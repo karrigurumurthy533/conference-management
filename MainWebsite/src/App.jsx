@@ -1,11 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 
 import Home from "./Pages/Home";
-import About from "./Pages/About";
+
 import Conferences from "./pages/Conferences";
 import Speakers from "./Pages/Speakers";
 import ConferenceDetails from "./pages/ConferenceDetails";
-import Contact from "./Pages/Contact";
+
 
 import Reviews from "./Pages/Reviews";
 import Terms from "./Pages/Terms";
@@ -13,9 +13,13 @@ import Privacy from "./Pages/Privacy";
 
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
-import RegisterPage from "./Pages/RegisterPage";
-import AbstractSubmissionPage from "./Pages/AbstractSubmissionPage";
-import DownloadBrochure from "./Pages/DownloadBrochure";
+import About from "./pages/About";
+import DownloadBrochure from "./pages/DownloadBrochure";
+import AbstractSubmissionPage from "./pages/AbstractSubmissionPage";
+import ContactPage from "./pages/Contact";
+import RegisterPage from "./pages/RegisterPage";
+
+
 
 const App = () => {
   return (
@@ -51,7 +55,7 @@ const App = () => {
         <Route path="/privacy" element={<Privacy />} />
 
         {/* Contact */}
-        <Route path="/contact" element={<Contact />} />
+        <Route path="/contact" element={<ContactPage />} />
       </Routes>
 
       <Footer />
