@@ -1,0 +1,57 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+@import "tailwindcss";
+
+
+:root {
+  /* White Main Background Theme with Violet Accents */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-card: #ffffff;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+
+  --brand: #7c3aed;
+  --brand-light: #8b5cf6;
+  --brand-dark: #6d28d9;
+
+  --border: #e5e7eb;
+
+  --hero-bg: #faf5ff;
+}
+
+/* ================================
+   HTML
+================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ================================
+   BODY
+================================ */
+
+body {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
+}
+
+/* ================================
+   GLOBAL TRANSITION
+================================ */
+
+* {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
