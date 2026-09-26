@@ -35,7 +35,7 @@ const ContactPage = () => {
   const fadeUp = {
     hidden: {
       opacity: 0,
-      y: 40,
+      y: 25,
     },
     visible: {
       opacity: 1,
@@ -50,7 +50,7 @@ const ContactPage = () => {
   const cardAnimation = {
     hidden: {
       opacity: 0,
-      y: 25,
+      y: 15,
     },
     visible: {
       opacity: 1,
@@ -107,10 +107,10 @@ const ContactPage = () => {
           }}
           className="
             w-full
-            h-[280px]
-            sm:h-[330px]
-            md:h-[380px]
-            lg:h-[430px]
+            h-[190px]
+            sm:h-[220px]
+            md:h-[250px]
+            lg:h-[270px]
             object-cover
             object-center
           "
@@ -137,10 +137,10 @@ const ContactPage = () => {
         <div className="absolute inset-0 flex items-center">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
             <motion.div
-              className="max-w-xl"
+              className="max-w-lg"
               initial={{
                 opacity: 0,
-                x: -50,
+                x: -35,
               }}
               animate={{
                 opacity: 1,
@@ -155,10 +155,10 @@ const ContactPage = () => {
               {/* Small Heading */}
 
               <motion.div
-                className="mb-3 flex items-center gap-3"
+                className="mb-2 flex items-center gap-2"
                 initial={{
                   opacity: 0,
-                  y: -15,
+                  y: -10,
                 }}
                 animate={{
                   opacity: 1,
@@ -170,7 +170,7 @@ const ContactPage = () => {
                 }}
               >
                 <span
-                  className="w-10 h-[2px]"
+                  className="w-7 h-[2px]"
                   style={{
                     backgroundColor: colors.primary,
                   }}
@@ -178,10 +178,10 @@ const ContactPage = () => {
 
                 <span
                   className="
-                    text-xs
-                    sm:text-sm
+                    text-[10px]
+                    sm:text-xs
                     font-semibold
-                    tracking-[0.25em]
+                    tracking-[0.2em]
                   "
                   style={{
                     color: colors.primary,
@@ -195,9 +195,9 @@ const ContactPage = () => {
 
               <motion.h1
                 className="
-                  text-4xl
-                  sm:text-5xl
-                  md:text-6xl
+                  text-2xl
+                  sm:text-3xl
+                  md:text-4xl
                   font-bold
                   leading-tight
                 "
@@ -206,7 +206,7 @@ const ContactPage = () => {
                 }}
                 initial={{
                   opacity: 0,
-                  y: 25,
+                  y: 20,
                 }}
                 animate={{
                   opacity: 1,
@@ -224,11 +224,11 @@ const ContactPage = () => {
 
               <motion.p
                 className="
-                  mt-4
-                  max-w-lg
-                  text-sm
-                  sm:text-base
-                  md:text-lg
+                  mt-2
+                  max-w-md
+                  text-xs
+                  sm:text-sm
+                  md:text-base
                   leading-relaxed
                 "
                 style={{
@@ -236,7 +236,7 @@ const ContactPage = () => {
                 }}
                 initial={{
                   opacity: 0,
-                  y: 20,
+                  y: 15,
                 }}
                 animate={{
                   opacity: 1,
@@ -260,7 +260,7 @@ const ContactPage = () => {
       ====================================================== */}
 
       <section
-        className="py-14 px-6"
+        className="py-10 px-6"
         style={{
           backgroundColor: colors.sectionBg,
         }}
@@ -272,7 +272,7 @@ const ContactPage = () => {
             grid
             grid-cols-1
             lg:grid-cols-3
-            gap-8
+            gap-6
           "
         >
           {/* =================================================
@@ -292,7 +292,7 @@ const ContactPage = () => {
             {/* Heading */}
 
             <h2
-              className="text-2xl font-bold mb-3"
+              className="text-xl font-bold mb-2"
               style={{
                 color: colors.primary,
               }}
@@ -303,27 +303,28 @@ const ContactPage = () => {
             {/* Description */}
 
             <p
-              className="text-sm leading-6 mb-7"
+              className="text-xs leading-5 mb-5"
               style={{
                 color: colors.bodyText,
               }}
             >
-              We would love to hear from you. Reach out to us for conference
-              information, registration support, sponsorship opportunities,
-              and general enquiries.
+              We would love to hear from you. Reach out to us for
+              conference information, registration support, sponsorship
+              opportunities, and general enquiries.
             </p>
 
             {/* Contact Cards */}
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* EMAIL */}
 
               <motion.div
                 variants={cardAnimation}
                 whileHover={{
-                  x: 6,
+                  x: 5,
                   scale: 1.02,
-                  boxShadow: "0px 8px 20px rgba(124,58,237,0.10)",
+                  boxShadow:
+                    "0px 8px 20px rgba(124,58,237,0.10)",
                 }}
                 transition={{
                   duration: 0.25,
@@ -331,8 +332,8 @@ const ContactPage = () => {
                 className="
                   flex
                   items-center
-                  gap-4
-                  p-4
+                  gap-3
+                  p-3
                   rounded-lg
                   border
                   cursor-pointer
@@ -348,8 +349,8 @@ const ContactPage = () => {
                     scale: 1.1,
                   }}
                   className="
-                    w-10
-                    h-10
+                    w-8
+                    h-8
                     rounded-full
                     flex
                     items-center
@@ -362,13 +363,13 @@ const ContactPage = () => {
                 >
                   <Mail
                     className="text-white"
-                    size={18}
+                    size={15}
                   />
                 </motion.div>
 
                 <div>
                   <p
-                    className="text-xs"
+                    className="text-[10px]"
                     style={{
                       color: colors.mutedText,
                     }}
@@ -377,7 +378,7 @@ const ContactPage = () => {
                   </p>
 
                   <p
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold"
                     style={{
                       color: colors.primaryLight,
                     }}
@@ -392,9 +393,10 @@ const ContactPage = () => {
               <motion.div
                 variants={cardAnimation}
                 whileHover={{
-                  x: 6,
+                  x: 5,
                   scale: 1.02,
-                  boxShadow: "0px 8px 20px rgba(124,58,237,0.10)",
+                  boxShadow:
+                    "0px 8px 20px rgba(124,58,237,0.10)",
                 }}
                 transition={{
                   duration: 0.25,
@@ -402,8 +404,8 @@ const ContactPage = () => {
                 className="
                   flex
                   items-center
-                  gap-4
-                  p-4
+                  gap-3
+                  p-3
                   rounded-lg
                   border
                   cursor-pointer
@@ -419,8 +421,8 @@ const ContactPage = () => {
                     scale: 1.1,
                   }}
                   className="
-                    w-10
-                    h-10
+                    w-8
+                    h-8
                     rounded-full
                     flex
                     items-center
@@ -433,13 +435,13 @@ const ContactPage = () => {
                 >
                   <Phone
                     className="text-white"
-                    size={18}
+                    size={15}
                   />
                 </motion.div>
 
                 <div>
                   <p
-                    className="text-xs"
+                    className="text-[10px]"
                     style={{
                       color: colors.mutedText,
                     }}
@@ -448,7 +450,7 @@ const ContactPage = () => {
                   </p>
 
                   <p
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold"
                     style={{
                       color: colors.primaryLight,
                     }}
@@ -463,9 +465,10 @@ const ContactPage = () => {
               <motion.div
                 variants={cardAnimation}
                 whileHover={{
-                  x: 6,
+                  x: 5,
                   scale: 1.02,
-                  boxShadow: "0px 8px 20px rgba(124,58,237,0.10)",
+                  boxShadow:
+                    "0px 8px 20px rgba(124,58,237,0.10)",
                 }}
                 transition={{
                   duration: 0.25,
@@ -473,8 +476,8 @@ const ContactPage = () => {
                 className="
                   flex
                   items-center
-                  gap-4
-                  p-4
+                  gap-3
+                  p-3
                   rounded-lg
                   border
                   cursor-pointer
@@ -490,8 +493,8 @@ const ContactPage = () => {
                     scale: 1.1,
                   }}
                   className="
-                    w-10
-                    h-10
+                    w-8
+                    h-8
                     rounded-full
                     flex
                     items-center
@@ -504,13 +507,13 @@ const ContactPage = () => {
                 >
                   <MapPin
                     className="text-white"
-                    size={18}
+                    size={15}
                   />
                 </motion.div>
 
                 <div>
                   <p
-                    className="text-xs"
+                    className="text-[10px]"
                     style={{
                       color: colors.mutedText,
                     }}
@@ -519,7 +522,7 @@ const ContactPage = () => {
                   </p>
 
                   <p
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold"
                     style={{
                       color: colors.primaryLight,
                     }}
@@ -534,9 +537,10 @@ const ContactPage = () => {
               <motion.div
                 variants={cardAnimation}
                 whileHover={{
-                  x: 6,
+                  x: 5,
                   scale: 1.02,
-                  boxShadow: "0px 8px 20px rgba(124,58,237,0.10)",
+                  boxShadow:
+                    "0px 8px 20px rgba(124,58,237,0.10)",
                 }}
                 transition={{
                   duration: 0.25,
@@ -544,8 +548,8 @@ const ContactPage = () => {
                 className="
                   flex
                   items-center
-                  gap-4
-                  p-4
+                  gap-3
+                  p-3
                   rounded-lg
                   border
                   cursor-pointer
@@ -561,8 +565,8 @@ const ContactPage = () => {
                     scale: 1.1,
                   }}
                   className="
-                    w-10
-                    h-10
+                    w-8
+                    h-8
                     rounded-full
                     flex
                     items-center
@@ -575,13 +579,13 @@ const ContactPage = () => {
                 >
                   <Clock
                     className="text-white"
-                    size={18}
+                    size={15}
                   />
                 </motion.div>
 
                 <div>
                   <p
-                    className="text-xs"
+                    className="text-[10px]"
                     style={{
                       color: colors.mutedText,
                     }}
@@ -590,7 +594,7 @@ const ContactPage = () => {
                   </p>
 
                   <p
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold"
                     style={{
                       color: colors.primaryLight,
                     }}
@@ -610,7 +614,7 @@ const ContactPage = () => {
             className="lg:col-span-2"
             initial={{
               opacity: 0,
-              x: 50,
+              x: 35,
             }}
             whileInView={{
               opacity: 1,
@@ -629,8 +633,8 @@ const ContactPage = () => {
               className="
                 border
                 rounded-xl
-                p-6
-                md:p-8
+                p-5
+                md:p-6
               "
               style={{
                 backgroundColor: colors.inputBg,
@@ -638,7 +642,8 @@ const ContactPage = () => {
                 boxShadow: colors.formShadow,
               }}
               whileHover={{
-                boxShadow: "0px 15px 35px rgba(124,58,237,0.10)",
+                boxShadow:
+                  "0px 15px 35px rgba(124,58,237,0.10)",
               }}
               transition={{
                 duration: 0.3,
@@ -647,7 +652,7 @@ const ContactPage = () => {
               {/* Form Heading */}
 
               <h2
-                className="text-2xl font-bold mb-2"
+                className="text-xl font-bold mb-1"
                 style={{
                   color: colors.primary,
                 }}
@@ -656,7 +661,7 @@ const ContactPage = () => {
               </h2>
 
               <p
-                className="text-sm mb-7"
+                className="text-xs mb-5"
                 style={{
                   color: colors.mutedText,
                 }}
@@ -664,16 +669,16 @@ const ContactPage = () => {
                 Fill out the form below and our team will get back to you.
               </p>
 
-              <form className="space-y-5">
+              <form className="space-y-4">
                 {/* NAME + EMAIL */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Name */}
 
                   <motion.div
                     initial={{
                       opacity: 0,
-                      y: 15,
+                      y: 12,
                     }}
                     whileInView={{
                       opacity: 1,
@@ -689,9 +694,9 @@ const ContactPage = () => {
                     <label
                       className="
                         block
-                        text-sm
+                        text-xs
                         font-semibold
-                        mb-2
+                        mb-1.5
                       "
                       style={{
                         color: "#374151",
@@ -702,7 +707,7 @@ const ContactPage = () => {
 
                     <div className="relative">
                       <User
-                        size={17}
+                        size={15}
                         className="
                           absolute
                           left-3
@@ -719,12 +724,12 @@ const ContactPage = () => {
                         placeholder="Enter your name"
                         className="
                           w-full
-                          h-11
-                          pl-10
-                          pr-4
+                          h-10
+                          pl-9
+                          pr-3
                           rounded-md
                           border
-                          text-sm
+                          text-xs
                           outline-none
                           transition-all
                         "
@@ -744,7 +749,7 @@ const ContactPage = () => {
                   <motion.div
                     initial={{
                       opacity: 0,
-                      y: 15,
+                      y: 12,
                     }}
                     whileInView={{
                       opacity: 1,
@@ -760,9 +765,9 @@ const ContactPage = () => {
                     <label
                       className="
                         block
-                        text-sm
+                        text-xs
                         font-semibold
-                        mb-2
+                        mb-1.5
                       "
                       style={{
                         color: "#374151",
@@ -773,7 +778,7 @@ const ContactPage = () => {
 
                     <div className="relative">
                       <Mail
-                        size={17}
+                        size={15}
                         className="
                           absolute
                           left-3
@@ -790,12 +795,12 @@ const ContactPage = () => {
                         placeholder="Enter your email"
                         className="
                           w-full
-                          h-11
-                          pl-10
-                          pr-4
+                          h-10
+                          pl-9
+                          pr-3
                           rounded-md
                           border
-                          text-sm
+                          text-xs
                           outline-none
                           transition-all
                         "
@@ -813,13 +818,13 @@ const ContactPage = () => {
 
                 {/* ORGANIZATION + PHONE */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Organization */}
 
                   <motion.div
                     initial={{
                       opacity: 0,
-                      y: 15,
+                      y: 12,
                     }}
                     whileInView={{
                       opacity: 1,
@@ -835,9 +840,9 @@ const ContactPage = () => {
                     <label
                       className="
                         block
-                        text-sm
+                        text-xs
                         font-semibold
-                        mb-2
+                        mb-1.5
                       "
                       style={{
                         color: "#374151",
@@ -848,7 +853,7 @@ const ContactPage = () => {
 
                     <div className="relative">
                       <Building2
-                        size={17}
+                        size={15}
                         className="
                           absolute
                           left-3
@@ -865,12 +870,12 @@ const ContactPage = () => {
                         placeholder="Organization name"
                         className="
                           w-full
-                          h-11
-                          pl-10
-                          pr-4
+                          h-10
+                          pl-9
+                          pr-3
                           rounded-md
                           border
-                          text-sm
+                          text-xs
                           outline-none
                           transition-all
                         "
@@ -890,7 +895,7 @@ const ContactPage = () => {
                   <motion.div
                     initial={{
                       opacity: 0,
-                      y: 15,
+                      y: 12,
                     }}
                     whileInView={{
                       opacity: 1,
@@ -906,9 +911,9 @@ const ContactPage = () => {
                     <label
                       className="
                         block
-                        text-sm
+                        text-xs
                         font-semibold
-                        mb-2
+                        mb-1.5
                       "
                       style={{
                         color: "#374151",
@@ -919,7 +924,7 @@ const ContactPage = () => {
 
                     <div className="relative">
                       <Phone
-                        size={17}
+                        size={15}
                         className="
                           absolute
                           left-3
@@ -936,12 +941,12 @@ const ContactPage = () => {
                         placeholder="Enter phone number"
                         className="
                           w-full
-                          h-11
-                          pl-10
-                          pr-4
+                          h-10
+                          pl-9
+                          pr-3
                           rounded-md
                           border
-                          text-sm
+                          text-xs
                           outline-none
                           transition-all
                         "
@@ -962,7 +967,7 @@ const ContactPage = () => {
                 <motion.div
                   initial={{
                     opacity: 0,
-                    y: 15,
+                    y: 12,
                   }}
                   whileInView={{
                     opacity: 1,
@@ -978,9 +983,9 @@ const ContactPage = () => {
                   <label
                     className="
                       block
-                      text-sm
+                      text-xs
                       font-semibold
-                      mb-2
+                      mb-1.5
                     "
                     style={{
                       color: "#374151",
@@ -991,11 +996,12 @@ const ContactPage = () => {
 
                   <div className="relative">
                     <MessageSquare
-                      size={17}
+                      size={15}
                       className="
                         absolute
                         left-3
-                        top-3
+                        top-1/2
+                        -translate-y-1/2
                       "
                       style={{
                         color: colors.primary,
@@ -1007,12 +1013,12 @@ const ContactPage = () => {
                       placeholder="What would you like to know?"
                       className="
                         w-full
-                        h-11
-                        pl-10
-                        pr-4
+                        h-10
+                        pl-9
+                        pr-3
                         rounded-md
                         border
-                        text-sm
+                        text-xs
                         outline-none
                         transition-all
                       "
@@ -1032,7 +1038,7 @@ const ContactPage = () => {
                 <motion.div
                   initial={{
                     opacity: 0,
-                    y: 15,
+                    y: 12,
                   }}
                   whileInView={{
                     opacity: 1,
@@ -1048,9 +1054,9 @@ const ContactPage = () => {
                   <label
                     className="
                       block
-                      text-sm
+                      text-xs
                       font-semibold
-                      mb-2
+                      mb-1.5
                     "
                     style={{
                       color: "#374151",
@@ -1060,15 +1066,15 @@ const ContactPage = () => {
                   </label>
 
                   <textarea
-                    rows="5"
+                    rows="4"
                     placeholder="Write your message..."
                     className="
                       w-full
-                      px-4
-                      py-3
+                      px-3
+                      py-2.5
                       rounded-md
                       border
-                      text-sm
+                      text-xs
                       outline-none
                       resize-none
                       transition-all
@@ -1089,7 +1095,7 @@ const ContactPage = () => {
                   type="submit"
                   initial={{
                     opacity: 0,
-                    y: 15,
+                    y: 12,
                   }}
                   whileInView={{
                     opacity: 1,
@@ -1103,7 +1109,8 @@ const ContactPage = () => {
                   }}
                   whileHover={{
                     scale: 1.04,
-                    boxShadow: "0 8px 20px rgba(124,58,237,0.20)",
+                    boxShadow:
+                      "0 8px 20px rgba(124,58,237,0.20)",
                   }}
                   whileTap={{
                     scale: 0.96,
@@ -1113,11 +1120,11 @@ const ContactPage = () => {
                     items-center
                     justify-center
                     gap-2
-                    px-7
-                    h-11
+                    px-6
+                    h-10
                     rounded-md
                     text-white
-                    text-sm
+                    text-xs
                     font-semibold
                     transition-all
                     duration-200
@@ -1141,7 +1148,7 @@ const ContactPage = () => {
                       x: 4,
                     }}
                   >
-                    <Send size={16} />
+                    <Send size={14} />
                   </motion.span>
                 </motion.button>
               </form>
@@ -1155,10 +1162,10 @@ const ContactPage = () => {
       ====================================================== */}
 
       <motion.section
-        className="px-6 pb-14"
+        className="px-6 pb-10"
         initial={{
           opacity: 0,
-          y: 40,
+          y: 25,
         }}
         whileInView={{
           opacity: 1,
@@ -1178,8 +1185,8 @@ const ContactPage = () => {
             mx-auto
             rounded-xl
             border
-            py-8
-            px-6
+            py-6
+            px-5
             text-center
           "
           style={{
@@ -1189,8 +1196,8 @@ const ContactPage = () => {
         >
           <motion.h3
             className="
-              text-xl
-              md:text-2xl
+              text-lg
+              md:text-xl
               font-bold
             "
             style={{
@@ -1215,13 +1222,13 @@ const ContactPage = () => {
           </motion.h3>
 
           <p
-            className="text-sm mt-2"
+            className="text-xs mt-1.5"
             style={{
               color: colors.mutedText,
             }}
           >
-            Connect with our team and discover how we can support your next
-            conference.
+            Connect with our team and discover how we can support
+            your next conference.
           </p>
         </div>
       </motion.section>

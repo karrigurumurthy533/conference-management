@@ -20,61 +20,38 @@ import conferences from "../../data/conferences";
 const RegisterPage = () => {
   const { id } = useParams();
 
-  const conference = conferences.find(
-    (item) => item.id === id
-  );
-
-  // =========================================================
-  // THEME COLORS (White + Violet Palette)
-  // =========================================================
+  const conference = conferences.find((item) => item.id === id);
 
   const colors = {
     pageBg: "#FFFFFF",
     text: "#111827",
-
     cardBg: "#FFFFFF",
     cardBgSecondary: "#F9FAFB",
-
     border: "#E5E7EB",
     borderStrong: "#DDD6FE",
     divider: "#F3F4F6",
-
     primary: "#7C3AED",
     primaryHover: "#6D28D9",
-
     primarySoft: "#F5F3FF",
     primarySoft2: "#EDE9FE",
-
     heading: "#7C3AED",
     body: "#4B5563",
     muted: "#6B7280",
     mutedLight: "#9CA3AF",
-
     inputBg: "#FFFFFF",
     inputBorder: "#E5E7EB",
     inputText: "#111827",
-
     heroBg: "#1E1B4B",
     heroSecondary: "#312E81",
-
     heroAccent: "#C084FC",
     heroSoft: "#A78BFA",
-
     selectedBg: "#F5F3FF",
     selectedBorder: "#7C3AED",
-
-    shadow: "0 15px 45px rgba(124,58,237,0.08)",
-
-    summaryShadow: "0 20px 55px rgba(124,58,237,0.12)",
-
+    shadow: "0 10px 30px rgba(124,58,237,0.06)",
+    summaryShadow: "0 12px 35px rgba(124,58,237,0.09)",
     supportBg: "#F5F3FF",
-
     overlay: "rgba(15,7,32,0.75)",
   };
-
-  // =========================================================
-  // FORM DATA
-  // =========================================================
 
   const [formData, setFormData] = useState({
     title: "",
@@ -92,10 +69,6 @@ const RegisterPage = () => {
   });
 
   const [submitted, setSubmitted] = useState(false);
-
-  // =========================================================
-  // REGISTRATION OPTIONS
-  // =========================================================
 
   const registrationGroups = [
     {
@@ -127,8 +100,7 @@ const RegisterPage = () => {
     },
     {
       title: "Others",
-      description:
-        "Professional and additional participation options.",
+      description: "Professional and additional participation options.",
       options: [
         {
           id: "other-workshop",
@@ -154,8 +126,7 @@ const RegisterPage = () => {
     },
     {
       title: "Student",
-      description:
-        "Special registration options for students.",
+      description: "Special registration options for students.",
       options: [
         {
           id: "student-speaker",
@@ -171,15 +142,10 @@ const RegisterPage = () => {
     },
   ];
 
-  // =========================================================
-  // SELECTED REGISTRATION
-  // =========================================================
-
   const selectedRegistration = useMemo(() => {
     for (const group of registrationGroups) {
       const found = group.options.find(
-        (option) =>
-          option.id === formData.registrationType
+        (option) => option.id === formData.registrationType,
       );
 
       if (found) return found;
@@ -190,10 +156,6 @@ const RegisterPage = () => {
 
   const total = selectedRegistration?.price || 0;
 
-  // =========================================================
-  // HANDLE CHANGE
-  // =========================================================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -202,10 +164,6 @@ const RegisterPage = () => {
       [name]: value,
     }));
   };
-
-  // =========================================================
-  // SUBMIT
-  // =========================================================
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -218,20 +176,16 @@ const RegisterPage = () => {
     });
   };
 
-  // =========================================================
-  // INVALID CONFERENCE
-  // =========================================================
-
   if (!conference) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center px-6"
+        className="flex min-h-screen items-center justify-center px-5"
         style={{
           backgroundColor: colors.pageBg,
         }}
       >
         <div
-          className="max-w-md rounded-3xl p-10 text-center"
+          className="w-full max-w-md rounded-2xl p-7 text-center"
           style={{
             backgroundColor: colors.cardBg,
             border: `1px solid ${colors.border}`,
@@ -239,38 +193,42 @@ const RegisterPage = () => {
           }}
         >
           <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl"
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl"
             style={{
               backgroundColor: colors.primarySoft,
               color: colors.primary,
             }}
           >
-            <CalendarDays size={28} />
+            <CalendarDays size={25} />
           </div>
 
           <h1
-            className="mt-6 text-2xl font-bold"
-            style={{ color: colors.heading }}
+            className="mt-4 text-xl font-bold"
+            style={{
+              color: colors.heading,
+            }}
           >
             Conference Not Found
           </h1>
 
           <p
-            className="mt-3 text-sm leading-6"
-            style={{ color: colors.muted }}
+            className="mt-2 text-xs leading-5"
+            style={{
+              color: colors.muted,
+            }}
           >
-            Please select a valid conference before
-            continuing with registration.
+            Please select a valid conference before continuing with
+            registration.
           </p>
 
           <Link
             to="/conferences"
-            className="mt-7 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
             style={{
               backgroundColor: colors.primary,
             }}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={15} />
             Back to Conferences
           </Link>
         </div>
@@ -278,21 +236,15 @@ const RegisterPage = () => {
     );
   }
 
-  // =========================================================
-  // MAIN
-  // =========================================================
-
   return (
     <div
-      className="min-h-screen transition-all duration-500"
+      className="min-h-screen"
       style={{
         backgroundColor: colors.pageBg,
         color: colors.text,
       }}
     >
-      {/* =====================================================
-          TOP HEADER
-      ===================================================== */}
+      {/* HERO */}
 
       <section
         className="relative overflow-hidden"
@@ -300,58 +252,47 @@ const RegisterPage = () => {
           backgroundColor: colors.heroBg,
         }}
       >
-        {/* Decorative circles */}
-
         <div
-          className="absolute -right-24 -top-24 h-72 w-72 rounded-full"
+          className="absolute -right-16 -top-16 h-40 w-40 rounded-full"
           style={{
-            border: "1px solid rgba(192,132,252,0.22)",
+            border: "1px solid rgba(192,132,252,0.20)",
           }}
         />
 
         <div
-          className="absolute -bottom-28 left-[8%] h-64 w-64 rounded-full"
+          className="absolute -bottom-16 left-[8%] h-32 w-32 rounded-full"
           style={{
-            border: "1px solid rgba(192,132,252,0.14)",
+            border: "1px solid rgba(192,132,252,0.12)",
           }}
         />
 
-        <div
-          className="absolute right-[20%] top-10 h-5 w-5 rounded-full"
-          style={{
-            backgroundColor: "rgba(192,132,252,0.35)",
-          }}
-        />
-
-        <div
-          className="relative mx-auto max-w-7xl px-6 py-8 lg:px-10"
-        >
+        <div className="relative mx-auto max-w-7xl px-5 py-3 lg:px-8 lg:py-4">
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold transition"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
             style={{
               color: colors.heroSoft,
             }}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={13} />
             Back to Conference
           </Link>
 
-          <div className="mt-8 grid items-end gap-8 lg:grid-cols-[1fr_auto]">
+          <div className="mt-3 grid items-center gap-4 lg:grid-cols-[1fr_auto]">
             <div>
               <div
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.14em]"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em]"
                 style={{
-                  border: "1px solid rgba(192,132,252,0.25)",
+                  border: "1px solid rgba(192,132,252,0.22)",
                   backgroundColor: "rgba(168,85,247,0.12)",
                   color: colors.heroAccent,
                 }}
               >
-                <Users size={14} />
+                <Users size={11} />
                 Conference Registration
               </div>
 
-              <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+              <h1 className="mt-2 max-w-4xl text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
                 Register for
                 <span
                   className="block"
@@ -363,60 +304,57 @@ const RegisterPage = () => {
                 </span>
               </h1>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">
-                Complete your registration details below
-                and select the participation category that
-                suits you best.
+              <p className="mt-1 max-w-2xl text-[11px] leading-5 text-white/65">
+                Complete your registration details below and select the
+                participation category that suits you best.
               </p>
             </div>
 
-            {/* Conference mini card */}
-
             <div
-              className="hidden min-w-[270px] rounded-2xl p-5 backdrop-blur-md lg:block"
+              className="hidden min-w-[210px] rounded-lg p-3 backdrop-blur-md lg:block"
               style={{
-                border: "1px solid rgba(192,132,252,0.20)",
-                backgroundColor: "rgba(13,7,28,0.75)",
+                border: "1px solid rgba(192,132,252,0.18)",
+                backgroundColor: "rgba(13,7,28,0.72)",
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div
-                  className="flex h-11 w-11 items-center justify-center rounded-xl text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-white"
                   style={{
                     backgroundColor: colors.primary,
                   }}
                 >
-                  <CalendarDays size={20} />
+                  <CalendarDays size={15} />
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                  <p className="text-[8px] font-bold uppercase tracking-wider text-white/45">
                     Conference Date
                   </p>
 
-                  <p className="mt-1 text-sm font-bold text-white">
+                  <p className="mt-0.5 text-[11px] font-bold text-white">
                     {conference.date}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-2.5 flex items-center gap-2">
                 <div
-                  className="flex h-11 w-11 items-center justify-center rounded-xl"
+                  className="flex h-8 w-8 items-center justify-center rounded-md"
                   style={{
                     backgroundColor: "rgba(168,85,247,0.12)",
                     color: colors.heroAccent,
                   }}
                 >
-                  <MapPin size={19} />
+                  <MapPin size={14} />
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                  <p className="text-[8px] font-bold uppercase tracking-wider text-white/45">
                     Location
                   </p>
 
-                  <p className="mt-1 text-sm font-semibold text-white">
+                  <p className="mt-0.5 text-[11px] font-semibold text-white">
                     {conference.location}
                   </p>
                 </div>
@@ -426,22 +364,18 @@ const RegisterPage = () => {
         </div>
       </section>
 
-      {/* =====================================================
-          MAIN FORM
-      ===================================================== */}
+      {/* MAIN */}
 
-      <main className="mx-auto max-w-7xl px-5 py-10 lg:px-10 lg:py-14">
+      <main className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
         <form onSubmit={handleSubmit}>
-          <div className="grid items-start gap-7 lg:grid-cols-[1fr_350px]">
-            {/* =================================================
-                LEFT CONTENT
-            ================================================= */}
+          <div className="grid items-start gap-5 lg:grid-cols-[1fr_300px]">
+            {/* LEFT */}
 
-            <div className="space-y-7">
-              {/* PERSONAL DETAILS */}
+            <div className="space-y-5">
+              {/* PERSONAL */}
 
               <section
-                className="overflow-hidden rounded-3xl"
+                className="overflow-hidden rounded-2xl"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.border}`,
@@ -450,26 +384,20 @@ const RegisterPage = () => {
               >
                 <FormSectionHeader
                   number="01"
-                  icon={<User size={19} />}
+                  icon={<User size={17} />}
                   title="Personal Information"
                   description="Tell us a little about yourself."
                 />
 
-                <div className="p-6 md:p-8">
-                  <div className="grid gap-5 md:grid-cols-[180px_1fr_1fr]">
+                <div className="p-4 md:p-5">
+                  <div className="grid gap-3.5 md:grid-cols-[150px_1fr_1fr]">
                     <SelectField
                       label="Title"
                       name="title"
                       value={formData.title}
                       onChange={handleChange}
                       required
-                      options={[
-                        "Mr.",
-                        "Ms.",
-                        "Mrs.",
-                        "Dr.",
-                        "Prof.",
-                      ]}
+                      options={["Mr.", "Ms.", "Mrs.", "Dr.", "Prof."]}
                       placeholder="Select Title"
                     />
 
@@ -492,7 +420,7 @@ const RegisterPage = () => {
                     />
                   </div>
 
-                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <div className="mt-3.5 grid gap-3.5 md:grid-cols-2">
                     <InputField
                       label="Email Address"
                       name="email"
@@ -500,7 +428,7 @@ const RegisterPage = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      icon={<Mail size={17} />}
+                      icon={<Mail size={15} />}
                       required
                     />
 
@@ -511,7 +439,7 @@ const RegisterPage = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+91 98765 43210"
-                      icon={<Phone size={17} />}
+                      icon={<Phone size={15} />}
                       required
                     />
                   </div>
@@ -521,7 +449,7 @@ const RegisterPage = () => {
               {/* CONFERENCE */}
 
               <section
-                className="overflow-hidden rounded-3xl"
+                className="overflow-hidden rounded-2xl"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.border}`,
@@ -530,50 +458,55 @@ const RegisterPage = () => {
               >
                 <FormSectionHeader
                   number="02"
-                  icon={<Globe2 size={19} />}
+                  icon={<Globe2 size={17} />}
                   title="Conference Details"
                   description="Confirm the conference you want to attend."
                 />
 
-                <div className="p-6 md:p-8">
+                <div className="p-4 md:p-5">
                   <div
-                    className="rounded-2xl p-4"
+                    className="rounded-xl p-3"
                     style={{
                       border: `1px solid ${colors.borderStrong}`,
                       backgroundColor: colors.cardBgSecondary,
                     }}
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-center gap-3">
                       <div
-                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl text-white shadow-md"
+                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-white shadow-sm"
                         style={{
                           backgroundColor: colors.primary,
                         }}
                       >
-                        <CalendarDays size={21} />
+                        <CalendarDays size={18} />
                       </div>
 
                       <div className="min-w-0">
                         <p
-                          className="text-[10px] font-bold uppercase tracking-wider"
-                          style={{ color: colors.primary }}
+                          className="text-[9px] font-bold uppercase tracking-wider"
+                          style={{
+                            color: colors.primary,
+                          }}
                         >
                           Selected Conference
                         </p>
 
                         <h3
-                          className="mt-1 text-sm font-bold leading-6"
-                          style={{ color: colors.heading }}
+                          className="mt-0.5 text-xs font-bold leading-5"
+                          style={{
+                            color: colors.heading,
+                          }}
                         >
                           {conference.title}
                         </h3>
 
                         <p
-                          className="mt-1 text-xs"
-                          style={{ color: colors.muted }}
+                          className="mt-0.5 text-[10px]"
+                          style={{
+                            color: colors.muted,
+                          }}
                         >
-                          {conference.date} ·{" "}
-                          {conference.location}
+                          {conference.date} · {conference.location}
                         </p>
                       </div>
                     </div>
@@ -590,7 +523,7 @@ const RegisterPage = () => {
               {/* ADDRESS */}
 
               <section
-                className="overflow-hidden rounded-3xl"
+                className="overflow-hidden rounded-2xl"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.border}`,
@@ -599,13 +532,13 @@ const RegisterPage = () => {
               >
                 <FormSectionHeader
                   number="03"
-                  icon={<MapPin size={19} />}
+                  icon={<MapPin size={17} />}
                   title="Location & Address"
                   description="Provide your current contact location."
                 />
 
-                <div className="p-6 md:p-8">
-                  <div className="grid gap-5 md:grid-cols-2">
+                <div className="p-4 md:p-5">
+                  <div className="grid gap-3.5 md:grid-cols-2">
                     <InputField
                       label="City"
                       name="city"
@@ -643,15 +576,19 @@ const RegisterPage = () => {
                     />
                   </div>
 
-                  <div className="mt-5">
+                  <div className="mt-3.5">
                     <label
-                      className="mb-2 block text-xs font-bold"
-                      style={{ color: colors.body }}
+                      className="mb-1.5 block text-[11px] font-bold"
+                      style={{
+                        color: "#374151",
+                      }}
                     >
                       Address
                       <span
                         className="ml-1"
-                        style={{ color: colors.primary }}
+                        style={{
+                          color: colors.primary,
+                        }}
                       >
                         *
                       </span>
@@ -662,9 +599,9 @@ const RegisterPage = () => {
                       value={formData.address}
                       onChange={handleChange}
                       required
-                      rows={4}
+                      rows={3}
                       placeholder="Enter your complete address"
-                      className="w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none transition"
+                      className="w-full resize-none rounded-xl px-3.5 py-2.5 text-xs outline-none transition"
                       style={{
                         backgroundColor: colors.inputBg,
                         border: `1px solid ${colors.inputBorder}`,
@@ -675,10 +612,10 @@ const RegisterPage = () => {
                 </div>
               </section>
 
-              {/* REGISTRATION TYPE */}
+              {/* REGISTRATION */}
 
               <section
-                className="overflow-hidden rounded-3xl"
+                className="overflow-hidden rounded-2xl"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.border}`,
@@ -687,41 +624,44 @@ const RegisterPage = () => {
               >
                 <FormSectionHeader
                   number="04"
-                  icon={<CreditCard size={19} />}
+                  icon={<CreditCard size={17} />}
                   title="Registration Category"
                   description="Select one registration option."
                 />
 
-                <div className="p-6 md:p-8">
-                  <div className="space-y-7">
+                <div className="p-4 md:p-5">
+                  <div className="space-y-5">
                     {registrationGroups.map((group) => (
                       <div key={group.title}>
-                        <div className="mb-4">
+                        <div className="mb-2.5">
                           <h3
-                            className="text-base font-bold"
-                            style={{ color: colors.heading }}
+                            className="text-sm font-bold"
+                            style={{
+                              color: colors.heading,
+                            }}
                           >
                             {group.title}
                           </h3>
 
                           <p
-                            className="mt-1 text-xs"
-                            style={{ color: colors.muted }}
+                            className="mt-0.5 text-[10px]"
+                            style={{
+                              color: colors.muted,
+                            }}
                           >
                             {group.description}
                           </p>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2">
+                        <div className="grid gap-2 md:grid-cols-2">
                           {group.options.map((option) => {
                             const selected =
-                              formData.registrationType ===
-                              option.id;
+                              formData.registrationType === option.id;
 
                             return (
                               <label
                                 key={option.id}
-                                className="group relative flex cursor-pointer items-center justify-between gap-4 rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+                                className="group relative flex cursor-pointer items-center justify-between gap-3 rounded-xl p-3 transition-all hover:-translate-y-0.5"
                                 style={{
                                   border: `1px solid ${
                                     selected
@@ -732,13 +672,13 @@ const RegisterPage = () => {
                                     ? colors.selectedBg
                                     : colors.cardBg,
                                   boxShadow: selected
-                                    ? "0 8px 25px rgba(124,58,237,0.12)"
+                                    ? "0 5px 16px rgba(124,58,237,0.10)"
                                     : "none",
                                 }}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex min-w-0 items-center gap-2.5">
                                   <div
-                                    className="flex h-5 w-5 items-center justify-center rounded-full border-2"
+                                    className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border-2"
                                     style={{
                                       borderColor: selected
                                         ? colors.primary
@@ -747,10 +687,9 @@ const RegisterPage = () => {
                                   >
                                     {selected && (
                                       <span
-                                        className="h-2.5 w-2.5 rounded-full"
+                                        className="h-2 w-2 rounded-full"
                                         style={{
-                                          backgroundColor:
-                                            colors.primary,
+                                          backgroundColor: colors.primary,
                                         }}
                                       />
                                     )}
@@ -766,7 +705,7 @@ const RegisterPage = () => {
                                   />
 
                                   <span
-                                    className="text-sm font-medium"
+                                    className="text-[11px] font-medium leading-4"
                                     style={{
                                       color: colors.body,
                                     }}
@@ -776,7 +715,7 @@ const RegisterPage = () => {
                                 </div>
 
                                 <span
-                                  className="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold"
+                                  className="whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-bold"
                                   style={{
                                     backgroundColor: selected
                                       ? colors.primary
@@ -799,38 +738,35 @@ const RegisterPage = () => {
               </section>
             </div>
 
-            {/* =================================================
-                RIGHT SUMMARY
-            ================================================= */}
+            {/* RIGHT SUMMARY */}
 
-            <aside className="lg:sticky lg:top-6">
+            <aside className="lg:sticky lg:top-5">
               <div
-                className="overflow-hidden rounded-3xl"
+                className="overflow-hidden rounded-2xl"
                 style={{
                   backgroundColor: colors.cardBg,
                   border: `1px solid ${colors.borderStrong}`,
                   boxShadow: colors.summaryShadow,
                 }}
               >
-                {/* Summary header */}
+                {/* SUMMARY HEADER */}
 
                 <div
-                  className="relative overflow-hidden p-6"
+                  className="relative overflow-hidden p-4"
                   style={{
                     backgroundColor: colors.heroBg,
                   }}
                 >
                   <div
-                    className="absolute -right-10 -top-10 h-32 w-32 rounded-full"
+                    className="absolute -right-8 -top-8 h-24 w-24 rounded-full"
                     style={{
-                      border:
-                        "1px solid rgba(192,132,252,0.22)",
+                      border: "1px solid rgba(192,132,252,0.20)",
                     }}
                   />
 
                   <div className="relative">
                     <p
-                      className="text-[10px] font-bold uppercase tracking-[0.18em]"
+                      className="text-[9px] font-bold uppercase tracking-[0.16em]"
                       style={{
                         color: colors.heroAccent,
                       }}
@@ -838,35 +774,34 @@ const RegisterPage = () => {
                       Registration Summary
                     </p>
 
-                    <h2 className="mt-2 text-xl font-bold text-white">
+                    <h2 className="mt-1 text-lg font-bold text-white">
                       Your Registration
                     </h2>
                   </div>
                 </div>
 
-                <div className="p-6">
-                  {/* Conference */}
+                <div className="p-4">
+                  {/* CONFERENCE */}
 
                   <div
-                    className="rounded-2xl p-4"
+                    className="rounded-xl p-3"
                     style={{
-                      backgroundColor:
-                        colors.cardBgSecondary,
+                      backgroundColor: colors.cardBgSecondary,
                     }}
                   >
-                    <div className="flex gap-3">
+                    <div className="flex gap-2.5">
                       <div
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white"
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-white"
                         style={{
                           backgroundColor: colors.primary,
                         }}
                       >
-                        <CalendarDays size={18} />
+                        <CalendarDays size={16} />
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
                         <p
-                          className="text-[10px] font-bold uppercase tracking-wider"
+                          className="text-[9px] font-bold uppercase tracking-wider"
                           style={{
                             color: colors.primary,
                           }}
@@ -875,7 +810,7 @@ const RegisterPage = () => {
                         </p>
 
                         <p
-                          className="mt-1 text-xs font-bold leading-5"
+                          className="mt-0.5 text-[11px] font-bold leading-4"
                           style={{
                             color: colors.body,
                           }}
@@ -886,11 +821,11 @@ const RegisterPage = () => {
                     </div>
                   </div>
 
-                  {/* Selected option */}
+                  {/* SELECTED */}
 
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <p
-                      className="text-xs font-bold uppercase tracking-wider"
+                      className="text-[9px] font-bold uppercase tracking-wider"
                       style={{
                         color: colors.mutedLight,
                       }}
@@ -899,10 +834,10 @@ const RegisterPage = () => {
                     </p>
 
                     {selectedRegistration ? (
-                      <div className="mt-3 flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-2">
+                      <div className="mt-2 flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-start gap-1.5">
                           <CheckCircle2
-                            size={17}
+                            size={15}
                             className="mt-0.5 flex-shrink-0"
                             style={{
                               color: colors.primary,
@@ -910,7 +845,7 @@ const RegisterPage = () => {
                           />
 
                           <span
-                            className="text-sm font-semibold leading-5"
+                            className="text-[11px] font-semibold leading-4"
                             style={{
                               color: colors.body,
                             }}
@@ -920,7 +855,7 @@ const RegisterPage = () => {
                         </div>
 
                         <span
-                          className="text-sm font-bold"
+                          className="text-xs font-bold"
                           style={{
                             color: colors.heading,
                           }}
@@ -930,33 +865,32 @@ const RegisterPage = () => {
                       </div>
                     ) : (
                       <p
-                        className="mt-3 rounded-xl p-4 text-xs leading-5"
+                        className="mt-2 rounded-lg p-3 text-[10px] leading-4"
                         style={{
                           border: `1px dashed ${colors.borderStrong}`,
                           color: colors.mutedLight,
                         }}
                       >
-                        Select a registration category
-                        to see the total.
+                        Select a registration category to see the total.
                       </p>
                     )}
                   </div>
 
-                  {/* Divider */}
+                  {/* DIVIDER */}
 
                   <div
-                    className="my-6 h-px"
+                    className="my-4 h-px"
                     style={{
                       backgroundColor: colors.divider,
                     }}
                   />
 
-                  {/* Total */}
+                  {/* TOTAL */}
 
                   <div className="flex items-end justify-between">
                     <div>
                       <p
-                        className="text-xs font-bold uppercase tracking-wider"
+                        className="text-[9px] font-bold uppercase tracking-wider"
                         style={{
                           color: colors.mutedLight,
                         }}
@@ -965,7 +899,7 @@ const RegisterPage = () => {
                       </p>
 
                       <p
-                        className="mt-1 text-[11px]"
+                        className="mt-0.5 text-[9px]"
                         style={{
                           color: colors.mutedLight,
                         }}
@@ -976,7 +910,7 @@ const RegisterPage = () => {
 
                     <div className="text-right">
                       <p
-                        className="text-3xl font-bold"
+                        className="text-2xl font-bold"
                         style={{
                           color: colors.heading,
                         }}
@@ -986,56 +920,55 @@ const RegisterPage = () => {
                     </div>
                   </div>
 
-                  {/* Submit */}
+                  {/* SUBMIT */}
 
                   <button
                     type="submit"
-                    className="mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl px-6 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                    className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     style={{
                       backgroundColor: colors.primary,
-                      boxShadow:
-                        "0 12px 30px rgba(124,58,237,0.22)",
+                      boxShadow: "0 8px 22px rgba(124,58,237,0.18)",
                     }}
                   >
                     Complete Registration
-                    <ArrowRight size={18} />
+                    <ArrowRight size={15} />
                   </button>
 
                   <p
-                    className="mt-4 text-center text-[10px] leading-5"
+                    className="mt-3 text-center text-[9px] leading-4"
                     style={{
                       color: colors.mutedLight,
                     }}
                   >
-                    By submitting this form, you confirm
-                    that the information provided is accurate.
+                    By submitting this form, you confirm that the information
+                    provided is accurate.
                   </p>
                 </div>
               </div>
 
-              {/* Support card */}
+              {/* SUPPORT */}
 
               <div
-                className="mt-5 rounded-2xl p-5"
+                className="mt-3 rounded-xl p-3.5"
                 style={{
                   border: `1px solid ${colors.border}`,
                   backgroundColor: colors.supportBg,
                 }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-xl shadow-sm"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg shadow-sm"
                     style={{
                       backgroundColor: colors.cardBg,
                       color: colors.primary,
                     }}
                   >
-                    <Phone size={17} />
+                    <Phone size={14} />
                   </div>
 
                   <div>
                     <p
-                      className="text-xs font-bold"
+                      className="text-[10px] font-bold"
                       style={{
                         color: colors.heading,
                       }}
@@ -1044,7 +977,7 @@ const RegisterPage = () => {
                     </p>
 
                     <p
-                      className="mt-1 text-[11px]"
+                      className="mt-0.5 text-[9px]"
                       style={{
                         color: colors.muted,
                       }}
@@ -1059,38 +992,35 @@ const RegisterPage = () => {
         </form>
       </main>
 
-      {/* =====================================================
-          SUCCESS MESSAGE
-      ===================================================== */}
+      {/* SUCCESS MODAL */}
 
       {submitted && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-5 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
           style={{
             backgroundColor: colors.overlay,
           }}
         >
           <div
-            className="w-full max-w-md rounded-3xl p-8 text-center"
+            className="w-full max-w-sm rounded-2xl p-6 text-center"
             style={{
               backgroundColor: colors.cardBg,
               border: `1px solid ${colors.border}`,
-              boxShadow:
-                "0 25px 80px rgba(0,0,0,0.25)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
             }}
           >
             <div
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
               style={{
                 backgroundColor: colors.primarySoft,
                 color: colors.primary,
               }}
             >
-              <CheckCircle2 size={34} />
+              <CheckCircle2 size={30} />
             </div>
 
             <h2
-              className="mt-5 text-2xl font-bold"
+              className="mt-4 text-xl font-bold"
               style={{
                 color: colors.heading,
               }}
@@ -1099,7 +1029,7 @@ const RegisterPage = () => {
             </h2>
 
             <p
-              className="mt-3 text-sm leading-6"
+              className="mt-2 text-xs leading-5"
               style={{
                 color: colors.muted,
               }}
@@ -1119,7 +1049,7 @@ const RegisterPage = () => {
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="mt-7 rounded-xl px-7 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+              className="mt-5 rounded-lg px-6 py-2.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
               style={{
                 backgroundColor: colors.primary,
               }}
@@ -1133,16 +1063,7 @@ const RegisterPage = () => {
   );
 };
 
-// =========================================================
-// FORM SECTION HEADER
-// =========================================================
-
-const FormSectionHeader = ({
-  number,
-  icon,
-  title,
-  description,
-}) => {
+const FormSectionHeader = ({ number, icon, title, description }) => {
   const colors = {
     border: "#E5E7EB",
     iconBg: "#F5F3FF",
@@ -1156,13 +1077,13 @@ const FormSectionHeader = ({
 
   return (
     <div
-      className="flex items-center gap-4 px-6 py-5 md:px-8"
+      className="flex items-center gap-3 px-4 py-3.5 md:px-5"
       style={{
         borderBottom: `1px solid ${colors.border}`,
       }}
     >
       <div
-        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl"
+        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
         style={{
           backgroundColor: colors.iconBg,
           color: colors.icon,
@@ -1172,9 +1093,9 @@ const FormSectionHeader = ({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span
-            className="text-[10px] font-bold uppercase tracking-wider"
+            className="text-[9px] font-bold uppercase tracking-wider"
             style={{
               color: colors.step,
             }}
@@ -1190,7 +1111,7 @@ const FormSectionHeader = ({
           />
 
           <span
-            className="text-[10px] font-medium uppercase tracking-wider"
+            className="text-[9px] font-medium uppercase tracking-wider"
             style={{
               color: colors.required,
             }}
@@ -1200,7 +1121,7 @@ const FormSectionHeader = ({
         </div>
 
         <h2
-          className="mt-1 text-lg font-bold"
+          className="mt-0.5 text-sm font-bold"
           style={{
             color: colors.heading,
           }}
@@ -1209,7 +1130,7 @@ const FormSectionHeader = ({
         </h2>
 
         <p
-          className="mt-1 text-xs"
+          className="mt-0.5 text-[10px]"
           style={{
             color: colors.description,
           }}
@@ -1220,10 +1141,6 @@ const FormSectionHeader = ({
     </div>
   );
 };
-
-// =========================================================
-// INPUT FIELD
-// =========================================================
 
 const InputField = ({
   label,
@@ -1247,7 +1164,7 @@ const InputField = ({
   return (
     <div>
       <label
-        className="mb-2 block text-xs font-bold"
+        className="mb-1.5 block text-[11px] font-bold"
         style={{
           color: colors.label,
         }}
@@ -1269,7 +1186,7 @@ const InputField = ({
       <div className="relative">
         {icon && (
           <div
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
             style={{
               color: colors.icon,
             }}
@@ -1285,8 +1202,8 @@ const InputField = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`h-12 w-full rounded-2xl px-4 text-sm outline-none transition ${
-            icon ? "pl-11 pr-4" : "px-4"
+          className={`h-10 w-full rounded-xl px-3 text-xs outline-none transition ${
+            icon ? "pl-9 pr-3" : "px-3"
           }`}
           style={{
             backgroundColor: colors.bg,
@@ -1298,10 +1215,6 @@ const InputField = ({
     </div>
   );
 };
-
-// =========================================================
-// SELECT FIELD
-// =========================================================
 
 const SelectField = ({
   label,
@@ -1324,7 +1237,7 @@ const SelectField = ({
   return (
     <div>
       <label
-        className="mb-2 block text-xs font-bold"
+        className="mb-1.5 block text-[11px] font-bold"
         style={{
           color: colors.label,
         }}
@@ -1349,7 +1262,7 @@ const SelectField = ({
           value={value}
           onChange={onChange}
           required={required}
-          className="h-12 w-full appearance-none rounded-2xl px-4 pr-10 text-sm outline-none transition"
+          className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-xs outline-none transition"
           style={{
             backgroundColor: colors.bg,
             border: `1px solid ${colors.border}`,
@@ -1381,8 +1294,8 @@ const SelectField = ({
         </select>
 
         <ChevronDown
-          size={17}
-          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
+          size={15}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
           style={{
             color: colors.muted,
           }}

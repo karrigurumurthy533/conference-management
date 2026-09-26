@@ -22,9 +22,7 @@ import conferences from "../../data/conferences";
 const DownloadBrochure = () => {
   const { id } = useParams();
 
-  const conference = conferences.find(
-    (item) => item.id === id
-  );
+  const conference = conferences.find((item) => item.id === id);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -38,7 +36,7 @@ const DownloadBrochure = () => {
   const [submitted, setSubmitted] = useState(false);
 
   // =========================================================
-  // THEME COLORS - WHITE + VIOLET
+  // THEME
   // =========================================================
 
   const colors = {
@@ -69,9 +67,7 @@ const DownloadBrochure = () => {
     heroBg: "#1E1B4B",
     heroSecondary: "#312E81",
 
-    shadow: "0 20px 60px rgba(124,58,237,0.10)",
-
-    successBg: "#F5F3FF",
+    shadow: "0 12px 35px rgba(124,58,237,0.08)",
   };
 
   // =========================================================
@@ -100,9 +96,6 @@ const DownloadBrochure = () => {
       conference: conference?.title,
       ...formData,
     });
-
-    // API integration later:
-    // await axios.post("/api/brochure-request", formData);
   };
 
   // =========================================================
@@ -112,7 +105,7 @@ const DownloadBrochure = () => {
   if (!conference) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center px-6 transition-colors duration-500"
+        className="flex min-h-screen items-center justify-center px-5"
         style={{
           backgroundColor: colors.pageBg,
           color: colors.pageText,
@@ -120,13 +113,13 @@ const DownloadBrochure = () => {
       >
         <div className="text-center">
           <div
-            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
             style={{
               backgroundColor: colors.primarySoft,
             }}
           >
             <FileText
-              size={34}
+              size={28}
               style={{
                 color: colors.primary,
               }}
@@ -134,7 +127,7 @@ const DownloadBrochure = () => {
           </div>
 
           <h1
-            className="mt-6 text-3xl font-bold"
+            className="mt-4 text-2xl font-bold"
             style={{
               color: colors.heading,
             }}
@@ -143,7 +136,7 @@ const DownloadBrochure = () => {
           </h1>
 
           <p
-            className="mt-3 text-sm"
+            className="mt-2 text-xs"
             style={{
               color: colors.muted,
             }}
@@ -153,12 +146,12 @@ const DownloadBrochure = () => {
 
           <Link
             to="/conferences"
-            className="mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+            className="mt-5 inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-bold text-white shadow-md transition hover:-translate-y-0.5"
             style={{
               backgroundColor: colors.primary,
             }}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={15} />
             Back to Conferences
           </Link>
         </div>
@@ -173,34 +166,34 @@ const DownloadBrochure = () => {
   if (submitted) {
     return (
       <div
-        className="min-h-screen px-5 py-12 transition-colors duration-500 md:px-8 lg:py-16"
+        className="min-h-screen px-4 py-8 md:px-6 lg:py-10"
         style={{
           backgroundColor: colors.pageBg,
           color: colors.pageText,
         }}
       >
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-3xl">
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold transition"
+            className="inline-flex items-center gap-2 text-xs font-semibold"
             style={{
               color: colors.primary,
             }}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={15} />
             Back to Conference
           </Link>
 
           <motion.div
             initial={{
               opacity: 0,
-              y: 25,
+              y: 15,
             }}
             animate={{
               opacity: 1,
               y: 0,
             }}
-            className="mt-8 overflow-hidden rounded-[30px] border"
+            className="mt-5 overflow-hidden rounded-2xl border"
             style={{
               borderColor: colors.border,
               backgroundColor: colors.cardBg,
@@ -210,26 +203,26 @@ const DownloadBrochure = () => {
             {/* SUCCESS HEADER */}
 
             <div
-              className="px-6 py-12 text-center text-white md:px-12"
+              className="px-5 py-9 text-center text-white md:px-8"
               style={{
                 background:
                   "linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #7C3AED 100%)",
               }}
             >
               <div
-                className="mx-auto flex h-20 w-20 items-center justify-center rounded-full backdrop-blur-sm"
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.12)",
                 }}
               >
-                <CheckCircle2 size={42} />
+                <CheckCircle2 size={30} />
               </div>
 
-              <h1 className="mt-6 text-3xl font-bold md:text-4xl">
+              <h1 className="mt-4 text-2xl font-bold md:text-3xl">
                 Request Submitted
               </h1>
 
-              <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-white/80">
+              <p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-white/75">
                 Thank you for your interest in{" "}
                 <span className="font-semibold text-white">
                   {conference.title}
@@ -240,37 +233,36 @@ const DownloadBrochure = () => {
 
             {/* SUCCESS BODY */}
 
-            <div className="px-6 py-10 text-center md:px-12">
+            <div className="px-5 py-7 text-center md:px-8">
               <p
-                className="text-sm leading-7"
+                className="text-xs leading-6"
                 style={{
                   color: colors.body,
                 }}
               >
-                Your brochure request has been received successfully.
-                Our team will contact you with the conference brochure
-                and additional information.
+                Your brochure request has been received successfully. Our
+                team will contact you with the conference brochure and
+                additional information.
               </p>
 
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Link
                   to={`/conferences/${conference.id}`}
-                  className="inline-flex h-12 items-center gap-2 rounded-full px-7 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                  className="inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-bold text-white shadow-md"
                   style={{
                     backgroundColor: colors.primary,
                   }}
                 >
                   View Conference
-                  <ArrowRight size={17} />
+                  <ArrowRight size={14} />
                 </Link>
 
                 <Link
                   to="/conferences"
-                  className="inline-flex h-12 items-center gap-2 rounded-full border px-7 text-sm font-bold transition"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border px-5 text-xs font-bold"
                   style={{
                     borderColor: colors.borderLight,
                     color: colors.heading,
-                    backgroundColor: "transparent",
                   }}
                 >
                   All Conferences
@@ -289,14 +281,14 @@ const DownloadBrochure = () => {
 
   return (
     <div
-      className="min-h-screen transition-colors duration-500"
+      className="min-h-screen"
       style={{
         backgroundColor: colors.pageBg,
         color: colors.pageText,
       }}
     >
       {/* =====================================================
-          TOP HEADER
+          COMPACT HERO
       ===================================================== */}
 
       <section
@@ -306,63 +298,52 @@ const DownloadBrochure = () => {
             "linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4C1D95 100%)",
         }}
       >
-        {/* Decorative circles */}
-
         <div
-          className="absolute -right-20 -top-24 h-72 w-72 rounded-full"
+          className="absolute -right-16 -top-20 h-52 w-52 rounded-full"
           style={{
             backgroundColor: "rgba(168,85,247,0.08)",
-            border: "1px solid rgba(192,132,252,0.18)",
+            border: "1px solid rgba(192,132,252,0.15)",
           }}
         />
 
         <div
-          className="absolute -bottom-32 left-10 h-64 w-64 rounded-full"
+          className="absolute -bottom-24 left-10 h-44 w-44 rounded-full"
           style={{
-            backgroundColor: "rgba(124,58,237,0.20)",
+            backgroundColor: "rgba(124,58,237,0.15)",
           }}
         />
 
-        <div
-          className="absolute right-[28%] top-10 h-8 w-8 rounded-full"
-          style={{
-            backgroundColor: "rgba(192,132,252,0.20)",
-          }}
-        />
-
-        <div className="relative mx-auto max-w-7xl px-5 py-8 md:px-8 lg:px-10">
+        <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-5 md:px-7 lg:px-8">
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-white/80 transition hover:text-white"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/75 transition hover:text-white"
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={14} />
             Back to Conference
           </Link>
 
-          <div className="mt-8 max-w-4xl">
+          <div className="mt-5 max-w-3xl">
             <div
-              className="inline-flex items-center gap-2 rounded-full border px-4 py-2 backdrop-blur-sm"
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5"
               style={{
                 borderColor: "rgba(192,132,252,0.25)",
                 backgroundColor: "rgba(168,85,247,0.10)",
               }}
             >
               <FileText
-                size={15}
+                size={13}
                 style={{
                   color: "#C084FC",
                 }}
               />
 
-              <span className="text-xs font-bold uppercase tracking-[0.16em] text-white/90">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/90">
                 Conference Brochure
               </span>
             </div>
 
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
-              Get the Conference
-              <br className="hidden sm:block" />
-
+            <h1 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl md:text-4xl">
+              Get the Conference{" "}
               <span
                 style={{
                   color: "#C084FC",
@@ -372,10 +353,9 @@ const DownloadBrochure = () => {
               </span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/70 md:text-base">
-              Complete the form below to receive detailed information
-              about the conference, scientific program, speakers,
-              registration and participation opportunities.
+            <p className="mt-2 max-w-xl text-xs leading-5 text-white/65 sm:text-sm">
+              Complete the form below to receive detailed information about
+              the conference, scientific program, speakers and registration.
             </p>
           </div>
         </div>
@@ -385,43 +365,39 @@ const DownloadBrochure = () => {
           MAIN CONTENT
       ===================================================== */}
 
-      <section className="px-5 py-10 md:px-8 lg:px-10 lg:py-14">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+      <section className="px-4 py-6 sm:px-5 md:px-7 lg:px-8 lg:py-8">
+        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[0.75fr_1.25fr]">
           {/* =================================================
-              LEFT INFORMATION CARD
+              LEFT COMPACT INFORMATION CARD
           ================================================= */}
 
           <motion.aside
             initial={{
               opacity: 0,
-              x: -25,
+              x: -15,
             }}
             animate={{
               opacity: 1,
               x: 0,
             }}
             transition={{
-              duration: 0.6,
+              duration: 0.4,
             }}
-            className="h-fit lg:sticky lg:top-8"
+            className="h-fit lg:sticky lg:top-5"
           >
             <div
-              className="overflow-hidden rounded-[28px]"
+              className="overflow-hidden rounded-2xl"
               style={{
                 background:
                   "linear-gradient(145deg, #1E1B4B 0%, #312E81 100%)",
-                boxShadow:
-                  "0 20px 60px rgba(124,58,237,0.18)",
+                boxShadow: "0 12px 35px rgba(124,58,237,0.13)",
               }}
             >
               {/* IMAGE */}
 
-              <div className="relative h-56 overflow-hidden">
+              <div className="relative h-36 overflow-hidden sm:h-40">
                 <img
-                  src={
-                    conference.aboutImage ||
-                    conference.image
-                  }
+                  src={conference.aboutImage || conference.image}
                   alt={conference.title}
                   className="h-full w-full object-cover"
                 />
@@ -430,13 +406,13 @@ const DownloadBrochure = () => {
                   className="absolute inset-0"
                   style={{
                     background:
-                      "linear-gradient(to top, #1E1B4B 0%, rgba(30,27,75,0.45) 45%, transparent 100%)",
+                      "linear-gradient(to top, #1E1B4B 0%, rgba(30,27,75,0.35) 55%, transparent 100%)",
                   }}
                 />
 
-                <div className="absolute bottom-5 left-5 right-5">
+                <div className="absolute bottom-3 left-4 right-4">
                   <span
-                    className="inline-flex rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                    className="inline-flex rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white"
                     style={{
                       backgroundColor: colors.primary,
                     }}
@@ -448,60 +424,59 @@ const DownloadBrochure = () => {
 
               {/* INFORMATION */}
 
-              <div className="p-6 md:p-7">
-                <h2 className="text-xl font-bold leading-7 text-white">
+              <div className="p-4">
+                <h2 className="text-base font-bold leading-5 text-white">
                   {conference.title}
                 </h2>
 
-                <p className="mt-3 text-sm leading-6 text-white/65">
+                <p className="mt-2 text-xs leading-5 text-white/60">
                   {conference.subtitle}
                 </p>
 
-                <div className="mt-7 space-y-4">
+                <div className="mt-4 space-y-2.5">
                   <InfoRow
-                    icon={<Globe2 size={17} />}
+                    icon={<Globe2 size={14} />}
                     text={conference.location}
                   />
 
                   <InfoRow
-                    icon={<FileText size={17} />}
+                    icon={<FileText size={14} />}
                     text={conference.date}
                   />
 
                   <InfoRow
-                    icon={<ShieldCheck size={17} />}
+                    icon={<ShieldCheck size={14} />}
                     text="Official Conference Information"
                   />
                 </div>
 
-                <div className="mt-7 h-px bg-white/10" />
+                <div className="mt-4 h-px bg-white/10" />
 
-                <p className="mt-6 text-xs leading-5 text-white/50">
-                  Your information is used only to process your
-                  brochure request and provide conference-related
-                  information.
+                <p className="mt-3 text-[10px] leading-4 text-white/45">
+                  Your information is used only to process your brochure
+                  request and provide conference-related information.
                 </p>
               </div>
             </div>
           </motion.aside>
 
           {/* =================================================
-              FORM
+              COMPACT FORM CARD
           ================================================= */}
 
           <motion.div
             initial={{
               opacity: 0,
-              y: 25,
+              y: 15,
             }}
             animate={{
               opacity: 1,
               y: 0,
             }}
             transition={{
-              duration: 0.65,
+              duration: 0.45,
             }}
-            className="rounded-[28px] border p-6 md:p-9 lg:p-10"
+            className="rounded-2xl border p-4 sm:p-5"
             style={{
               backgroundColor: colors.cardBg,
               borderColor: colors.border,
@@ -511,25 +486,25 @@ const DownloadBrochure = () => {
             {/* FORM HEADER */}
 
             <div
-              className="border-b pb-7"
+              className="border-b pb-4"
               style={{
                 borderColor: colors.borderLight,
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className="flex h-11 w-11 items-center justify-center rounded-2xl"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl"
                   style={{
                     backgroundColor: colors.primarySoft,
                     color: colors.primary,
                   }}
                 >
-                  <Download size={21} />
+                  <Download size={17} />
                 </div>
 
                 <div>
                   <p
-                    className="text-xs font-bold uppercase tracking-[0.15em]"
+                    className="text-[9px] font-bold uppercase tracking-[0.13em]"
                     style={{
                       color: colors.primary,
                     }}
@@ -538,9 +513,9 @@ const DownloadBrochure = () => {
                   </p>
 
                   <h2
-                    className="mt-1 text-xl font-bold md:text-2xl"
+                    className="mt-0.5 text-base font-bold"
                     style={{
-                      color: colors.heading,
+                      color: colors.pageText,
                     }}
                   >
                     Your Details
@@ -549,16 +524,14 @@ const DownloadBrochure = () => {
               </div>
 
               <p
-                className="mt-4 text-sm leading-6"
+                className="mt-2 text-[11px] leading-5"
                 style={{
                   color: colors.muted,
                 }}
               >
-                Please provide your details below. Fields marked with
-                <span className="ml-1 font-semibold text-red-500">
-                  *
-                </span>{" "}
-                are required.
+                Please provide your details below. Fields marked with{" "}
+                <span className="font-semibold text-red-500">*</span> are
+                required.
               </p>
             </div>
 
@@ -566,21 +539,21 @@ const DownloadBrochure = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="mt-8"
+              className="mt-5"
             >
               {/* FULL NAME */}
 
               <div>
                 <FieldLabel
-                  icon={<User size={15} />}
+                  icon={<User size={13} />}
                   label="Full Name"
                   required
                 />
 
-                <div className="relative mt-2">
+                <div className="relative mt-1.5">
                   <User
-                    size={17}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+                    size={15}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
                     style={{
                       color: colors.subtle,
                     }}
@@ -593,25 +566,21 @@ const DownloadBrochure = () => {
                     onChange={handleChange}
                     placeholder="Enter your full name"
                     required
-                    className="h-14 w-full rounded-2xl border pl-12 pr-4 text-sm outline-none transition"
+                    className="h-11 w-full rounded-xl border pl-10 pr-3 text-xs outline-none transition"
                     style={{
                       borderColor: colors.inputBorder,
                       backgroundColor: colors.inputBg,
                       color: colors.inputText,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor =
-                        colors.primary;
-
+                      e.currentTarget.style.borderColor = colors.primary;
                       e.currentTarget.style.boxShadow =
-                        "0 0 0 4px rgba(124,58,237,0.10)";
+                        "0 0 0 3px rgba(124,58,237,0.08)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor =
                         colors.inputBorder;
-
-                      e.currentTarget.style.boxShadow =
-                        "none";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   />
                 </div>
@@ -619,20 +588,20 @@ const DownloadBrochure = () => {
 
               {/* EMAIL + PHONE */}
 
-              <div className="mt-6 grid gap-6 md:grid-cols-2">
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
                 {/* EMAIL */}
 
                 <div>
                   <FieldLabel
-                    icon={<Mail size={15} />}
+                    icon={<Mail size={13} />}
                     label="Your Email"
                     required
                   />
 
-                  <div className="relative mt-2">
+                  <div className="relative mt-1.5">
                     <Mail
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+                      size={15}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
                       style={{
                         color: colors.subtle,
                       }}
@@ -645,25 +614,21 @@ const DownloadBrochure = () => {
                       onChange={handleChange}
                       placeholder="Enter your email"
                       required
-                      className="h-14 w-full rounded-2xl border pl-12 pr-4 text-sm outline-none transition"
+                      className="h-11 w-full rounded-xl border pl-10 pr-3 text-xs outline-none transition"
                       style={{
                         borderColor: colors.inputBorder,
                         backgroundColor: colors.inputBg,
                         color: colors.inputText,
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor =
-                          colors.primary;
-
+                        e.currentTarget.style.borderColor = colors.primary;
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 4px rgba(124,58,237,0.10)";
+                          "0 0 0 3px rgba(124,58,237,0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           colors.inputBorder;
-
-                        e.currentTarget.style.boxShadow =
-                          "none";
+                        e.currentTarget.style.boxShadow = "none";
                       }}
                     />
                   </div>
@@ -673,15 +638,15 @@ const DownloadBrochure = () => {
 
                 <div>
                   <FieldLabel
-                    icon={<Phone size={15} />}
+                    icon={<Phone size={13} />}
                     label="Your Phone"
                     required
                   />
 
-                  <div className="relative mt-2">
+                  <div className="relative mt-1.5">
                     <Phone
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+                      size={15}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
                       style={{
                         color: colors.subtle,
                       }}
@@ -694,25 +659,21 @@ const DownloadBrochure = () => {
                       onChange={handleChange}
                       placeholder="Enter your phone number"
                       required
-                      className="h-14 w-full rounded-2xl border pl-12 pr-4 text-sm outline-none transition"
+                      className="h-11 w-full rounded-xl border pl-10 pr-3 text-xs outline-none transition"
                       style={{
                         borderColor: colors.inputBorder,
                         backgroundColor: colors.inputBg,
                         color: colors.inputText,
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor =
-                          colors.primary;
-
+                        e.currentTarget.style.borderColor = colors.primary;
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 4px rgba(124,58,237,0.10)";
+                          "0 0 0 3px rgba(124,58,237,0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           colors.inputBorder;
-
-                        e.currentTarget.style.boxShadow =
-                          "none";
+                        e.currentTarget.style.boxShadow = "none";
                       }}
                     />
                   </div>
@@ -721,17 +682,17 @@ const DownloadBrochure = () => {
 
               {/* COUNTRY */}
 
-              <div className="mt-6">
+              <div className="mt-4">
                 <FieldLabel
-                  icon={<Globe2 size={15} />}
+                  icon={<Globe2 size={13} />}
                   label="Country"
                   required
                 />
 
-                <div className="relative mt-2">
+                <div className="relative mt-1.5">
                   <Globe2
-                    size={17}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+                    size={15}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
                     style={{
                       color: colors.subtle,
                     }}
@@ -742,36 +703,24 @@ const DownloadBrochure = () => {
                     value={formData.country}
                     onChange={handleChange}
                     required
-                    className="h-14 w-full appearance-none rounded-2xl border pl-12 pr-12 text-sm outline-none transition"
+                    className="h-11 w-full appearance-none rounded-xl border pl-10 pr-10 text-xs outline-none transition"
                     style={{
                       borderColor: colors.inputBorder,
                       backgroundColor: colors.inputBg,
                       color: colors.inputText,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor =
-                        colors.primary;
-
+                      e.currentTarget.style.borderColor = colors.primary;
                       e.currentTarget.style.boxShadow =
-                        "0 0 0 4px rgba(124,58,237,0.10)";
+                        "0 0 0 3px rgba(124,58,237,0.08)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor =
                         colors.inputBorder;
-
-                      e.currentTarget.style.boxShadow =
-                        "none";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <option
-                      value=""
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        color: colors.inputText,
-                      }}
-                    >
-                      Select your country
-                    </option>
+                    <option value="">Select your country</option>
 
                     {[
                       "India",
@@ -785,22 +734,15 @@ const DownloadBrochure = () => {
                       "Singapore",
                       "Other",
                     ].map((country) => (
-                      <option
-                        key={country}
-                        value={country}
-                        style={{
-                          backgroundColor: colors.inputBg,
-                          color: colors.inputText,
-                        }}
-                      >
+                      <option key={country} value={country}>
                         {country}
                       </option>
                     ))}
                   </select>
 
                   <ArrowRight
-                    size={17}
-                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rotate-90"
+                    size={14}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rotate-90"
                     style={{
                       color: colors.subtle,
                     }}
@@ -810,17 +752,17 @@ const DownloadBrochure = () => {
 
               {/* ADDRESS */}
 
-              <div className="mt-6">
+              <div className="mt-4">
                 <FieldLabel
-                  icon={<MapPin size={15} />}
+                  icon={<MapPin size={13} />}
                   label="Address"
                   required
                 />
 
-                <div className="relative mt-2">
+                <div className="relative mt-1.5">
                   <MapPin
-                    size={17}
-                    className="pointer-events-none absolute left-4 top-5"
+                    size={15}
+                    className="pointer-events-none absolute left-3 top-3"
                     style={{
                       color: colors.subtle,
                     }}
@@ -832,26 +774,22 @@ const DownloadBrochure = () => {
                     onChange={handleChange}
                     placeholder="Enter your complete address"
                     required
-                    rows={4}
-                    className="w-full resize-none rounded-2xl border py-4 pl-12 pr-4 text-sm leading-6 outline-none transition"
+                    rows={2}
+                    className="w-full resize-none rounded-xl border py-3 pl-10 pr-3 text-xs leading-5 outline-none transition"
                     style={{
                       borderColor: colors.inputBorder,
                       backgroundColor: colors.inputBg,
                       color: colors.inputText,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor =
-                        colors.primary;
-
+                      e.currentTarget.style.borderColor = colors.primary;
                       e.currentTarget.style.boxShadow =
-                        "0 0 0 4px rgba(124,58,237,0.10)";
+                        "0 0 0 3px rgba(124,58,237,0.08)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor =
                         colors.inputBorder;
-
-                      e.currentTarget.style.boxShadow =
-                        "none";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   />
                 </div>
@@ -859,16 +797,16 @@ const DownloadBrochure = () => {
 
               {/* REQUIREMENTS */}
 
-              <div className="mt-6">
+              <div className="mt-4">
                 <FieldLabel
-                  icon={<MessageSquare size={15} />}
+                  icon={<MessageSquare size={13} />}
                   label="Tell Us About Your Requirements"
                 />
 
-                <div className="relative mt-2">
+                <div className="relative mt-1.5">
                   <MessageSquare
-                    size={17}
-                    className="pointer-events-none absolute left-4 top-5"
+                    size={15}
+                    className="pointer-events-none absolute left-3 top-3"
                     style={{
                       color: colors.subtle,
                     }}
@@ -879,26 +817,22 @@ const DownloadBrochure = () => {
                     value={formData.requirements}
                     onChange={handleChange}
                     placeholder="Tell us a little about your requirements..."
-                    rows={5}
-                    className="w-full resize-none rounded-2xl border py-4 pl-12 pr-4 text-sm leading-6 outline-none transition"
+                    rows={2}
+                    className="w-full resize-none rounded-xl border py-3 pl-10 pr-3 text-xs leading-5 outline-none transition"
                     style={{
                       borderColor: colors.inputBorder,
                       backgroundColor: colors.inputBg,
                       color: colors.inputText,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor =
-                        colors.primary;
-
+                      e.currentTarget.style.borderColor = colors.primary;
                       e.currentTarget.style.boxShadow =
-                        "0 0 0 4px rgba(124,58,237,0.10)";
+                        "0 0 0 3px rgba(124,58,237,0.08)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor =
                         colors.inputBorder;
-
-                      e.currentTarget.style.boxShadow =
-                        "none";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   />
                 </div>
@@ -907,13 +841,13 @@ const DownloadBrochure = () => {
               {/* PRIVACY */}
 
               <div
-                className="mt-7 flex items-start gap-3 rounded-2xl p-4"
+                className="mt-4 flex items-start gap-2.5 rounded-xl p-3"
                 style={{
                   backgroundColor: colors.primarySoft2,
                 }}
               >
                 <ShieldCheck
-                  size={19}
+                  size={16}
                   className="mt-0.5 flex-shrink-0"
                   style={{
                     color: colors.primary,
@@ -921,22 +855,21 @@ const DownloadBrochure = () => {
                 />
 
                 <p
-                  className="text-xs leading-5"
+                  className="text-[10px] leading-4"
                   style={{
                     color: colors.body,
                   }}
                 >
-                  Your information is securely handled and will only
-                  be used for conference-related communication and
-                  brochure delivery.
+                  Your information is securely handled and will only be used
+                  for conference-related communication and brochure delivery.
                 </p>
               </div>
 
               {/* SUBMIT */}
 
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p
-                  className="text-xs"
+                  className="text-[10px]"
                   style={{
                     color: colors.subtle,
                   }}
@@ -947,16 +880,16 @@ const DownloadBrochure = () => {
                 <motion.button
                   type="submit"
                   whileHover={{
-                    scale: 1.02,
+                    scale: 1.01,
                   }}
                   whileTap={{
                     scale: 0.98,
                   }}
-                  className="inline-flex h-14 items-center justify-center gap-3 rounded-2xl px-8 text-sm font-bold text-white transition"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-6 text-xs font-bold text-white transition"
                   style={{
                     backgroundColor: colors.primary,
                     boxShadow:
-                      "0 10px 25px rgba(124,58,237,0.22)",
+                      "0 7px 18px rgba(124,58,237,0.18)",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor =
@@ -967,11 +900,11 @@ const DownloadBrochure = () => {
                       colors.primary;
                   }}
                 >
-                  <Download size={18} />
+                  <Download size={15} />
 
                   Request Brochure
 
-                  <ArrowRight size={17} />
+                  <ArrowRight size={14} />
                 </motion.button>
               </div>
             </form>
@@ -980,31 +913,31 @@ const DownloadBrochure = () => {
       </section>
 
       {/* =====================================================
-          BOTTOM TRUST SECTION
+          COMPACT TRUST SECTION
       ===================================================== */}
 
       <section
-        className="border-t px-5 py-8 md:px-8"
+        className="border-t px-4 py-5 sm:px-5 md:px-7 lg:px-8"
         style={{
           borderColor: colors.borderLight,
           backgroundColor: colors.cardBg,
         }}
       >
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 sm:flex-row sm:text-left">
+          <div className="flex items-center gap-2.5">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full"
               style={{
                 backgroundColor: colors.primarySoft,
                 color: colors.primary,
               }}
             >
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={15} />
             </div>
 
             <div>
               <p
-                className="text-xs font-bold"
+                className="text-[10px] font-bold"
                 style={{
                   color: colors.heading,
                 }}
@@ -1013,7 +946,7 @@ const DownloadBrochure = () => {
               </p>
 
               <p
-                className="mt-0.5 text-[11px]"
+                className="mt-0.5 text-[9px]"
                 style={{
                   color: colors.muted,
                 }}
@@ -1025,13 +958,13 @@ const DownloadBrochure = () => {
 
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 text-xs font-bold transition"
+            className="inline-flex items-center gap-1.5 text-[10px] font-bold transition"
             style={{
               color: colors.primary,
             }}
           >
             Return to Conference
-            <ArrowRight size={14} />
+            <ArrowRight size={12} />
           </Link>
         </div>
       </section>
@@ -1050,7 +983,7 @@ const FieldLabel = ({
 }) => {
   return (
     <label
-      className="flex items-center gap-2 text-sm font-bold"
+      className="flex items-center gap-1.5 text-[11px] font-bold"
       style={{
         color: "#374151",
       }}
@@ -1066,7 +999,7 @@ const FieldLabel = ({
       <span>{label}</span>
 
       {required && (
-        <span className="text-xs font-medium text-red-500">
+        <span className="text-[10px] font-medium text-red-500">
           *
         </span>
       )}
@@ -1083,9 +1016,9 @@ const InfoRow = ({
   text,
 }) => {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2.5">
       <div
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
         style={{
           backgroundColor: "rgba(192,132,252,0.13)",
           color: "#C084FC",
@@ -1095,9 +1028,9 @@ const InfoRow = ({
       </div>
 
       <span
-        className="text-xs font-medium leading-5"
+        className="text-[10px] font-medium leading-4"
         style={{
-          color: "rgba(255,255,255,0.75)",
+          color: "rgba(255,255,255,0.72)",
         }}
       >
         {text}

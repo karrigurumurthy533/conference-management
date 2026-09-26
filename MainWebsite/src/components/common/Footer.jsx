@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
 
@@ -13,13 +12,13 @@ const Footer = () => {
   const fadeUp = {
     hidden: {
       opacity: 0,
-      y: 25,
+      y: 15,
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.65,
+        duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
       },
     },
@@ -28,15 +27,15 @@ const Footer = () => {
   const statAnimation = {
     hidden: {
       opacity: 0,
-      y: 25,
-      scale: 0.96,
+      y: 15,
+      scale: 0.98,
     },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
       },
     },
@@ -44,10 +43,10 @@ const Footer = () => {
 
   const linkHover = {
     whileHover: {
-      x: 4,
+      x: 3,
     },
     transition: {
-      duration: 0.2,
+      duration: 0.15,
     },
   };
 
@@ -59,6 +58,9 @@ const Footer = () => {
         color: violet,
       }}
     >
+      {/* =========================================================
+          STATS SECTION
+      ========================================================= */}
       <div
         className="border-b"
         style={{
@@ -77,25 +79,34 @@ const Footer = () => {
             hidden: {},
             visible: {
               transition: {
-                staggerChildren: 0.12,
+                staggerChildren: 0.08,
               },
             },
           }}
-          className="mx-auto grid max-w-7xl grid-cols-2 gap-x-8 gap-y-6 px-6 py-6 md:grid-cols-4"
+          className="
+            mx-auto grid max-w-7xl
+            grid-cols-2
+            gap-x-6 gap-y-4
+            px-5 py-4
+            md:grid-cols-4
+            md:gap-5
+            md:px-6
+          "
         >
+          {/* STAT 1 */}
           <motion.div
             variants={statAnimation}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3"
           >
             <motion.div
               whileHover={{
-                scale: 1.08,
+                scale: 1.05,
                 rotate: 3,
               }}
               transition={{
-                duration: 0.25,
+                duration: 0.2,
               }}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               style={{
                 backgroundColor: "#DDD6FE",
               }}
@@ -103,7 +114,7 @@ const Footer = () => {
               <img
                 src="/svgs/earth-globe.svg"
                 alt="Global Attendees"
-                className="h-7 w-7 object-contain"
+                className="h-6 w-6 object-contain"
                 style={{
                   filter: violetFilter,
                 }}
@@ -112,7 +123,7 @@ const Footer = () => {
 
             <div>
               <h3
-                className="text-[25px] font-bold leading-none"
+                className="text-[21px] font-bold leading-none"
                 style={{
                   color: violet,
                 }}
@@ -121,7 +132,7 @@ const Footer = () => {
               </h3>
 
               <p
-                className="mt-1 text-sm"
+                className="mt-1 text-[12px]"
                 style={{
                   color: textColor,
                 }}
@@ -131,19 +142,20 @@ const Footer = () => {
             </div>
           </motion.div>
 
+          {/* STAT 2 */}
           <motion.div
             variants={statAnimation}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3"
           >
             <motion.div
               whileHover={{
-                scale: 1.08,
+                scale: 1.05,
                 rotate: 3,
               }}
               transition={{
-                duration: 0.25,
+                duration: 0.2,
               }}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               style={{
                 backgroundColor: "#DDD6FE",
               }}
@@ -151,7 +163,7 @@ const Footer = () => {
               <img
                 src="/svgs/countries.svg"
                 alt="Countries"
-                className="h-7 w-7 object-contain"
+                className="h-6 w-6 object-contain"
                 style={{
                   filter: violetFilter,
                 }}
@@ -160,7 +172,7 @@ const Footer = () => {
 
             <div>
               <h3
-                className="text-[25px] font-bold leading-none"
+                className="text-[21px] font-bold leading-none"
                 style={{
                   color: violet,
                 }}
@@ -169,7 +181,7 @@ const Footer = () => {
               </h3>
 
               <p
-                className="mt-1 text-sm"
+                className="mt-1 text-[12px]"
                 style={{
                   color: textColor,
                 }}
@@ -179,19 +191,20 @@ const Footer = () => {
             </div>
           </motion.div>
 
+          {/* STAT 3 */}
           <motion.div
             variants={statAnimation}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3"
           >
             <motion.div
               whileHover={{
-                scale: 1.08,
+                scale: 1.05,
                 rotate: 3,
               }}
               transition={{
-                duration: 0.25,
+                duration: 0.2,
               }}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               style={{
                 backgroundColor: "#DDD6FE",
               }}
@@ -199,7 +212,7 @@ const Footer = () => {
               <img
                 src="/svgs/conferences.svg"
                 alt="Conferences"
-                className="h-7 w-7 object-contain"
+                className="h-6 w-6 object-contain"
                 style={{
                   filter: violetFilter,
                 }}
@@ -208,7 +221,7 @@ const Footer = () => {
 
             <div>
               <h3
-                className="text-[25px] font-bold leading-none"
+                className="text-[21px] font-bold leading-none"
                 style={{
                   color: violet,
                 }}
@@ -217,7 +230,7 @@ const Footer = () => {
               </h3>
 
               <p
-                className="mt-1 text-sm"
+                className="mt-1 text-[12px]"
                 style={{
                   color: textColor,
                 }}
@@ -227,19 +240,20 @@ const Footer = () => {
             </div>
           </motion.div>
 
+          {/* STAT 4 */}
           <motion.div
             variants={statAnimation}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3"
           >
             <motion.div
               whileHover={{
-                scale: 1.08,
+                scale: 1.05,
                 rotate: 3,
               }}
               transition={{
-                duration: 0.25,
+                duration: 0.2,
               }}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               style={{
                 backgroundColor: "#DDD6FE",
               }}
@@ -247,7 +261,7 @@ const Footer = () => {
               <img
                 src="/svgs/peoples.svg"
                 alt="Speakers"
-                className="h-7 w-7 object-contain"
+                className="h-6 w-6 object-contain"
                 style={{
                   filter: violetFilter,
                 }}
@@ -256,7 +270,7 @@ const Footer = () => {
 
             <div>
               <h3
-                className="text-[25px] font-bold leading-none"
+                className="text-[21px] font-bold leading-none"
                 style={{
                   color: violet,
                 }}
@@ -265,7 +279,7 @@ const Footer = () => {
               </h3>
 
               <p
-                className="mt-1 text-sm"
+                className="mt-1 text-[12px]"
                 style={{
                   color: textColor,
                 }}
@@ -277,7 +291,10 @@ const Footer = () => {
         </motion.div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      {/* =========================================================
+          MAIN FOOTER
+      ========================================================= */}
+      <div className="mx-auto max-w-7xl px-5 py-7 md:px-6 md:py-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -289,12 +306,20 @@ const Footer = () => {
             hidden: {},
             visible: {
               transition: {
-                staggerChildren: 0.12,
+                staggerChildren: 0.08,
               },
             },
           }}
-          className="grid gap-9 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1.35fr]"
+          className="
+            grid gap-6
+            sm:grid-cols-2
+            lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.25fr]
+            lg:gap-7
+          "
         >
+          {/* =====================================================
+              BRAND
+          ===================================================== */}
           <motion.div variants={fadeUp}>
             <motion.a
               href="/"
@@ -304,20 +329,20 @@ const Footer = () => {
               transition={{
                 duration: 0.2,
               }}
-              className="mb-4 inline-flex items-center gap-3"
+              className="mb-3 inline-flex items-center gap-2.5"
             >
               <motion.div
                 whileHover={{
-                  scale: 1.08,
+                  scale: 1.06,
                   rotate: 4,
                 }}
-                className="flex h-11 w-11 items-center justify-center rounded-full"
+                className="flex h-9 w-9 items-center justify-center rounded-full"
                 style={{
                   backgroundColor: "#DDD6FE",
                 }}
               >
                 <span
-                  className="text-xl font-bold"
+                  className="text-lg font-bold"
                   style={{
                     color: violet,
                   }}
@@ -328,7 +353,7 @@ const Footer = () => {
 
               <div>
                 <h2
-                  className="text-lg font-bold leading-tight"
+                  className="text-[16px] font-bold leading-tight"
                   style={{
                     color: violet,
                   }}
@@ -337,7 +362,7 @@ const Footer = () => {
                 </h2>
 
                 <p
-                  className="text-sm"
+                  className="text-[11px]"
                   style={{
                     color: textColor,
                   }}
@@ -348,7 +373,7 @@ const Footer = () => {
             </motion.a>
 
             <p
-              className="max-w-xs text-sm leading-6"
+              className="max-w-xs text-[12px] leading-5"
               style={{
                 color: textColor,
               }}
@@ -357,7 +382,8 @@ const Footer = () => {
               tomorrow.
             </p>
 
-            <div className="mt-5 flex items-center gap-3">
+            {/* SOCIAL ICONS */}
+            <div className="mt-4 flex items-center gap-2.5">
               {[
                 ["linkedin.svg", "LinkedIn"],
                 ["instagram.svg", "Instagram"],
@@ -369,13 +395,13 @@ const Footer = () => {
                   href="#"
                   aria-label={label}
                   whileHover={{
-                    y: -4,
-                    scale: 1.05,
+                    y: -3,
+                    scale: 1.04,
                   }}
                   whileTap={{
                     scale: 0.94,
                   }}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border"
                   style={{
                     borderColor: "#C4B5FD",
                     backgroundColor: "#EDE9FE",
@@ -384,7 +410,7 @@ const Footer = () => {
                   <img
                     src={`/svgs/${icon}`}
                     alt={label}
-                    className="h-5 w-5 object-contain"
+                    className="h-4 w-4 object-contain"
                     style={{
                       filter: violetFilter,
                     }}
@@ -394,9 +420,12 @@ const Footer = () => {
             </div>
           </motion.div>
 
+          {/* =====================================================
+              QUICK LINKS
+          ===================================================== */}
           <motion.div variants={fadeUp}>
             <h3
-              className="mb-4 text-sm font-semibold uppercase tracking-wide"
+              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
               style={{
                 color: violet,
               }}
@@ -405,7 +434,7 @@ const Footer = () => {
             </h3>
 
             <ul
-              className="space-y-2.5 text-sm"
+              className="space-y-1.5 text-[12px]"
               style={{
                 color: textColor,
               }}
@@ -440,9 +469,12 @@ const Footer = () => {
             </ul>
           </motion.div>
 
+          {/* =====================================================
+              CONFERENCES
+          ===================================================== */}
           <motion.div variants={fadeUp}>
             <h3
-              className="mb-4 text-sm font-semibold uppercase tracking-wide"
+              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
               style={{
                 color: violet,
               }}
@@ -451,7 +483,7 @@ const Footer = () => {
             </h3>
 
             <ul
-              className="space-y-2.5 text-sm"
+              className="space-y-1.5 text-[12px]"
               style={{
                 color: textColor,
               }}
@@ -485,9 +517,12 @@ const Footer = () => {
             </ul>
           </motion.div>
 
+          {/* =====================================================
+              RESOURCES
+          ===================================================== */}
           <motion.div variants={fadeUp}>
             <h3
-              className="mb-4 text-sm font-semibold uppercase tracking-wide"
+              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
               style={{
                 color: violet,
               }}
@@ -496,7 +531,7 @@ const Footer = () => {
             </h3>
 
             <ul
-              className="space-y-2.5 text-sm"
+              className="space-y-1.5 text-[12px]"
               style={{
                 color: textColor,
               }}
@@ -530,9 +565,12 @@ const Footer = () => {
             </ul>
           </motion.div>
 
+          {/* =====================================================
+              CONTACT
+          ===================================================== */}
           <motion.div variants={fadeUp}>
             <h3
-              className="mb-4 text-sm font-semibold uppercase tracking-wide"
+              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
               style={{
                 color: violet,
               }}
@@ -541,19 +579,20 @@ const Footer = () => {
             </h3>
 
             <div
-              className="space-y-3.5 text-sm"
+              className="space-y-2.5 text-[12px]"
               style={{
                 color: textColor,
               }}
             >
+              {/* LOCATION */}
               <motion.div
                 whileHover={{
                   x: 3,
                 }}
-                className="flex items-start gap-3"
+                className="flex items-start gap-2.5"
               >
                 <MapPin
-                  size={19}
+                  size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{
@@ -564,14 +603,15 @@ const Footer = () => {
                 <span>Bangalore, India</span>
               </motion.div>
 
+              {/* PHONE */}
               <motion.div
                 whileHover={{
                   x: 3,
                 }}
-                className="flex items-start gap-3"
+                className="flex items-start gap-2.5"
               >
                 <Phone
-                  size={19}
+                  size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{
@@ -596,14 +636,15 @@ const Footer = () => {
                 </a>
               </motion.div>
 
+              {/* EMAIL */}
               <motion.div
                 whileHover={{
                   x: 3,
                 }}
-                className="flex items-start gap-3"
+                className="flex items-start gap-2.5"
               >
                 <Mail
-                  size={19}
+                  size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{
@@ -629,12 +670,13 @@ const Footer = () => {
               </motion.div>
             </div>
 
+            {/* NEWSLETTER */}
             <motion.div
               variants={fadeUp}
-              className="mt-6"
+              className="mt-4"
             >
               <h4
-                className="mb-3 text-sm font-semibold"
+                className="mb-2 text-[12px] font-semibold"
                 style={{
                   color: violet,
                 }}
@@ -643,7 +685,7 @@ const Footer = () => {
               </h4>
 
               <div
-                className="flex h-10 overflow-hidden rounded-lg"
+                className="flex h-9 overflow-hidden rounded-md"
                 style={{
                   backgroundColor: "#FFFFFF",
                   border: "1px solid #DDD6FE",
@@ -652,9 +694,9 @@ const Footer = () => {
                 <input
                   type="email"
                   placeholder="Enter your email address"
-                  className="min-w-0 flex-1 bg-transparent px-4 text-xs outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-3 text-[11px] outline-none"
                   style={{
-                    color: textColor,
+                    color: "#333333",
                   }}
                 />
 
@@ -662,18 +704,18 @@ const Footer = () => {
                   type="button"
                   aria-label="Subscribe"
                   whileHover={{
-                    scale: 1.04,
+                    scale: 1.03,
                   }}
                   whileTap={{
                     scale: 0.96,
                   }}
-                  className="flex w-12 shrink-0 items-center justify-center text-white"
+                  className="flex w-10 shrink-0 items-center justify-center text-white"
                   style={{
                     backgroundColor: violet,
                   }}
                 >
                   <Send
-                    size={18}
+                    size={16}
                     strokeWidth={1.8}
                   />
                 </motion.button>
@@ -683,6 +725,9 @@ const Footer = () => {
         </motion.div>
       </div>
 
+      {/* =========================================================
+          COPYRIGHT
+      ========================================================= */}
       <motion.div
         initial={{
           opacity: 0,
@@ -694,7 +739,7 @@ const Footer = () => {
           once: true,
         }}
         transition={{
-          duration: 0.7,
+          duration: 0.5,
         }}
         className="border-t"
         style={{
@@ -702,7 +747,14 @@ const Footer = () => {
         }}
       >
         <div
-          className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-4 text-xs md:flex-row md:items-center md:justify-between"
+          className="
+            mx-auto flex max-w-7xl
+            flex-col gap-2
+            px-5 py-3
+            text-[10px]
+            md:flex-row md:items-center md:justify-between
+            md:px-6
+          "
           style={{
             color: textColor,
           }}
@@ -711,7 +763,7 @@ const Footer = () => {
             © 2025 GlobalScion Conferences. All rights reserved.
           </p>
 
-          <div className="flex flex-wrap items-center gap-5">
+          <div className="flex flex-wrap items-center gap-3.5">
             <motion.a
               href="/terms"
               whileHover={{

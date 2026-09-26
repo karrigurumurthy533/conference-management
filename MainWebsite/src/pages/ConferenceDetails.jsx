@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -35,19 +36,20 @@ const ConferenceDetails = () => {
     pageBg: "#FFFFFF",
     text: "#111827",
 
-    heroBg: "#1E1B4B",
+    heroBg: "#12091F",
 
     link: "#C084FC",
-    linkHover: "#E9D5FF",
+    linkHover: "#FFFFFF",
 
-    categoryBg: "rgba(124,58,237,0.18)",
+    categoryBg: "rgba(124,58,237,0.24)",
     categoryText: "#E9D5FF",
 
-    heading: "#7550a5",
+    heading: "#FFFFFF",
+    headingAccent: "#C084FC",
     subtitle: "#F5F3FF",
     description: "#DDD6FE",
 
-    infoIconBg: "rgba(255,255,255,0.15)",
+    infoIconBg: "rgba(255,255,255,0.14)",
     infoIcon: "#D8B4FE",
     infoTitle: "#FFFFFF",
     muted: "rgba(255,255,255,0.68)",
@@ -118,26 +120,37 @@ const ConferenceDetails = () => {
     finalIcon: "#DDD6FE",
   };
 
+  /*
+   * =========================================================
+   * DYNAMIC COUNTDOWN
+   * =========================================================
+   * Countdown uses the conference startDate.
+   *
+   * Days, Hours and Minutes are recalculated every second.
+   * Seconds are intentionally not displayed.
+   */
   const calculateTimeLeft = () => {
     if (!conference?.startDate) {
       return {
         days: 0,
         hours: 0,
         minutes: 0,
-        seconds: 0,
       };
     }
 
-    const difference =
-      new Date(conference.startDate).getTime() -
-      new Date().getTime();
+    const targetTime = new Date(
+      conference.startDate
+    ).getTime();
+
+    const currentTime = Date.now();
+
+    const difference = targetTime - currentTime;
 
     if (difference <= 0) {
       return {
         days: 0,
         hours: 0,
         minutes: 0,
-        seconds: 0,
       };
     }
 
@@ -145,14 +158,13 @@ const ConferenceDetails = () => {
       days: Math.floor(
         difference / (1000 * 60 * 60 * 24)
       ),
+
       hours: Math.floor(
         (difference / (1000 * 60 * 60)) % 24
       ),
+
       minutes: Math.floor(
         (difference / (1000 * 60)) % 60
-      ),
-      seconds: Math.floor(
-        (difference / 1000) % 60
       ),
     };
   };
@@ -162,14 +174,18 @@ const ConferenceDetails = () => {
   );
 
   useEffect(() => {
-    if (!conference?.startDate) return;
+    if (!conference?.startDate) {
+      return;
+    }
 
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [conference]);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [conference?.startDate]);
 
   if (!conference) {
     return (
@@ -242,13 +258,15 @@ const ConferenceDetails = () => {
           backgroundColor: colors.heroBg,
         }}
       >
+        {/* HERO IMAGE */}
+
         <div className="absolute inset-0">
           <img
             src={conference.image}
             alt={conference.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
             style={{
-              filter: "brightness(0.55) saturate(1.05)",
+              filter: "brightness(0.52) saturate(1.05)",
             }}
           />
 
@@ -256,18 +274,20 @@ const ConferenceDetails = () => {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(90deg, rgba(20,8,38,0.92) 0%, rgba(40,18,65,0.78) 45%, rgba(76,29,149,0.48) 100%)",
+                "linear-gradient(90deg, rgba(15,5,28,0.95) 0%, rgba(35,13,55,0.82) 42%, rgba(76,29,149,0.45) 100%)",
             }}
           />
 
           <div
-            className="absolute inset-x-0 bottom-0 h-20"
+            className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to top, rgba(5,2,13,0.65), transparent)",
+                "linear-gradient(to top, rgba(7,2,15,0.72) 0%, rgba(7,2,15,0.05) 55%, rgba(7,2,15,0.18) 100%)",
             }}
           />
         </div>
+
+        {/* DECORATIVE ELEMENTS */}
 
         <div
           className="absolute right-[8%] top-10 h-14 w-14 rounded-full border"
@@ -290,18 +310,31 @@ const ConferenceDetails = () => {
           }}
         />
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 py-3.5 lg:px-10 lg:py-5">
+        <div
+          className="absolute left-[54%] top-[18%] h-3 w-3 rounded-full"
+          style={{
+            backgroundColor: "rgba(216,180,254,0.10)",
+          }}
+        />
+
+        {/* HERO CONTENT */}
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6 py-4 lg:px-10 lg:py-5">
+          {/* BACK */}
+
           <Link
             to="/conferences"
-            className="inline-flex items-center gap-1.5 text-[10px] font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 text-[10px] font-semibold transition-all hover:translate-x-0.5"
             style={{
-              color: "#E9D5FF",
+              color: colors.link,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#FFFFFF";
+              e.currentTarget.style.color =
+                colors.linkHover;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#E9D5FF";
+              e.currentTarget.style.color =
+                colors.link;
             }}
           >
             <ArrowLeft size={13} />
@@ -322,46 +355,120 @@ const ConferenceDetails = () => {
             }}
             className="mt-3 max-w-4xl"
           >
-            <span
+            {/* CATEGORY */}
+
+            <motion.span
+              initial={{
+                opacity: 0,
+                scale: 0.95,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                duration: 0.4,
+              }}
               className="inline-flex rounded-full border px-2.5 py-1 text-[8px] font-bold backdrop-blur-md"
               style={{
-                backgroundColor: colors.categoryBg,
-                borderColor: "rgba(216,180,254,0.25)",
+                backgroundColor:
+                  colors.categoryBg,
+                borderColor:
+                  "rgba(216,180,254,0.25)",
                 color: colors.categoryText,
               }}
             >
               {conference.category}
-            </span>
+            </motion.span>
 
-            <h1
-              className="mt-2 max-w-3xl text-xl font-bold leading-[1.05] tracking-tight sm:text-2xl lg:text-3xl xl:text-4xl"
+            {/* TITLE */}
+
+            <motion.h1
+              className="mt-2 max-w-3xl text-xl font-extrabold leading-[1.05] tracking-tight sm:text-2xl lg:text-3xl xl:text-4xl"
               style={{
                 color: colors.heading,
-                textShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                textShadow:
+                  "0 4px 20px rgba(0,0,0,0.45)",
+              }}
+              initial={{
+                opacity: 0,
+                y: 15,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.6,
+                delay: 0.1,
               }}
             >
               {conference.title}
-            </h1>
+            </motion.h1>
 
-            <p
-              className="mt-2 max-w-2xl text-[11px] font-medium leading-4 sm:text-xs"
+            {/* SUBTITLE */}
+
+            <motion.p
+              className="mt-2 max-w-2xl text-[11px] font-semibold leading-4 sm:text-xs"
               style={{
                 color: colors.subtitle,
               }}
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.2,
+              }}
             >
               {conference.subtitle}
-            </p>
+            </motion.p>
 
-            <p
+            {/* DESCRIPTION */}
+
+            <motion.p
               className="mt-1 max-w-2xl text-[9px] leading-4 sm:text-[10px]"
               style={{
                 color: colors.description,
               }}
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.25,
+              }}
             >
               {conference.description}
-            </p>
+            </motion.p>
 
-            <div className="mt-3 grid max-w-3xl grid-cols-1 gap-2 sm:grid-cols-3">
+            {/* INFO */}
+
+            <motion.div
+              className="mt-3 grid max-w-3xl grid-cols-1 gap-2 sm:grid-cols-3"
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.3,
+              }}
+            >
               <InfoItem
                 icon={<CalendarDays size={15} />}
                 title={conference.date}
@@ -382,9 +489,25 @@ const ConferenceDetails = () => {
                 subtitle="Expected Participants"
                 colors={colors}
               />
-            </div>
+            </motion.div>
 
-            <div className="mt-3 max-w-xl">
+            {/* COUNTDOWN */}
+
+            <motion.div
+              className="mt-3 max-w-xl"
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.35,
+              }}
+            >
               <div className="mb-1.5 flex items-center gap-1.5">
                 <div
                   className="flex h-5 w-5 items-center justify-center rounded-md text-white"
@@ -399,7 +522,8 @@ const ConferenceDetails = () => {
                 <p
                   className="text-[8px] font-bold uppercase tracking-[0.15em]"
                   style={{
-                    color: colors.countdownHeading,
+                    color:
+                      colors.countdownHeading,
                   }}
                 >
                   Conference Starts In
@@ -425,7 +549,7 @@ const ConferenceDetails = () => {
                   }}
                 />
 
-                <div className="relative grid grid-cols-4 gap-1.5">
+                <div className="relative grid grid-cols-3 gap-1.5">
                   <PremiumCountdownBox
                     value={timeLeft.days}
                     label="Days"
@@ -443,17 +567,27 @@ const ConferenceDetails = () => {
                     label="Minutes"
                     colors={colors}
                   />
-
-                  <PremiumCountdownBox
-                    value={timeLeft.seconds}
-                    label="Seconds"
-                    colors={colors}
-                  />
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="mt-3 max-w-2xl">
+            {/* ACTIONS */}
+
+            <motion.div
+              className="mt-3 max-w-2xl"
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.4,
+              }}
+            >
               <div className="mb-1.5 flex items-center justify-between">
                 <p
                   className="text-[8px] font-bold uppercase tracking-[0.14em]"
@@ -528,7 +662,7 @@ const ConferenceDetails = () => {
                   }
                 />
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -552,88 +686,91 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-4 lg:grid-cols-8">
-            {conference.speakers.map((speaker, index) => (
-              <motion.div
-                key={speaker.name}
-                initial={{
-                  opacity: 0,
-                  y: 15,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  delay: index * 0.05,
-                }}
-                className="group text-center"
-              >
-                <div className="relative mx-auto h-20 w-20 sm:h-24 sm:w-24">
-                  <div
-                    className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
-                    style={{
-                      borderColor:
-                        colors.speakerRing,
-                    }}
-                  />
+            {conference.speakers.map(
+              (speaker, index) => (
+                <motion.div
+                  key={speaker.name}
+                  initial={{
+                    opacity: 0,
+                    y: 15,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    delay: index * 0.05,
+                  }}
+                  className="group text-center"
+                >
+                  <div className="relative mx-auto h-20 w-20 sm:h-24 sm:w-24">
+                    <div
+                      className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
+                      style={{
+                        borderColor:
+                          colors.speakerRing,
+                      }}
+                    />
 
-                  <img
-                    src={speaker.image}
-                    alt={speaker.name}
-                    className="h-full w-full rounded-full object-cover"
-                  />
+                    <img
+                      src={speaker.image}
+                      alt={speaker.name}
+                      className="h-full w-full rounded-full object-cover"
+                    />
 
-                  <a
-                    href={speaker.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md"
+                    <a
+                      href={speaker.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md"
+                      style={{
+                        borderColor:
+                          colors.featuredBg,
+                        backgroundColor:
+                          colors.primary,
+                      }}
+                    >
+                      <img
+                        src="/svgs/linkedin.svg"
+                        alt="LinkedIn"
+                        className="h-3 w-3"
+                      />
+                    </a>
+                  </div>
+
+                  <h3
+                    className="mt-3 text-[11px] font-bold leading-4 sm:text-xs"
                     style={{
-                      borderColor:
-                        colors.featuredBg,
-                      backgroundColor:
-                        colors.primary,
+                      color: colors.speakerName,
                     }}
                   >
-                    <img
-                      src="/svgs/linkedin.svg"
-                      alt="LinkedIn"
-                      className="h-3 w-3"
-                    />
-                  </a>
-                </div>
+                    {speaker.name}
+                  </h3>
 
-                <h3
-                  className="mt-3 text-[11px] font-bold leading-4 sm:text-xs"
-                  style={{
-                    color: colors.speakerName,
-                  }}
-                >
-                  {speaker.name}
-                </h3>
+                  <p
+                    className="mt-1 text-[9px] leading-3.5 sm:text-[10px]"
+                    style={{
+                      color: colors.speakerOrg,
+                    }}
+                  >
+                    {speaker.organization}
+                  </p>
 
-                <p
-                  className="mt-1 text-[9px] leading-3.5 sm:text-[10px]"
-                  style={{
-                    color: colors.speakerOrg,
-                  }}
-                >
-                  {speaker.organization}
-                </p>
-
-                <p
-                  className="mt-1 text-[9px] font-medium leading-3.5"
-                  style={{
-                    color: colors.speakerSpecialty,
-                  }}
-                >
-                  {speaker.specialty}
-                </p>
-              </motion.div>
-            ))}
+                  <p
+                    className="mt-1 text-[9px] font-medium leading-3.5"
+                    style={{
+                      color:
+                        colors.speakerSpecialty,
+                    }}
+                  >
+                    {speaker.specialty}
+                  </p>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -690,7 +827,7 @@ const ConferenceDetails = () => {
             <h2
               className="mt-3 text-2xl font-bold leading-tight md:text-3xl"
               style={{
-                color: colors.heading,
+                color: colors.headingAccent,
               }}
             >
               Building a More
@@ -813,47 +950,52 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-7 grid grid-cols-1 gap-x-14 md:grid-cols-2">
-            {conference.topics.map((topic, index) => (
-              <motion.div
-                key={topic}
-                initial={{
-                  opacity: 0,
-                  x: index % 2 === 0 ? -12 : 12,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  x: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  delay: index * 0.03,
-                }}
-                className="flex items-start gap-3 border-b py-2.5"
-                style={{
-                  borderColor:
-                    colors.topicBorder,
-                }}
-              >
-                <CheckCircle2
-                  size={17}
-                  className="mt-0.5 flex-shrink-0"
-                  style={{
-                    color: colors.primary,
+            {conference.topics.map(
+              (topic, index) => (
+                <motion.div
+                  key={topic}
+                  initial={{
+                    opacity: 0,
+                    x:
+                      index % 2 === 0
+                        ? -12
+                        : 12,
                   }}
-                />
-
-                <span
-                  className="text-xs leading-5"
+                  whileInView={{
+                    opacity: 1,
+                    x: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    delay: index * 0.03,
+                  }}
+                  className="flex items-start gap-3 border-b py-2.5"
                   style={{
-                    color: colors.topicText,
+                    borderColor:
+                      colors.topicBorder,
                   }}
                 >
-                  {topic}
-                </span>
-              </motion.div>
-            ))}
+                  <CheckCircle2
+                    size={17}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{
+                      color: colors.primary,
+                    }}
+                  />
+
+                  <span
+                    className="text-xs leading-5"
+                    style={{
+                      color: colors.topicText,
+                    }}
+                  >
+                    {topic}
+                  </span>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       </section>
@@ -924,7 +1066,7 @@ const ConferenceDetails = () => {
               <h2
                 className="mt-2 text-xl font-bold leading-tight md:text-2xl"
                 style={{
-                  color: colors.heading,
+                  color: colors.headingAccent,
                 }}
               >
                 More than a Conference
@@ -1017,7 +1159,7 @@ const ConferenceDetails = () => {
             <h2
               className="mt-2 text-2xl font-bold md:text-3xl"
               style={{
-                color: colors.heading,
+                color: colors.headingAccent,
               }}
             >
               Sessions & Tracks
@@ -1044,103 +1186,111 @@ const ConferenceDetails = () => {
                 colors.accordionBg,
             }}
           >
-            {conference.tracks.map((track, index) => {
-              const isOpen = openTrack === index;
+            {conference.tracks.map(
+              (track, index) => {
+                const isOpen =
+                  openTrack === index;
 
-              return (
-                <div
-                  key={track.title}
-                  className="border-b last:border-b-0"
-                  style={{
-                    borderColor:
-                      colors.rowBorder,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenTrack(
-                        isOpen ? null : index
-                      )
-                    }
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors md:px-6"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        colors.rowHover;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        "transparent";
+                return (
+                  <div
+                    key={track.title}
+                    className="border-b last:border-b-0"
+                    style={{
+                      borderColor:
+                        colors.rowBorder,
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                        style={{
-                          backgroundColor: isOpen
-                            ? colors.primary
-                            : colors.closedNumberBg,
-                          color: isOpen
-                            ? "#FFFFFF"
-                            : colors.primary,
-                        }}
-                      >
-                        {String(index + 1).padStart(
-                          2,
-                          "0"
-                        )}
-                      </span>
-
-                      <span
-                        className="text-xs font-bold md:text-sm"
-                        style={{
-                          color:
-                            colors.trackTitle,
-                        }}
-                      >
-                        {track.title}
-                      </span>
-                    </div>
-
-                    <ChevronDown
-                      size={17}
-                      className={`flex-shrink-0 transition-transform ${
-                        isOpen
-                          ? "rotate-180"
-                          : ""
-                      }`}
-                      style={{
-                        color: colors.primary,
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenTrack(
+                          isOpen
+                            ? null
+                            : index
+                        )
+                      }
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors md:px-6"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          colors.rowHover;
                       }}
-                    />
-                  </button>
-
-                  {isOpen && (
-                    <motion.div
-                      initial={{
-                        opacity: 0,
-                        height: 0,
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "transparent";
                       }}
-                      animate={{
-                        opacity: 1,
-                        height: "auto",
-                      }}
-                      className="px-5 pb-5 pl-[60px] md:px-6 md:pl-[70px]"
                     >
-                      <p
-                        className="max-w-3xl text-xs leading-6"
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{
+                            backgroundColor:
+                              isOpen
+                                ? colors.primary
+                                : colors.closedNumberBg,
+                            color: isOpen
+                              ? "#FFFFFF"
+                              : colors.primary,
+                          }}
+                        >
+                          {String(
+                            index + 1
+                          ).padStart(2, "0")}
+                        </span>
+
+                        <span
+                          className="text-xs font-bold md:text-sm"
+                          style={{
+                            color:
+                              colors.trackTitle,
+                          }}
+                        >
+                          {track.title}
+                        </span>
+                      </div>
+
+                      <ChevronDown
+                        size={17}
+                        className={`flex-shrink-0 transition-transform ${
+                          isOpen
+                            ? "rotate-180"
+                            : ""
+                        }`}
                         style={{
-                          color:
-                            colors.trackDesc,
+                          color: colors.primary,
                         }}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <motion.div
+                        initial={{
+                          opacity: 0,
+                          height: 0,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          height: "auto",
+                        }}
+                        transition={{
+                          duration: 0.3,
+                        }}
+                        className="px-5 pb-5 pl-[60px] md:px-6 md:pl-[70px]"
                       >
-                        {track.description}
-                      </p>
-                    </motion.div>
-                  )}
-                </div>
-              );
-            })}
+                        <p
+                          className="max-w-3xl text-xs leading-6"
+                          style={{
+                            color:
+                              colors.trackDesc,
+                          }}
+                        >
+                          {track.description}
+                        </p>
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              }
+            )}
           </div>
         </div>
       </section>
@@ -1148,9 +1298,9 @@ const ConferenceDetails = () => {
   );
 };
 
-// =========================================================
-// PREMIUM COUNTDOWN BOX
-// =========================================================
+/* =========================================================
+   PREMIUM COUNTDOWN BOX
+========================================================= */
 
 const PremiumCountdownBox = ({
   value,
@@ -1192,7 +1342,8 @@ const PremiumCountdownBox = ({
       <span
         className="block text-lg font-extrabold leading-none tracking-tight sm:text-xl"
         style={{
-          color: colors.countdownNumber,
+          color:
+            colors.countdownNumber,
         }}
       >
         {String(value).padStart(2, "0")}
@@ -1201,7 +1352,8 @@ const PremiumCountdownBox = ({
       <span
         className="mt-1 block text-[7px] font-bold uppercase tracking-[0.08em] sm:text-[8px]"
         style={{
-          color: colors.countdownLabel,
+          color:
+            colors.countdownLabel,
         }}
       >
         {label}
@@ -1210,9 +1362,9 @@ const PremiumCountdownBox = ({
   );
 };
 
-// =========================================================
-// PREMIUM ACTION BUTTON
-// =========================================================
+/* =========================================================
+   PREMIUM ACTION BUTTON
+========================================================= */
 
 const PremiumActionButton = ({
   icon,
@@ -1291,7 +1443,7 @@ const PremiumActionButton = ({
 
       <div className="relative z-10 min-w-0 flex-1">
         <p
-          className="text-[9px] font-bold leading-3.5 sm:text-[10px]"
+          className="text-[9px] font-bold leading-3.5 sm:text-[14px]"
           style={{
             color: "#FFFFFF",
           }}
@@ -1326,9 +1478,9 @@ const PremiumActionButton = ({
   );
 };
 
-// =========================================================
-// INFO ITEM
-// =========================================================
+/* =========================================================
+   INFO ITEM
+========================================================= */
 
 const InfoItem = ({
   icon,
@@ -1372,9 +1524,9 @@ const InfoItem = ({
   );
 };
 
-// =========================================================
-// SECTION LABEL
-// =========================================================
+/* =========================================================
+   SECTION LABEL
+========================================================= */
 
 const SectionLabel = ({
   label,
@@ -1402,9 +1554,9 @@ const SectionLabel = ({
   );
 };
 
-// =========================================================
-// SECTION HEADING
-// =========================================================
+/* =========================================================
+   SECTION HEADING
+========================================================= */
 
 const SectionHeading = ({
   label,
@@ -1425,7 +1577,7 @@ const SectionHeading = ({
         <h2
           className="text-lg font-bold md:text-xl"
           style={{
-            color: colors.heading,
+            color: colors.headingAccent,
           }}
         >
           {label}
@@ -1447,9 +1599,9 @@ const SectionHeading = ({
   );
 };
 
-// =========================================================
-// MINI FEATURE
-// =========================================================
+/* =========================================================
+   MINI FEATURE
+========================================================= */
 
 const MiniFeature = ({
   icon,
@@ -1498,9 +1650,9 @@ const MiniFeature = ({
   );
 };
 
-// =========================================================
-// BENEFIT
-// =========================================================
+/* =========================================================
+   BENEFIT
+========================================================= */
 
 const Benefit = ({
   text,
@@ -1536,3 +1688,4 @@ const Benefit = ({
 };
 
 export default ConferenceDetails;
+

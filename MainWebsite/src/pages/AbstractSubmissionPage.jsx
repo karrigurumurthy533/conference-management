@@ -1,422 +1,625 @@
-
-import React from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarDays, Monitor } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  CheckCircle2,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Globe2,
+  ChevronDown,
+  X,
+} from "lucide-react";
 
-const conferences = [
-  {
-    title:
-      "International Conference on Autism Research and Innovations",
-    date: "September 17–18, 2026",
-    type: "Webinar",
-    image: "/images/conference-hero.png",
-  },
-  {
-    title:
-      "International Conference on Mental Health & Psychiatry",
-    date: "October 10–11, 2026",
-    type: "Hybrid",
-    image: "/images/conference-hero.png",
-  },
-  {
-    title:
-      "World Congress on Oncology Research & AI Innovations",
-    date: "November 5–6, 2026",
-    type: "In Person",
-    image: "/images/conference-hero.png",
-  },
-  {
-    title:
-      "World Congress on Healthcare Innovation, Precision Medicine and Artificial Intelligence",
-    date: "December 12–13, 2026",
-    type: "Hybrid",
-    image: "/images/conference-hero.png",
-  },
-];
+const AbstractSubmissionPage = () => {
+  const fileInputRef = useRef(null);
 
-const Conferences = () => {
-  const colors = {
-    sectionBg: "#FFFFFF",
-    label: "#7C3AED",
-    heading: "#111827",
-    description: "#4B5563",
-    cardBg: "#FFFFFF",
-    cardBorder: "#E5E7EB",
-    date: "#7C3AED",
-    title: "#111827",
-    type: "#6B7280",
-    buttonBg: "#7C3AED",
-    buttonHover: "#6D28D9",
-    outlineBorder: "#7C3AED",
-    outlineText: "#7C3AED",
-    outlineHoverBg: "#F5F3FF",
+  const [formData, setFormData] = useState({
+    title: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    category: "",
+    conference: "",
+    country: "",
+    address: "",
+  });
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const countries = [
+    "Afghanistan",
+    "Albania",
+    "Algeria",
+    "American Samoa",
+    "Andorra",
+    "Angola",
+    "Anguilla",
+    "Antarctica",
+    "Antigua and Barbuda",
+    "Argentina",
+    "Armenia",
+    "Aruba",
+    "Australia",
+    "Austria",
+    "Azerbaijan",
+    "Bahamas",
+    "Bahrain",
+    "Bangladesh",
+    "Barbados",
+    "Belarus",
+    "Belgium",
+    "Belize",
+    "Benin",
+    "Bhutan",
+    "Bolivia",
+    "Bosnia and Herzegovina",
+    "Botswana",
+    "Brazil",
+    "Brunei Darussalam",
+    "Bulgaria",
+    "Cambodia",
+    "Cameroon",
+    "Canada",
+    "Chile",
+    "China",
+    "Colombia",
+    "Costa Rica",
+    "Croatia",
+    "Cuba",
+    "Cyprus",
+    "Czechia",
+    "Denmark",
+    "Dominican Republic",
+    "Ecuador",
+    "Egypt",
+    "Estonia",
+    "Ethiopia",
+    "Finland",
+    "France",
+    "Georgia",
+    "Germany",
+    "Ghana",
+    "Greece",
+    "Hungary",
+    "Iceland",
+    "India",
+    "Indonesia",
+    "Iran",
+    "Iraq",
+    "Ireland",
+    "Israel",
+    "Italy",
+    "Jamaica",
+    "Japan",
+    "Jordan",
+    "Kazakhstan",
+    "Kenya",
+    "Kuwait",
+    "Latvia",
+    "Lebanon",
+    "Lithuania",
+    "Luxembourg",
+    "Malaysia",
+    "Maldives",
+    "Malta",
+    "Mexico",
+    "Monaco",
+    "Mongolia",
+    "Montenegro",
+    "Morocco",
+    "Myanmar",
+    "Nepal",
+    "Netherlands",
+    "New Zealand",
+    "Nigeria",
+    "Norway",
+    "Oman",
+    "Pakistan",
+    "Panama",
+    "Peru",
+    "Philippines",
+    "Poland",
+    "Portugal",
+    "Qatar",
+    "Romania",
+    "Russia",
+    "Saudi Arabia",
+    "Serbia",
+    "Singapore",
+    "Slovakia",
+    "Slovenia",
+    "South Africa",
+    "South Korea",
+    "Spain",
+    "Sri Lanka",
+    "Sudan",
+    "Sweden",
+    "Switzerland",
+    "Taiwan",
+    "Thailand",
+    "Tunisia",
+    "Türkiye",
+    "Ukraine",
+    "United Arab Emirates",
+    "United Kingdom",
+    "United States",
+    "Uruguay",
+    "Uzbekistan",
+    "Venezuela",
+    "Vietnam",
+    "Zambia",
+    "Zimbabwe",
+  ];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const fadeUp = {
-    hidden: {
-      opacity: 0,
-      y: 25,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.65,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      setSelectedFile(file);
+    }
   };
 
-  const cardAnimation = {
-    hidden: {
-      opacity: 0,
-      y: 25,
-      scale: 0.97,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.65,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
+  const removeFile = () => {
+    setSelectedFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    console.log("Abstract Submission:", {
+      ...formData,
+      file: selectedFile,
+    });
+
+    setSubmitted(true);
+
+    setTimeout(() => {
+      setSubmitted(false);
+    }, 4000);
+  };
+
+  const inputClass =
+    "w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100";
+
+  const selectClass =
+    "w-full h-10 appearance-none rounded-lg border border-gray-200 bg-white px-3 pr-9 text-sm text-gray-800 outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-100";
+
+  const labelClass =
+    "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-600";
 
   return (
-    <section
-      id="conferences"
-      className="
-        relative
-        overflow-hidden
-        py-10
-        sm:py-14
-        transition-colors
-        duration-500
-      "
-      style={{
-        backgroundColor: colors.sectionBg,
-      }}
-    >
-      <div className="relative z-10 mx-auto max-w-7xl px-6">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.2,
-          }}
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.12,
-              },
-            },
-          }}
-          className="text-center"
+    <div className="min-h-screen bg-[#f7f7fa] text-gray-900">
+      {/* =====================================================
+          HERO
+      ===================================================== */}
+      <section className="relative overflow-hidden bg-[#442f74]">
+        <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-400/10" />
+        <div className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-white/5" />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200">
+              GlobalScion Conferences
+            </p>
+
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Abstract Submission
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-violet-100/85 sm:text-sm">
+              Submit your research abstract for presentation at our upcoming
+              international conference.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          FORM
+      ===================================================== */}
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
         >
-          <motion.p
-            variants={fadeUp}
-            className="
-              text-sm
-              font-semibold
-              uppercase
-              tracking-wider
-              transition-colors
-              duration-500
-            "
-            style={{
-              color: colors.label,
-            }}
-          >
-            Our Events
-          </motion.p>
+          {/* FORM HEADER */}
+          <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50">
+              <FileText className="h-4 w-4 text-violet-600" />
+            </div>
 
-          <motion.h2
-            variants={fadeUp}
-            className="
-              mt-3
-              text-4xl
-              font-bold
-              transition-colors
-              duration-500
-            "
-            style={{
-              color: colors.heading,
-            }}
-          >
-            Upcoming Conferences
-          </motion.h2>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 sm:text-base">
+                Presenter Information
+              </h2>
 
-          <motion.p
-            variants={fadeUp}
-            className="
-              mx-auto
-              mt-4
-              max-w-2xl
-              transition-colors
-              duration-500
-            "
-            style={{
-              color: colors.description,
-            }}
-          >
-            Explore our upcoming international conferences and connect
-            with researchers, professionals, and industry leaders.
-          </motion.p>
-        </motion.div>
+              <p className="text-[11px] text-gray-500">
+                Please provide your details below
+              </p>
+            </div>
+          </div>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.1,
-          }}
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.12,
-              },
-            },
-          }}
-          className="
-            mt-8
-            grid
-            gap-5
-            md:grid-cols-2
-            lg:grid-cols-4
-          "
-        >
-          {conferences.map((conference, index) => (
-            <motion.div
-              key={index}
-              variants={cardAnimation}
-              whileHover={{
-                y: -4,
-                transition: {
-                  duration: 0.2,
-                },
-              }}
-              className="
-                group
-                overflow-hidden
-                rounded-xl
-                border
-                transition-all
-                duration-300
-              "
-              style={{
-                backgroundColor: colors.cardBg,
-                borderColor: colors.cardBorder,
-                boxShadow: "0 4px 16px rgba(124,58,237,0.06)",
-              }}
-            >
-              <div className="relative overflow-hidden">
-                <motion.img
-                  src={conference.image}
-                  alt={conference.title}
-                  className="
-                    h-36
-                    w-full
-                    object-cover
-                    transition-transform
-                    duration-500
-                    group-hover:scale-105
-                  "
-                />
+          <div className="space-y-5 p-5 sm:p-6">
+            {/* =================================================
+                PERSONAL INFORMATION
+            ================================================= */}
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <User className="h-4 w-4 text-violet-600" />
 
-                <div
-                  className="
-                    pointer-events-none
-                    absolute
-                    inset-0
-                    opacity-0
-                    transition-opacity
-                    duration-300
-                    group-hover:opacity-100
-                  "
-                  style={{
-                    background:
-                      "linear-gradient(to top, rgba(124,58,237,0.20), transparent)",
-                  }}
-                />
-              </div>
-
-              <div className="p-4">
-                <div className="flex items-center gap-2">
-                  <CalendarDays
-                    size={13}
-                    strokeWidth={2}
-                    style={{
-                      color: colors.date,
-                    }}
-                  />
-
-                  <p
-                    className="
-                      text-xs
-                      font-semibold
-                      transition-colors
-                      duration-500
-                    "
-                    style={{
-                      color: colors.date,
-                    }}
-                  >
-                    {conference.date}
-                  </p>
-                </div>
-
-                <h3
-                  className="
-                    mt-2
-                    min-h-[52px]
-                    text-base
-                    font-bold
-                    leading-6
-                    line-clamp-2
-                    transition-colors
-                    duration-500
-                  "
-                  style={{
-                    color: colors.title,
-                  }}
-                >
-                  {conference.title}
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-800">
+                  Personal Information
                 </h3>
+              </div>
 
-                <div className="mt-2 flex items-center gap-2">
-                  <Monitor
-                    size={13}
-                    strokeWidth={2}
-                    style={{
-                      color: colors.type,
-                    }}
-                  />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                {/* TITLE */}
+                <div className="sm:col-span-3">
+                  <label className={labelClass}>Title</label>
 
-                  <p
-                    className="
-                      text-xs
-                      transition-colors
-                      duration-500
-                    "
-                    style={{
-                      color: colors.type,
-                    }}
-                  >
-                    {conference.type}
-                  </p>
+                  <div className="relative">
+                    <select
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      className={selectClass}
+                      required
+                    >
+                      <option value="">Select Title</option>
+                      <option value="Mr">Mr</option>
+                      <option value="Ms">Ms</option>
+                      <option value="Mrs">Mrs</option>
+                      <option value="Prof Dr">Prof Dr</option>
+                      <option value="Assist Prof Dr">Assist Prof Dr</option>
+                      <option value="Assoc Prof Dr">Assoc Prof Dr</option>
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="
-                    mt-4
-                    flex
-                    w-full
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-md
-                    px-3
-                    py-2.5
-                    text-xs
-                    font-semibold
-                    text-white
-                    transition-all
-                    duration-300
-                    hover:-translate-y-0.5
-                  "
-                  style={{
-                    backgroundColor: colors.buttonBg,
-                    boxShadow: "0 4px 14px rgba(124,58,237,0.25)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      colors.buttonHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      colors.buttonBg;
-                  }}
-                >
-                  View Conference
+                {/* FIRST NAME */}
+                <div className="sm:col-span-4">
+                  <label className={labelClass}>First Name</label>
 
-                  <ArrowRight
-                    size={14}
-                    className="
-                      transition-transform
-                      duration-200
-                      group-hover:translate-x-1
-                    "
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="First"
+                    className={inputClass}
+                    required
                   />
-                </button>
+                </div>
+
+                {/* LAST NAME */}
+                <div className="sm:col-span-5">
+                  <label className={labelClass}>Last Name</label>
+
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Last"
+                    className={inputClass}
+                    required
+                  />
+                </div>
+
+                {/* EMAIL */}
+                <div className="sm:col-span-6">
+                  <label className={labelClass}>Author's Email</label>
+
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
+
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="author@example.com"
+                      className={`${inputClass} pl-9`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* PHONE */}
+                <div className="sm:col-span-6">
+                  <label className={labelClass}>Phone Number</label>
+
+                  <div className="relative">
+                    <Phone className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
+
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+91 98765 43210"
+                      className={`${inputClass} pl-9`}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
-            </motion.div>
-          ))}
-        </motion.div>
+            </div>
 
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          viewport={{
-            once: true,
-            amount: 0.2,
-          }}
-          transition={{
-            duration: 0.65,
-            delay: 0.15,
-          }}
-          className="mt-10 text-center"
-        >
-          <button
-            type="button"
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-md
-              border
-              px-7
-              py-3
-              text-sm
-              font-semibold
-              transition-all
-              duration-300
-              hover:-translate-y-0.5
-            "
-            style={{
-              borderColor: colors.outlineBorder,
-              color: colors.outlineText,
-              backgroundColor: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                colors.outlineHoverBg;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                "transparent";
-            }}
-          >
-            View All Conferences
+            {/* =================================================
+                ABSTRACT DETAILS
+            ================================================= */}
+            <div className="border-t border-gray-100 pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-violet-600" />
 
-            <ArrowRight size={16} />
-          </button>
-        </motion.div>
-      </div>
-    </section>
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-800">
+                  Abstract Details
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* CATEGORY */}
+                <div>
+                  <label className={labelClass}>Abstract Category</label>
+
+                  <div className="relative">
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className={selectClass}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Poster">Poster</option>
+                      <option value="Oral">Oral</option>
+                      <option value="Workshop">Workshop</option>
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* CONFERENCE */}
+                <div>
+                  <label className={labelClass}>Conference</label>
+
+                  <div className="relative">
+                    <select
+                      name="conference"
+                      value={formData.conference}
+                      onChange={handleChange}
+                      className={selectClass}
+                      required
+                    >
+                      <option value="">Select Conference</option>
+                      <option value="European Autism">
+                        European Autism
+                      </option>
+                      <option value="Autism Research">
+                        International Conference on Autism Research
+                      </option>
+                      <option value="Mental Health Psychiatry">
+                        International Conference on Mental Health & Psychiatry
+                      </option>
+                      <option value="Oncology Research">
+                        World Congress on Oncology Research & AI Innovations
+                      </option>
+                      <option value="Healthcare Innovation">
+                        World Congress on Healthcare Innovation
+                      </option>
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* =================================================
+                LOCATION
+            ================================================= */}
+            <div className="border-t border-gray-100 pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Globe2 className="h-4 w-4 text-violet-600" />
+
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-800">
+                  Location Details
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* COUNTRY */}
+                <div>
+                  <label className={labelClass}>Country</label>
+
+                  <div className="relative">
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      className={selectClass}
+                      required
+                    >
+                      <option value="">Select Country</option>
+
+                      {countries.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* ADDRESS */}
+                <div>
+                  <label className={labelClass}>Full Postal Address</label>
+
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
+
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Street, City, State, Postal Code"
+                      className={`${inputClass} pl-9`}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* =================================================
+                FILE UPLOAD
+            ================================================= */}
+            <div className="border-t border-gray-100 pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Upload className="h-4 w-4 text-violet-600" />
+
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-800">
+                  Abstract File
+                </h3>
+              </div>
+
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+
+                  const file = e.dataTransfer.files?.[0];
+
+                  if (file) {
+                    setSelectedFile(file);
+                  }
+                }}
+                className="group cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center transition hover:border-violet-400 hover:bg-violet-50/40"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                />
+
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+                  <Upload className="h-4 w-4 text-violet-600" />
+                </div>
+
+                <p className="mt-2 text-xs font-semibold text-gray-700">
+                  Drop files here or{" "}
+                  <span className="text-violet-600">Select files</span>
+                </p>
+
+                <p className="mt-1 text-[10px] text-gray-400">
+                  PDF, DOC or DOCX • Max. file size 3 GB
+                </p>
+              </div>
+
+              {/* SELECTED FILE */}
+              {selectedFile && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50 px-3 py-2"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <FileText className="h-4 w-4 shrink-0 text-violet-600" />
+
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-gray-800">
+                        {selectedFile.name}
+                      </p>
+
+                      <p className="text-[10px] text-gray-400">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="ml-3 rounded-md p-1 text-gray-400 transition hover:bg-white hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              )}
+            </div>
+
+            {/* =================================================
+                SUBMIT
+            ================================================= */}
+            <div className="flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[10px] leading-4 text-gray-400">
+                By submitting this form, you confirm that the information
+                provided is accurate.
+              </p>
+
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md"
+              >
+                Submit Abstract
+                <CheckCircle2 className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* SUCCESS MESSAGE */}
+            {submitted && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-700"
+              >
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+
+                <span>
+                  Your abstract submission has been received successfully.
+                </span>
+              </motion.div>
+            )}
+          </div>
+        </motion.form>
+      </section>
+    </div>
   );
 };
 
-export default Conferences;
+export default AbstractSubmissionPage;
