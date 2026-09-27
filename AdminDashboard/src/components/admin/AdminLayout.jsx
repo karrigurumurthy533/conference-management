@@ -1,29 +1,28 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 
-import AdminSidebar from "./AdminSidebar";
 import AdminNavbar from "./AdminNavbar";
+import AdminSidebar from "./AdminSidebar";
 
 const AdminLayout = () => {
   return (
-    <div className="min-h-screen bg-[#f7f7fc]">
+    <div className="min-h-screen bg-[#f8f8fc]">
 
-      {/* ================= SIDEBAR ================= */}
+      {/* Sidebar */}
       <AdminSidebar />
 
-      {/* ================= MAIN AREA ================= */}
-      <div className="ml-[250px] min-h-screen">
+      {/* Main Area */}
+      <div className="ml-[220px] min-h-screen">
 
-        {/* ================= NAVBAR ================= */}
+        {/* Navbar */}
         <AdminNavbar />
 
-        {/* ================= PAGE CONTENT ================= */}
-        <main className="px-5 pt-3 pb-5">
+        {/* Page Content */}
+        <main className="px-4 py-4">
           <Outlet />
         </main>
 
       </div>
-
     </div>
   );
 };

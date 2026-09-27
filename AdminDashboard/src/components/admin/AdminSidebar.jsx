@@ -18,18 +18,15 @@ import {
 const AdminSidebar = () => {
   const navigate = useNavigate();
 
-  // Active tab styles
   const navClass = ({ isActive }) =>
-    `group flex items-center gap-3 px-3 py-2.5 text-[14px] font-medium transition-all duration-200
-    ${
+    `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-200 ${
       isActive
-        ? "text-[#7C3AED]"
-        : "text-gray-600 hover:text-[#7C3AED]"
+        ? "bg-purple-50 text-[#7C3AED]"
+        : "text-gray-600 hover:bg-gray-50 hover:text-[#7C3AED]"
     }`;
 
   const iconClass = ({ isActive }) =>
-    `transition-all duration-200
-    ${
+    `shrink-0 transition-all duration-200 ${
       isActive
         ? "text-[#7C3AED]"
         : "text-gray-500 group-hover:text-[#7C3AED]"
@@ -48,250 +45,165 @@ const AdminSidebar = () => {
         z-50
         flex
         h-screen
-        w-[250px]
+        w-[220px]
         flex-col
         border-r
         border-gray-200
         bg-white
       "
     >
-
       {/* =====================================================
           LOGO
-      ===================================================== */}
-      <div className="flex h-[78px] shrink-0 items-center border-b border-gray-100 px-5">
+      ====================================================== */}
+      <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
         <img
           src="/web_logo.png"
           alt="GlobalScion"
-          className="h-11 w-auto object-contain"
+          className="h-9 w-auto object-contain"
         />
       </div>
 
-
       {/* =====================================================
           NAVIGATION
-          NO SCROLL
-          NO NESTED MENU
-      ===================================================== */}
-      <nav className="flex-1 px-4 py-5">
+      ====================================================== */}
+      <nav className="flex-1 overflow-hidden px-3 py-3">
 
-        {/* Dashboard */}
-        <NavLink
-          to="/admin/dashboard"
-          className={navClass}
-        >
+        <NavLink to="/admin/dashboard" className={navClass}>
           {({ isActive }) => (
             <>
               <LayoutDashboard
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Dashboard
-              </span>
+              <span>Dashboard</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Create Conference */}
-        <NavLink
-          to="/admin/conferences/create"
-          className={navClass}
-        >
+        <NavLink to="/admin/conferences/create" className={navClass}>
           {({ isActive }) => (
             <>
               <CalendarPlus
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Create New Conference
-              </span>
+              <span>Create New Conference</span>
             </>
           )}
         </NavLink>
 
-
-        {/* All Conferences */}
-        <NavLink
-          to="/admin/conferences"
-          className={navClass}
-        >
+        <NavLink to="/admin/conferences" className={navClass}>
           {({ isActive }) => (
             <>
               <CalendarDays
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                All Conferences
-              </span>
+              <span>All Conferences</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Create Employee */}
-        <NavLink
-          to="/admin/employees/create"
-          className={navClass}
-        >
+        <NavLink to="/admin/employees/create" className={navClass}>
           {({ isActive }) => (
             <>
               <UserPlus
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Create New Employee
-              </span>
+              <span>Create New Employee</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Registrations */}
-        <NavLink
-          to="/admin/registrations"
-          className={navClass}
-        >
+        <NavLink to="/admin/registrations" className={navClass}>
           {({ isActive }) => (
             <>
               <ClipboardList
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Registrations
-              </span>
+              <span>Registrations</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Payments */}
-        <NavLink
-          to="/admin/payments"
-          className={navClass}
-        >
+        <NavLink to="/admin/payments" className={navClass}>
           {({ isActive }) => (
             <>
               <CreditCard
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Payments
-              </span>
+              <span>Payments</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Reports */}
-        <NavLink
-          to="/admin/reports"
-          className={navClass}
-        >
+        <NavLink to="/admin/reports" className={navClass}>
           {({ isActive }) => (
             <>
               <BarChart3
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Reports
-              </span>
+              <span>Reports</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Speakers */}
-        <NavLink
-          to="/admin/speakers"
-          className={navClass}
-        >
+        <NavLink to="/admin/speakers" className={navClass}>
           {({ isActive }) => (
             <>
               <Mic2
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Speakers
-              </span>
+              <span>Speakers</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Notifications */}
-        <NavLink
-          to="/admin/notifications"
-          className={navClass}
-        >
+        <NavLink to="/admin/notifications" className={navClass}>
           {({ isActive }) => (
             <>
               <Bell
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Notifications
-              </span>
+              <span>Notifications</span>
             </>
           )}
         </NavLink>
 
-
-        {/* Profile */}
-        <NavLink
-          to="/admin/profile"
-          className={navClass}
-        >
+        <NavLink to="/admin/profile" className={navClass}>
           {({ isActive }) => (
             <>
               <UserCircle
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-
-              <span>
-                Profile
-              </span>
+              <span>Profile</span>
             </>
           )}
         </NavLink>
 
       </nav>
 
-
       {/* =====================================================
           LOGOUT
-      ===================================================== */}
-      <div className="shrink-0 border-t border-gray-100 px-4 py-4">
-
+      ====================================================== */}
+      <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
         <button
           onClick={handleLogout}
           className="
@@ -299,29 +211,27 @@ const AdminSidebar = () => {
             flex
             w-full
             items-center
-            gap-3
-            px-3
-            py-2.5
-            text-[14px]
+            gap-2.5
+            rounded-lg
+            px-2.5
+            py-2
+            text-[13px]
             font-medium
             text-gray-600
             transition-all
             duration-200
+            hover:bg-red-50
             hover:text-red-500
           "
         >
           <LogOut
-            size={19}
+            size={18}
             className="text-gray-500 transition group-hover:text-red-500"
           />
 
-          <span>
-            Logout
-          </span>
+          <span>Logout</span>
         </button>
-
       </div>
-
     </aside>
   );
 };

@@ -8,6 +8,7 @@ import {
   UserCheck,
   FileText,
   CreditCard,
+  TrendingUp,
 } from "lucide-react";
 
 import {
@@ -20,6 +21,10 @@ import {
   Tooltip,
 } from "recharts";
 
+// ============================================================
+// REGISTRATION DATA
+// ============================================================
+
 const registrationData = [
   { month: "Jan", registrations: 62 },
   { month: "Feb", registrations: 78 },
@@ -31,6 +36,10 @@ const registrationData = [
   { month: "Aug", registrations: 138 },
   { month: "Sep", registrations: 168 },
 ];
+
+// ============================================================
+// STATISTICS
+// ============================================================
 
 const stats = [
   {
@@ -65,6 +74,10 @@ const stats = [
   },
 ];
 
+// ============================================================
+// RECENT CONFERENCES
+// ============================================================
+
 const conferences = [
   {
     title: "Mental Health & Psychiatry",
@@ -87,6 +100,10 @@ const conferences = [
     status: "Completed",
   },
 ];
+
+// ============================================================
+// RECENT ACTIVITIES
+// ============================================================
 
 const activities = [
   {
@@ -121,83 +138,89 @@ const activities = [
   },
 ];
 
+// ============================================================
+// DASHBOARD
+// ============================================================
+
 const Dashboard = () => {
   return (
-    <div className="w-full bg-[#f8f8fc]">
-      {/* =====================================================
-          MAIN CONTENT
-      ===================================================== */}
-      <main className="w-full px-5 pt-3 pb-5">
-        {/* ===================================================
+    <div className="w-full min-w-0 overflow-x-hidden bg-[#f8f8fc]">
+      <main className="w-full px-3 pt-2.5 pb-3 sm:px-4">
+
+        {/* ==================================================
             STATISTICS
-        =================================================== */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        ================================================== */}
+
+        <section className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-5">
           {stats.map((stat) => {
             const Icon = stat.icon;
 
             return (
               <div
                 key={stat.title}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.025)] transition hover:border-violet-200"
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-[0_1px_5px_rgba(0,0,0,0.025)] transition-all duration-200 hover:border-violet-200 hover:shadow-[0_3px_10px_rgba(124,58,237,0.06)]"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[12px] font-medium text-gray-500">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-gray-500">
                       {stat.title}
                     </p>
 
-                    <p className="mt-1 text-[20px] font-semibold leading-none text-gray-900">
+                    <p className="mt-1 text-[19px] font-semibold leading-none tracking-tight text-gray-900">
                       {stat.value}
                     </p>
                   </div>
 
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                    <Icon size={18} strokeWidth={1.8} />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                    <Icon size={16} strokeWidth={1.8} />
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-emerald-600">
-                  <span>↗</span>
+                <div className="mt-2.5 flex items-center gap-1 text-[9px] font-medium text-emerald-600">
+                  <TrendingUp size={10} strokeWidth={2} />
                   <span>{stat.change}</span>
                 </div>
               </div>
             );
           })}
-        </div>
+        </section>
 
-        {/* ===================================================
+        {/* ==================================================
             CHART + RECENT CONFERENCES
-        =================================================== */}
-        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        ================================================== */}
+
+        <section className="mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
+
           {/* ================= REGISTRATION CHART ================= */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.025)] xl:col-span-2">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-[14px] font-semibold text-gray-900">
+
+          <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.025)] xl:col-span-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-[13px] font-semibold text-gray-900">
                   Registrations Overview
                 </h2>
 
-                <p className="mt-0.5 text-[11px] text-gray-400">
+                <p className="mt-0.5 text-[10px] text-gray-400">
                   Monthly registration performance
                 </p>
               </div>
 
               <button
                 type="button"
-                className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-gray-600 hover:border-violet-200 hover:text-violet-600"
+                className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-medium text-gray-600 transition hover:border-violet-200 hover:text-violet-600"
               >
                 Last 9 Months
               </button>
             </div>
 
-            <div className="mt-2 h-[245px] w-full">
+            <div className="mt-1.5 h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={registrationData}
                   margin={{
                     top: 8,
-                    right: 4,
-                    left: -22,
+                    right: 3,
+                    left: -24,
                     bottom: 0,
                   }}
                 >
@@ -215,7 +238,11 @@ const Dashboard = () => {
                         stopOpacity={0.16}
                       />
 
-                      <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                      <stop
+                        offset="100%"
+                        stopColor="#7c3aed"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
 
@@ -230,7 +257,7 @@ const Dashboard = () => {
                     axisLine={false}
                     tickLine={false}
                     tick={{
-                      fontSize: 10,
+                      fontSize: 9,
                       fill: "#9ca3af",
                     }}
                   />
@@ -239,7 +266,7 @@ const Dashboard = () => {
                     axisLine={false}
                     tickLine={false}
                     tick={{
-                      fontSize: 9,
+                      fontSize: 8,
                       fill: "#9ca3af",
                     }}
                     domain={[0, 180]}
@@ -248,9 +275,9 @@ const Dashboard = () => {
 
                   <Tooltip
                     contentStyle={{
-                      border: "1px solid #eee",
-                      borderRadius: "8px",
-                      fontSize: "11px",
+                      border: "1px solid #eeeeee",
+                      borderRadius: "7px",
+                      fontSize: "10px",
                       boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
                     }}
                     cursor={{
@@ -276,48 +303,49 @@ const Dashboard = () => {
           </div>
 
           {/* ================= RECENT CONFERENCES ================= */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.025)]">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-[14px] font-semibold text-gray-900">
+
+          <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.025)]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h2 className="text-[13px] font-semibold text-gray-900">
                   Recent Conferences
                 </h2>
 
-                <p className="mt-0.5 text-[11px] text-gray-400">
+                <p className="mt-0.5 text-[10px] text-gray-400">
                   Latest conference activity
                 </p>
               </div>
 
               <button
                 type="button"
-                className="text-[11px] font-medium text-violet-600 hover:text-violet-700"
+                className="shrink-0 text-[10px] font-medium text-violet-600 transition hover:text-violet-700"
               >
                 View All
               </button>
             </div>
 
-            <div className="mt-3">
+            <div className="mt-2">
               {conferences.map((conference, index) => (
                 <div
                   key={conference.title}
-                  className={`flex items-center justify-between gap-3 py-3 ${
+                  className={`flex items-center justify-between gap-2 py-2.5 ${
                     index !== conferences.length - 1
                       ? "border-b border-gray-100"
                       : ""
                   }`}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-[12px] font-medium text-gray-800">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-medium text-gray-800">
                       {conference.title}
                     </p>
 
-                    <p className="mt-0.5 text-[10px] text-gray-400">
+                    <p className="mt-0.5 text-[9px] text-gray-400">
                       {conference.date}
                     </p>
                   </div>
 
                   <span
-                    className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-medium ${
+                    className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-medium ${
                       conference.status === "Upcoming"
                         ? "bg-violet-50 text-violet-600"
                         : "bg-gray-100 text-gray-500"
@@ -329,62 +357,64 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* ===================================================
-    RECENT ACTIVITIES
-=================================================== */}
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.025)]">
-          {/* Header */}
+        {/* ==================================================
+            RECENT ACTIVITIES
+        ================================================== */}
+
+        <section className="mt-3 rounded-lg border border-gray-200 bg-white p-3 shadow-[0_1px_5px_rgba(0,0,0,0.025)]">
           <div>
-            <h2 className="text-[14px] font-semibold text-gray-900">
+            <h2 className="text-[13px] font-semibold text-gray-900">
               Recent Activities
             </h2>
 
-            <p className="mt-0.5 text-[11px] text-gray-400">
+            <p className="mt-0.5 text-[10px] text-gray-400">
               Latest updates from your conference system
             </p>
           </div>
 
-          {/* Activities */}
-          <div className="mt-2">
+          <div className="mt-1.5">
             {activities.map((activity, index) => {
               const Icon = activity.icon;
 
               return (
                 <div
                   key={activity.title}
-                  className={`flex items-center gap-3 py-3 ${
+                  className={`flex items-center gap-2.5 py-2.5 ${
                     index !== activities.length - 1
                       ? "border-b border-gray-100"
                       : ""
                   }`}
                 >
                   {/* Icon */}
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                    <Icon size={15} strokeWidth={1.8} />
+
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                    <Icon size={14} strokeWidth={1.8} />
                   </div>
 
-                  {/* Activity Details */}
+                  {/* Details */}
+
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-medium text-gray-800">
+                    <p className="truncate text-[10px] font-medium text-gray-800">
                       {activity.title}
                     </p>
 
-                    <p className="mt-0.5 truncate text-[10px] text-gray-400">
+                    <p className="mt-0.5 truncate text-[9px] text-gray-400">
                       {activity.description}
                     </p>
                   </div>
 
                   {/* Time */}
-                  <span className="shrink-0 text-[9px] text-gray-400">
+
+                  <span className="shrink-0 text-[8px] text-gray-400">
                     {activity.time}
                   </span>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
