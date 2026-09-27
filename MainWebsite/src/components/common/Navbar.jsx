@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Menu,
@@ -5,10 +6,23 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+} from "react-router-dom";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const location = useLocation();
+
+  // =========================================================
+  // CHECK ACTIVE ROUTE
+  // =========================================================
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   // =========================================================
   // ESCAPE KEY
@@ -70,6 +84,44 @@ const Navbar = () => {
   // =========================================================
 
   const logoSrc = "/images/dark_logo.png";
+
+  // =========================================================
+  // DESKTOP LINK CLASS
+  // =========================================================
+
+  const desktopLinkClass = (path) => `
+    relative
+    text-sm
+    transition-all
+    duration-300
+    hover:opacity-75
+    ${
+      isActive(path)
+        ? "font-semibold"
+        : "font-medium"
+    }
+  `;
+
+  // =========================================================
+  // MOBILE LINK CLASS
+  // =========================================================
+
+  const mobileLinkClass = (path) => `
+    flex
+    items-center
+    justify-between
+    rounded-lg
+    px-4
+    py-3
+    text-sm
+    transition-all
+    duration-300
+    ${
+      isActive(path)
+        ? "font-semibold"
+        : "font-medium"
+    }
+  `;
 
   return (
     <>
@@ -136,130 +188,248 @@ const Navbar = () => {
 
             <Link
               to="/"
-              className="
-                text-sm
-                font-semibold
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
+              className={desktopLinkClass("/")}
               style={{
-                color: "var(--brand)",
+                color: isActive("/")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
               }}
             >
               Home
+
+              {isActive("/") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
             {/* ABOUT */}
 
             <Link
               to="/about"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/about")}
+              style={{
+                color: isActive("/about")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               About
+
+              {isActive("/about") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
             {/* CONFERENCES */}
 
             <Link
               to="/conferences"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/conferences")}
+              style={{
+                color: isActive("/conferences")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Conferences
+
+              {isActive("/conferences") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
             {/* SPEAKERS */}
 
             <Link
               to="/speakers"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/speakers")}
+              style={{
+                color: isActive("/speakers")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Speakers
+
+              {isActive("/speakers") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
             {/* REVIEWS */}
 
             <Link
               to="/reviews"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/reviews")}
+              style={{
+                color: isActive("/reviews")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Reviews
+
+              {isActive("/reviews") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
-            {/* TERMS AND CONDITIONS */}
+            {/* TERMS */}
 
             <Link
               to="/terms"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/terms")}
+              style={{
+                color: isActive("/terms")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Terms & Conditions
+
+              {isActive("/terms") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
-            {/* GLOBAL PRIVACY POLICY */}
+            {/* PRIVACY */}
 
             <Link
               to="/privacy"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/privacy")}
+              style={{
+                color: isActive("/privacy")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Global Privacy Policy
+
+              {isActive("/privacy") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
             {/* CONTACT */}
 
             <Link
               to="/contact"
-              className="
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-                hover:opacity-75
-              "
-              style={navTextStyle}
+              className={desktopLinkClass("/contact")}
+              style={{
+                color: isActive("/contact")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+              }}
             >
               Contact
+
+              {isActive("/contact") && (
+                <span
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    right-0
+                    mx-auto
+                    h-[2px]
+                    rounded-full
+                  "
+                  style={{
+                    backgroundColor: "var(--brand)",
+                  }}
+                />
+              )}
             </Link>
 
           </nav>
@@ -352,24 +522,17 @@ const Navbar = () => {
             <Link
               to="/"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-semibold
-                transition-all
-                duration-300
-              "
+              className={mobileLinkClass("/")}
               style={{
-                color: "var(--brand)",
+                color: isActive("/")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
               }}
             >
               <span>Home</span>
-
               <ChevronRight size={16} />
             </Link>
 
@@ -378,22 +541,17 @@ const Navbar = () => {
             <Link
               to="/about"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/about")}
+              style={{
+                color: isActive("/about")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/about")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>About</span>
-
               <ChevronRight size={16} />
             </Link>
 
@@ -402,22 +560,17 @@ const Navbar = () => {
             <Link
               to="/conferences"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/conferences")}
+              style={{
+                color: isActive("/conferences")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/conferences")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Conferences</span>
-
               <ChevronRight size={16} />
             </Link>
 
@@ -426,22 +579,17 @@ const Navbar = () => {
             <Link
               to="/speakers"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/speakers")}
+              style={{
+                color: isActive("/speakers")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/speakers")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Speakers</span>
-
               <ChevronRight size={16} />
             </Link>
 
@@ -450,70 +598,55 @@ const Navbar = () => {
             <Link
               to="/reviews"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/reviews")}
+              style={{
+                color: isActive("/reviews")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/reviews")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Reviews</span>
-
               <ChevronRight size={16} />
             </Link>
 
-            {/* TERMS AND CONDITIONS */}
+            {/* TERMS */}
 
             <Link
               to="/terms"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/terms")}
+              style={{
+                color: isActive("/terms")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/terms")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Terms & Conditions</span>
-
               <ChevronRight size={16} />
             </Link>
 
-            {/* GLOBAL PRIVACY POLICY */}
+            {/* PRIVACY */}
 
             <Link
               to="/privacy"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/privacy")}
+              style={{
+                color: isActive("/privacy")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/privacy")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Global Privacy Policy</span>
-
               <ChevronRight size={16} />
             </Link>
 
@@ -522,22 +655,17 @@ const Navbar = () => {
             <Link
               to="/contact"
               onClick={closeMobileMenu}
-              className="
-                flex
-                items-center
-                justify-between
-                rounded-lg
-                px-4
-                py-3
-                text-sm
-                font-medium
-                transition-all
-                duration-300
-              "
-              style={navTextStyle}
+              className={mobileLinkClass("/contact")}
+              style={{
+                color: isActive("/contact")
+                  ? "var(--brand)"
+                  : "var(--text-secondary)",
+                backgroundColor: isActive("/contact")
+                  ? "var(--bg-secondary)"
+                  : "transparent",
+              }}
             >
               <span>Contact</span>
-
               <ChevronRight size={16} />
             </Link>
 

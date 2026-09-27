@@ -1,11 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
-
 import Conferences from "./pages/Conferences";
 import Speakers from "./pages/Speakers";
 import ConferenceDetails from "./pages/ConferenceDetails";
-
 
 import Reviews from "./pages/Reviews";
 import Terms from "./pages/Terms";
@@ -13,13 +11,13 @@ import Privacy from "./pages/Privacy";
 
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
+import Chatbot from "./components/common/Chatbot";
+
 import About from "./pages/About";
 import DownloadBrochure from "./pages/DownloadBrochure";
 import AbstractSubmissionPage from "./pages/AbstractSubmissionPage";
 import ContactPage from "./pages/Contact";
 import RegisterPage from "./pages/RegisterPage";
-
-
 
 const App = () => {
   return (
@@ -27,38 +25,106 @@ const App = () => {
       <Navbar />
 
       <Routes>
-        {/* Home */}
+        {/* =====================================================
+            HOME
+        ====================================================== */}
         <Route path="/" element={<Home />} />
 
-        {/* About */}
+        {/* =====================================================
+            ABOUT
+        ====================================================== */}
         <Route path="/about" element={<About />} />
 
-        {/* Conferences */}
-        <Route path="/conferences" element={<Conferences />} />
+        {/* =====================================================
+            CONFERENCES
+        ====================================================== */}
+        <Route
+          path="/conferences"
+          element={<Conferences />}
+        />
 
-        {/* Conference Details */}
-        <Route path="/conference/:id" element={<ConferenceDetails />} />
-        <Route path="/conferences/:id/register" element={<RegisterPage />} />
-        <Route path="/conferences/:id/abstract-submission" element={<AbstractSubmissionPage />} />
-        <Route path="/conferences/:id/brochure" element={<DownloadBrochure />} />
+        {/* =====================================================
+            CONFERENCE DETAILS
+        ====================================================== */}
+        <Route
+          path="/conference/:id"
+          element={<ConferenceDetails />}
+        />
 
-        {/* Speakers */}
-        <Route path="/speakers" element={<Speakers />} />
+        {/* =====================================================
+            REGISTER
+        ====================================================== */}
+        <Route
+          path="/conferences/:id/register"
+          element={<RegisterPage />}
+        />
 
-        {/* Reviews */}
-        <Route path="/reviews" element={<Reviews />} />
+        {/* =====================================================
+            ABSTRACT SUBMISSION
+        ====================================================== */}
+        <Route
+          path="/conferences/:id/abstract-submission"
+          element={<AbstractSubmissionPage />}
+        />
 
-        {/* Terms and Conditions */}
-        <Route path="/terms" element={<Terms />} />
+        {/* =====================================================
+            BROCHURE
+        ====================================================== */}
+        <Route
+          path="/conferences/:id/brochure"
+          element={<DownloadBrochure />}
+        />
 
-        {/* Global Privacy Policy */}
-        <Route path="/privacy" element={<Privacy />} />
+        {/* =====================================================
+            SPEAKERS
+        ====================================================== */}
+        <Route
+          path="/speakers"
+          element={<Speakers />}
+        />
 
-        {/* Contact */}
-        <Route path="/contact" element={<ContactPage />} />
+        {/* =====================================================
+            REVIEWS
+        ====================================================== */}
+        <Route
+          path="/reviews"
+          element={<Reviews />}
+        />
+
+        {/* =====================================================
+            TERMS & CONDITIONS
+        ====================================================== */}
+        <Route
+          path="/terms"
+          element={<Terms />}
+        />
+
+        {/* =====================================================
+            GLOBAL PRIVACY POLICY
+        ====================================================== */}
+        <Route
+          path="/privacy"
+          element={<Privacy />}
+        />
+
+        {/* =====================================================
+            CONTACT
+        ====================================================== */}
+        <Route
+          path="/contact"
+          element={<ContactPage />}
+        />
       </Routes>
 
       <Footer />
+
+      {/* =====================================================
+          GLOBAL FLOATING CHATBOT
+
+          This is outside Routes, so it appears on
+          every page automatically.
+      ====================================================== */}
+      <Chatbot />
     </div>
   );
 };
