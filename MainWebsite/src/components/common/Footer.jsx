@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
 
 const violetFilter =
@@ -49,6 +50,38 @@ const Footer = () => {
       duration: 0.15,
     },
   };
+
+  const quickLinks = [
+    ["Home", "/"],
+    ["Conferences", "/conferences"],
+    ["Speakers", "/speakers"],
+    ["Reviews", "/reviews"],
+    ["About", "/about"],
+    ["Contact", "/contact"],
+  ];
+
+  const conferenceLinks = [
+    ["Upcoming Events", "/conferences"],
+    ["Past Conferences", "/conferences"],
+    ["Conference Themes", "/conferences"],
+    ["Submit Abstract", "/abstract"],
+    ["Register Now", "/register"],
+  ];
+
+  const resourceLinks = [
+    ["FAQ", "/faq"],
+    ["Help Center", "/contact"],
+    ["Terms & Conditions", "/terms"],
+    ["Privacy Policy", "/privacy"],
+    ["Sitemap", "/sitemap"],
+  ];
+
+  const socialLinks = [
+    ["linkedin.svg", "LinkedIn", "#"],
+    ["instagram.svg", "Instagram", "#"],
+    ["youtube.svg", "YouTube", "#"],
+    ["facebook.svg", "Facebook", "#"],
+  ];
 
   return (
     <footer
@@ -321,56 +354,55 @@ const Footer = () => {
               BRAND
           ===================================================== */}
           <motion.div variants={fadeUp}>
-            <motion.a
-              href="/"
-              whileHover={{
-                x: 3,
-              }}
-              transition={{
-                duration: 0.2,
-              }}
-              className="mb-3 inline-flex items-center gap-2.5"
+            <motion.div
+              {...linkHover}
+              className="mb-3 inline-flex"
             >
-              <motion.div
-                whileHover={{
-                  scale: 1.06,
-                  rotate: 4,
-                }}
-                className="flex h-9 w-9 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: "#DDD6FE",
-                }}
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2.5"
               >
-                <span
-                  className="text-lg font-bold"
+                <motion.div
+                  whileHover={{
+                    scale: 1.06,
+                    rotate: 4,
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full"
                   style={{
-                    color: violet,
+                    backgroundColor: "#DDD6FE",
                   }}
                 >
-                  G
-                </span>
-              </motion.div>
+                  <span
+                    className="text-lg font-bold"
+                    style={{
+                      color: violet,
+                    }}
+                  >
+                    G
+                  </span>
+                </motion.div>
 
-              <div>
-                <h2
-                  className="text-[16px] font-bold leading-tight"
-                  style={{
-                    color: violet,
-                  }}
-                >
-                  GlobalScion
-                </h2>
+                <div>
+                  <h2
+                    className="text-[16px] font-bold leading-tight"
+                    style={{
+                      color: violet,
+                    }}
+                  >
+                    GlobalScion
+                  </h2>
 
-                <p
-                  className="text-[11px]"
-                  style={{
-                    color: textColor,
-                  }}
-                >
-                  Conferences
-                </p>
-              </div>
-            </motion.a>
+                  <p
+                    className="text-[11px]"
+                    style={{
+                      color: textColor,
+                    }}
+                  >
+                    Conferences
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
 
             <p
               className="max-w-xs text-[12px] leading-5"
@@ -384,15 +416,10 @@ const Footer = () => {
 
             {/* SOCIAL ICONS */}
             <div className="mt-4 flex items-center gap-2.5">
-              {[
-                ["linkedin.svg", "LinkedIn"],
-                ["instagram.svg", "Instagram"],
-                ["youtube.svg", "YouTube"],
-                ["facebook.svg", "Facebook"],
-              ].map(([icon, label]) => (
+              {socialLinks.map(([icon, label, href]) => (
                 <motion.a
                   key={label}
-                  href="#"
+                  href={href}
                   aria-label={label}
                   whileHover={{
                     y: -3,
@@ -439,31 +466,25 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {[
-                ["Home", "/"],
-                ["Conferences", "/conferences"],
-                ["Speakers", "/speakers"],
-                ["Program", "/program"],
-                ["About", "/about"],
-                ["Contact", "/contact"],
-              ].map(([label, href]) => (
+              {quickLinks.map(([label, href]) => (
                 <li key={label}>
-                  <motion.a
-                    href={href}
-                    {...linkHover}
-                    className="inline-block transition-colors"
-                    style={{
-                      color: textColor,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = violet;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = textColor;
-                    }}
-                  >
-                    {label}
-                  </motion.a>
+                  <motion.div {...linkHover}>
+                    <Link
+                      to={href}
+                      className="inline-block transition-colors"
+                      style={{
+                        color: textColor,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = violet;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = textColor;
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  </motion.div>
                 </li>
               ))}
             </ul>
@@ -488,30 +509,25 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {[
-                ["Upcoming Events", "/conferences"],
-                ["Past Conferences", "/past-conferences"],
-                ["Conference Themes", "/conference-themes"],
-                ["Submit Abstract", "/submit-abstract"],
-                ["Register Now", "/register"],
-              ].map(([label, href]) => (
+              {conferenceLinks.map(([label, href]) => (
                 <li key={label}>
-                  <motion.a
-                    href={href}
-                    {...linkHover}
-                    className="inline-block transition-colors"
-                    style={{
-                      color: textColor,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = violet;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = textColor;
-                    }}
-                  >
-                    {label}
-                  </motion.a>
+                  <motion.div {...linkHover}>
+                    <Link
+                      to={href}
+                      className="inline-block transition-colors"
+                      style={{
+                        color: textColor,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = violet;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = textColor;
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  </motion.div>
                 </li>
               ))}
             </ul>
@@ -536,30 +552,25 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {[
-                ["FAQ", "/faq"],
-                ["Help Center", "/help-center"],
-                ["Terms & Conditions", "/terms"],
-                ["Privacy Policy", "/privacy"],
-                ["Sitemap", "/sitemap"],
-              ].map(([label, href]) => (
+              {resourceLinks.map(([label, href]) => (
                 <li key={label}>
-                  <motion.a
-                    href={href}
-                    {...linkHover}
-                    className="inline-block transition-colors"
-                    style={{
-                      color: textColor,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = violet;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = textColor;
-                    }}
-                  >
-                    {label}
-                  </motion.a>
+                  <motion.div {...linkHover}>
+                    <Link
+                      to={href}
+                      className="inline-block transition-colors"
+                      style={{
+                        color: textColor,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = violet;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = textColor;
+                      }}
+                    >
+                      {label}
+                    </Link>
+                  </motion.div>
                 </li>
               ))}
             </ul>
@@ -764,11 +775,8 @@ const Footer = () => {
           </p>
 
           <div className="flex flex-wrap items-center gap-3.5">
-            <motion.a
-              href="/terms"
-              whileHover={{
-                y: -1,
-              }}
+            <Link
+              to="/terms"
               className="transition-colors"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = violet;
@@ -778,7 +786,7 @@ const Footer = () => {
               }}
             >
               Terms & Conditions
-            </motion.a>
+            </Link>
 
             <span
               className="h-3 w-px"
@@ -787,11 +795,8 @@ const Footer = () => {
               }}
             />
 
-            <motion.a
-              href="/privacy"
-              whileHover={{
-                y: -1,
-              }}
+            <Link
+              to="/privacy"
               className="transition-colors"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = violet;
@@ -801,7 +806,7 @@ const Footer = () => {
               }}
             >
               Privacy Policy
-            </motion.a>
+            </Link>
 
             <span
               className="h-3 w-px"
@@ -810,11 +815,8 @@ const Footer = () => {
               }}
             />
 
-            <motion.a
-              href="/help-center"
-              whileHover={{
-                y: -1,
-              }}
+            <Link
+              to="/help-center"
               className="transition-colors"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = violet;
@@ -824,7 +826,7 @@ const Footer = () => {
               }}
             >
               Help Center
-            </motion.a>
+            </Link>
           </div>
         </div>
       </motion.div>

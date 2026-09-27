@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -47,7 +46,8 @@ const conferences = [
   },
   {
     id: "healthcare-innovation",
-    title: "Healthcare Innovation, Precision Medicine & AI",
+    title:
+      "Healthcare Innovation, Precision Medicine & AI",
     category: "Healthcare Innovation",
     date: "July 20–21, 2027",
     location: "Barcelona, Spain",
@@ -56,7 +56,8 @@ const conferences = [
   },
   {
     id: "nutrition-wellness",
-    title: "International Conference on Food, Nutrition & Wellness",
+    title:
+      "International Conference on Food, Nutrition & Wellness",
     category: "Nutrition & Wellness",
     date: "August 10–11, 2027",
     location: "Paris, France",
@@ -68,25 +69,50 @@ const conferences = [
 const Conferences = () => {
   const navigate = useNavigate();
 
+  // ==========================================================
+  // COLORS
+  // ==========================================================
+
   const colors = {
     pageBg: "#FFFFFF",
     headerBg: "#FAF7FF",
+
     eyebrow: "#7C3AED",
     heading: "#4C1D95",
     description: "#4B5563",
+
     sectionBg: "#FFFFFF",
+
     cardBg: "#FFFFFF",
     cardBorder: "#E9DDFB",
+
     cardShadow: "0 2px 10px rgba(124,58,237,0.04)",
-    cardHoverShadow: "0 18px 40px rgba(124,58,237,0.12)",
+    cardHoverShadow:
+      "0 18px 40px rgba(124,58,237,0.12)",
+
     cardTitle: "#4C1D95",
     infoText: "#4B5563",
+
     icon: "#7C3AED",
+
     badgeBg: "rgba(255,255,255,0.95)",
     badgeText: "#7C3AED",
+
     button: "#7C3AED",
     buttonHover: "#5B21B6",
   };
+
+  // ==========================================================
+  // NAVIGATE TO CONFERENCE DETAILS
+  // ==========================================================
+
+  const handleConferenceClick = (id) => {
+    navigate(`/conference/${id}`);
+  };
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <main
@@ -95,18 +121,22 @@ const Conferences = () => {
         backgroundColor: colors.pageBg,
       }}
     >
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
+
       <section
         className="
           relative
           overflow-hidden
-          py-20
           px-6
+          py-20
         "
         style={{
           backgroundColor: colors.headerBg,
         }}
       >
-        <div className="relative max-w-7xl mx-auto text-center">
+        <div className="relative mx-auto max-w-7xl text-center">
           <motion.p
             initial={{
               opacity: 0,
@@ -122,8 +152,8 @@ const Conferences = () => {
             className="
               text-sm
               font-semibold
-              tracking-[0.2em]
               uppercase
+              tracking-[0.2em]
             "
             style={{
               color: colors.eyebrow,
@@ -148,8 +178,8 @@ const Conferences = () => {
             className="
               mt-3
               text-4xl
-              md:text-5xl
               font-bold
+              md:text-5xl
             "
             style={{
               color: colors.heading,
@@ -172,25 +202,30 @@ const Conferences = () => {
               delay: 0.2,
             }}
             className="
-              max-w-2xl
               mx-auto
               mt-5
+              max-w-2xl
               leading-7
             "
             style={{
               color: colors.description,
             }}
           >
-            Discover global conferences bringing together researchers,
-            healthcare professionals, academics and industry leaders.
+            Discover global conferences bringing together
+            researchers, healthcare professionals, academics
+            and industry leaders.
           </motion.p>
         </div>
       </section>
 
+      {/* ======================================================
+          CONFERENCES
+      ====================================================== */}
+
       <section
         className="
-          py-20
           px-6
+          py-20
         "
         style={{
           backgroundColor: colors.sectionBg,
@@ -198,12 +233,12 @@ const Conferences = () => {
       >
         <div
           className="
-            max-w-7xl
             mx-auto
             grid
+            max-w-7xl
+            gap-8
             md:grid-cols-2
             lg:grid-cols-3
-            gap-8
           "
         >
           {conferences.map((conference, index) => (
@@ -219,22 +254,42 @@ const Conferences = () => {
               }}
               viewport={{
                 once: true,
+                amount: 0.1,
               }}
               transition={{
                 delay: index * 0.08,
+                duration: 0.55,
               }}
               whileHover={{
                 y: -7,
                 boxShadow: colors.cardHoverShadow,
               }}
+              onClick={() =>
+                handleConferenceClick(conference.id)
+              }
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === " "
+                ) {
+                  e.preventDefault();
+                  handleConferenceClick(conference.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
               className="
                 group
+                cursor-pointer
                 overflow-hidden
                 rounded-2xl
                 border
                 shadow-sm
                 transition-all
                 duration-500
+                focus:outline-none
+                focus:ring-2
+                focus:ring-[#7C3AED]/30
               "
               style={{
                 backgroundColor: colors.cardBg,
@@ -242,6 +297,10 @@ const Conferences = () => {
                 boxShadow: colors.cardShadow,
               }}
             >
+              {/* ==================================================
+                  IMAGE
+              ================================================== */}
+
               <div
                 className="
                   relative
@@ -253,12 +312,12 @@ const Conferences = () => {
                   src={conference.image}
                   alt={conference.title}
                   className="
-                    w-full
                     h-full
+                    w-full
                     object-cover
-                    group-hover:scale-105
                     transition-transform
                     duration-700
+                    group-hover:scale-105
                   "
                 />
 
@@ -273,14 +332,16 @@ const Conferences = () => {
                   "
                 />
 
+                {/* CATEGORY */}
+
                 <span
                   className="
                     absolute
                     bottom-4
                     left-4
+                    rounded-full
                     px-3
                     py-1.5
-                    rounded-full
                     text-xs
                     font-semibold
                     shadow-sm
@@ -294,7 +355,13 @@ const Conferences = () => {
                 </span>
               </div>
 
+              {/* ==================================================
+                  CONTENT
+              ================================================== */}
+
               <div className="p-6">
+                {/* TITLE */}
+
                 <h2
                   className="
                     text-xl
@@ -308,7 +375,11 @@ const Conferences = () => {
                   {conference.title}
                 </h2>
 
+                {/* INFORMATION */}
+
                 <div className="mt-5 space-y-3">
+                  {/* DATE */}
+
                   <div
                     className="
                       flex
@@ -322,12 +393,18 @@ const Conferences = () => {
                   >
                     <CalendarDays
                       size={17}
+                      strokeWidth={2}
                       style={{
                         color: colors.icon,
                       }}
                     />
-                    {conference.date}
+
+                    <span>
+                      {conference.date}
+                    </span>
                   </div>
+
+                  {/* LOCATION */}
 
                   <div
                     className="
@@ -342,18 +419,34 @@ const Conferences = () => {
                   >
                     <MapPin
                       size={17}
+                      strokeWidth={2}
                       style={{
                         color: colors.icon,
                       }}
                     />
-                    {conference.location}
+
+                    <span>
+                      {conference.location}
+                    </span>
                   </div>
                 </div>
 
+                {/* ==================================================
+                    VIEW CONFERENCE
+                ================================================== */}
+
                 <button
-                  onClick={() =>
-                    navigate(`/conference/${conference.id}`)
-                  }
+                  type="button"
+                  onClick={(e) => {
+                    // Prevent the parent card click
+                    // from firing twice.
+                    e.stopPropagation();
+
+                    // SAME navigation as card click.
+                    handleConferenceClick(
+                      conference.id
+                    );
+                  }}
                   className="
                     mt-6
                     inline-flex
@@ -370,18 +463,28 @@ const Conferences = () => {
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color =
                       colors.buttonHover;
+
                     e.currentTarget.style.transform =
                       "translateX(3px)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color =
                       colors.button;
+
                     e.currentTarget.style.transform =
                       "translateX(0)";
                   }}
                 >
                   View Conference
-                  <ArrowRight size={17} />
+
+                  <ArrowRight
+                    size={17}
+                    className="
+                      transition-transform
+                      duration-300
+                      group-hover:translate-x-1
+                    "
+                  />
                 </button>
               </div>
             </motion.article>
