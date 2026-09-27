@@ -3,11 +3,8 @@ import {
   CalendarDays,
   CheckSquare,
   FileText,
-  Globe2,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
-  PhoneCall,
   UserCircle,
   Users,
   UserRound,
@@ -42,19 +39,19 @@ const menuItems = [
     icon: Users,
   },
   {
-    name: "Tasks",
-    path: "/tasks",
+    name: "Attendance",
+    path: "/attendance",
     icon: CheckSquare,
   },
   {
-    name: "Follow-ups",
-    path: "/follow-ups",
-    icon: PhoneCall,
+    name: "Notifications",
+    path: "/notifications",
+    icon: Bell,
   },
   {
-    name: "Communications",
-    path: "/communications",
-    icon: MessageSquare,
+    name: "My Profile",
+    path: "/profile",
+    icon: UserCircle,
   },
 ];
 
@@ -71,41 +68,45 @@ function Sidebar() {
     });
   };
 
+  const navClass = ({ isActive }) =>
+    `group flex h-[40px] items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 ${
+      isActive
+        ? "bg-purple-50 text-[#7C3AED]"
+        : "text-gray-600 hover:bg-gray-50 hover:text-[#7C3AED]"
+    }`;
+
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-screen w-[265px] flex-col overflow-hidden border-r border-[#292740] bg-[#111025] text-white">
-
-      {/* Logo */}
-      <div className="border-b border-[#292740] px-5 py-5">
-        <div className="flex items-center gap-3">
-
-          {/* Logo Icon */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6d43e8] shadow-sm">
-            <Globe2
-              size={22}
-              strokeWidth={2}
-              className="text-white"
-            />
-          </div>
-
-          {/* Brand */}
-          <div className="min-w-0">
-            <h1 className="text-[17px] font-bold leading-tight tracking-tight text-white">
-              GlobalScion
-            </h1>
-
-            <p className="mt-0.5 text-[10px] font-medium text-[#85829f]">
-              Conference Management
-            </p>
-          </div>
-
-        </div>
+    <aside
+      className="
+        fixed
+        left-0
+        top-0
+        z-50
+        flex
+        h-screen
+        w-[220px]
+        flex-col
+        border-r
+        border-gray-200
+        bg-white
+      "
+    >
+      {/* =====================================================
+          LOGO
+      ====================================================== */}
+      <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
+        <img
+          src="/web_logo.png"
+          alt="GlobalScion"
+          className="h-9 w-auto object-contain"
+        />
       </div>
 
-      {/* Navigation */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 [scrollbar-color:#85838f_#111025] [scrollbar-width:thin]">
-
-        <nav className="space-y-1">
-
+      {/* =====================================================
+          MAIN NAVIGATION
+      ====================================================== */}
+      <nav className="flex-1 overflow-hidden px-3 py-2">
+        <div className="space-y-0.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
 
@@ -113,82 +114,67 @@ function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={({ isActive }) =>
-                  `flex h-[44px] items-center gap-3 rounded-xl px-3 text-[14px] transition ${
-                    isActive
-                      ? "bg-[#6d43e8] font-medium text-white shadow-sm"
-                      : "text-[#9997b5] hover:bg-[#1b1931] hover:text-white"
-                  }`
-                }
+                className={navClass}
               >
-                <Icon
-                  size={18}
-                  strokeWidth={1.7}
-                />
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={18}
+                      strokeWidth={isActive ? 2.4 : 2}
+                      className={`shrink-0 transition-colors ${
+                        isActive
+                          ? "text-[#7C3AED]"
+                          : "text-gray-500 group-hover:text-[#7C3AED]"
+                      }`}
+                    />
 
-                <span>{item.name}</span>
+                    <span className="truncate">{item.name}</span>
+                  </>
+                )}
               </NavLink>
             );
           })}
+        </div>
+      </nav>
 
-        </nav>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="border-t border-[#292740] px-3 py-3">
-
-        {/* Notifications */}
-        <NavLink
-          to="/notifications"
-          className={({ isActive }) =>
-            `flex h-[44px] items-center gap-3 rounded-xl px-3 text-[14px] transition ${
-              isActive
-                ? "bg-[#6d43e8] font-medium text-white"
-                : "text-[#9997b5] hover:bg-[#1b1931] hover:text-white"
-            }`
-          }
-        >
-          <Bell
-            size={18}
-            strokeWidth={1.7}
-          />
-
-          <span>Notifications</span>
-        </NavLink>
-
-        {/* Profile */}
-        <NavLink
-          to="/profile"
-          className={({ isActive }) =>
-            `mt-1 flex h-[42px] items-center gap-3 rounded-xl px-3 text-[14px] transition ${
-              isActive
-                ? "bg-[#7045e9] font-medium text-white"
-                : "text-[#9997b5] hover:bg-[#1b1931] hover:text-white"
-            }`
-          }
-        >
-          <UserCircle
-            size={19}
-            strokeWidth={1.7}
-          />
-
-          <span>My Profile</span>
-        </NavLink>
-
-        {/* Logout */}
+      {/* =====================================================
+          LOGOUT
+      ====================================================== */}
+      <div className="shrink-0 border-t border-gray-100 px-3 py-2">
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-1 flex h-[42px] w-full items-center gap-3 rounded-xl px-3 text-[14px] text-[#9997b5] transition hover:bg-[#1b1931] hover:text-white"
+          className="
+            group
+            flex
+            h-[40px]
+            w-full
+            items-center
+            gap-2.5
+            rounded-lg
+            px-2.5
+            text-[13px]
+            font-medium
+            text-gray-600
+            transition-all
+            duration-200
+            hover:bg-red-50
+            hover:text-red-500
+          "
         >
           <LogOut
             size={18}
-            strokeWidth={1.7}
+            strokeWidth={2}
+            className="
+              shrink-0
+              text-gray-500
+              transition-colors
+              group-hover:text-red-500
+            "
           />
 
           <span>Logout</span>
         </button>
-
       </div>
     </aside>
   );

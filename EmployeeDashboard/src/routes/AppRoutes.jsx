@@ -8,12 +8,10 @@ import MyConference from "../Pages/MyConference";
 import Speakers from "../Pages/Speakers";
 import Abstracts from "../Pages/Abstracts";
 import Registrations from "../Pages/Registrations";
-import Tasks from "../Pages/Tasks";
-import FollowUps from "../Pages/FollowUps";
-import Communications from "../Pages/Communications";
 import Notifications from "../Pages/Notifications";
 import Profile from "../Pages/Profile";
-import MainLayout from "../layouts/mainLayout";
+import MainLayout from "../layouts/MainLayout";
+import Attendance from "../Pages/Attendance";
 
 function ProtectedRoute({ children }) {
   const isLoggedIn =
@@ -81,19 +79,9 @@ function AppRoutes() {
           element={<Registrations />}
         />
 
-        <Route
-          path="/tasks"
-          element={<Tasks />}
-        />
-
-        <Route
-          path="/follow-ups"
-          element={<FollowUps />}
-        />
-
-        <Route
-          path="/communications"
-          element={<Communications />}
+         <Route
+          path="/attendance"
+          element={<Attendance/>}
         />
 
         <Route

@@ -5,13 +5,21 @@ import Sidebar from "../components/Sidebar";
 
 function MainLayout() {
   return (
-    <div className="min-h-screen bg-[#f7f7fb]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f7f7fb]">
+      {/* =====================================================
+          SIDEBAR
+      ====================================================== */}
       <Sidebar />
 
-      <div className="ml-[265px]">
+      {/* =====================================================
+          MAIN CONTENT AREA
+      ====================================================== */}
+      <div className="ml-[220px] min-h-screen min-w-0">
+        {/* Navbar */}
         <Navbar />
 
-        <main>
+        {/* Page Content */}
+        <main className="min-w-0">
           <Outlet />
         </main>
       </div>
