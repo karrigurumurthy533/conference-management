@@ -50,7 +50,7 @@ const About = () => {
     decorativeShape: "#EDE9FE",
     imageBackground: "#FFFFFF",
     imageShadow: "0 20px 50px rgba(124,58,237,0.15)",
-    aboutImage: "/images/about.png",
+    aboutImage: "/images/dark_about.png",
   };
 
   return (

@@ -9,9 +9,6 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
 
-      
-
-      {/* Hero Carousel */}
       <section id="home">
         <HeroSection />
       </section>

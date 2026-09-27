@@ -276,9 +276,6 @@ const About = () => {
                 </div>
               </div>
             </motion.div>
-
-            {/* CONTENT */}
-
             <motion.div
               initial={{
                 opacity: 0,
@@ -393,10 +390,6 @@ const About = () => {
           </div>
         </div>
       </section>
-
-      {/* =====================================================
-          MISSION
-      ===================================================== */}
 
       <section
         className="px-6 py-12"

@@ -88,7 +88,7 @@ const WhyChooseGlobalScion = () => {
     iconHoverShadow: "0 10px 24px rgba(124,58,237,0.25)",
   };
 
-  const mapImage = "/images/map.png";
+  const mapImage = "/images/dark_map.png";
 
   return (
     <section

@@ -106,21 +106,6 @@ const HeroSection = () => {
                   className="transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
-
-              <Link
-                to="/conferences"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 hover:bg-white/20 backdrop-blur-md px-7 py-3.5 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <span>Register Now</span>
-              </Link>
-
-              <Link
-                to="/conferences"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-400/30 bg-violet-950/50 hover:bg-violet-900/60 backdrop-blur-md px-6 py-3.5 text-sm sm:text-base font-bold text-violet-200 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <Award size={18} className="text-violet-400" />
-                <span>Submit Abstract</span>
-              </Link>
             </motion.div>
           </motion.div>
         </div>
