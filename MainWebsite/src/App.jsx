@@ -1,15 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 
-import Home from "./Pages/Home";
+import Home from "./pages/Home";
 
 import Conferences from "./pages/Conferences";
-import Speakers from "./Pages/Speakers";
+import Speakers from "./pages/Speakers";
 import ConferenceDetails from "./pages/ConferenceDetails";
 
 
-import Reviews from "./Pages/Reviews";
-import Terms from "./Pages/Terms";
-import Privacy from "./Pages/Privacy";
+import Reviews from "./pages/Reviews";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
