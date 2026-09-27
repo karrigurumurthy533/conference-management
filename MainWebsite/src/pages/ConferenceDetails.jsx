@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -120,64 +119,65 @@ const ConferenceDetails = () => {
     finalIcon: "#DDD6FE",
   };
 
-  /*
-   * =========================================================
-   * DYNAMIC COUNTDOWN
-   * =========================================================
-   * Countdown uses the conference startDate.
-   *
-   * Days, Hours and Minutes are recalculated every second.
-   * Seconds are intentionally not displayed.
-   */
+  /* =========================================================
+     DYNAMIC COUNTDOWN
+     ========================================================= */
+
   const calculateTimeLeft = () => {
     if (!conference?.startDate) {
       return {
         days: 0,
         hours: 0,
         minutes: 0,
+        seconds: 0,
       };
     }
 
-    const targetTime = new Date(
-      conference.startDate
-    ).getTime();
+    const targetTime = new Date(conference.startDate).getTime();
 
-    const currentTime = Date.now();
+    if (Number.isNaN(targetTime)) {
+      console.error("Invalid conference startDate:", conference.startDate);
 
-    const difference = targetTime - currentTime;
+      return {
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      };
+    }
+
+    const difference = targetTime - Date.now();
 
     if (difference <= 0) {
       return {
         days: 0,
         hours: 0,
         minutes: 0,
+        seconds: 0,
       };
     }
 
     return {
-      days: Math.floor(
-        difference / (1000 * 60 * 60 * 24)
-      ),
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
 
-      hours: Math.floor(
-        (difference / (1000 * 60 * 60)) % 24
-      ),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
 
-      minutes: Math.floor(
-        (difference / (1000 * 60)) % 60
-      ),
+      minutes: Math.floor((difference / (1000 * 60)) % 60),
+
+      seconds: Math.floor((difference / 1000) % 60),
     };
   };
-
-  const [timeLeft, setTimeLeft] = useState(
-    calculateTimeLeft()
-  );
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
     if (!conference?.startDate) {
       return;
     }
 
+    // Update immediately
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every second
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
@@ -186,6 +186,10 @@ const ConferenceDetails = () => {
       clearInterval(timer);
     };
   }, [conference?.startDate]);
+
+  /* =========================================================
+     INVALID CONFERENCE
+  ========================================================= */
 
   if (!conference) {
     return (
@@ -329,12 +333,10 @@ const ConferenceDetails = () => {
               color: colors.link,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color =
-                colors.linkHover;
+              e.currentTarget.style.color = colors.linkHover;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color =
-                colors.link;
+              e.currentTarget.style.color = colors.link;
             }}
           >
             <ArrowLeft size={13} />
@@ -371,10 +373,8 @@ const ConferenceDetails = () => {
               }}
               className="inline-flex rounded-full border px-2.5 py-1 text-[8px] font-bold backdrop-blur-md"
               style={{
-                backgroundColor:
-                  colors.categoryBg,
-                borderColor:
-                  "rgba(216,180,254,0.25)",
+                backgroundColor: colors.categoryBg,
+                borderColor: "rgba(216,180,254,0.25)",
                 color: colors.categoryText,
               }}
             >
@@ -387,8 +387,7 @@ const ConferenceDetails = () => {
               className="mt-2 max-w-3xl text-xl font-extrabold leading-[1.05] tracking-tight sm:text-2xl lg:text-3xl xl:text-4xl"
               style={{
                 color: colors.heading,
-                textShadow:
-                  "0 4px 20px rgba(0,0,0,0.45)",
+                textShadow: "0 4px 20px rgba(0,0,0,0.45)",
               }}
               initial={{
                 opacity: 0,
@@ -491,7 +490,9 @@ const ConferenceDetails = () => {
               />
             </motion.div>
 
-            {/* COUNTDOWN */}
+            {/* =================================================
+                COUNTDOWN
+            ================================================= */}
 
             <motion.div
               className="mt-3 max-w-xl"
@@ -512,8 +513,7 @@ const ConferenceDetails = () => {
                 <div
                   className="flex h-5 w-5 items-center justify-center rounded-md text-white"
                   style={{
-                    backgroundColor:
-                      colors.countdownIconBg,
+                    backgroundColor: colors.countdownIconBg,
                   }}
                 >
                   <Clock3 size={11} />
@@ -522,8 +522,7 @@ const ConferenceDetails = () => {
                 <p
                   className="text-[8px] font-bold uppercase tracking-[0.15em]"
                   style={{
-                    color:
-                      colors.countdownHeading,
+                    color: colors.countdownHeading,
                   }}
                 >
                   Conference Starts In
@@ -533,23 +532,21 @@ const ConferenceDetails = () => {
               <div
                 className="relative overflow-hidden rounded-lg border p-1.5 backdrop-blur-xl"
                 style={{
-                  borderColor:
-                    colors.countdownCardBorder,
-                  backgroundColor:
-                    colors.countdownCardBg,
-                  boxShadow:
-                    colors.countdownCardShadow,
+                  borderColor: colors.countdownCardBorder,
+                  backgroundColor: colors.countdownCardBg,
+                  boxShadow: colors.countdownCardShadow,
                 }}
               >
                 <div
                   className="absolute -right-6 -top-6 h-14 w-14 rounded-full"
                   style={{
-                    backgroundColor:
-                      colors.countdownDecor,
+                    backgroundColor: colors.countdownDecor,
                   }}
                 />
 
-                <div className="relative grid grid-cols-3 gap-1.5">
+                {/* 4 COUNTDOWN BOXES */}
+
+                <div className="relative grid grid-cols-4 gap-1.5">
                   <PremiumCountdownBox
                     value={timeLeft.days}
                     label="Days"
@@ -565,6 +562,12 @@ const ConferenceDetails = () => {
                   <PremiumCountdownBox
                     value={timeLeft.minutes}
                     label="Minutes"
+                    colors={colors}
+                  />
+
+                  <PremiumCountdownBox
+                    value={timeLeft.seconds}
+                    label="Seconds"
                     colors={colors}
                   />
                 </div>
@@ -601,8 +604,7 @@ const ConferenceDetails = () => {
                 <span
                   className="hidden text-[8px] font-medium sm:block"
                   style={{
-                    color:
-                      "rgba(255,255,255,0.60)",
+                    color: "rgba(255,255,255,0.60)",
                   }}
                 >
                   Explore & participate
@@ -617,9 +619,7 @@ const ConferenceDetails = () => {
                   colors={colors}
                   primary={false}
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/brochure`
-                    )
+                    navigate(`/conferences/${conference.id}/brochure`)
                   }
                 />
 
@@ -631,7 +631,7 @@ const ConferenceDetails = () => {
                   primary={false}
                   onClick={() =>
                     navigate(
-                      `/conferences/${conference.id}/abstract-submission`
+                      `/conferences/${conference.id}/abstract-submission`,
                     )
                   }
                 />
@@ -643,9 +643,7 @@ const ConferenceDetails = () => {
                   colors={colors}
                   primary
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/register`
-                    )
+                    navigate(`/conferences/${conference.id}/register`)
                   }
                 />
 
@@ -656,9 +654,7 @@ const ConferenceDetails = () => {
                   colors={colors}
                   primary={false}
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/scientific-program`
-                    )
+                    navigate(`/conferences/${conference.id}/scientific-program`)
                   }
                 />
               </div>
@@ -686,91 +682,85 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-4 lg:grid-cols-8">
-            {conference.speakers.map(
-              (speaker, index) => (
-                <motion.div
-                  key={speaker.name}
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.05,
-                  }}
-                  className="group text-center"
-                >
-                  <div className="relative mx-auto h-20 w-20 sm:h-24 sm:w-24">
-                    <div
-                      className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
-                      style={{
-                        borderColor:
-                          colors.speakerRing,
-                      }}
-                    />
+            {conference.speakers.map((speaker, index) => (
+              <motion.div
+                key={speaker.name}
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
+                transition={{
+                  delay: index * 0.05,
+                }}
+                className="group text-center"
+              >
+                <div className="relative mx-auto h-20 w-20 sm:h-24 sm:w-24">
+                  <div
+                    className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
+                    style={{
+                      borderColor: colors.speakerRing,
+                    }}
+                  />
 
+                  <img
+                    src={speaker.image}
+                    alt={speaker.name}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+
+                  <a
+                    href={speaker.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md"
+                    style={{
+                      borderColor: colors.featuredBg,
+                      backgroundColor: colors.primary,
+                    }}
+                  >
                     <img
-                      src={speaker.image}
-                      alt={speaker.name}
-                      className="h-full w-full rounded-full object-cover"
+                      src="/svgs/linkedin.svg"
+                      alt="LinkedIn"
+                      className="h-3 w-3"
                     />
+                  </a>
+                </div>
 
-                    <a
-                      href={speaker.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md"
-                      style={{
-                        borderColor:
-                          colors.featuredBg,
-                        backgroundColor:
-                          colors.primary,
-                      }}
-                    >
-                      <img
-                        src="/svgs/linkedin.svg"
-                        alt="LinkedIn"
-                        className="h-3 w-3"
-                      />
-                    </a>
-                  </div>
+                <h3
+                  className="mt-3 text-[11px] font-bold leading-4 sm:text-xs"
+                  style={{
+                    color: colors.speakerName,
+                  }}
+                >
+                  {speaker.name}
+                </h3>
 
-                  <h3
-                    className="mt-3 text-[11px] font-bold leading-4 sm:text-xs"
-                    style={{
-                      color: colors.speakerName,
-                    }}
-                  >
-                    {speaker.name}
-                  </h3>
+                <p
+                  className="mt-1 text-[9px] leading-3.5 sm:text-[10px]"
+                  style={{
+                    color: colors.speakerOrg,
+                  }}
+                >
+                  {speaker.organization}
+                </p>
 
-                  <p
-                    className="mt-1 text-[9px] leading-3.5 sm:text-[10px]"
-                    style={{
-                      color: colors.speakerOrg,
-                    }}
-                  >
-                    {speaker.organization}
-                  </p>
-
-                  <p
-                    className="mt-1 text-[9px] font-medium leading-3.5"
-                    style={{
-                      color:
-                        colors.speakerSpecialty,
-                    }}
-                  >
-                    {speaker.specialty}
-                  </p>
-                </motion.div>
-              )
-            )}
+                <p
+                  className="mt-1 text-[9px] font-medium leading-3.5"
+                  style={{
+                    color: colors.speakerSpecialty,
+                  }}
+                >
+                  {speaker.specialty}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -819,10 +809,7 @@ const ConferenceDetails = () => {
               once: true,
             }}
           >
-            <SectionLabel
-              label="About the Conference"
-              colors={colors}
-            />
+            <SectionLabel label="About the Conference" colors={colors} />
 
             <h2
               className="mt-3 text-2xl font-bold leading-tight md:text-3xl"
@@ -915,8 +902,7 @@ const ConferenceDetails = () => {
             <div
               className="mt-5 h-px"
               style={{
-                backgroundColor:
-                  colors.quoteDivider,
+                backgroundColor: colors.quoteDivider,
               }}
             />
 
@@ -950,52 +936,46 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-7 grid grid-cols-1 gap-x-14 md:grid-cols-2">
-            {conference.topics.map(
-              (topic, index) => (
-                <motion.div
-                  key={topic}
-                  initial={{
-                    opacity: 0,
-                    x:
-                      index % 2 === 0
-                        ? -12
-                        : 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.03,
-                  }}
-                  className="flex items-start gap-3 border-b py-2.5"
+            {conference.topics.map((topic, index) => (
+              <motion.div
+                key={topic}
+                initial={{
+                  opacity: 0,
+                  x: index % 2 === 0 ? -12 : 12,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
+                transition={{
+                  delay: index * 0.03,
+                }}
+                className="flex items-start gap-3 border-b py-2.5"
+                style={{
+                  borderColor: colors.topicBorder,
+                }}
+              >
+                <CheckCircle2
+                  size={17}
+                  className="mt-0.5 flex-shrink-0"
                   style={{
-                    borderColor:
-                      colors.topicBorder,
+                    color: colors.primary,
+                  }}
+                />
+
+                <span
+                  className="text-xs leading-5"
+                  style={{
+                    color: colors.topicText,
                   }}
                 >
-                  <CheckCircle2
-                    size={17}
-                    className="mt-0.5 flex-shrink-0"
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
-
-                  <span
-                    className="text-xs leading-5"
-                    style={{
-                      color: colors.topicText,
-                    }}
-                  >
-                    {topic}
-                  </span>
-                </motion.div>
-              )
-            )}
+                  {topic}
+                </span>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -1030,16 +1010,14 @@ const ConferenceDetails = () => {
           <div
             className="absolute -right-14 -top-14 h-36 w-36 rounded-full"
             style={{
-              backgroundColor:
-                colors.whyDecor1,
+              backgroundColor: colors.whyDecor1,
             }}
           />
 
           <div
             className="absolute -bottom-16 -left-8 h-32 w-32 rounded-full"
             style={{
-              backgroundColor:
-                colors.whyDecor2,
+              backgroundColor: colors.whyDecor2,
             }}
           />
 
@@ -1070,8 +1048,7 @@ const ConferenceDetails = () => {
                 }}
               >
                 More than a Conference
-                <br />
-                — It's a Global Community
+                <br />— It's a Global Community
               </h2>
 
               <p
@@ -1080,17 +1057,15 @@ const ConferenceDetails = () => {
                   color: colors.whyText,
                 }}
               >
-                Join researchers, professionals,
-                innovators and experts from around
-                the world.
+                Join researchers, professionals, innovators and experts from
+                around the world.
               </p>
             </div>
 
             <div
               className="space-y-3 lg:border-l lg:pl-8"
               style={{
-                borderColor:
-                  colors.benefitBorder,
+                borderColor: colors.benefitBorder,
               }}
             >
               <Benefit
@@ -1098,34 +1073,25 @@ const ConferenceDetails = () => {
                 colors={colors}
               />
 
-              <Benefit
-                text="Discover emerging research"
-                colors={colors}
-              />
+              <Benefit text="Discover emerging research" colors={colors} />
 
               <Benefit
                 text="Build professional collaborations"
                 colors={colors}
               />
 
-              <Benefit
-                text="Be part of a global community"
-                colors={colors}
-              />
+              <Benefit text="Be part of a global community" colors={colors} />
             </div>
 
             <div>
               <button
                 type="button"
                 onClick={() =>
-                  navigate(
-                    `/conferences/${conference.id}/register`
-                  )
+                  navigate(`/conferences/${conference.id}/register`)
                 }
                 className="inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-bold text-white shadow-lg transition-all hover:-translate-y-1"
                 style={{
-                  backgroundColor:
-                    colors.primary,
+                  backgroundColor: colors.primary,
                 }}
               >
                 Register Now
@@ -1143,17 +1109,13 @@ const ConferenceDetails = () => {
       <section
         className="px-6 py-12 lg:px-10"
         style={{
-          backgroundColor:
-            colors.sessionsBg,
+          backgroundColor: colors.sessionsBg,
         }}
       >
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <div className="flex justify-center">
-              <SectionLabel
-                label="Conference Program"
-                colors={colors}
-              />
+              <SectionLabel label="Conference Program" colors={colors} />
             </div>
 
             <h2
@@ -1171,126 +1133,102 @@ const ConferenceDetails = () => {
                 color: colors.trackDesc,
               }}
             >
-              Explore the major scientific and
-              professional themes covered during
-              the conference.
+              Explore the major scientific and professional themes covered
+              during the conference.
             </p>
           </div>
 
           <div
             className="mt-7 overflow-hidden rounded-xl border"
             style={{
-              borderColor:
-                colors.accordionBorder,
-              backgroundColor:
-                colors.accordionBg,
+              borderColor: colors.accordionBorder,
+              backgroundColor: colors.accordionBg,
             }}
           >
-            {conference.tracks.map(
-              (track, index) => {
-                const isOpen =
-                  openTrack === index;
+            {conference.tracks.map((track, index) => {
+              const isOpen = openTrack === index;
 
-                return (
-                  <div
-                    key={track.title}
-                    className="border-b last:border-b-0"
-                    style={{
-                      borderColor:
-                        colors.rowBorder,
+              return (
+                <div
+                  key={track.title}
+                  className="border-b last:border-b-0"
+                  style={{
+                    borderColor: colors.rowBorder,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenTrack(isOpen ? null : index)}
+                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors md:px-6"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.rowHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenTrack(
-                          isOpen
-                            ? null
-                            : index
-                        )
-                      }
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors md:px-6"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          colors.rowHover;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          "transparent";
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                          style={{
-                            backgroundColor:
-                              isOpen
-                                ? colors.primary
-                                : colors.closedNumberBg,
-                            color: isOpen
-                              ? "#FFFFFF"
-                              : colors.primary,
-                          }}
-                        >
-                          {String(
-                            index + 1
-                          ).padStart(2, "0")}
-                        </span>
-
-                        <span
-                          className="text-xs font-bold md:text-sm"
-                          style={{
-                            color:
-                              colors.trackTitle,
-                          }}
-                        >
-                          {track.title}
-                        </span>
-                      </div>
-
-                      <ChevronDown
-                        size={17}
-                        className={`flex-shrink-0 transition-transform ${
-                          isOpen
-                            ? "rotate-180"
-                            : ""
-                        }`}
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                         style={{
-                          color: colors.primary,
+                          backgroundColor: isOpen
+                            ? colors.primary
+                            : colors.closedNumberBg,
+                          color: isOpen ? "#FFFFFF" : colors.primary,
                         }}
-                      />
-                    </button>
-
-                    {isOpen && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          height: 0,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          height: "auto",
-                        }}
-                        transition={{
-                          duration: 0.3,
-                        }}
-                        className="px-5 pb-5 pl-[60px] md:px-6 md:pl-[70px]"
                       >
-                        <p
-                          className="max-w-3xl text-xs leading-6"
-                          style={{
-                            color:
-                              colors.trackDesc,
-                          }}
-                        >
-                          {track.description}
-                        </p>
-                      </motion.div>
-                    )}
-                  </div>
-                );
-              }
-            )}
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+
+                      <span
+                        className="text-xs font-bold md:text-sm"
+                        style={{
+                          color: colors.trackTitle,
+                        }}
+                      >
+                        {track.title}
+                      </span>
+                    </div>
+
+                    <ChevronDown
+                      size={17}
+                      className={`flex-shrink-0 transition-transform ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                      style={{
+                        color: colors.primary,
+                      }}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <motion.div
+                      initial={{
+                        opacity: 0,
+                        height: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        height: "auto",
+                      }}
+                      transition={{
+                        duration: 0.3,
+                      }}
+                      className="px-5 pb-5 pl-[60px] md:px-6 md:pl-[70px]"
+                    >
+                      <p
+                        className="max-w-3xl text-xs leading-6"
+                        style={{
+                          color: colors.trackDesc,
+                        }}
+                      >
+                        {track.description}
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -1302,11 +1240,7 @@ const ConferenceDetails = () => {
    PREMIUM COUNTDOWN BOX
 ========================================================= */
 
-const PremiumCountdownBox = ({
-  value,
-  label,
-  colors,
-}) => {
+const PremiumCountdownBox = ({ value, label, colors }) => {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -1326,24 +1260,20 @@ const PremiumCountdownBox = ({
           ? "rgba(255,255,255,0.11)"
           : colors.countdownBoxBg,
 
-        boxShadow: hovered
-          ? `0 5px 12px ${colors.primary}35`
-          : "none",
+        boxShadow: hovered ? `0 5px 12px ${colors.primary}35` : "none",
       }}
     >
       <div
         className="absolute left-1/2 top-0 h-0.5 w-5 -translate-x-1/2 rounded-b-full"
         style={{
-          backgroundColor:
-            colors.primary,
+          backgroundColor: colors.primary,
         }}
       />
 
       <span
         className="block text-lg font-extrabold leading-none tracking-tight sm:text-xl"
         style={{
-          color:
-            colors.countdownNumber,
+          color: colors.countdownNumber,
         }}
       >
         {String(value).padStart(2, "0")}
@@ -1352,8 +1282,7 @@ const PremiumCountdownBox = ({
       <span
         className="mt-1 block text-[7px] font-bold uppercase tracking-[0.08em] sm:text-[8px]"
         style={{
-          color:
-            colors.countdownLabel,
+          color: colors.countdownLabel,
         }}
       >
         {label}
@@ -1395,22 +1324,22 @@ const PremiumActionButton = ({
             ? colors.primaryHover
             : colors.primary
           : hovered
-          ? colors.primary
-          : colors.actionBorder,
+            ? colors.primary
+            : colors.actionBorder,
 
         backgroundColor: primary
           ? hovered
             ? colors.primaryHover
             : colors.primary
           : hovered
-          ? "rgba(255,255,255,0.13)"
-          : colors.actionBg,
+            ? "rgba(255,255,255,0.13)"
+            : colors.actionBg,
 
         boxShadow: primary
           ? `0 6px 16px ${colors.primary}35`
           : hovered
-          ? `0 5px 12px ${colors.primary}20`
-          : "0 2px 5px rgba(0,0,0,0.08)",
+            ? `0 5px 12px ${colors.primary}20`
+            : "0 2px 5px rgba(0,0,0,0.08)",
       }}
     >
       <div
@@ -1428,14 +1357,10 @@ const PremiumActionButton = ({
           backgroundColor: primary
             ? "rgba(255,255,255,0.15)"
             : hovered
-            ? colors.primary
-            : colors.actionIconBg,
+              ? colors.primary
+              : colors.actionIconBg,
 
-          color: primary
-            ? "#FFFFFF"
-            : hovered
-            ? "#FFFFFF"
-            : colors.actionIcon,
+          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.actionIcon,
         }}
       >
         {icon}
@@ -1467,11 +1392,7 @@ const PremiumActionButton = ({
         size={12}
         className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1"
         style={{
-          color: primary
-            ? "#FFFFFF"
-            : hovered
-            ? "#FFFFFF"
-            : colors.primary,
+          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.primary,
         }}
       />
     </motion.button>
@@ -1482,19 +1403,13 @@ const PremiumActionButton = ({
    INFO ITEM
 ========================================================= */
 
-const InfoItem = ({
-  icon,
-  title,
-  subtitle,
-  colors,
-}) => {
+const InfoItem = ({ icon, title, subtitle, colors }) => {
   return (
     <div className="flex items-center gap-2">
       <div
         className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
         style={{
-          backgroundColor:
-            colors.infoIconBg,
+          backgroundColor: colors.infoIconBg,
           color: colors.infoIcon,
         }}
       >
@@ -1528,17 +1443,13 @@ const InfoItem = ({
    SECTION LABEL
 ========================================================= */
 
-const SectionLabel = ({
-  label,
-  colors,
-}) => {
+const SectionLabel = ({ label, colors }) => {
   return (
     <div className="flex items-center gap-2.5">
       <span
         className="h-[2px] w-7"
         style={{
-          backgroundColor:
-            colors.primary,
+          backgroundColor: colors.primary,
         }}
       />
 
@@ -1558,19 +1469,14 @@ const SectionLabel = ({
    SECTION HEADING
 ========================================================= */
 
-const SectionHeading = ({
-  label,
-  action,
-  colors,
-}) => {
+const SectionHeading = ({ label, action, colors }) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2.5">
         <span
           className="h-[2px] w-7"
           style={{
-            backgroundColor:
-              colors.primary,
+            backgroundColor: colors.primary,
           }}
         />
 
@@ -1603,25 +1509,18 @@ const SectionHeading = ({
    MINI FEATURE
 ========================================================= */
 
-const MiniFeature = ({
-  icon,
-  title,
-  text,
-  colors,
-}) => {
+const MiniFeature = ({ icon, title, text, colors }) => {
   return (
     <div
       className="flex items-start gap-1.5 border-r pr-2.5 last:border-r-0"
       style={{
-        borderColor:
-          colors.miniBorder,
+        borderColor: colors.miniBorder,
       }}
     >
       <div
         className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white"
         style={{
-          backgroundColor:
-            colors.primary,
+          backgroundColor: colors.primary,
         }}
       >
         {icon}
@@ -1654,16 +1553,12 @@ const MiniFeature = ({
    BENEFIT
 ========================================================= */
 
-const Benefit = ({
-  text,
-  colors,
-}) => {
+const Benefit = ({ text, colors }) => {
   return (
     <div
       className="flex items-center gap-2.5 rounded-lg border p-2.5"
       style={{
-        borderColor:
-          colors.benefitBorder,
+        borderColor: colors.benefitBorder,
         backgroundColor: "#FFFFFF",
       }}
     >
@@ -1688,4 +1583,3 @@ const Benefit = ({
 };
 
 export default ConferenceDetails;
-

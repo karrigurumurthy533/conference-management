@@ -76,9 +76,7 @@ const commonSpeakers = [
 const conferences = [
   {
     id: "autism-research",
-
     category: "Autism & Neurodiversity",
-
     title:
       "International Conference on Autism Research & Innovations",
 
@@ -92,13 +90,13 @@ const conferences = [
       "https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=900&q=90",
 
     date: "April 06–07, 2027",
-
     time: "9:00 AM – 5:00 PM",
 
+    // Countdown start date
+    startDate: "2027-04-06T09:00:00",
+
     location: "Webinar",
-
     mode: "Online Conference",
-
     participants: "500+",
 
     description:
@@ -186,9 +184,7 @@ const conferences = [
 
   {
     id: "mental-health",
-
     category: "Mental Health & Psychiatry",
-
     title:
       "International Conference on Mental Health & Psychiatry",
 
@@ -203,6 +199,9 @@ const conferences = [
 
     date: "May 15–16, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-05-15T09:00:00",
+
     location: "Dubai, UAE",
     mode: "Hybrid Conference",
     participants: "600+",
@@ -243,7 +242,8 @@ const conferences = [
           "Latest developments in psychiatric diagnosis, treatment and patient-centered clinical care.",
       },
       {
-        title: "Depression, Anxiety and Emotional Well-Being",
+        title:
+          "Depression, Anxiety and Emotional Well-Being",
         description:
           "Research and practical strategies for understanding and managing common mental health conditions.",
       },
@@ -262,9 +262,7 @@ const conferences = [
 
   {
     id: "endocrinology-diabetes",
-
     category: "Endocrinology & Diabetes",
-
     title:
       "International Conference on Endocrinology & Diabetes",
 
@@ -279,6 +277,9 @@ const conferences = [
 
     date: "June 10–11, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-06-10T09:00:00",
+
     location: "Singapore",
     mode: "Hybrid Conference",
     participants: "700+",
@@ -338,9 +339,7 @@ const conferences = [
 
   {
     id: "oncology-ai",
-
     category: "Oncology & Cancer Research",
-
     title:
       "International Conference on Oncology Research & AI Innovations",
 
@@ -355,6 +354,9 @@ const conferences = [
 
     date: "July 20–21, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-07-20T09:00:00",
+
     location: "London, UK",
     mode: "Hybrid Conference",
     participants: "800+",
@@ -400,12 +402,14 @@ const conferences = [
           "Applications of artificial intelligence in diagnosis, research and clinical decision support.",
       },
       {
-        title: "Immunotherapy and Targeted Therapy",
+        title:
+          "Immunotherapy and Targeted Therapy",
         description:
           "Latest developments in immune-based and targeted cancer treatments.",
       },
       {
-        title: "Cancer Prevention and Early Detection",
+        title:
+          "Cancer Prevention and Early Detection",
         description:
           "Strategies for prevention, screening and earlier cancer diagnosis.",
       },
@@ -414,9 +418,7 @@ const conferences = [
 
   {
     id: "healthcare-innovation",
-
     category: "Healthcare Innovation",
-
     title:
       "International Conference on Healthcare Innovation & Precision Medicine",
 
@@ -431,6 +433,9 @@ const conferences = [
 
     date: "August 12–13, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-08-12T09:00:00",
+
     location: "Singapore",
     mode: "Hybrid Conference",
     participants: "750+",
@@ -490,9 +495,7 @@ const conferences = [
 
   {
     id: "nutrition-wellness",
-
     category: "Food, Nutrition & Wellness",
-
     title:
       "International Conference on Food, Nutrition & Wellness",
 
@@ -507,6 +510,9 @@ const conferences = [
 
     date: "September 08–09, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-09-08T09:00:00",
+
     location: "Dubai, UAE",
     mode: "Hybrid Conference",
     participants: "500+",
@@ -552,7 +558,8 @@ const conferences = [
           "Emerging food technologies, functional foods and food product innovation.",
       },
       {
-        title: "Nutrition and Preventive Healthcare",
+        title:
+          "Nutrition and Preventive Healthcare",
         description:
           "How nutrition can support disease prevention and healthy aging.",
       },
@@ -566,9 +573,7 @@ const conferences = [
 
   {
     id: "brain-health",
-
     category: "Brain Health & Neurodiversity",
-
     title:
       "International Conference on Brain Health, Neurodiversity & Neuroscience",
 
@@ -583,6 +588,9 @@ const conferences = [
 
     date: "October 14–15, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-10-14T09:00:00",
+
     location: "Amsterdam, Netherlands",
     mode: "Hybrid Conference",
     participants: "650+",
@@ -642,9 +650,7 @@ const conferences = [
 
   {
     id: "cardiovascular",
-
     category: "Cardiovascular Diseases",
-
     title:
       "International Conference on Cardiovascular Diseases & Innovation",
 
@@ -659,6 +665,9 @@ const conferences = [
 
     date: "November 10–11, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-11-10T09:00:00",
+
     location: "Paris, France",
     mode: "Hybrid Conference",
     participants: "700+",
@@ -718,9 +727,7 @@ const conferences = [
 
   {
     id: "digital-psychiatry",
-
     category: "AI & Digital Psychiatry",
-
     title:
       "International Conference on AI & Digital Psychiatry",
 
@@ -735,6 +742,9 @@ const conferences = [
 
     date: "December 05–06, 2027",
     time: "9:00 AM – 5:00 PM",
+
+    startDate: "2027-12-05T09:00:00",
+
     location: "London, UK",
     mode: "Online Conference",
     participants: "550+",

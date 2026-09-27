@@ -1,10 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Mic2,
-  Globe2,
-} from "lucide-react";
+import { ArrowRight, Mic2, Globe2 } from "lucide-react";
 
 const Speakers = () => {
   const speakers = [
@@ -199,8 +195,8 @@ const Speakers = () => {
       }}
     >
       {/* =====================================================
-          HERO
-      ====================================================== */}
+    HERO
+====================================================== */}
 
       <section
         className="relative overflow-hidden transition-colors duration-500"
@@ -208,37 +204,37 @@ const Speakers = () => {
           backgroundColor: colors.heroBg,
         }}
       >
-        {/* Decorative Circle */}
+        {/* DECORATIVE CIRCLE */}
 
         <div
           className="
-            absolute
-            -top-32
-            -right-20
-            w-96
-            h-96
-            rounded-full
-            transition-all
-            duration-500
-          "
+      absolute
+      -top-24
+      -right-16
+      h-72
+      w-72
+      rounded-full
+      transition-all
+      duration-500
+    "
           style={{
             backgroundColor: colors.heroCircleOne,
           }}
         />
 
-        {/* Decorative Circle */}
+        {/* DECORATIVE CIRCLE */}
 
         <div
           className="
-            absolute
-            -bottom-40
-            -left-20
-            w-80
-            h-80
-            rounded-full
-            transition-all
-            duration-500
-          "
+      absolute
+      -bottom-28
+      -left-16
+      h-64
+      w-64
+      rounded-full
+      transition-all
+      duration-500
+    "
           style={{
             backgroundColor: colors.heroCircleTwo,
           }}
@@ -246,34 +242,36 @@ const Speakers = () => {
 
         <div
           className="
-            relative
-            max-w-7xl
-            mx-auto
-            px-6
-            lg:px-10
-            py-16
-            md:py-20
-            text-center
-          "
+      relative
+      mx-auto
+      max-w-7xl
+      px-6
+      py-10
+      text-center
+      md:py-12
+      lg:px-10
+    "
         >
           <motion.div
             initial={{
               opacity: 0,
-              y: 30,
+              y: 20,
             }}
             animate={{
               opacity: 1,
               y: 0,
             }}
             transition={{
-              duration: 0.7,
+              duration: 0.6,
             }}
           >
-            {/* EYEBROW */}
+            {/* =================================================
+          EYEBROW
+      ================================================== */}
 
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="mb-3 flex items-center justify-center gap-2.5">
               <span
-                className="w-10 h-[2px]"
+                className="h-[1.5px] w-7 sm:w-9"
                 style={{
                   backgroundColor: colors.eyebrow,
                 }}
@@ -281,11 +279,11 @@ const Speakers = () => {
 
               <span
                 className="
-                  text-xs
-                  sm:text-sm
-                  font-semibold
-                  tracking-[0.25em]
-                "
+            text-[10px]
+            font-semibold
+            tracking-[0.2em]
+            sm:text-xs
+          "
                 style={{
                   color: colors.eyebrow,
                 }}
@@ -294,53 +292,80 @@ const Speakers = () => {
               </span>
 
               <span
-                className="w-10 h-[2px]"
+                className="h-[1.5px] w-7 sm:w-9"
                 style={{
                   backgroundColor: colors.eyebrow,
                 }}
               />
             </div>
 
-            {/* HEADING */}
+            {/* =================================================
+          HEADING
+      ================================================== */}
 
-            <h1
+            <motion.h1
+              initial={{
+                opacity: 0,
+                y: 12,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.08,
+              }}
               className="
-                text-4xl
-                sm:text-5xl
-                md:text-6xl
-                font-bold
-              "
+          text-2xl
+          font-bold
+          leading-tight
+          sm:text-3xl
+          md:text-4xl
+        "
               style={{
                 color: colors.heroHeading,
               }}
             >
               Meet Our Speakers
-            </h1>
+            </motion.h1>
 
-            {/* DESCRIPTION */}
+            {/* =================================================
+          DESCRIPTION
+      ================================================== */}
 
-            <p
+            <motion.p
+              initial={{
+                opacity: 0,
+                y: 12,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: 0.15,
+              }}
               className="
-                max-w-2xl
-                mx-auto
-                mt-5
-                text-sm
-                sm:text-base
-                md:text-lg
-                leading-relaxed
-              "
+          mx-auto
+          mt-3
+          max-w-xl
+          text-xs
+          leading-5
+          sm:text-sm
+          sm:leading-6
+        "
               style={{
                 color: colors.heroText,
               }}
             >
               Connect with renowned researchers, healthcare professionals,
-              innovators, academics, and industry leaders from around the
-              world.
-            </p>
+              innovators, academics, and industry leaders from around the world.
+            </motion.p>
           </motion.div>
         </div>
       </section>
-
       {/* =====================================================
           SPEAKERS
       ====================================================== */}
@@ -421,8 +446,8 @@ const Speakers = () => {
                   color: colors.sectionDescription,
                 }}
               >
-                Learn from experts shaping the future of healthcare,
-                science, technology, and innovation.
+                Learn from experts shaping the future of healthcare, science,
+                technology, and innovation.
               </p>
             </div>
 
@@ -847,8 +872,8 @@ const Speakers = () => {
                 color: colors.ctaText,
               }}
             >
-              Share your expertise, research, and ideas with a global
-              audience of professionals and innovators.
+              Share your expertise, research, and ideas with a global audience
+              of professionals and innovators.
             </p>
 
             {/* BUTTON */}
@@ -876,20 +901,16 @@ const Speakers = () => {
               "
               style={{
                 backgroundColor: colors.button,
-                boxShadow:
-                  "0 8px 25px rgba(124,58,237,0.25)",
+                boxShadow: "0 8px 25px rgba(124,58,237,0.25)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  colors.buttonHover;
+                e.currentTarget.style.backgroundColor = colors.buttonHover;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  colors.button;
+                e.currentTarget.style.backgroundColor = colors.button;
               }}
             >
               Become a Speaker
-
               <ArrowRight size={16} />
             </motion.button>
           </div>

@@ -1,9 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CalendarDays,
-  MapPin,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const conferences = [
@@ -36,8 +32,7 @@ const conferences = [
   },
   {
     id: "oncology-research",
-    title:
-      "International Conference on Oncology Research & AI Innovations",
+    title: "International Conference on Oncology Research & AI Innovations",
     category: "Oncology",
     date: "June 12–13, 2027",
     location: "Amsterdam, Netherlands",
@@ -46,8 +41,7 @@ const conferences = [
   },
   {
     id: "healthcare-innovation",
-    title:
-      "Healthcare Innovation, Precision Medicine & AI",
+    title: "Healthcare Innovation, Precision Medicine & AI",
     category: "Healthcare Innovation",
     date: "July 20–21, 2027",
     location: "Barcelona, Spain",
@@ -56,8 +50,7 @@ const conferences = [
   },
   {
     id: "nutrition-wellness",
-    title:
-      "International Conference on Food, Nutrition & Wellness",
+    title: "International Conference on Food, Nutrition & Wellness",
     category: "Nutrition & Wellness",
     date: "August 10–11, 2027",
     location: "Paris, France",
@@ -87,8 +80,7 @@ const Conferences = () => {
     cardBorder: "#E9DDFB",
 
     cardShadow: "0 2px 10px rgba(124,58,237,0.04)",
-    cardHoverShadow:
-      "0 18px 40px rgba(124,58,237,0.12)",
+    cardHoverShadow: "0 18px 40px rgba(124,58,237,0.12)",
 
     cardTitle: "#4C1D95",
     infoText: "#4B5563",
@@ -122,21 +114,81 @@ const Conferences = () => {
       }}
     >
       {/* ======================================================
-          HEADER
-      ====================================================== */}
+    HEADER
+====================================================== */}
 
       <section
         className="
-          relative
-          overflow-hidden
-          px-6
-          py-20
-        "
+    relative
+    overflow-hidden
+    px-6
+    py-10
+    md:py-12
+  "
         style={{
           backgroundColor: colors.headerBg,
         }}
       >
         <div className="relative mx-auto max-w-7xl text-center">
+          {/* EYEBROW */}
+
+          <motion.p
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.45,
+            }}
+            className="
+        text-[10px]
+        font-semibold
+        uppercase
+        tracking-[0.18em]
+        md:text-xs
+      "
+            style={{
+              color: colors.eyebrow,
+            }}
+          >
+            GlobalScion Conferences
+          </motion.p>
+
+          {/* HEADING */}
+
+          <motion.h1
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.5,
+              delay: 0.08,
+            }}
+            className="
+        mt-2
+        text-2xl
+        font-bold
+        leading-tight
+        md:text-3xl
+      "
+            style={{
+              color: colors.heading,
+            }}
+          >
+            Explore Our Conferences
+          </motion.h1>
+
+          {/* DESCRIPTION */}
+
           <motion.p
             initial={{
               opacity: 0,
@@ -148,76 +200,26 @@ const Conferences = () => {
             }}
             transition={{
               duration: 0.5,
+              delay: 0.16,
             }}
             className="
-              text-sm
-              font-semibold
-              uppercase
-              tracking-[0.2em]
-            "
-            style={{
-              color: colors.eyebrow,
-            }}
-          >
-            GlobalScion Conferences
-          </motion.p>
-
-          <motion.h1
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.6,
-              delay: 0.1,
-            }}
-            className="
-              mt-3
-              text-4xl
-              font-bold
-              md:text-5xl
-            "
-            style={{
-              color: colors.heading,
-            }}
-          >
-            Explore Our Conferences
-          </motion.h1>
-
-          <motion.p
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.6,
-              delay: 0.2,
-            }}
-            className="
-              mx-auto
-              mt-5
-              max-w-2xl
-              leading-7
-            "
+        mx-auto
+        mt-3
+        max-w-xl
+        text-xs
+        leading-5
+        md:text-sm
+        md:leading-6
+      "
             style={{
               color: colors.description,
             }}
           >
-            Discover global conferences bringing together
-            researchers, healthcare professionals, academics
-            and industry leaders.
+            Discover global conferences bringing together researchers,
+            healthcare professionals, academics and industry leaders.
           </motion.p>
         </div>
       </section>
-
       {/* ======================================================
           CONFERENCES
       ====================================================== */}
@@ -264,14 +266,9 @@ const Conferences = () => {
                 y: -7,
                 boxShadow: colors.cardHoverShadow,
               }}
-              onClick={() =>
-                handleConferenceClick(conference.id)
-              }
+              onClick={() => handleConferenceClick(conference.id)}
               onKeyDown={(e) => {
-                if (
-                  e.key === "Enter" ||
-                  e.key === " "
-                ) {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   handleConferenceClick(conference.id);
                 }
@@ -399,9 +396,7 @@ const Conferences = () => {
                       }}
                     />
 
-                    <span>
-                      {conference.date}
-                    </span>
+                    <span>{conference.date}</span>
                   </div>
 
                   {/* LOCATION */}
@@ -425,9 +420,7 @@ const Conferences = () => {
                       }}
                     />
 
-                    <span>
-                      {conference.location}
-                    </span>
+                    <span>{conference.location}</span>
                   </div>
                 </div>
 
@@ -443,9 +436,7 @@ const Conferences = () => {
                     e.stopPropagation();
 
                     // SAME navigation as card click.
-                    handleConferenceClick(
-                      conference.id
-                    );
+                    handleConferenceClick(conference.id);
                   }}
                   className="
                     mt-6
@@ -461,22 +452,17 @@ const Conferences = () => {
                     color: colors.button,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color =
-                      colors.buttonHover;
+                    e.currentTarget.style.color = colors.buttonHover;
 
-                    e.currentTarget.style.transform =
-                      "translateX(3px)";
+                    e.currentTarget.style.transform = "translateX(3px)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color =
-                      colors.button;
+                    e.currentTarget.style.color = colors.button;
 
-                    e.currentTarget.style.transform =
-                      "translateX(0)";
+                    e.currentTarget.style.transform = "translateX(0)";
                   }}
                 >
                   View Conference
-
                   <ArrowRight
                     size={17}
                     className="

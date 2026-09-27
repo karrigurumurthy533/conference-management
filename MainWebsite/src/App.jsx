@@ -12,6 +12,7 @@ import Privacy from "./pages/Privacy";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
 import Chatbot from "./components/common/Chatbot";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 import About from "./pages/About";
 import DownloadBrochure from "./pages/DownloadBrochure";
@@ -22,6 +23,7 @@ import RegisterPage from "./pages/RegisterPage";
 const App = () => {
   return (
     <div className="min-h-screen bg-white">
+      <ScrollToTop />
       <Navbar />
 
       <Routes>
