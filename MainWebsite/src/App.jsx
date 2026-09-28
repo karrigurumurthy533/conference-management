@@ -11,7 +11,7 @@ import Privacy from "./pages/Privacy";
 
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
-import Chatbot from "./components/common/Chatbot";
+
 import ScrollToTop from "./components/common/ScrollToTop";
 
 import About from "./pages/About";
@@ -19,6 +19,7 @@ import DownloadBrochure from "./pages/DownloadBrochure";
 import AbstractSubmissionPage from "./pages/AbstractSubmissionPage";
 import ContactPage from "./pages/Contact";
 import RegisterPage from "./pages/RegisterPage";
+import TawkChat from "./components/common/TawkChat";
 
 const App = () => {
   return (
@@ -27,19 +28,12 @@ const App = () => {
       <Navbar />
 
       <Routes>
-        {/* =====================================================
-            HOME
-        ====================================================== */}
+      
         <Route path="/" element={<Home />} />
 
-        {/* =====================================================
-            ABOUT
-        ====================================================== */}
         <Route path="/about" element={<About />} />
 
-        {/* =====================================================
-            CONFERENCES
-        ====================================================== */}
+    
         <Route
           path="/conferences"
           element={<Conferences />}
@@ -119,14 +113,8 @@ const App = () => {
       </Routes>
 
       <Footer />
+      <TawkChat />
 
-      {/* =====================================================
-          GLOBAL FLOATING CHATBOT
-
-          This is outside Routes, so it appears on
-          every page automatically.
-      ====================================================== */}
-      <Chatbot />
     </div>
   );
 };
