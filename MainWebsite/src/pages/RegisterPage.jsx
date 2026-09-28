@@ -212,7 +212,7 @@ const RegisterPage = () => {
           </h1>
 
           <p
-            className="mt-2 text-xs leading-5"
+            className="mt-2 text-base leading-5"
             style={{
               color: colors.muted,
             }}
@@ -223,7 +223,7 @@ const RegisterPage = () => {
 
           <Link
             to="/conferences"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-base font-bold text-white transition hover:-translate-y-0.5"
             style={{
               backgroundColor: colors.primary,
             }}
@@ -269,7 +269,7 @@ const RegisterPage = () => {
         <div className="relative mx-auto max-w-7xl px-5 py-3 lg:px-8 lg:py-4">
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
+            className="inline-flex items-center gap-1 text-sm font-semibold transition"
             style={{
               color: colors.heroSoft,
             }}
@@ -281,7 +281,7 @@ const RegisterPage = () => {
           <div className="mt-3 grid items-center gap-4 lg:grid-cols-[1fr_auto]">
             <div>
               <div
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em]"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em]"
                 style={{
                   border: "1px solid rgba(192,132,252,0.22)",
                   backgroundColor: "rgba(168,85,247,0.12)",
@@ -304,7 +304,7 @@ const RegisterPage = () => {
                 </span>
               </h1>
 
-              <p className="mt-1 max-w-2xl text-[11px] leading-5 text-white/65">
+              <p className="mt-1 max-w-2xl text-sm leading-5 text-white/65">
                 Complete your registration details below and select the
                 participation category that suits you best.
               </p>
@@ -332,7 +332,7 @@ const RegisterPage = () => {
                     Conference Date
                   </p>
 
-                  <p className="mt-0.5 text-[11px] font-bold text-white">
+                  <p className="mt-0.5 text-sm font-bold text-white">
                     {conference.date}
                   </p>
                 </div>
@@ -354,7 +354,7 @@ const RegisterPage = () => {
                     Location
                   </p>
 
-                  <p className="mt-0.5 text-[11px] font-semibold text-white">
+                  <p className="mt-0.5 text-sm font-semibold text-white">
                     {conference.location}
                   </p>
                 </div>
@@ -483,7 +483,7 @@ const RegisterPage = () => {
 
                       <div className="min-w-0">
                         <p
-                          className="text-[9px] font-bold uppercase tracking-wider"
+                          className="text-[11px] font-bold uppercase tracking-wider"
                           style={{
                             color: colors.primary,
                           }}
@@ -492,7 +492,7 @@ const RegisterPage = () => {
                         </p>
 
                         <h3
-                          className="mt-0.5 text-xs font-bold leading-5"
+                          className="mt-0.5 text-base font-bold leading-5"
                           style={{
                             color: colors.heading,
                           }}
@@ -501,7 +501,7 @@ const RegisterPage = () => {
                         </h3>
 
                         <p
-                          className="mt-0.5 text-[10px]"
+                          className="mt-0.5 text-xs"
                           style={{
                             color: colors.muted,
                           }}
@@ -578,7 +578,7 @@ const RegisterPage = () => {
 
                   <div className="mt-3.5">
                     <label
-                      className="mb-1.5 block text-[11px] font-bold"
+                      className="mb-1.5 block text-sm font-bold"
                       style={{
                         color: "#374151",
                       }}
@@ -601,7 +601,7 @@ const RegisterPage = () => {
                       required
                       rows={3}
                       placeholder="Enter your complete address"
-                      className="w-full resize-none rounded-xl px-3.5 py-2.5 text-xs outline-none transition"
+                      className="w-full resize-none rounded-xl px-3.5 py-2.5 text-base outline-none transition"
                       style={{
                         backgroundColor: colors.inputBg,
                         border: `1px solid ${colors.inputBorder}`,
@@ -635,7 +635,7 @@ const RegisterPage = () => {
                       <div key={group.title}>
                         <div className="mb-2.5">
                           <h3
-                            className="text-sm font-bold"
+                            className="text-base font-bold"
                             style={{
                               color: colors.heading,
                             }}
@@ -644,7 +644,7 @@ const RegisterPage = () => {
                           </h3>
 
                           <p
-                            className="mt-0.5 text-[10px]"
+                            className="mt-0.5 text-xs"
                             style={{
                               color: colors.muted,
                             }}
@@ -705,7 +705,7 @@ const RegisterPage = () => {
                                   />
 
                                   <span
-                                    className="text-[11px] font-medium leading-4"
+                                    className="text-sm font-medium leading-4"
                                     style={{
                                       color: colors.body,
                                     }}
@@ -715,7 +715,7 @@ const RegisterPage = () => {
                                 </div>
 
                                 <span
-                                  className="whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-bold"
+                                  className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-bold"
                                   style={{
                                     backgroundColor: selected
                                       ? colors.primary
@@ -766,7 +766,7 @@ const RegisterPage = () => {
 
                   <div className="relative">
                     <p
-                      className="text-[9px] font-bold uppercase tracking-[0.16em]"
+                      className="text-[11px] font-bold uppercase tracking-[0.16em]"
                       style={{
                         color: colors.heroAccent,
                       }}
@@ -801,7 +801,7 @@ const RegisterPage = () => {
 
                       <div className="min-w-0">
                         <p
-                          className="text-[9px] font-bold uppercase tracking-wider"
+                          className="text-[11px] font-bold uppercase tracking-wider"
                           style={{
                             color: colors.primary,
                           }}
@@ -810,7 +810,7 @@ const RegisterPage = () => {
                         </p>
 
                         <p
-                          className="mt-0.5 text-[11px] font-bold leading-4"
+                          className="mt-0.5 text-sm font-bold leading-4"
                           style={{
                             color: colors.body,
                           }}
@@ -825,7 +825,7 @@ const RegisterPage = () => {
 
                   <div className="mt-4">
                     <p
-                      className="text-[9px] font-bold uppercase tracking-wider"
+                      className="text-[11px] font-bold uppercase tracking-wider"
                       style={{
                         color: colors.mutedLight,
                       }}
@@ -845,7 +845,7 @@ const RegisterPage = () => {
                           />
 
                           <span
-                            className="text-[11px] font-semibold leading-4"
+                            className="text-sm font-semibold leading-4"
                             style={{
                               color: colors.body,
                             }}
@@ -855,7 +855,7 @@ const RegisterPage = () => {
                         </div>
 
                         <span
-                          className="text-xs font-bold"
+                          className="text-base font-bold"
                           style={{
                             color: colors.heading,
                           }}
@@ -865,7 +865,7 @@ const RegisterPage = () => {
                       </div>
                     ) : (
                       <p
-                        className="mt-2 rounded-lg p-3 text-[10px] leading-4"
+                        className="mt-2 rounded-lg p-3 text-xs leading-4"
                         style={{
                           border: `1px dashed ${colors.borderStrong}`,
                           color: colors.mutedLight,
@@ -890,7 +890,7 @@ const RegisterPage = () => {
                   <div className="flex items-end justify-between">
                     <div>
                       <p
-                        className="text-[9px] font-bold uppercase tracking-wider"
+                        className="text-[11px] font-bold uppercase tracking-wider"
                         style={{
                           color: colors.mutedLight,
                         }}
@@ -899,7 +899,7 @@ const RegisterPage = () => {
                       </p>
 
                       <p
-                        className="mt-0.5 text-[9px]"
+                        className="mt-0.5 text-[11px]"
                         style={{
                           color: colors.mutedLight,
                         }}
@@ -924,7 +924,7 @@ const RegisterPage = () => {
 
                   <button
                     type="submit"
-                    className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-xs font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                    className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     style={{
                       backgroundColor: colors.primary,
                       boxShadow: "0 8px 22px rgba(124,58,237,0.18)",
@@ -935,7 +935,7 @@ const RegisterPage = () => {
                   </button>
 
                   <p
-                    className="mt-3 text-center text-[9px] leading-4"
+                    className="mt-3 text-center text-[11px] leading-4"
                     style={{
                       color: colors.mutedLight,
                     }}
@@ -968,7 +968,7 @@ const RegisterPage = () => {
 
                   <div>
                     <p
-                      className="text-[10px] font-bold"
+                      className="text-xs font-bold"
                       style={{
                         color: colors.heading,
                       }}
@@ -977,7 +977,7 @@ const RegisterPage = () => {
                     </p>
 
                     <p
-                      className="mt-0.5 text-[9px]"
+                      className="mt-0.5 text-[11px]"
                       style={{
                         color: colors.muted,
                       }}
@@ -1029,7 +1029,7 @@ const RegisterPage = () => {
             </h2>
 
             <p
-              className="mt-2 text-xs leading-5"
+              className="mt-2 text-base leading-5"
               style={{
                 color: colors.muted,
               }}
@@ -1049,7 +1049,7 @@ const RegisterPage = () => {
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="mt-5 rounded-lg px-6 py-2.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
+              className="mt-5 rounded-lg px-6 py-2.5 text-base font-bold text-white transition hover:-translate-y-0.5"
               style={{
                 backgroundColor: colors.primary,
               }}
@@ -1095,7 +1095,7 @@ const FormSectionHeader = ({ number, icon, title, description }) => {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span
-            className="text-[9px] font-bold uppercase tracking-wider"
+            className="text-[11px] font-bold uppercase tracking-wider"
             style={{
               color: colors.step,
             }}
@@ -1111,7 +1111,7 @@ const FormSectionHeader = ({ number, icon, title, description }) => {
           />
 
           <span
-            className="text-[9px] font-medium uppercase tracking-wider"
+            className="text-[11px] font-medium uppercase tracking-wider"
             style={{
               color: colors.required,
             }}
@@ -1121,7 +1121,7 @@ const FormSectionHeader = ({ number, icon, title, description }) => {
         </div>
 
         <h2
-          className="mt-0.5 text-sm font-bold"
+          className="mt-0.5 text-base font-bold"
           style={{
             color: colors.heading,
           }}
@@ -1130,7 +1130,7 @@ const FormSectionHeader = ({ number, icon, title, description }) => {
         </h2>
 
         <p
-          className="mt-0.5 text-[10px]"
+          className="mt-0.5 text-xs"
           style={{
             color: colors.description,
           }}
@@ -1164,7 +1164,7 @@ const InputField = ({
   return (
     <div>
       <label
-        className="mb-1.5 block text-[11px] font-bold"
+        className="mb-1.5 block text-sm font-bold"
         style={{
           color: colors.label,
         }}
@@ -1202,7 +1202,7 @@ const InputField = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`h-10 w-full rounded-xl px-3 text-xs outline-none transition ${
+          className={`h-10 w-full rounded-xl px-3 text-base outline-none transition ${
             icon ? "pl-9 pr-3" : "px-3"
           }`}
           style={{
@@ -1237,7 +1237,7 @@ const SelectField = ({
   return (
     <div>
       <label
-        className="mb-1.5 block text-[11px] font-bold"
+        className="mb-1.5 block text-sm font-bold"
         style={{
           color: colors.label,
         }}
@@ -1262,7 +1262,7 @@ const SelectField = ({
           value={value}
           onChange={onChange}
           required={required}
-          className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-xs outline-none transition"
+          className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-base outline-none transition"
           style={{
             backgroundColor: colors.bg,
             border: `1px solid ${colors.border}`,
