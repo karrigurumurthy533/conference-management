@@ -8,6 +8,7 @@ import {
   UserCircle,
   Users,
   UserRound,
+  BookOpen,
 } from "lucide-react";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -32,6 +33,11 @@ const menuItems = [
     name: "Abstracts",
     path: "/abstracts",
     icon: FileText,
+  },
+  {
+    name: "Brochures",
+    path: "/brochures",
+    icon: BookOpen,
   },
   {
     name: "Registrations",
@@ -91,9 +97,6 @@ function Sidebar() {
         bg-white
       "
     >
-      {/* =====================================================
-          LOGO
-      ====================================================== */}
       <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
         <img
           src="/web_logo.png"
@@ -102,9 +105,6 @@ function Sidebar() {
         />
       </div>
 
-      {/* =====================================================
-          MAIN NAVIGATION
-      ====================================================== */}
       <nav className="flex-1 overflow-hidden px-3 py-2">
         <div className="space-y-0.5">
           {menuItems.map((item) => {
@@ -137,9 +137,6 @@ function Sidebar() {
         </div>
       </nav>
 
-      {/* =====================================================
-          LOGOUT
-      ====================================================== */}
       <div className="shrink-0 border-t border-gray-100 px-3 py-2">
         <button
           type="button"

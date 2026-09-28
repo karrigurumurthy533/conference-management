@@ -12,6 +12,7 @@ import Notifications from "../Pages/Notifications";
 import Profile from "../Pages/Profile";
 import MainLayout from "../layouts/MainLayout";
 import Attendance from "../Pages/Attendance";
+import Brochures from "../Pages/Brochures";
 
 function ProtectedRoute({ children }) {
   const isLoggedIn =
@@ -77,6 +78,10 @@ function AppRoutes() {
         <Route
           path="/registrations"
           element={<Registrations />}
+        />
+           <Route
+          path="/brochures"
+          element={<Brochures />}
         />
 
          <Route
