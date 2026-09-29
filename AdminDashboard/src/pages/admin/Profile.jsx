@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   User,
   Mail,
@@ -18,21 +19,59 @@ import {
 } from "lucide-react";
 
 const Profile = () => {
+  const { user } = useSelector((state) => state.auth);
+
   const [isEditing, setIsEditing] = useState(false);
 
-  const [profile, setProfile] = useState({
-    firstName: "Admin",
-    lastName: "User",
-    email: "admin@globalscion.com",
-    phone: "+91 98765 43210",
-    role: "Super Admin",
-    department: "Administration",
-    location: "Hyderabad, India",
-    timezone: "IST (UTC +5:30)",
-    bio: "Administrator managing conferences, registrations, speakers and platform activities.",
+  const profile = {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    role: user?.role || "",
+    department: user?.department || "",
+    location: user?.location || "",
+    timezone: user?.timezone || "",
+    bio: user?.about || "",
+    active: user?.active ?? false,
+    verificationStatus: user?.verificationStatus || "",
+    twoFactorEnabled: user?.twoFactorEnabled ?? false,
+    lastLogin: user?.lastLogin || null,
+    permissions: user?.permissions || [],
+  };
+
+  const [formData, setFormData] = useState({
+    firstName: profile.firstName,
+    lastName: profile.lastName,
+    email: profile.email,
+    phone: profile.phone,
+    department: profile.department,
+    location: profile.location,
+    timezone: profile.timezone,
+    bio: profile.bio,
   });
 
-  const [formData, setFormData] = useState(profile);
+  useEffect(() => {
+    setFormData({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email: profile.email,
+      phone: profile.phone,
+      department: profile.department,
+      location: profile.location,
+      timezone: profile.timezone,
+      bio: profile.bio,
+    });
+  }, [
+    user?.firstName,
+    user?.lastName,
+    user?.email,
+    user?.phone,
+    user?.department,
+    user?.location,
+    user?.timezone,
+    user?.about,
+  ]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({
@@ -42,24 +81,57 @@ const Profile = () => {
   };
 
   const handleSave = () => {
-    setProfile(formData);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setFormData(profile);
+    setFormData({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email: profile.email,
+      phone: profile.phone,
+      department: profile.department,
+      location: profile.location,
+      timezone: profile.timezone,
+      bio: profile.bio,
+    });
+
     setIsEditing(false);
+  };
+
+  const formatLastLogin = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatRole = (role) => {
+    if (!role) {
+      return "—";
+    }
+
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const formatVerification = (status) => {
+    if (!status) {
+      return "—";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   return (
     <div className="min-w-0 space-y-3">
-      {/* =====================================================
-          PROFILE HEADER
-      ====================================================== */}
-
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        {/* Banner */}
-
         <div className="relative h-24 bg-gradient-to-r from-violet-700 via-violet-600 to-purple-600">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute -right-10 -top-16 h-40 w-40 rounded-full border-[20px] border-white" />
@@ -68,16 +140,12 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Profile Info */}
-
         <div className="relative px-4 pb-3">
           <div className="-mt-9 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-3">
-              {/* Avatar */}
-
               <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-xl border-4 border-white bg-violet-100 text-[20px] font-bold text-violet-700 shadow-sm">
-                {profile.firstName.charAt(0)}
-                {profile.lastName.charAt(0)}
+                {profile.firstName?.charAt(0)}
+                {profile.lastName?.charAt(0)}
               </div>
 
               <div className="pb-1">
@@ -92,7 +160,7 @@ const Profile = () => {
                   />
 
                   <span className="text-[12px] font-medium text-gray-500">
-                    {profile.role}
+                    {formatRole(profile.role)}
                   </span>
 
                   <span className="text-gray-300">•</span>
@@ -103,8 +171,6 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-
-            {/* Actions */}
 
             {!isEditing ? (
               <button
@@ -140,18 +206,8 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* =====================================================
-          MAIN GRID
-      ====================================================== */}
-
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-        {/* =================================================
-            PERSONAL INFORMATION
-        ================================================== */}
-
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2">
-          {/* Header */}
-
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <div>
               <h3 className="text-[15px] font-semibold text-gray-900">
@@ -169,8 +225,6 @@ const Profile = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
-            {/* First Name */}
-
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 First Name
@@ -187,12 +241,10 @@ const Profile = () => {
                 />
               ) : (
                 <div className="flex h-10 items-center rounded-lg bg-gray-50 px-3 text-[12px] text-gray-700">
-                  {profile.firstName}
+                  {profile.firstName || "—"}
                 </div>
               )}
             </div>
-
-            {/* Last Name */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -210,12 +262,10 @@ const Profile = () => {
                 />
               ) : (
                 <div className="flex h-10 items-center rounded-lg bg-gray-50 px-3 text-[12px] text-gray-700">
-                  {profile.lastName}
+                  {profile.lastName || "—"}
                 </div>
               )}
             </div>
-
-            {/* Email */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -239,13 +289,11 @@ const Profile = () => {
                   />
                 ) : (
                   <div className="flex h-10 items-center rounded-lg bg-gray-50 pl-9 text-[12px] text-gray-700">
-                    {profile.email}
+                    {profile.email || "—"}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Phone */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -269,13 +317,11 @@ const Profile = () => {
                   />
                 ) : (
                   <div className="flex h-10 items-center rounded-lg bg-gray-50 pl-9 text-[12px] text-gray-700">
-                    {profile.phone}
+                    {profile.phone || "—"}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Department */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -293,12 +339,10 @@ const Profile = () => {
                 />
               ) : (
                 <div className="flex h-10 items-center rounded-lg bg-gray-50 px-3 text-[12px] text-gray-700">
-                  {profile.department}
+                  {profile.department || "—"}
                 </div>
               )}
             </div>
-
-            {/* Location */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -322,13 +366,11 @@ const Profile = () => {
                   />
                 ) : (
                   <div className="flex h-10 items-center rounded-lg bg-gray-50 pl-9 text-[12px] text-gray-700">
-                    {profile.location}
+                    {profile.location || "—"}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Timezone */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -352,13 +394,11 @@ const Profile = () => {
                   />
                 ) : (
                   <div className="flex h-10 items-center rounded-lg bg-gray-50 pl-9 text-[12px] text-gray-700">
-                    {profile.timezone}
+                    {profile.timezone || "—"}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Role */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -367,16 +407,14 @@ const Profile = () => {
 
               <div className="flex h-10 items-center justify-between rounded-lg bg-gray-50 px-3">
                 <span className="text-[12px] font-medium text-gray-700">
-                  {profile.role}
+                  {formatRole(profile.role)}
                 </span>
 
                 <span className="rounded-md bg-violet-100 px-2 py-1 text-[9px] font-semibold text-violet-700">
-                  Admin
+                  {formatRole(profile.role)}
                 </span>
               </div>
             </div>
-
-            {/* Bio */}
 
             <div className="sm:col-span-2">
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -394,20 +432,14 @@ const Profile = () => {
                 />
               ) : (
                 <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-[12px] leading-5 text-gray-600">
-                  {profile.bio}
+                  {profile.bio || "—"}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* =================================================
-            ACCOUNT INFORMATION
-        ================================================== */}
-
         <div className="space-y-3">
-          {/* Account Status */}
-
           <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -427,8 +459,6 @@ const Profile = () => {
             </div>
 
             <div className="mt-3 space-y-2">
-              {/* Status */}
-
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5">
                 <div className="flex items-center gap-2">
                   <CheckCircle2
@@ -442,11 +472,9 @@ const Profile = () => {
                 </div>
 
                 <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
-                  Active
+                  {profile.active ? "Active" : "Inactive"}
                 </span>
               </div>
-
-              {/* Verification */}
 
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5">
                 <div className="flex items-center gap-2">
@@ -461,11 +489,9 @@ const Profile = () => {
                 </div>
 
                 <span className="text-[11px] font-semibold text-violet-600">
-                  Verified
+                  {formatVerification(profile.verificationStatus)}
                 </span>
               </div>
-
-              {/* Member Since */}
 
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5">
                 <div className="flex items-center gap-2">
@@ -480,11 +506,9 @@ const Profile = () => {
                 </div>
 
                 <span className="text-[11px] text-gray-500">
-                  Jan 2025
+                  —
                 </span>
               </div>
-
-              {/* Last Login */}
 
               <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2.5">
                 <div className="flex items-center gap-2">
@@ -498,14 +522,12 @@ const Profile = () => {
                   </span>
                 </div>
 
-                <span className="text-[11px] text-gray-500">
-                  Today, 09:42 PM
+                <span className="text-right text-[11px] text-gray-500">
+                  {formatLastLogin(profile.lastLogin)}
                 </span>
               </div>
             </div>
           </div>
-
-          {/* Security */}
 
           <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
@@ -525,8 +547,6 @@ const Profile = () => {
             </div>
 
             <div className="mt-3 space-y-2">
-              {/* Password */}
-
               <button
                 type="button"
                 className="flex h-11 w-full items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 transition hover:border-violet-200 hover:bg-violet-50"
@@ -547,8 +567,6 @@ const Profile = () => {
                 </span>
               </button>
 
-              {/* 2FA */}
-
               <button
                 type="button"
                 className="flex h-11 w-full items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 transition hover:border-violet-200 hover:bg-violet-50"
@@ -565,17 +583,13 @@ const Profile = () => {
                 </div>
 
                 <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
-                  ON
+                  {profile.twoFactorEnabled ? "ON" : "OFF"}
                 </span>
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* =====================================================
-          ADMIN PERMISSIONS
-      ====================================================== */}
 
       <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
@@ -596,14 +610,17 @@ const Profile = () => {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          {[
-            "Conferences",
-            "Registrations",
-            "Payments",
-            "Speakers",
-            "Reports",
-            "Employees",
-          ].map((permission) => (
+          {(profile.permissions.length > 0
+            ? profile.permissions
+            : [
+                "Conferences",
+                "Registrations",
+                "Payments",
+                "Speakers",
+                "Reports",
+                "Employees",
+              ]
+          ).map((permission) => (
             <div
               key={permission}
               className="flex items-center gap-2 rounded-lg bg-violet-50/60 px-3 py-2.5"

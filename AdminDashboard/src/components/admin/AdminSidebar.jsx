@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 import {
   LayoutDashboard,
@@ -15,8 +16,11 @@ import {
   LogOut,
 } from "lucide-react";
 
+import { logout } from "../../redux/authSlice";
+
 const AdminSidebar = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const navClass = ({ isActive }) =>
     `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-200 ${
@@ -32,29 +36,18 @@ const AdminSidebar = () => {
         : "text-gray-500 group-hover:text-[#7C3AED]"
     }`;
 
-  const handleLogout = () => {
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      navigate("/admin/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      navigate("/admin/login");
+    }
   };
 
   return (
-    <aside
-      className="
-        fixed
-        left-0
-        top-0
-        z-50
-        flex
-        h-screen
-        w-[220px]
-        flex-col
-        border-r
-        border-gray-200
-        bg-white
-      "
-    >
-      {/* =====================================================
-          LOGO
-      ====================================================== */}
+    <aside className="fixed left-0 top-0 z-50 flex h-screen w-[220px] flex-col border-r border-gray-200 bg-white">
       <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
         <img
           src="/web_logo.png"
@@ -63,11 +56,7 @@ const AdminSidebar = () => {
         />
       </div>
 
-      {/* =====================================================
-          NAVIGATION
-      ====================================================== */}
       <nav className="flex-1 overflow-hidden px-3 py-3">
-
         <NavLink to="/admin/dashboard" className={navClass}>
           {({ isActive }) => (
             <>
@@ -197,32 +186,13 @@ const AdminSidebar = () => {
             </>
           )}
         </NavLink>
-
       </nav>
 
-      {/* =====================================================
-          LOGOUT
-      ====================================================== */}
       <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
         <button
+          type="button"
           onClick={handleLogout}
-          className="
-            group
-            flex
-            w-full
-            items-center
-            gap-2.5
-            rounded-lg
-            px-2.5
-            py-2
-            text-[13px]
-            font-medium
-            text-gray-600
-            transition-all
-            duration-200
-            hover:bg-red-50
-            hover:text-red-500
-          "
+          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-gray-600 transition-all duration-200 hover:bg-red-50 hover:text-red-500"
         >
           <LogOut
             size={18}
