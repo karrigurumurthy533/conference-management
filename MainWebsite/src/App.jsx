@@ -20,6 +20,7 @@ import AbstractSubmissionPage from "./pages/AbstractSubmissionPage";
 import ContactPage from "./pages/Contact";
 import RegisterPage from "./pages/RegisterPage";
 import TawkChat from "./components/common/TawkChat";
+import ScientificProgram from "./pages/ScientificProgram";
 
 const App = () => {
   return (
@@ -62,6 +63,12 @@ const App = () => {
           path="/conferences/:id/abstract-submission"
           element={<AbstractSubmissionPage />}
         />
+
+          <Route
+          path="/conferences/:id/scientific-program"
+          element={<ScientificProgram/>}
+        />
+
 
         {/* =====================================================
             BROCHURE

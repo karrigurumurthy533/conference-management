@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -5,65 +6,155 @@ import {
   ChevronRight,
   List,
   Mail,
-  Phone,
-  MapPin,
   ShieldCheck,
+  Database,
+  Eye,
+  Share2,
+  Cookie,
+  UserCheck,
+  FileText,
+  Lock,
+  CalendarDays,
 } from "lucide-react";
+
+/* =========================================================
+   GLOBAL PRIVACY POLICY CONTENT
+========================================================= */
 
 const sections = [
   {
-    id: "information",
-    title: "Information We Collect",
-    content:
-      "We collect personal information that you voluntarily provide to us, such as your name, email address, phone number, organization, and details related to conference registration, abstract submission, or newsletter subscription. We may also collect information automatically through your use of our website, such as IP address, browser type, device information, and pages you visit.",
+    id: "introduction",
+    title: "Global Privacy Policy",
+    icon: ShieldCheck,
+    content: [
+      "To be at the forefront of innovation and provide a unique platform for the global scientific community to share their diverse perspectives which empower latest research outcomes in science and technology.",
+      "This Global Privacy Policy describes the types of Personal Data we collect through our services and via our online presence, which include our main website at scientificsummits.org, as well as services that we enable internet users to access, such as our conferences Scientific Summits and their sub–Scientific Summits (collectively Account Sites).",
+      "This policy also describes how we use Personal Data, with whom we share it, your rights and choices, and how you can contact us about our privacy practices.",
+      "This policy does not apply to third-party websites, products, or services, even if they link to our Services or Sites, and you should consider the privacy practices of those third-parties carefully.",
+    ],
   },
+
   {
-    id: "use-information",
-    title: "How We Use Your Information",
-    content:
-      "We use your information to provide and improve our services, process registrations, communicate with you about upcoming conferences and events, send important updates, and personalize your experience. We may also use your information for internal analytics and website performance.",
+    id: "personal-data",
+    title: "Personal Data We Collect",
+    icon: Database,
+    content: [
+      "Personal Data is any information that relates to an identified or identifiable individual. The Personal Data that you provide directly to us through our Sites will be apparent from the context in which you provide the data.",
+      "When you are interested towards our services, we will collect your Full Name, E-mail, Phone Number, Address, Photograph and Biography.",
+      "When you fill-in our online form to contact our customer support team, we collect your full name, E-mail, Phone Number and anything else you tell us about your needs and timeline.",
+      "When you submit your research paper, abstract, presentation, or poster, we will collect your research interest name, your name, your contact details and copy of the research paper, abstract, presentation, or poster.",
+      "When you register for our services, we will collect your full name, E-mail, Phone number, Address and Register amount. We will not collect or store any Credit/Debit card details when you register through online.",
+      "When you subscribe for our newsletters, we will collect your name and E-mail.",
+      "When you respond to our emails or surveys, we collect your email address, name and any other information you choose to include in the body of your email or response.",
+      "We may also collect information relating to opportunities to deliver a presentation at our conferences and events.",
+      "If you contact us by phone, we will collect your name and phone number.",
+    ],
   },
-  {
-    id: "sharing",
-    title: "Sharing Your Information",
-    content:
-      "We do not sell, rent, or trade your personal information. We may share your information with trusted partners and service providers who help us operate our website, process registrations, and deliver our events. These partners are obligated to keep your information confidential.",
-  },
+
   {
     id: "cookies",
-    title: "Cookies and Tracking Technologies",
-    content:
-      "We use cookies and similar tracking technologies to enhance your browsing experience, analyze website traffic, and understand your preferences. You can control cookies through your browser settings.",
+    title: "Cookies & Website Technologies",
+    icon: Cookie,
+    content: [
+      "Our sites use cookies and other technologies to function effectively. These technologies record information about your use of our Sites.",
+      "Browser and device data may include IP address, device type, operating system and Internet browser type, screen resolution, operating system name and version, device manufacturer and model, language, plug-ins, add-ons and the language version of the Sites you are visiting.",
+      "Usage data may include time spent on the Sites, Scientific Summits visited, links clicked, language preferences, and the Scientific Summits that led or referred you to our Sites.",
+    ],
   },
+
   {
-    id: "security",
-    title: "Data Security",
-    content:
-      "We implement appropriate technical and organizational measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction.",
+    id: "use-information",
+    title: "How We Use Personal Data",
+    icon: Eye,
+    content: [
+      "We may send you email marketing communications about our services, invite you to participate in our events or surveys, or otherwise communicate with you for marketing purposes, provided that we do so in accordance with the consent requirements that are imposed by applicable law.",
+      "When we collect your business contact details through our participation at trade shows or other events, we may use the information to follow-up with you regarding an event, send you information that you have requested on our products and services and, with your permission, include you on our marketing information campaigns.",
+      "When you visit our Sites or online services, both we and certain third parties collect information about your online activities over time and across different sites to provide you with advertising about products and services tailored to your individual interests. This type of advertising is called interest-based advertising.",
+      "These third parties may place or recognize a unique cookie or other technology on your browser, including the use of pixel tags. Where required by applicable law, we will obtain your consent prior to processing of your information for the purpose of interest-based advertising.",
+      "You may see our ads on other websites or mobile apps because we participate in advertising networks. Ad networks allow us to target our messaging to users based on a range of factors, including demographic data, users' inferred interests and browsing context.",
+      "This technology also helps us track the effectiveness of our marketing efforts and understand if you have seen one of our advertisements.",
+    ],
   },
+
+  {
+    id: "disclosure",
+    title: "How We Disclose Personal Data",
+    icon: Share2,
+    content: [
+      "Scientific Summits does not sell personal data to marketers or unaffiliated third parties. We share your personal data with trusted entities as outlined below.",
+      "We share Personal Data with other Scientific Summits entities in order to provide our Services and for internal administration purposes.",
+      "We share Personal Data with a limited number of our service providers. We have service providers that provide services on our behalf, such as Hotels, Banks, Payment Gateways, Logistics, Website design & hosting, Customer Service, Email Delivery Services and Auditing Services.",
+      "These service providers may need to access Personal Data to perform their services. We authorize such service providers to use or disclose the Personal Data only as necessary to perform services on our behalf or comply with legal requirements.",
+      "We require such service providers to contractually commit to protect the security and confidentiality of Personal Data they process on our behalf.",
+      "In the event that we enter into, or intend to enter into, a situation that alters the structure of our business, such as a reorganization, merger, sale, joint venture, assignment, transfer, change of control, or other disposition of all or any portion of our business, we may share Personal Data with third parties for the purpose of facilitating and completing the transaction.",
+      "We share Personal Data as we believe necessary to comply with applicable law, enforce our contractual rights, protect the rights, privacy, safety and property of Scientific Summits, you or others, and respond to requests from courts, law enforcement agencies, regulatory agencies, and other public and government authorities, which may include authorities outside your country of residence.",
+    ],
+  },
+
   {
     id: "rights",
-    title: "Your Rights",
-    content:
-      "You have the right to access, update, or delete your personal information at any time. You can also opt-out of receiving promotional emails by following the unsubscribe instructions in our emails.",
+    title: "Your Rights & Choices",
+    icon: UserCheck,
+    content: [
+      "You have choices regarding our use and disclosure of your Personal Data.",
+      "If you no longer want to receive marketing-related emails from us, you may opt-out via the unsubscribe link included in such emails. We will try to comply with your request as soon as reasonably practicable.",
+      "If you would like to review, correct, or update Personal Data that you have previously disclosed to us, you may do so by contacting us.",
+      "Depending on your location and subject to applicable law, you may have the following rights with regard to the Personal Data we control about you.",
+    ],
+    list: [
+      "The right to request confirmation of whether Scientific Summits processes Personal Data relating to you, and if so, to request a copy of that Personal Data.",
+      "The right to request that Scientific Summits rectifies or updates your Personal Data that is inaccurate, incomplete or outdated.",
+      "The right to request that Scientific Summits erase your Personal Data in certain circumstances provided by law.",
+      "The right to request that Scientific Summits restrict the use of your Personal Data in certain circumstances.",
+      "The right to request that we export to another company, where technically feasible, your Personal Data that we hold in order to provide Services to you.",
+      "Where the processing of your Personal Data is based on your previously given consent, you have the right to withdraw your consent at any time.",
+      "You may also have the right to object to the processing of your Personal Data on grounds relating to your particular situation.",
+    ],
   },
+
   {
-    id: "third-party",
-    title: "Third-Party Links",
-    content:
-      "Our website may contain links to third-party websites. We are not responsible for the privacy practices or content of those websites. We encourage you to review their privacy policies before providing any personal information.",
+    id: "data-requests",
+    title: "Data Protection Requests",
+    icon: FileText,
+    content: [
+      "In order to exercise your data protection rights, you may contact Scientific Summits as described in the Contact Us section below.",
+      "We take each request seriously. We will comply with your request to the extent required by applicable law.",
+      "We will not be able to respond to a request if we no longer hold your Personal Data.",
+      "If you feel that you have not received a satisfactory response from us, you may consult with the data protection authority in your country.",
+      "For your protection, we may need to verify your identity before responding to your request, such as verifying that the email address from which you send the request matches your email address that we have on file.",
+      "If we no longer need to process Personal Data about you in order to provide our Services or our Sites, we will not maintain, acquire or process additional information in order to identify you for the purpose of responding to your request.",
+    ],
   },
+
   {
-    id: "changes",
-    title: "Changes to This Policy",
-    content:
-      "We may update this Privacy Policy from time to time. Any changes will be posted on this page with the updated effective date. We encourage you to review this policy periodically.",
+    id: "security",
+    title: "Data Security & Retention",
+    icon: Lock,
+    content: [
+      "We make reasonable efforts to ensure a level of security appropriate to the risk associated with the processing of Personal Data.",
+      "We maintain organizational, technical and administrative measures designed to protect Personal Data within our organization against unauthorized access, destruction, loss, alteration or misuse.",
+      "Your Personal Data is only accessible to a limited number of personnel who need access to the information to perform their duties.",
+      "Unfortunately, no data transmission or storage system can be guaranteed to be 100% secure.",
+      "If you have reason to believe that your interaction with us is no longer secure, for example, if you feel that the security of your account has been compromised, please contact us immediately.",
+    ],
   },
+
   {
     id: "contact",
     title: "Contact Us",
-    content:
-      "If you have any questions or concerns about this Privacy Policy, please contact us at:",
+    icon: Mail,
+    content: [
+      "If you have any questions or complaints about this Privacy Policy, please contact us electronically using the contact details below.",
+    ],
+  },
+
+  {
+    id: "updated",
+    title: "Policy Update",
+    icon: CalendarDays,
+    content: [
+      "This Privacy Policy was updated on May 05, 2025.",
+    ],
   },
 ];
 
@@ -85,6 +176,7 @@ const heroItem = {
     opacity: 0,
     y: 20,
   },
+
   visible: {
     opacity: 1,
     y: 0,
@@ -98,8 +190,9 @@ const heroItem = {
 const sidebarAnimation = {
   hidden: {
     opacity: 0,
-    x: -35,
+    x: -45,
   },
+
   visible: {
     opacity: 1,
     x: 0,
@@ -110,9 +203,13 @@ const sidebarAnimation = {
   },
 };
 
+/* =========================================================
+   PRIVACY COMPONENT
+========================================================= */
+
 const Privacy = () => {
   const [activeSection, setActiveSection] =
-    useState("information");
+    useState("introduction");
 
   const scrollToSection = (id) => {
     setActiveSection(id);
@@ -124,7 +221,8 @@ const Privacy = () => {
     const navbarOffset = 95;
 
     const elementPosition =
-      element.getBoundingClientRect().top + window.scrollY;
+      element.getBoundingClientRect().top +
+      window.scrollY;
 
     window.scrollTo({
       top: elementPosition - navbarOffset,
@@ -135,22 +233,24 @@ const Privacy = () => {
   return (
     <div className="min-h-screen bg-white text-[#11134d]">
 
-      {/* =========================================================
-          HERO
-      ========================================================= */}
+      {/* =====================================================
+          HERO SECTION
+      ===================================================== */}
 
-      <section className="relative min-h-[195px] overflow-hidden bg-[#130a3b]">
+      <section className="relative min-h-[225px] overflow-hidden bg-[#130a3b]">
 
-        {/* Background glow */}
+        {/* Background Glow */}
 
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 overflow-hidden">
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="absolute -right-20 -top-24 h-[380px] w-[600px] rounded-full bg-[#5425d8]/20 blur-[80px]"
+            className="absolute -right-20 -top-24 h-[420px] w-[650px] rounded-full bg-[#5425d8]/20 blur-[85px]"
           />
+
+          {/* Circle 1 */}
 
           <motion.div
             initial={{
@@ -162,10 +262,12 @@ const Privacy = () => {
               scale: 1,
             }}
             transition={{
-              duration: 1,
+              duration: 1.2,
             }}
-            className="absolute right-[18%] top-[25px] h-[250px] w-[250px] rounded-full border border-[#744cff]/30"
+            className="absolute right-[17%] top-[18px] h-[290px] w-[290px] rounded-full border border-[#744cff]/30"
           />
+
+          {/* Circle 2 */}
 
           <motion.div
             initial={{
@@ -175,64 +277,68 @@ const Privacy = () => {
             animate={{
               opacity: 1,
               scale: 1,
-            }}
-            transition={{
-              duration: 1,
-              delay: 0.15,
-            }}
-            className="absolute right-[20%] top-[45px] h-[210px] w-[210px] rounded-full border border-[#744cff]/20"
-          />
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              scale: 0.8,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-            }}
-            transition={{
-              duration: 1,
-              delay: 0.25,
-            }}
-            className="absolute right-[24%] top-[68px] h-[160px] w-[160px] rounded-full border border-[#744cff]/20"
-          />
-
-          {/* Decorative Lines */}
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              x: 30,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
-            }}
-            transition={{
-              duration: 1,
-            }}
-            className="absolute right-[12%] top-[30px] h-px w-[430px] rotate-[20deg] bg-gradient-to-r from-transparent via-[#744cff]/50 to-transparent"
-          />
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              x: 30,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
             }}
             transition={{
               duration: 1.1,
               delay: 0.15,
             }}
-            className="absolute right-[5%] top-[105px] h-px w-[500px] -rotate-[15deg] bg-gradient-to-r from-transparent via-[#744cff]/40 to-transparent"
+            className="absolute right-[19%] top-[38px] h-[245px] w-[245px] rounded-full border border-[#744cff]/25"
           />
 
-          {/* Glowing Dots */}
+          {/* Circle 3 */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0.8,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+            }}
+            transition={{
+              duration: 1,
+              delay: 0.3,
+            }}
+            className="absolute right-[22%] top-[60px] h-[195px] w-[195px] rounded-full border border-[#744cff]/20"
+          />
+
+          {/* Decorative Line 1 */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: 30,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 1.2,
+            }}
+            className="absolute right-[7%] top-[55px] h-px w-[500px] rotate-[20deg] bg-gradient-to-r from-transparent via-[#7957ff]/50 to-transparent"
+          />
+
+          {/* Decorative Line 2 */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: 30,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 1.3,
+              delay: 0.15,
+            }}
+            className="absolute right-[2%] top-[140px] h-px w-[520px] -rotate-[17deg] bg-gradient-to-r from-transparent via-[#7957ff]/40 to-transparent"
+          />
+
+          {/* Glowing Dot 1 */}
 
           <motion.div
             animate={{
@@ -243,8 +349,10 @@ const Privacy = () => {
               duration: 2,
               repeat: Infinity,
             }}
-            className="absolute right-[33%] top-[30px] h-2 w-2 rounded-full bg-[#7d5cff] shadow-[0_0_15px_#7d5cff]"
+            className="absolute right-[32%] top-[30px] h-2 w-2 rounded-full bg-[#8061ff] shadow-[0_0_14px_#8061ff]"
           />
+
+          {/* Glowing Dot 2 */}
 
           <motion.div
             animate={{
@@ -254,23 +362,11 @@ const Privacy = () => {
             transition={{
               duration: 2.2,
               repeat: Infinity,
-              delay: 0.4,
+              delay: 0.5,
             }}
-            className="absolute right-[22%] top-[80px] h-2 w-2 rounded-full bg-[#7d5cff] shadow-[0_0_15px_#7d5cff]"
+            className="absolute right-[23%] top-[76px] h-2 w-2 rounded-full bg-[#8061ff] shadow-[0_0_14px_#8061ff]"
           />
 
-          <motion.div
-            animate={{
-              opacity: [0.4, 1, 0.4],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: 2.4,
-              repeat: Infinity,
-              delay: 0.8,
-            }}
-            className="absolute right-[13%] top-[120px] h-2 w-2 rounded-full bg-[#7d5cff] shadow-[0_0_15px_#7d5cff]"
-          />
         </div>
 
         {/* Hero Content */}
@@ -279,16 +375,18 @@ const Privacy = () => {
           variants={heroContainer}
           initial="hidden"
           animate="visible"
-          className="relative mx-auto flex min-h-[195px] max-w-[1040px] items-center px-5"
+          className="relative mx-auto flex min-h-[225px] max-w-[1180px] items-center px-5"
         >
-          <div className="w-full max-w-[500px]">
+
+          <div className="w-full max-w-[680px]">
 
             {/* Breadcrumb */}
 
             <motion.div
               variants={heroItem}
-              className="mb-4 flex items-center gap-2 text-[11px] text-white/75"
+              className="mb-5 flex items-center gap-2 text-[13px] text-white/75"
             >
+
               <Link
                 to="/"
                 className="transition hover:text-white"
@@ -296,38 +394,39 @@ const Privacy = () => {
                 Home
               </Link>
 
-              <ChevronRight size={12} />
+              <ChevronRight size={14} />
 
               <span className="text-white/90">
                 Privacy Policy
               </span>
+
             </motion.div>
 
             {/* Heading */}
 
             <motion.h1
               variants={heroItem}
-              className="text-[32px] font-bold leading-none tracking-[-1px] text-white"
+              className="text-[34px] font-bold leading-tight tracking-[-1px] text-white sm:text-[38px]"
             >
-              Privacy Policy
+              Global Privacy Policy
             </motion.h1>
 
             {/* Description */}
 
             <motion.p
               variants={heroItem}
-              className="mt-4 max-w-[500px] text-[13px] leading-[1.45] text-white/85"
+              className="mt-4 max-w-[620px] text-[15px] leading-[1.65] text-white/80"
             >
-              We value your privacy. This Privacy Policy explains
-              how we collect, use, and protect your personal
-              information when you visit our website and use our
-              services.
+              We respect your privacy and are committed to
+              protecting your personal information across our
+              websites, conferences, events, and online services.
             </motion.p>
+
           </div>
 
-          {/* =====================================================
-              HERO SHIELD
-          ===================================================== */}
+          {/* =================================================
+              HERO ICON
+          ================================================= */}
 
           <motion.div
             initial={{
@@ -345,22 +444,24 @@ const Privacy = () => {
               delay: 0.3,
               ease: "easeOut",
             }}
-            className="absolute right-[13%] top-1/2 hidden -translate-y-1/2 md:block"
+            className="absolute right-[12%] top-1/2 hidden -translate-y-1/2 md:block"
           >
+
             <motion.div
               animate={{
-                y: [0, -7, 0],
+                y: [0, -8, 0],
               }}
               transition={{
                 duration: 4,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="relative flex h-[130px] w-[130px] items-center justify-center rounded-full border border-[#7549ff]/40"
+              className="relative flex h-[155px] w-[155px] items-center justify-center rounded-full border border-[#7549ff]/40"
             >
-              <div className="absolute inset-[13px] rounded-full border border-[#7549ff]/35" />
 
-              <div className="absolute inset-[25px] rounded-full border border-[#7549ff]/20" />
+              <div className="absolute inset-[14px] rounded-full border border-[#7549ff]/30" />
+
+              <div className="absolute inset-[28px] rounded-full border border-[#7549ff]/20" />
 
               <motion.div
                 animate={{
@@ -374,9 +475,9 @@ const Privacy = () => {
                 }}
               >
                 <ShieldCheck
-                  size={78}
+                  size={88}
                   strokeWidth={1.4}
-                  className="text-[#8d68ff] drop-shadow-[0_0_18px_rgba(141,104,255,0.7)]"
+                  className="text-[#926cff] drop-shadow-[0_0_18px_rgba(146,108,255,0.75)]"
                 />
               </motion.div>
 
@@ -389,7 +490,7 @@ const Privacy = () => {
                   duration: 2,
                   repeat: Infinity,
                 }}
-                className="absolute left-[15px] top-[25px] h-2 w-2 rounded-full bg-[#8d68ff] shadow-[0_0_14px_#8d68ff]"
+                className="absolute left-[15px] top-[28px] h-2 w-2 rounded-full bg-[#926cff] shadow-[0_0_15px_#926cff]"
               />
 
               <motion.div
@@ -402,84 +503,70 @@ const Privacy = () => {
                   repeat: Infinity,
                   delay: 0.5,
                 }}
-                className="absolute bottom-[20px] right-[10px] h-2 w-2 rounded-full bg-[#8d68ff] shadow-[0_0_14px_#8d68ff]"
+                className="absolute bottom-[20px] right-[10px] h-2 w-2 rounded-full bg-[#926cff] shadow-[0_0_15px_#926cff]"
               />
+
             </motion.div>
+
           </motion.div>
+
         </motion.div>
       </section>
 
-      {/* =========================================================
+      {/* =====================================================
           MAIN CONTENT
-      ========================================================= */}
+      ===================================================== */}
 
-      <main className="mx-auto max-w-[1040px] px-5 py-7">
+      <main className="mx-auto max-w-[1180px] px-5 py-10">
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[265px_1fr]">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[300px_1fr]">
 
-          {/* =====================================================
+          {/* =================================================
               LEFT SIDEBAR
-              STICKY CARD
-          ===================================================== */}
+          ================================================= */}
 
           <motion.aside
-            initial={{
-              opacity: 0,
-              x: -35,
-            }}
-            whileInView={{
-              opacity: 1,
-              x: 0,
-            }}
+            variants={sidebarAnimation}
+            initial="hidden"
+            whileInView="visible"
             viewport={{
               once: true,
               amount: 0.2,
             }}
-            transition={{
-              duration: 0.7,
-              ease: "easeOut",
-            }}
-            className="h-fit self-start lg:sticky lg:top-[95px]"
+            className="h-fit self-start lg:sticky lg:top-[95px] lg:-ml-10"
           >
-            <div className="rounded-xl bg-gradient-to-br from-[#faf9ff] to-[#f5f3fd] p-4">
+
+            <div className="w-full rounded-2xl border border-[#ebe8f7] bg-gradient-to-br from-[#faf9ff] to-[#f3f0fc] p-5 shadow-[0_8px_30px_rgba(48,35,100,0.06)]">
 
               {/* Sidebar Header */}
 
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 10,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  duration: 0.4,
-                }}
-                className="mb-5 flex items-center gap-3"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e8e2ff]">
+              <div className="mb-6 flex items-center gap-3">
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8e2ff]">
+
                   <List
-                    size={13}
+                    size={17}
                     className="text-[#5425d8]"
                   />
+
                 </div>
 
-                <h2 className="text-[12px] font-bold text-[#11134d]">
+                <h2 className="text-[15px] font-bold text-[#11134d]">
                   On this page
                 </h2>
-              </motion.div>
 
-              {/* Sidebar Items */}
+              </div>
 
-              <div className="space-y-1">
+              {/* Sidebar Menu */}
+
+              <div className="space-y-2">
+
                 {sections.map((section, index) => {
+
                   const isActive =
                     activeSection === section.id;
+
+                  const Icon = section.icon;
 
                   return (
                     <motion.button
@@ -489,244 +576,275 @@ const Privacy = () => {
                         scrollToSection(section.id)
                       }
                       whileHover={{
-                        x: 4,
+                        x: 6,
                       }}
                       whileTap={{
                         scale: 0.98,
                       }}
-                      transition={{
-                        duration: 0.2,
-                      }}
-                      className={`flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-left ${
+                      className={`flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition ${
                         isActive
-                          ? "text-[#5425d8]"
-                          : "text-[#51617b] hover:text-[#5425d8]"
+                          ? "bg-white text-[#5425d8] shadow-[0_3px_12px_rgba(84,37,216,0.08)]"
+                          : "text-[#51617b] hover:bg-white/70 hover:text-[#5425d8]"
                       }`}
                     >
+
                       {/* Number */}
 
-                      <motion.span
-                        animate={{
-                          scale: isActive ? 1.05 : 1,
-                        }}
-                        transition={{
-                          duration: 0.25,
-                        }}
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${
                           isActive
-                            ? "bg-[#5425d8] text-white shadow-[0_3px_10px_rgba(84,37,216,0.25)]"
+                            ? "bg-[#5425d8] text-white shadow-[0_4px_12px_rgba(84,37,216,0.25)]"
                             : "bg-[#e7e5f4] text-[#20205d]"
                         }`}
                       >
                         {index + 1}
-                      </motion.span>
+                      </span>
+
+                      {/* Icon */}
+
+                      <Icon
+                        size={16}
+                        className={
+                          isActive
+                            ? "text-[#5425d8]"
+                            : "text-slate-400"
+                        }
+                      />
 
                       {/* Title */}
 
-                      <span className="text-[11px] leading-4">
+                      <span className="text-[13px] font-medium leading-5">
                         {section.title}
                       </span>
+
                     </motion.button>
                   );
                 })}
+
               </div>
+
             </div>
+
           </motion.aside>
 
-          {/* =====================================================
-              POLICY CONTENT
-          ===================================================== */}
+          {/* =================================================
+              RIGHT CONTENT
+          ================================================= */}
 
           <div className="min-w-0">
 
-            {sections.map((section, index) => (
-              <motion.section
-                key={section.id}
-                id={section.id}
-                initial={{
-                  opacity: 0,
-                  y: 25,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                  amount: 0.15,
-                }}
-                transition={{
-                  duration: 0.55,
-                  delay: 0.03,
-                  ease: "easeOut",
-                }}
-                className="scroll-mt-[95px] border-b border-[#e7e7ef] py-2.5 first:pt-0"
-              >
-                <div className="flex gap-4">
+            {sections.map((section, index) => {
 
-                  {/* NUMBER */}
+              const Icon = section.icon;
 
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      scale: 0.7,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      scale: 1,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      duration: 0.4,
-                    }}
-                    whileHover={{
-                      scale: 1.08,
-                    }}
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5425d8] text-[11px] font-bold text-white shadow-[0_3px_8px_rgba(84,37,216,0.2)]"
-                  >
-                    {index + 1}
-                  </motion.div>
+              return (
+                <motion.section
+                  key={section.id}
+                  id={section.id}
+                  initial={{
+                    opacity: 0,
+                    y: 25,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                    amount: 0.12,
+                  }}
+                  transition={{
+                    duration: 0.55,
+                    delay: index * 0.03,
+                    ease: "easeOut",
+                  }}
+                  className="scroll-mt-[95px] border-b border-[#e7e7ef] py-8 first:pt-0"
+                >
 
-                  {/* CONTENT */}
+                  <div className="flex gap-5">
 
-                  <div className="flex-1">
+                    {/* Number */}
 
-                    <motion.h2
-                      initial={{
-                        opacity: 0,
-                        x: 10,
+                    <motion.div
+                      whileHover={{
+                        scale: 1.08,
                       }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      transition={{
-                        duration: 0.4,
-                        delay: 0.08,
-                      }}
-                      className="text-[13px] font-bold leading-6 text-[#11134d]"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5425d8] text-[13px] font-bold text-white shadow-[0_4px_10px_rgba(84,37,216,0.2)]"
                     >
-                      {section.title}
-                    </motion.h2>
+                      {index + 1}
+                    </motion.div>
 
-                    <motion.p
-                      initial={{
-                        opacity: 0,
-                        x: 10,
-                      }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      transition={{
-                        duration: 0.45,
-                        delay: 0.13,
-                      }}
-                      className="max-w-[710px] text-[11.5px] leading-[1.45] text-[#46617b]"
-                    >
-                      {section.content}
-                    </motion.p>
+                    {/* Section Content */}
 
-                    {/* CONTACT DETAILS */}
+                    <div className="min-w-0 flex-1">
 
-                    {section.id === "contact" && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          y: 10,
-                        }}
-                        whileInView={{
-                          opacity: 1,
-                          y: 0,
-                        }}
-                        viewport={{
-                          once: true,
-                        }}
-                        transition={{
-                          duration: 0.45,
-                          delay: 0.2,
-                        }}
-                        className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10.5px] text-[#46617b]"
-                      >
+                      {/* Heading */}
 
-                        {/* Email */}
+                      <div className="flex items-center gap-3">
 
-                        <motion.a
-                          href="mailto:privacy@globalscion.com"
-                          whileHover={{
-                            x: 3,
-                          }}
-                          className="flex items-center gap-2 transition hover:text-[#5425d8]"
-                        >
-                          <Mail
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
+                        <Icon
+                          size={21}
+                          className="text-[#5425d8]"
+                          strokeWidth={1.8}
+                        />
 
-                          <span>
-                            privacy@globalscion.com
-                          </span>
-                        </motion.a>
+                        <h2 className="text-[20px] font-bold leading-7 text-[#11134d]">
+                          {section.title}
+                        </h2>
 
-                        <span className="hidden h-4 w-px bg-gray-300 sm:block" />
+                      </div>
 
-                        {/* Phone */}
+                      {/* Paragraphs */}
 
-                        <motion.a
-                          href="tel:+15551234567"
-                          whileHover={{
-                            x: 3,
-                          }}
-                          className="flex items-center gap-2 transition hover:text-[#5425d8]"
-                        >
-                          <Phone
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
+                      <div className="mt-4 space-y-4">
 
-                          <span>
-                            +1 (555) 123-4567
-                          </span>
-                        </motion.a>
+                        {section.content.map(
+                          (paragraph, paragraphIndex) => (
+                            <p
+                              key={paragraphIndex}
+                              className="text-[14px] leading-[1.8] text-[#46617b]"
+                            >
+                              {paragraph}
+                            </p>
+                          )
+                        )}
 
-                        <span className="hidden h-4 w-px bg-gray-300 sm:block" />
+                      </div>
 
-                        {/* Address */}
+                      {/* =================================================
+                          RIGHTS LIST
+                      ================================================= */}
 
+                      {section.list && (
+                        <div className="mt-6 rounded-xl border border-violet-100 bg-violet-50/50 p-5">
+
+                          <p className="mb-4 text-[14px] font-semibold text-[#5425d8]">
+                            Your data protection rights may include:
+                          </p>
+
+                          <ul className="space-y-3">
+
+                            {section.list.map(
+                              (item, listIndex) => (
+                                <li
+                                  key={listIndex}
+                                  className="flex items-start gap-3 text-[13.5px] leading-6 text-[#46617b]"
+                                >
+
+                                  <span className="mt-[9px] h-2 w-2 shrink-0 rounded-full bg-[#5425d8]" />
+
+                                  <span>
+                                    {item}
+                                  </span>
+
+                                </li>
+                              )
+                            )}
+
+                          </ul>
+
+                        </div>
+                      )}
+
+                      {/* =================================================
+                          CONTACT DETAILS
+                      ================================================= */}
+
+                      {section.id === "contact" && (
                         <motion.div
-                          whileHover={{
-                            x: 3,
+                          initial={{
+                            opacity: 0,
+                            y: 10,
                           }}
-                          className="flex items-center gap-2"
+                          whileInView={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          viewport={{
+                            once: true,
+                          }}
+                          transition={{
+                            duration: 0.45,
+                          }}
+                          className="mt-5"
                         >
-                          <MapPin
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
 
-                          <span>
-                            123 Innovation Drive, Dubai, UAE
-                          </span>
+                          <motion.a
+                            href="mailto:support@globalscion.org"
+                            whileHover={{
+                              x: 4,
+                            }}
+                            className="inline-flex items-center gap-3 rounded-lg border border-violet-100 bg-violet-50/60 px-4 py-3 text-[14px] font-medium text-[#46617b] transition hover:border-violet-200 hover:text-[#5425d8]"
+                          >
+
+                            <Mail
+                              size={18}
+                              className="text-[#5425d8]"
+                            />
+
+                            support@globalscion.org
+
+                          </motion.a>
+
                         </motion.div>
-                      </motion.div>
-                    )}
+                      )}
+
+                    </div>
+
                   </div>
-                </div>
-              </motion.section>
-            ))}
+
+                </motion.section>
+              );
+            })}
+
           </div>
         </div>
+
+        {/* =====================================================
+            FINAL COMMITMENT
+        ===================================================== */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+          }}
+          className="mt-10 rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-50 to-purple-50 p-6"
+        >
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.2)]">
+
+              <ShieldCheck size={21} />
+
+            </div>
+
+            <div>
+
+              <h3 className="text-[16px] font-bold text-[#11134d]">
+                Your Privacy Matters
+              </h3>
+
+              <p className="mt-2 text-[13.5px] leading-6 text-[#46617b]">
+                We are committed to handling Personal Data
+                responsibly and maintaining appropriate measures
+                designed to protect the information entrusted to us.
+              </p>
+
+            </div>
+
+          </div>
+
+        </motion.div>
+
       </main>
     </div>
   );

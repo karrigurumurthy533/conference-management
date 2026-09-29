@@ -1,806 +1,582 @@
-const commonSpeakers = [
-  {
-    name: "Dr. Sarah Mitchell",
-    role: "Professor of Neuroscience",
-    organization: "Harvard Medical School",
-    specialty: "Neuroscience & Brain Health",
-    image:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Michael Anderson",
-    role: "Clinical Specialist",
-    organization: "Mayo Clinic",
-    specialty: "Clinical Research",
-    image:
-      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Emily Carter",
-    role: "Research Scientist",
-    organization: "Johns Hopkins Medicine",
-    specialty: "Research & Innovation",
-    image:
-      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. James Wilson",
-    role: "Medical Specialist",
-    organization: "Cleveland Clinic",
-    specialty: "Healthcare Innovation",
-    image:
-      "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Olivia Brown",
-    role: "Healthcare Innovation Expert",
-    organization: "Stanford Medicine",
-    specialty: "AI & Precision Medicine",
-    image:
-      "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Daniel Thompson",
-    role: "Clinical Researcher",
-    organization: "Mount Sinai Health",
-    specialty: "Clinical Research",
-    image:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Sophia Williams",
-    role: "Nutrition Scientist",
-    organization: "Global Wellness Institute",
-    specialty: "Nutrition & Wellness",
-    image:
-      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-  {
-    name: "Dr. Robert Davis",
-    role: "Digital Researcher",
-    organization: "University of California",
-    specialty: "AI & Digital Innovation",
-    image:
-      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=500&q=85",
-    linkedin: "https://www.linkedin.com/",
-  },
-];
-
 const conferences = [
   {
-    id: "autism-research",
-    category: "Autism & Neurodiversity",
-    title:
-      "International Conference on Autism Research & Innovations",
+  id: "autism-research",
 
-    subtitle:
-      "Next-Generation Autism Research: AI, Neuroscience, Genetics & Personalized Intervention",
+  category: "Autism Research",
 
-    image:
-      "https://images.unsplash.com/photo-1607453998774-d533f65dac99?auto=format&fit=crop&w=1600&q=90",
+  title: "2nd International Conference on Autism Research and Innovations",
 
-    aboutImage:
-      "https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=900&q=90",
+  subtitle:
+    "Next-Generation Autism Research: AI, Neuroscience, Genetics & Personalized Intervention",
 
-    date: "April 06–07, 2027",
-    time: "9:00 AM – 5:00 PM",
+  image:
+    "https://globalscion.com/wp-content/uploads/2026/09/vitaly-gariev-QRK_LW8-cKM-unsplash-scaled.jpg",
 
-    // Countdown start date
-    startDate: "2027-04-06T09:00:00",
+  aboutImage:
+    "https://globalscion.com/wp-content/uploads/2025/12/Autism-.png",
 
-    location: "Webinar",
-    mode: "Online Conference",
-    participants: "500+",
+  date: "April 06-07, 2027",
 
-    description:
-      "A global platform bringing together researchers, clinicians, educators, therapists, and professionals to discuss emerging research, innovative approaches, and new developments in autism and neurodiversity.",
+  time: "Webinar",
 
-    about:
-      "It is our great pleasure to welcome you to the International Conference on Autism Research and Innovations, scheduled to take place on April 06–07, 2027 in Webinar. The main theme of the conference is Next-Generation Autism Research: AI, Neuroscience, Genetics & Personalized Intervention.",
+  startDate: "2027-04-06T10:00:38",
 
-    aboutSecond:
-      "This conference provides a vibrant platform to explore the latest developments in autism research, early diagnosis, intervention methods, behavioral science, education, assistive technologies, and community-based support. Our mission is to promote a deeper and more inclusive understanding of neurodevelopmental diversity while highlighting practical strategies that improve everyday outcomes for individuals with autism.",
+  location: "Webinar",
 
-    quote:
-      "Together, we can advance research, support families, and create a more inclusive future for every individual with autism.",
+  mode: "Webinar",
 
-    speakers: commonSpeakers,
+  participants: "Global",
 
-    topics: [
-      "Autism Research, Clinical Trials and Global Collaboration",
-      "Advances in Autism Diagnosis and Screening",
-      "Early Intervention Strategies and Developmental Therapies",
-      "Autism and Education: Inclusive Learning Models",
-      "Behavioral Science and Social Development in Autism",
-      "Technology, AI, and Assistive Innovation in Autism",
-      "Autism Across the Lifespan: Adolescence to Adulthood",
-      "Family Support, Caregiving, and Community Engagement",
-      "Sensory Processing and Adaptive Behavior",
-      "Communication, Language Development, and AAC",
-      "Genetics, Neuroscience, and Biological Foundations of Autism",
-      "Social Inclusion, Rights, and Policy Development",
-      "Employment, Vocational Training, and Independent Living",
-      "Neurodiversity, Strength-Based Approaches, and Quality of Life",
+  description:
+    "2nd International Conference on Autism Research and Innovations. Next-Generation Autism Research: AI, Neuroscience, Genetics & Personalized Intervention.",
+
+  welcomeMessage: {
+    heading: "Welcome Message",
+
+    paragraphs: [
+      "It is our great pleasure to welcome you to the 2nd International Conference on Autism Research and Innovations, scheduled to take place on April 06-07, 2027 in Webinar. The main theme of the conference is “Next-Generation Autism Research: AI, Neuroscience, Genetics & Personalized Intervention.” We are delighted to bring together a diverse global community of researchers, clinicians, educators, advocates, families, and individuals on the autism spectrum for two engaging days of learning and collaboration.",
+
+      "This conference provides a vibrant platform to explore the latest developments in autism research, early diagnosis, intervention methods, behavioral science, education, assistive technologies, and community-based support. Our mission is to promote a deeper, more inclusive understanding of neurodevelopmental diversity while highlighting practical strategies that improve everyday outcomes for individuals with autism.",
+
+      "The program features keynote lectures from leading experts, interactive panel discussions, oral and poster presentations, and hands-on workshops that address needs across all stages of life. This year’s focus on inclusion, empowerment, and innovation reflects Europe’s strong commitment to advancing autism knowledge and enhancing quality of care.",
+
+      "Set against the culturally rich and welcoming backdrop of Webinar, the conference offers an ideal setting to exchange ideas, build collaborations, and experience the city’s heritage and hospitality.",
+
+      "We look forward to welcoming you to Webinar for an inspiring and impactful Autism Conference 2027."
     ],
 
-    tracks: [
-      {
-        title:
-          "Autism, Mental Health, and Emotional Well-Being",
-        description:
-          "Covers co-occurring conditions like anxiety, depression, and emotional regulation. Focuses on holistic therapeutic approaches for mental well-being and supportive care models.",
-      },
-      {
-        title:
-          "Advances in Autism Diagnosis and Screening",
-        description:
-          "Explores innovations in early detection, AI tools, and assessment methods. Emphasizes improving diagnostic accuracy and timely evaluations.",
-      },
-      {
-        title:
-          "Early Intervention Strategies and Developmental Therapies",
-        description:
-          "Highlights evidence-based interventions such as ABA, speech, and OT. Focuses on personalized care for communication and social development.",
-      },
-      {
-        title:
-          "Autism and Education: Inclusive Learning Models",
-        description:
-          "Examines inclusive teaching strategies and classroom accommodations. Supports academic success and accessible learning environments.",
-      },
-      {
-        title:
-          "Behavioral Science and Social Development in Autism",
-        description:
-          "Covers behavioral patterns, social challenges, emotional regulation, communication, and evidence-based behavioral support.",
-      },
-      {
-        title:
-          "Technology, AI, and Assistive Innovation in Autism",
-        description:
-          "Showcases AI tools, apps, AAC devices, VR/AR, and robotics. Highlights technology's role in independence and communication.",
-      },
-      {
-        title:
-          "Autism Across the Lifespan: Adolescence to Adulthood",
-        description:
-          "Focuses on transitions, identity, mental well-being, career readiness, relationships, and independent living.",
-      },
-      {
-        title:
-          "Family Support, Caregiving, and Community Engagement",
-        description:
-          "Explores caregiver well-being, stress management, family engagement, stronger support systems, and service access.",
-      },
-    ],
+    signature: "Warm Regards, Grace | Autism Conference 2027",
   },
 
-  {
-    id: "mental-health",
-    category: "Mental Health & Psychiatry",
-    title:
-      "International Conference on Mental Health & Psychiatry",
+  speakers: [
+    {
+      name: "Sam Vaknin",
+      role: "Commonwealth Institute of Advanced Professional Studies",
+      organization: "Commonwealth Institute of Advanced Professional Studies",
+      specialty: "Autism Research",
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/12/Sam-Vaknin.jfif_.jpg",
+    },
 
-    subtitle:
-      "Advancing Mental Health Through Research, Innovation & Compassionate Care",
+    {
+      name: "Amina Tebaa",
+      role: "Pharmacovigilance Responsible in Public Health Programs, Morocco",
+      organization:
+        "Pharmacovigilance Responsible in Public Health Programs, Morocco",
+      specialty: "Public Health Programs",
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/05/user-2.jpg",
+    },
 
-    image:
-      "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=1600&q=90",
+    {
+      name: "Orien L Tulp",
+      role: "University of Science Arts and Technology, USA",
+      organization: "University of Science Arts and Technology, USA",
+      specialty: "Autism Research",
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/05/3.jpg",
+    },
 
-    aboutImage:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=90",
+    {
+      name: "Sandra Gunhild Erika Möhr",
+      role: "REHAB Basel, Switzerland",
+      organization: "REHAB Basel, Switzerland",
+      specialty: "Rehabilitation",
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/05/5.jpg",
+    },
 
-    date: "May 15–16, 2027",
-    time: "9:00 AM – 5:00 PM",
+    {
+      name: "Cecilia Castro",
+      role: "University of Minho, Portugal",
+      organization: "University of Minho, Portugal",
+      specialty: "Autism Research",
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/05/2.jpg",
+    },
 
-    startDate: "2027-05-15T09:00:00",
+    {
+      name: "Dra Line Duarte",
+      role:
+        "Specialist in Pediatric Neurodevelopment & Autism; Founder of CALIOMAC – Pediatric Clinic & Neurocompatible Education Center",
+      organization:
+        "CALIOMAC – Pediatric Clinic & Neurocompatible Education Center",
+      specialty: "Pediatric Neurodevelopment & Autism",
+      image:
+        "https://globalscion.com/wp-content/uploads/2026/06/Line-Duarte.jpeg",
+    },
+  ],
 
-    location: "Dubai, UAE",
-    mode: "Hybrid Conference",
-    participants: "600+",
+  whoShouldAttend: [
+    "Autism Researchers",
+    "Clinicians",
+    "Therapists",
+    "Special Educators",
+    "Academic Professionals",
+    "Assistive Technology Experts",
+    "Social Workers",
+    "Policy Makers",
+    "Advocacy Groups",
+    "Non-Profit Leaders",
+    "Parents",
+    "Caregivers",
+    "Individuals on the Autism Spectrum",
+  ],
 
-    description:
-      "A global meeting point for psychiatrists, psychologists, researchers, therapists, clinicians and healthcare professionals working toward better mental health outcomes.",
+  whoShouldAttendDescription:
+    "The Autism Conference 2026 welcomes autism researchers, clinicians, therapists, special educators, academic professionals, assistive technology experts, social workers, policy makers, advocacy groups, and non-profit leaders. Parents, caregivers, and individuals on the autism spectrum are also encouraged to join. This event is ideal for anyone committed to advancing autism research, care, and inclusive support.",
 
-    about:
-      "The Mental Health & Psychiatry Conference brings together global experts to discuss modern approaches to mental healthcare, psychiatric research, prevention, diagnosis and treatment.",
+  keyHighlights: [
+    {
+      title: "Live Keynote Presentations",
+      description:
+        "Inspiring keynote sessions from global leaders in autism research, neuroscience, behavioral science, and inclusive education.",
+    },
 
-    aboutSecond:
-      "The program focuses on emerging psychiatric research, digital mental health, behavioral science, neuroscience, patient-centered care and community-based mental health systems.",
+    {
+      title: "Interactive Panel Discussions",
+      description:
+        "Engaging discussions on early diagnosis, intervention strategies, assistive technologies, and pathways to social inclusion.",
+    },
 
-    quote:
-      "Better mental health begins with better understanding, collaboration and compassionate care.",
+    {
+      title: "Workshops and Case Studies",
+      description:
+        "Hands-on workshops and real-world case studies focusing on innovative therapies, educational models, and community-based support systems.",
+    },
 
-    speakers: commonSpeakers,
+    {
+      title: "Networking Opportunities",
+      description:
+        "International networking opportunities with researchers, clinicians, therapists, educators, advocates, policymakers, and innovators in autism care.",
+    },
 
-    topics: [
-      "Clinical Psychiatry",
-      "Mental Health & Wellness",
-      "Depression and Anxiety",
-      "Child and Adolescent Psychiatry",
-      "Digital Mental Health",
-      "Behavioral Science",
-      "Neuroscience",
-      "Psychotherapy",
-      "Addiction Psychiatry",
-      "Community Mental Health",
-      "Psychiatric Research",
-      "AI in Mental Healthcare",
+    {
+      title: "Wellness Breaks",
+      description:
+        "Dedicated scientific breaks featuring poster sessions, informal discussions, and collaborative idea-sharing moments.",
+    },
+  ],
+
+  topics: [
+    "Autism Research",
+    "Mental Health",
+    "Diagnosis and Screening",
+    "Early Intervention",
+    "Education",
+    "Behavioral Science",
+    "Technology and AI",
+    "Assistive Technology",
+    "Autism Across the Lifespan",
+    "Family Support",
+    "Sensory Processing",
+    "Communication and AAC",
+    "Genetics and Neuroscience",
+    "Social Inclusion and Policy",
+    "Employment and Independent Living",
+  ],
+
+  tracks: [
+    {
+      title: "Autism, Mental Health, and Emotional Well-Being",
+      description:
+        "Covers co-occurring conditions like anxiety, depression, and emotional regulation. Focuses on holistic, therapeutic approaches for mental well-being. Aims to strengthen emotional resilience and supportive care models.",
+    },
+
+    {
+      title: "Advances in Autism Diagnosis and Screening",
+      description:
+        "Explores innovations in early detection, AI tools, and assessment methods. Emphasizes improving diagnostic accuracy and timely evaluations. Supports equitable access to quality diagnostic services worldwide.",
+    },
+
+    {
+      title: "Early Intervention Strategies and Developmental Therapies",
+      description:
+        "Highlights evidence-based interventions such as ABA, speech, and OT. Focuses on personalized care for communication and social development. Aims to enhance developmental outcomes through early support.",
+    },
+
+    {
+      title: "Autism and Education: Inclusive Learning Models",
+      description:
+        "Examines inclusive teaching strategies and classroom accommodations. Supports academic success and emotional well-being for autistic students. Promotes accessible learning environments across all education levels.",
+    },
+
+    {
+      title: "Behavioral Science and Social Development in Autism",
+      description:
+        "Covers behavioral patterns, social challenges, and emotional regulation. Provides tools to strengthen communication and reduce difficulties. Focuses on building confidence through evidence-based behavioral support.",
+    },
+
+    {
+      title: "Technology, AI, and Assistive Innovation in Autism",
+      description:
+        "Showcases AI tools, apps, AAC devices, VR/AR, and robotics. Highlights technology’s role in independence and communication. Aims to transform therapy and support through digital innovation.",
+    },
+
+    {
+      title: "Autism Across the Lifespan: Adolescence to Adulthood",
+      description:
+        "Focuses on transitions, identity, and mental well-being. Addresses career readiness, relationships, and independence. Supports lifelong inclusion and long-term developmental planning.",
+    },
+
+    {
+      title: "Family Support, Caregiving, and Community Engagement",
+      description:
+        "Explores caregiver well-being, stress management, and family engagement. Highlights building stronger support systems and service access. Aims to empower families throughout their autism journey.",
+    },
+
+    {
+      title: "Sensory Processing and Adaptive Behavior",
+      description:
+        "Covers sensory sensitivities and regulation strategies. Provides methods for sensory integration and environment adjustments. Supports comfort, functioning, and engagement across daily settings.",
+    },
+
+    {
+      title: "Communication, Language Development, and AAC",
+      description:
+        "Focuses on speech development, communication barriers, and AAC tools. Supports personalized approaches for expressive and receptive language. Aims to enhance independence and meaningful interaction.",
+    },
+
+    {
+      title: "Genetics, Neuroscience, and Biological Foundations of Autism",
+      description:
+        "Examines genetic, neurological, and biological aspects of autism. Highlights biomarkers, brain development, and sensory differences. Provides scientific insights to guide future research directions.",
+    },
+
+    {
+      title: "Social Inclusion, Rights, and Policy Development",
+      description:
+        "Addresses disability rights, policy advancement, and reducing stigma. Promotes equitable systems and accessible community participation. Aims to build societies that embrace neurodiversity with fairness.",
+    },
+
+    {
+      title: "Employment, Vocational Training, and Independent Living",
+      description:
+        "Covers job readiness, skills training, and workplace inclusion. Supports pathways to employment and long-term independence. Aims to empower autistic adults with sustainable career opportunities.",
+    },
+
+    {
+      title: "Autism Research, Clinical Trials, and Global Collaboration",
+      description:
+        "Explores new research methods, trial outcomes, and global partnerships. Encourages standardized protocols and data-sharing initiatives. Strengthens international networks to advance autism science.",
+    },
+
+    {
+      title: "Neurodiversity, Strength-Based Approaches, and Quality of Life",
+      description:
+        "Celebrates strengths, talents, and diverse thinking styles. Focuses on empowerment, authenticity, and personal fulfillment. Promotes environments that value individuality and quality of life.",
+    },
+  ],
+
+  otherData: {
+    whyToAttend: [
+      {
+        title: "Stay Updated on Latest Developments",
+        description:
+          "Learn about the newest research, diagnostic innovations, intervention strategies, assistive technologies, and global trends in autism care and neurodevelopmental science.",
+      },
+      {
+        title: "Expert Insights",
+        description:
+          "Hear from leading autism researchers, neuroscientists, clinicians, therapists, educators, and advocates as they share breakthroughs, experiences, and real-world applications.",
+      },
+      {
+        title: "Networking Opportunities",
+        description:
+          "Connect with professionals across autism research, clinical practice, education, therapy, assistive technology, advocacy, and community support for meaningful collaboration.",
+      },
+      {
+        title: "Continuing Education",
+        description:
+          "Earn participation certificates that support professional growth, continuing education, and updated knowledge in autism studies, intervention methods, and inclusive practices.",
+      },
+      {
+        title: "Improved Patient Care",
+        description:
+          "Gain practical, evidence-based strategies to enhance outcomes in early intervention, behavioral support, communication development, and daily living skills.",
+      },
+      {
+        title: "Access to Resources",
+        description:
+          "Receive access to presentation materials, case studies, intervention guidelines, policy updates, and the latest published research in autism science and care.",
+      },
+      {
+        title: "Interactive Discussions",
+        description:
+          "Engage in Q &A sessions, workshops, panel discussions, and hands-on demonstrations guided by global experts and multidisciplinary professionals.",
+      },
+      {
+        title: "Career Advancement",
+        description:
+          "Stay competitive in your field, discover new career pathways, build global connections, and expand opportunities in clinical care, research, education, and advocacy.",
+      },
     ],
 
-    tracks: [
+    sampleAgenda: [
       {
-        title: "Modern Psychiatry and Clinical Practice",
-        description:
-          "Latest developments in psychiatric diagnosis, treatment and patient-centered clinical care.",
+        day: "Day 1 – April 06, 2026 | Webinar | Autism Conference 2026",
+        schedule: [
+          {
+            time: "9:00 AM",
+            session: "Opening Remarks & Welcome Address",
+          },
+          {
+            time: "9:30 AM",
+            session:
+              "Keynote: Breakthroughs in Autism Research & Inclusive Practices",
+          },
+          {
+            time: "11:00 AM",
+            session:
+              "Panel: Early Diagnosis & Global Access to Intervention",
+          },
+          {
+            time: "1:00 PM",
+            session:
+              "Workshop: Strength-Based Early Development Strategies",
+          },
+          {
+            time: "3:00 PM",
+            session:
+              "Case Study: Assistive Technologies Enhancing Communication",
+          },
+        ],
       },
+
       {
-        title:
-          "Depression, Anxiety and Emotional Well-Being",
-        description:
-          "Research and practical strategies for understanding and managing common mental health conditions.",
-      },
-      {
-        title: "Digital Mental Health and AI",
-        description:
-          "Explores digital platforms, AI tools and technology-enabled mental healthcare.",
-      },
-      {
-        title: "Child and Adolescent Mental Health",
-        description:
-          "Focuses on early intervention, developmental mental health and support systems.",
+        day: "Day 2 – April 07, 2026 | Webinar | Autism Conference 2026",
+        schedule: [
+          {
+            time: "9:00 AM",
+            session:
+              "Keynote: Neurodiversity & Support Across the Lifespan",
+          },
+          {
+            time: "10:30 AM",
+            session:
+              "Roundtable: Autism Rights, Policy & Community Inclusion",
+          },
+          {
+            time: "1:00 PM",
+            session:
+              "Interactive Session: Telehealth & Digital Access to Services",
+          },
+          {
+            time: "2:30 PM",
+            session:
+              "Closing Session: Global Collaboration in Autism Research",
+          },
+        ],
       },
     ],
+
+    benefitsOfAttending: [
+      {
+        title: "Showcase Your Expertise",
+        description:
+          "Present your research, insights, or innovations to a global audience of professionals and advocates.",
+      },
+      {
+        title: "Global Recognition",
+        description:
+          "Get featured in event promotions, program materials, and the official conference website.",
+      },
+      {
+        title: "High-Level Networking",
+        description:
+          "Connect with keynote speakers, researchers, clinicians, educators, and industry leaders.",
+      },
+      {
+        title: "Publication Opportunities",
+        description:
+          "Submit your work for inclusion in conference proceedings or an e-journal (if applicable).",
+      },
+      {
+        title: "Speaker Certification",
+        description:
+          "Receive an official certificate recognizing your contribution.",
+      },
+      {
+        title: "Session Access",
+        description:
+          "Enjoy free access to all session recordings for continued learning.",
+      },
+      {
+        title: "Exclusive Access",
+        description:
+          "Early entry to networking rooms, panel discussions, and speaker forums.",
+      },
+    ],
+
+    delegates: [
+      {
+        title: "Latest Knowledge",
+        description:
+          "Learn about cutting-edge research, tools, therapies, and global advancements in autism care and support.",
+      },
+      {
+        title: "Expert Interaction",
+        description:
+          "Engage directly with specialists through Q &A sessions, panels, and workshops.",
+      },
+      {
+        title: "Skill Enhancement",
+        description:
+          "Gain practical skills and evidence-based strategies to apply in clinical, educational, or community settings.",
+      },
+      {
+        title: "Certification",
+        description:
+          "Receive a participation certificate to support professional growth and continuing education.",
+      },
+      {
+        title: "Networking Opportunities",
+        description:
+          "Build connections with global attendees, experts, researchers, and organizations.",
+      },
+      {
+        title: "Resource Access",
+        description:
+          "Receive access to presentation slides, case studies, guidelines, and research materials.",
+      },
+      {
+        title: "Career Growth",
+        description:
+          "Explore new opportunities, collaborations, and pathways in research, education, policy, and healthcare.",
+      },
+    ],
+
+    posterPresentersLive: [
+      "Present your research to a global audience of autism specialists, clinicians, educators, therapists, and advocates.",
+      "Engage with attendees in real time and receive expert feedback to strengthen your work.",
+      "Earn an official digital certificate recognizing your poster presentation at the conference.",
+      "Eligible abstracts may be included in the conference proceedings or digital abstract book.",
+      "Opportunity to compete for the “Best Poster Presentation” award.",
+      "Connect with researchers, practitioners, and organizations to build meaningful collaborations and future projects.",
+    ],
+
+    ePosterPresenters: {
+      benefits: [
+        "Your poster will be displayed online for all attendees to view throughout the event.",
+        "Featured in the virtual poster gallery accessible before, during, and after the event.",
+        "Receive input and questions from attendees through interactive comment features.",
+        "Certificate of e-poster presentation included.",
+        "Eligible abstracts may be published in the e-conference proceedings.",
+        "No need to present live—your work speaks for itself in a digital format.",
+      ],
+
+      guidelinesIntro:
+        "The Organizing Committee welcomes the submission of E-Posters for presentation at the conference. E-Posters provide an excellent opportunity for researchers, academicians, clinicians, students, and industry professionals to showcase their work and engage with conference participants.",
+
+      specifications: {
+        Format: "PDF or PowerPoint (PPT/PPTX)",
+        Orientation: "Portrait",
+        "Recommended Size": "A0 (841 mm × 1189 mm)",
+        Language: "English",
+        "Maximum File Size": "20 MB",
+      },
+
+      posterContent: [
+        "Title of the Study/Project",
+        "Author(s) Name(s)",
+        "Affiliation(s)",
+        "Introduction/Background",
+        "Objectives",
+        "Methodology",
+        "Results/Findings",
+        "Conclusion",
+        "References (if applicable)",
+        "Contact Information",
+      ],
+
+      designRequirements: [
+        "Use clear and readable fonts.",
+        "Title should be prominently displayed.",
+        "Use high-quality images, graphs, charts, and tables.",
+        "Ensure proper contrast between text and background.",
+        "Avoid excessive text and focus on key findings.",
+      ],
+
+      submissionGuidelines: [
+        "Submit the E-Poster through the conference submission portal or by email as instructed by the Organizing Committee.",
+        "The file name should include the presenting author’s name and abstract ID (if applicable).",
+        "All submissions must be received before the stated submission deadline.",
+      ],
+
+      reviewAndAcceptance: [
+        "All E-Posters will undergo review by the Scientific Committee.",
+        "Authors will be notified of acceptance via email.",
+        "Accepted E-Posters will be displayed electronically during the conference.",
+      ],
+
+      presentation: [
+        "At least one author must be registered for the conference.",
+        "Presenting authors may be requested to participate in a designated poster discussion session.",
+        "Authors should be available to answer questions from attendees during the conference.",
+      ],
+
+      certificate: [
+        "A Certificate of Presentation will be provided to the presenting author after successful participation in the conference.",
+      ],
+
+      closingNotes: [
+        "For any questions regarding E-Poster submissions, please contact the Conference Secretariat.",
+        "This version is suitable for most international academic and medical conferences and can be directly uploaded to your conference website.",
+      ],
+    },
+
+    marketAnalysis: {
+      heading: "Autism Market Analysis",
+
+      paragraphs: [
+        "The global autism spectrum disorder (ASD) market is experiencing significant growth due to rising awareness, increasing diagnosis rates, and expanding access to specialized care. Valued at around USD 2–3 billion in 2023, the market is projected to grow steadily through 2033, driven by the demand for early intervention therapies, behavioral treatments, and advanced diagnostic tools.",
+
+        "Key factors fueling this growth include improved screening technologies, growing research on neurodevelopmental disorders, and higher investments in educational and therapeutic programs. The rise of digital therapeutics, AI-based diagnostic systems, teletherapy platforms, and personalized treatment models is reshaping autism care worldwide.",
+
+        "North America leads the market due to established healthcare infrastructure and strong research funding, while the Asia-Pacific region is expected to be the fastest-growing market, driven by increasing awareness, supportive government policies, and expanding pediatric healthcare services in India, China, and Southeast Asia.",
+
+        "Despite challenges such as high therapy costs and limited access in rural regions, the autism market continues to expand, creating strong opportunities for global conferences, research collaborations, technology showcases, and professional training over the next decade.",
+      ],
+
+      image:
+        "https://globalscion.com/wp-content/uploads/2025/12/Autism-.png",
+    },
   },
 
-  {
-    id: "endocrinology-diabetes",
-    category: "Endocrinology & Diabetes",
-    title:
-      "International Conference on Endocrinology & Diabetes",
+  sponsors: [
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-1.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-2.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-3.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-4.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-5.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-6.jpg",
+  ],
 
-    subtitle:
-      "New Frontiers in Diabetes, Hormones, Metabolism & Precision Medicine",
+  sponsorLogos: [
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-1.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-2.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-3.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-4.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-5.jpg",
+    "https://globalscion.com/wp-content/uploads/2025/05/Logo-6.jpg",
+  ],
 
-    image:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=900&q=90",
-
-    date: "June 10–11, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-06-10T09:00:00",
-
-    location: "Singapore",
-    mode: "Hybrid Conference",
-    participants: "700+",
-
-    description:
-      "A scientific platform connecting endocrinologists, diabetologists, researchers and healthcare professionals to explore advances in metabolic health and diabetes care.",
-
-    about:
-      "This conference brings together specialists to discuss diabetes prevention, treatment, endocrinology, metabolic disorders and emerging therapeutic approaches.",
-
-    aboutSecond:
-      "Sessions include clinical research, precision medicine, obesity management, endocrine disorders, technology-enabled diabetes management and patient-centered care.",
-
-    quote:
-      "Innovation in metabolic healthcare can transform prevention, treatment and quality of life.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Diabetes Research",
-      "Endocrinology",
-      "Obesity and Metabolism",
-      "Type 1 Diabetes",
-      "Type 2 Diabetes",
-      "Diabetes Technology",
-      "Hormonal Disorders",
-      "Thyroid Disorders",
-      "Precision Medicine",
-      "Metabolic Syndrome",
-      "Clinical Trials",
-      "Nutrition and Diabetes",
-    ],
-
-    tracks: [
-      {
-        title: "Diabetes Research and Clinical Care",
-        description:
-          "Emerging research and modern clinical approaches to diabetes management.",
-      },
-      {
-        title: "Endocrine Disorders",
-        description:
-          "Current developments in thyroid, adrenal, pituitary and reproductive endocrine disorders.",
-      },
-      {
-        title: "Obesity and Metabolic Health",
-        description:
-          "Research on obesity prevention, metabolic syndrome and personalized treatment.",
-      },
-      {
-        title: "Digital Diabetes Management",
-        description:
-          "Technology, remote monitoring and digital solutions for diabetes care.",
-      },
-    ],
+  contact: {
+    phone: "+44 3308088650",
+    whatsapp: "https://wa.me/443308088650",
+    emails: ["info@globalscion.com", "support@globalscion.com"],
+    headquarters:
+      "United Kingdom | United States | India | Germany | UAE",
   },
 
-  {
-    id: "oncology-ai",
-    category: "Oncology & Cancer Research",
-    title:
-      "International Conference on Oncology Research & AI Innovations",
-
-    subtitle:
-      "Transforming Cancer Research Through AI, Precision Medicine & Innovation",
-
-    image:
-      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=90",
-
-    date: "July 20–21, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-07-20T09:00:00",
-
-    location: "London, UK",
-    mode: "Hybrid Conference",
-    participants: "800+",
-
-    description:
-      "A global oncology platform exploring cancer research, precision medicine, immunotherapy, clinical trials and artificial intelligence.",
-
-    about:
-      "The Oncology Research & AI Innovations Conference brings together oncologists, researchers, clinicians, technology experts and healthcare innovators.",
-
-    aboutSecond:
-      "The conference focuses on cancer prevention, diagnosis, treatment innovation, precision medicine, AI-powered research and multidisciplinary collaboration.",
-
-    quote:
-      "Research, technology and collaboration can open new possibilities in cancer care.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Cancer Research",
-      "Precision Oncology",
-      "Immunotherapy",
-      "Cancer Genomics",
-      "AI in Oncology",
-      "Clinical Trials",
-      "Early Cancer Detection",
-      "Radiation Oncology",
-      "Surgical Oncology",
-      "Targeted Therapy",
-      "Cancer Prevention",
-      "Digital Health",
-    ],
-
-    tracks: [
-      {
-        title: "Precision Oncology",
-        description:
-          "Explores personalized cancer treatment based on molecular and genomic information.",
-      },
-      {
-        title: "AI in Cancer Research",
-        description:
-          "Applications of artificial intelligence in diagnosis, research and clinical decision support.",
-      },
-      {
-        title:
-          "Immunotherapy and Targeted Therapy",
-        description:
-          "Latest developments in immune-based and targeted cancer treatments.",
-      },
-      {
-        title:
-          "Cancer Prevention and Early Detection",
-        description:
-          "Strategies for prevention, screening and earlier cancer diagnosis.",
-      },
-    ],
+  socialLinks: {
+    facebook: "https://www.facebook.com/share/14KW4MrpefS/",
+    twitter: "https://x.com/GGlobalscion",
+    instagram: "https://www.instagram.com/global_scion_conferences",
+    youtube: "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
+    linkedin:
+      "https://www.linkedin.com/in/global-conferences-6025b23b6/",
   },
-
-  {
-    id: "healthcare-innovation",
-    category: "Healthcare Innovation",
-    title:
-      "International Conference on Healthcare Innovation & Precision Medicine",
-
-    subtitle:
-      "AI, Digital Health, Precision Medicine & The Future of Healthcare",
-
-    image:
-      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1516841273335-e39b37888115?auto=format&fit=crop&w=900&q=90",
-
-    date: "August 12–13, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-08-12T09:00:00",
-
-    location: "Singapore",
-    mode: "Hybrid Conference",
-    participants: "750+",
-
-    description:
-      "A global healthcare innovation platform bringing together clinicians, researchers, technology leaders and healthcare organizations.",
-
-    about:
-      "The conference explores how technology, AI and precision medicine are transforming healthcare delivery.",
-
-    aboutSecond:
-      "Participants will discuss digital health, medical AI, personalized medicine, healthcare systems, interoperability and patient-centered innovation.",
-
-    quote:
-      "The future of healthcare belongs to innovation that improves real patient outcomes.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Healthcare Innovation",
-      "Artificial Intelligence",
-      "Digital Health",
-      "Precision Medicine",
-      "Telemedicine",
-      "Healthcare Data",
-      "Medical Devices",
-      "Interoperability",
-      "Patient-Centered Care",
-      "Healthcare Systems",
-      "Robotics",
-      "Future of Medicine",
-    ],
-
-    tracks: [
-      {
-        title: "AI and Healthcare",
-        description:
-          "Explores applications of AI and machine learning across healthcare.",
-      },
-      {
-        title: "Precision Medicine",
-        description:
-          "Discusses personalized approaches to diagnosis and treatment.",
-      },
-      {
-        title: "Digital Health",
-        description:
-          "Covers telemedicine, remote monitoring and digital healthcare platforms.",
-      },
-      {
-        title: "Future Healthcare Technologies",
-        description:
-          "Emerging technologies shaping the next generation of healthcare.",
-      },
-    ],
-  },
-
-  {
-    id: "nutrition-wellness",
-    category: "Food, Nutrition & Wellness",
-    title:
-      "International Conference on Food, Nutrition & Wellness",
-
-    subtitle:
-      "Nutrition Science, Healthy Living, Food Innovation & Sustainable Wellness",
-
-    image:
-      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=90",
-
-    date: "September 08–09, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-09-08T09:00:00",
-
-    location: "Dubai, UAE",
-    mode: "Hybrid Conference",
-    participants: "500+",
-
-    description:
-      "A multidisciplinary conference exploring nutrition science, food technology, wellness, preventive health and sustainable food systems.",
-
-    about:
-      "This conference brings together nutritionists, food scientists, healthcare professionals, researchers and wellness experts.",
-
-    aboutSecond:
-      "The program explores healthy diets, nutrition research, functional foods, food safety, sustainable nutrition and preventive healthcare.",
-
-    quote:
-      "Better nutrition creates healthier communities and a stronger future.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Nutrition Science",
-      "Food Technology",
-      "Healthy Lifestyle",
-      "Functional Foods",
-      "Sports Nutrition",
-      "Clinical Nutrition",
-      "Food Safety",
-      "Sustainable Food",
-      "Preventive Health",
-      "Child Nutrition",
-      "Public Health Nutrition",
-      "Wellness",
-    ],
-
-    tracks: [
-      {
-        title: "Nutrition Science",
-        description:
-          "Latest research in nutrition, dietary patterns and human health.",
-      },
-      {
-        title: "Food Innovation",
-        description:
-          "Emerging food technologies, functional foods and food product innovation.",
-      },
-      {
-        title:
-          "Nutrition and Preventive Healthcare",
-        description:
-          "How nutrition can support disease prevention and healthy aging.",
-      },
-      {
-        title: "Sustainable Food Systems",
-        description:
-          "Exploring sustainable, accessible and healthy food systems.",
-      },
-    ],
-  },
-
-  {
-    id: "brain-health",
-    category: "Brain Health & Neurodiversity",
-    title:
-      "International Conference on Brain Health, Neurodiversity & Neuroscience",
-
-    subtitle:
-      "Understanding the Brain Through Neuroscience, Research & Innovation",
-
-    image:
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=900&q=90",
-
-    date: "October 14–15, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-10-14T09:00:00",
-
-    location: "Amsterdam, Netherlands",
-    mode: "Hybrid Conference",
-    participants: "650+",
-
-    description:
-      "A scientific meeting focused on neuroscience, brain health, neurodevelopment and emerging approaches to neurological research.",
-
-    about:
-      "The conference connects neuroscientists, neurologists, researchers, clinicians and technology experts.",
-
-    aboutSecond:
-      "The program explores brain development, neurological disorders, neurodiversity, cognitive health and emerging neuroscience technologies.",
-
-    quote:
-      "Understanding the brain helps us build healthier and more inclusive communities.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Neuroscience",
-      "Brain Health",
-      "Neurodevelopment",
-      "Neurodiversity",
-      "Cognitive Health",
-      "Neurological Disorders",
-      "Brain Imaging",
-      "Neurotechnology",
-      "AI in Neuroscience",
-      "Mental Health",
-      "Brain Aging",
-      "Clinical Neuroscience",
-    ],
-
-    tracks: [
-      {
-        title: "Neuroscience Research",
-        description:
-          "Latest discoveries in brain science and neurological research.",
-      },
-      {
-        title: "Brain Health and Aging",
-        description:
-          "Strategies for maintaining cognitive and neurological health.",
-      },
-      {
-        title: "Neurotechnology and AI",
-        description:
-          "Technology and AI applications in neuroscience and brain research.",
-      },
-      {
-        title: "Neurodiversity",
-        description:
-          "Understanding neurodevelopmental diversity and inclusive approaches.",
-      },
-    ],
-  },
-
-  {
-    id: "cardiovascular",
-    category: "Cardiovascular Diseases",
-    title:
-      "International Conference on Cardiovascular Diseases & Innovation",
-
-    subtitle:
-      "Advances in Cardiology, Prevention, Diagnostics & Cardiovascular Technology",
-
-    image:
-      "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=90",
-
-    date: "November 10–11, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-11-10T09:00:00",
-
-    location: "Paris, France",
-    mode: "Hybrid Conference",
-    participants: "700+",
-
-    description:
-      "A global cardiovascular meeting covering cardiology research, prevention, diagnostics, treatment and emerging technologies.",
-
-    about:
-      "Cardiovascular experts, researchers and clinicians will explore the latest developments in heart health and cardiovascular medicine.",
-
-    aboutSecond:
-      "The conference focuses on cardiovascular prevention, imaging, interventional cardiology, digital health and innovative treatment strategies.",
-
-    quote:
-      "Prevention, research and innovation are central to a healthier heart.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "Cardiology",
-      "Heart Disease",
-      "Preventive Cardiology",
-      "Interventional Cardiology",
-      "Cardiac Imaging",
-      "Heart Failure",
-      "Hypertension",
-      "Arrhythmia",
-      "Digital Cardiology",
-      "Cardiovascular Research",
-      "Cardiac Surgery",
-      "AI in Cardiology",
-    ],
-
-    tracks: [
-      {
-        title: "Preventive Cardiology",
-        description:
-          "Strategies for reducing cardiovascular risk and improving heart health.",
-      },
-      {
-        title: "Interventional Cardiology",
-        description:
-          "Advances in minimally invasive cardiovascular procedures.",
-      },
-      {
-        title: "Cardiac Imaging",
-        description:
-          "Modern imaging technologies for cardiovascular diagnosis.",
-      },
-      {
-        title: "Digital Cardiology and AI",
-        description:
-          "Digital technologies and AI applications in cardiovascular medicine.",
-      },
-    ],
-  },
-
-  {
-    id: "digital-psychiatry",
-    category: "AI & Digital Psychiatry",
-    title:
-      "International Conference on AI & Digital Psychiatry",
-
-    subtitle:
-      "Artificial Intelligence, Digital Therapeutics & The Future of Mental Healthcare",
-
-    image:
-      "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?auto=format&fit=crop&w=1600&q=90",
-
-    aboutImage:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=90",
-
-    date: "December 05–06, 2027",
-    time: "9:00 AM – 5:00 PM",
-
-    startDate: "2027-12-05T09:00:00",
-
-    location: "London, UK",
-    mode: "Online Conference",
-    participants: "550+",
-
-    description:
-      "A future-focused conference exploring artificial intelligence, digital therapeutics and technology-enabled mental healthcare.",
-
-    about:
-      "The AI & Digital Psychiatry Conference brings together psychiatrists, researchers, technology professionals and healthcare innovators.",
-
-    aboutSecond:
-      "Sessions explore AI-assisted diagnosis, digital therapeutics, remote mental healthcare, behavioral data and responsible technology adoption.",
-
-    quote:
-      "Technology should make mental healthcare more accessible, personalized and connected.",
-
-    speakers: commonSpeakers,
-
-    topics: [
-      "AI in Psychiatry",
-      "Digital Therapeutics",
-      "Telepsychiatry",
-      "Mental Health Apps",
-      "Machine Learning",
-      "Behavioral Data",
-      "Digital Diagnostics",
-      "Virtual Reality",
-      "Remote Healthcare",
-      "Mental Health Research",
-      "Responsible AI",
-      "Future Psychiatry",
-    ],
-
-    tracks: [
-      {
-        title: "Artificial Intelligence in Psychiatry",
-        description:
-          "AI applications in psychiatric research, diagnosis and clinical decision support.",
-      },
-      {
-        title: "Digital Therapeutics",
-        description:
-          "Digital interventions designed to support mental health and behavioral care.",
-      },
-      {
-        title: "Telepsychiatry",
-        description:
-          "Technology-enabled psychiatric services and remote patient care.",
-      },
-      {
-        title: "Responsible AI in Mental Healthcare",
-        description:
-          "Ethical, privacy and responsible implementation of AI technologies.",
-      },
-    ],
-  },
-];
-
+}
+]
 export default conferences;

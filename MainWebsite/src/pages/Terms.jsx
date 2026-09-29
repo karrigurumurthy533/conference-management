@@ -1,75 +1,94 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
   List,
+  ShieldCheck,
+  CreditCard,
+  CalendarX,
+  RefreshCcw,
   Mail,
   Phone,
   MapPin,
-  ShieldCheck,
 } from "lucide-react";
+
+/* =========================================================
+   TERMS & CONDITIONS CONTENT
+========================================================= */
 
 const sections = [
   {
-    id: "acceptance",
-    title: "Acceptance of Terms",
-    content:
-      "By accessing and using the GlobalScion website, you agree to comply with and be bound by these Terms and Conditions, as well as any additional terms and conditions that may apply to specific sections of the website or services.",
+    id: "cancellation",
+    title: "Cancellation Policy",
+    icon: CalendarX,
+    content: [
+      "If a participant’s visa application is rejected or cancelled by the respective embassy or consulate, the conference organizers will provide a refund of the registration fee.",
+      "To process the refund, participants must submit an official visa rejection letter or supporting document issued by the embassy or consulate as proof of the visa denial.",
+      "Once the valid documentation is received and verified, the refund will be processed within 7–14 business days. Any applicable bank transaction or administrative charges may be deducted from the refund amount.",
+      "We encourage all participants to apply for their visa well in advance and to ensure that all required documentation is submitted accurately to avoid delays.",
+      "The organizing committee remains committed to supporting participants and will assist with any required conference invitation letters or documentation for the visa application process.",
+    ],
   },
+
   {
-    id: "use-website",
-    title: "Use of Our Website",
-    content:
-      "You agree to use our website only for lawful purposes and in accordance with these Terms. You must not use our website in any way that may damage, disable, overburden, or impair our services or interfere with any other party’s use and enjoyment of the website.",
+    id: "visa-refusal",
+    title: "Visa Refusal & Registration Amount",
+    icon: CreditCard,
+    content: [
+      "In the case of VISA refusal, the paid amount can be transferred to another conference as per the participant’s choice.",
+      "Participants who availed discounts on the registration fee are not eligible for refunds.",
+      "An exception may apply if the event itself is cancelled, in which case the applicable cancellation policy will be followed.",
+    ],
   },
+
   {
-    id: "account",
-    title: "Account Registration",
-    content:
-      "Some features of our website may require you to create an account. You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.",
+    id: "conference-cancellation",
+    title: "Cancellation / Postponement of Conference",
+    icon: CalendarX,
+    content: [
+      "In the event that the congress cannot be held or is postponed due to situations beyond the control of the Conference/Summit organizers, or due to events which are not attributable to wrongful intent or gross negligence of the congress organizers, the congress organizers will refund 100% of the registration fee.",
+      "The congress organizers cannot be held liable by participants for any damages, costs, or losses incurred, such as transportation costs, flight booking cancellation charges, accommodation costs, financial losses, or other related expenses.",
+    ],
   },
+
   {
-    id: "intellectual-property",
-    title: "Intellectual Property",
-    content:
-      "All content on this website, including text, graphics, logos, images, and software, is the property of GlobalScion or its licensors and is protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our prior written permission.",
+    id: "transfer-policy",
+    title: "Transfer Policy",
+    icon: RefreshCcw,
+    content: [
+      "A fully paid registration can be transferred to another related conference within the Organization, only if the participant has a valid reason for their absence.",
+      "Transfers are only initiated through requests submitted by email.",
+      "If there is a replacement of the registered person, the following details must be provided to the respective conference secretary:",
+    ],
+    list: [
+      "Full name of the replacement participant",
+      "Contact number",
+      "Email address",
+      "Presenting abstract",
+      "Title of the abstract",
+    ],
   },
+
   {
-    id: "user-content",
-    title: "User Content",
-    content:
-      "By submitting content to our website, you grant GlobalScion a non-exclusive, royalty-free, worldwide license to use, reproduce, modify, and distribute your content for the purpose of operating and promoting our services.",
+    id: "participant-support",
+    title: "Participant Support",
+    icon: ShieldCheck,
+    content: [
+      "Our goal is to ensure a smooth and transparent experience for all attendees.",
+      "We remain committed to supporting participants throughout the registration and travel preparation process.",
+      "Participants may contact the organizing committee for assistance regarding registration, visa documentation, conference invitation letters, cancellations, postponements, or transfer requests.",
+    ],
   },
-  {
-    id: "liability",
-    title: "Limitation of Liability",
-    content:
-      "GlobalScion will not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of our website or services, even if we have been advised of the possibility of such damages.",
-  },
-  {
-    id: "privacy",
-    title: "Privacy",
-    content:
-      "Your use of our website is also governed by our Privacy Policy, which explains how we collect, use, and protect your personal information.",
-  },
-  {
-    id: "changes",
-    title: "Changes to Terms",
-    content:
-      "We reserve the right to modify or replace these Terms and Conditions at any time. Any changes will be posted on this page with the updated effective date. Your continued use of the website after such changes constitutes your acceptance of the new terms.",
-  },
-  {
-    id: "governing-law",
-    title: "Governing Law",
-    content:
-      "These Terms and Conditions are governed by and construed in accordance with the laws of the UAE, without regard to its conflict of law provisions.",
-  },
+
   {
     id: "contact",
     title: "Contact Us",
-    content:
-      "If you have any questions or concerns about these Terms and Conditions, please contact us at:",
+    icon: Mail,
+    content: [
+      "If you have any questions regarding these Terms and Conditions, Cancellation Policy, Visa Refusal Policy, Conference Cancellation/Postponement, or Transfer Policy, please contact our organizing team.",
+    ],
   },
 ];
 
@@ -91,6 +110,7 @@ const heroItem = {
     opacity: 0,
     y: 20,
   },
+
   visible: {
     opacity: 1,
     y: 0,
@@ -104,8 +124,9 @@ const heroItem = {
 const sidebarAnimation = {
   hidden: {
     opacity: 0,
-    x: -35,
+    x: -45,
   },
+
   visible: {
     opacity: 1,
     x: 0,
@@ -116,23 +137,12 @@ const sidebarAnimation = {
   },
 };
 
-const sectionAnimation = {
-  hidden: {
-    opacity: 0,
-    y: 25,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.55,
-      ease: "easeOut",
-    },
-  },
-};
+/* =========================================================
+   TERMS COMPONENT
+========================================================= */
 
 const Terms = () => {
-  const [activeSection, setActiveSection] = useState("acceptance");
+  const [activeSection, setActiveSection] = useState("cancellation");
 
   const scrollToSection = (id) => {
     setActiveSection(id);
@@ -155,11 +165,11 @@ const Terms = () => {
   return (
     <div className="min-h-screen bg-white text-[#11134d]">
 
-      {/* =========================================================
+      {/* =====================================================
           HERO SECTION
-      ========================================================= */}
+      ===================================================== */}
 
-      <section className="relative min-h-[195px] overflow-hidden bg-[#130a3b]">
+      <section className="relative min-h-[225px] overflow-hidden bg-[#130a3b]">
 
         {/* Background Glow */}
         <div className="absolute inset-0 overflow-hidden">
@@ -168,32 +178,34 @@ const Terms = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="absolute -right-20 -top-24 h-[380px] w-[600px] rounded-full bg-[#5425d8]/20 blur-[80px]"
+            className="absolute -right-20 -top-24 h-[420px] w-[650px] rounded-full bg-[#5425d8]/20 blur-[85px]"
           />
 
+          {/* Circle 1 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2 }}
-            className="absolute right-[17%] top-[18px] h-[270px] w-[270px] rounded-full border border-[#744cff]/30"
+            className="absolute right-[17%] top-[18px] h-[290px] w-[290px] rounded-full border border-[#744cff]/30"
           />
 
+          {/* Circle 2 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.1, delay: 0.15 }}
-            className="absolute right-[19%] top-[38px] h-[230px] w-[230px] rounded-full border border-[#744cff]/25"
+            className="absolute right-[19%] top-[38px] h-[245px] w-[245px] rounded-full border border-[#744cff]/25"
           />
 
+          {/* Circle 3 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.3 }}
-            className="absolute right-[22%] top-[60px] h-[185px] w-[185px] rounded-full border border-[#744cff]/20"
+            className="absolute right-[22%] top-[60px] h-[195px] w-[195px] rounded-full border border-[#744cff]/20"
           />
 
           {/* Decorative Lines */}
-
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -209,7 +221,6 @@ const Terms = () => {
           />
 
           {/* Glowing Dots */}
-
           <motion.div
             animate={{
               opacity: [0.4, 1, 0.4],
@@ -235,35 +246,22 @@ const Terms = () => {
             className="absolute right-[23%] top-[76px] h-2 w-2 rounded-full bg-[#8061ff] shadow-[0_0_14px_#8061ff]"
           />
 
-          <motion.div
-            animate={{
-              opacity: [0.4, 1, 0.4],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: 2.4,
-              repeat: Infinity,
-              delay: 0.8,
-            }}
-            className="absolute right-[12%] top-[120px] h-2 w-2 rounded-full bg-[#8061ff] shadow-[0_0_14px_#8061ff]"
-          />
         </div>
 
         {/* Hero Content */}
-
         <motion.div
           variants={heroContainer}
           initial="hidden"
           animate="visible"
-          className="relative mx-auto flex min-h-[195px] max-w-[1040px] items-center px-5"
+          className="relative mx-auto flex min-h-[225px] max-w-[1180px] items-center px-5"
         >
-          <div className="w-full max-w-[520px]">
+
+          <div className="w-full max-w-[650px]">
 
             {/* Breadcrumb */}
-
             <motion.div
               variants={heroItem}
-              className="mb-4 flex items-center gap-2 text-[11px] text-white/75"
+              className="mb-5 flex items-center gap-2 text-[13px] text-white/75"
             >
               <Link
                 to="/"
@@ -272,39 +270,34 @@ const Terms = () => {
                 Home
               </Link>
 
-              <ChevronRight size={12} />
+              <ChevronRight size={14} />
 
               <span className="text-white/90">
-                Terms and Conditions
+                Terms & Conditions
               </span>
             </motion.div>
 
             {/* Heading */}
-
             <motion.h1
               variants={heroItem}
-              className="text-[32px] font-bold leading-none tracking-[-1px] text-white"
+              className="text-[34px] font-bold leading-tight tracking-[-1px] text-white sm:text-[38px]"
             >
-              Terms and Conditions
+              Terms & Conditions
             </motion.h1>
 
             {/* Description */}
-
             <motion.p
               variants={heroItem}
-              className="mt-4 max-w-[500px] text-[13px] leading-[1.5] text-white/85"
+              className="mt-4 max-w-[600px] text-[15px] leading-[1.65] text-white/80"
             >
-              Please read these Terms and Conditions carefully
-              before using our website and services. By accessing
-              or using our platform, you agree to be bound by these
-              terms.
+              Please review our cancellation, visa refusal,
+              conference postponement, and registration transfer
+              policies before completing your registration.
             </motion.p>
+
           </div>
 
-          {/* =====================================================
-              HERO SHIELD
-          ===================================================== */}
-
+          {/* Hero Icon */}
           <motion.div
             initial={{
               opacity: 0,
@@ -321,22 +314,24 @@ const Terms = () => {
               delay: 0.3,
               ease: "easeOut",
             }}
-            className="absolute right-[14%] top-1/2 hidden -translate-y-1/2 md:block"
+            className="absolute right-[12%] top-1/2 hidden -translate-y-1/2 md:block"
           >
+
             <motion.div
               animate={{
-                y: [0, -7, 0],
+                y: [0, -8, 0],
               }}
               transition={{
                 duration: 4,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="relative flex h-[135px] w-[135px] items-center justify-center rounded-full border border-[#7549ff]/40"
+              className="relative flex h-[155px] w-[155px] items-center justify-center rounded-full border border-[#7549ff]/40"
             >
-              <div className="absolute inset-[13px] rounded-full border border-[#7549ff]/30" />
 
-              <div className="absolute inset-[25px] rounded-full border border-[#7549ff]/20" />
+              <div className="absolute inset-[14px] rounded-full border border-[#7549ff]/30" />
+
+              <div className="absolute inset-[28px] rounded-full border border-[#7549ff]/20" />
 
               <motion.div
                 animate={{
@@ -350,7 +345,7 @@ const Terms = () => {
                 }}
               >
                 <ShieldCheck
-                  size={80}
+                  size={86}
                   strokeWidth={1.4}
                   className="text-[#926cff] drop-shadow-[0_0_18px_rgba(146,108,255,0.75)]"
                 />
@@ -365,7 +360,7 @@ const Terms = () => {
                   duration: 2,
                   repeat: Infinity,
                 }}
-                className="absolute left-[15px] top-[25px] h-2 w-2 rounded-full bg-[#926cff] shadow-[0_0_15px_#926cff]"
+                className="absolute left-[15px] top-[28px] h-2 w-2 rounded-full bg-[#926cff] shadow-[0_0_15px_#926cff]"
               />
 
               <motion.div
@@ -380,23 +375,25 @@ const Terms = () => {
                 }}
                 className="absolute bottom-[20px] right-[10px] h-2 w-2 rounded-full bg-[#926cff] shadow-[0_0_15px_#926cff]"
               />
+
             </motion.div>
+
           </motion.div>
+
         </motion.div>
       </section>
 
-      {/* =========================================================
+      {/* =====================================================
           MAIN CONTENT
-      ========================================================= */}
+      ===================================================== */}
 
-      <main className="mx-auto max-w-[1040px] px-5 py-7">
+      <main className="mx-auto max-w-[1180px] px-5 py-10">
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[265px_1fr]">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[300px_1fr]">
 
-          {/* =====================================================
-              LEFT SIDEBAR
-              STICKY
-          ===================================================== */}
+          {/* =================================================
+              SIDEBAR
+          ================================================= */}
 
           <motion.aside
             variants={sidebarAnimation}
@@ -406,37 +403,36 @@ const Terms = () => {
               once: true,
               amount: 0.2,
             }}
-            className="h-fit lg:sticky lg:top-6 lg:self-start"
+            className="h-fit lg:sticky lg:top-6 lg:self-start lg:-ml-10"
           >
-            <div className="rounded-xl bg-gradient-to-br from-[#faf9ff] to-[#f5f3fd] p-4">
 
-              {/* Sidebar Header */}
+            <div className="w-full rounded-2xl border border-[#ebe8f7] bg-gradient-to-br from-[#faf9ff] to-[#f3f0fc] p-5 shadow-[0_8px_30px_rgba(48,35,100,0.06)]">
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="mb-5 flex items-center gap-3"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e8e2ff]">
+              {/* Header */}
+              <div className="mb-6 flex items-center gap-3">
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8e2ff]">
                   <List
-                    size={13}
+                    size={17}
                     className="text-[#5425d8]"
                   />
                 </div>
 
-                <h2 className="text-[12px] font-bold text-[#11134d]">
+                <h2 className="text-[15px] font-bold text-[#11134d]">
                   On this page
                 </h2>
-              </motion.div>
 
-              {/* Sidebar Items */}
+              </div>
 
-              <div className="space-y-1">
+              {/* Menu */}
+              <div className="space-y-2">
+
                 {sections.map((section, index) => {
+
                   const isActive =
                     activeSection === section.id;
+
+                  const Icon = section.icon;
 
                   return (
                     <motion.button
@@ -445,247 +441,263 @@ const Terms = () => {
                       onClick={() =>
                         scrollToSection(section.id)
                       }
-                      whileHover={{
-                        x: 4,
-                      }}
-                      whileTap={{
-                        scale: 0.98,
-                      }}
-                      transition={{
-                        duration: 0.2,
-                      }}
-                      className={`flex w-full items-center gap-3 rounded-lg px-1.5 py-2 text-left ${
+                      whileHover={{ x: 6 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition ${
                         isActive
-                          ? "text-[#5425d8]"
-                          : "text-[#51617b] hover:text-[#5425d8]"
+                          ? "bg-white text-[#5425d8] shadow-[0_3px_12px_rgba(84,37,216,0.08)]"
+                          : "text-[#51617b] hover:bg-white/70 hover:text-[#5425d8]"
                       }`}
                     >
-                      {/* Number */}
 
-                      <motion.span
-                        animate={{
-                          scale: isActive ? 1.05 : 1,
-                        }}
-                        transition={{
-                          duration: 0.25,
-                        }}
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+                      {/* Number */}
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${
                           isActive
-                            ? "bg-[#5425d8] text-white shadow-[0_3px_10px_rgba(84,37,216,0.25)]"
+                            ? "bg-[#5425d8] text-white shadow-[0_4px_12px_rgba(84,37,216,0.25)]"
                             : "bg-[#e7e5f4] text-[#20205d]"
                         }`}
                       >
                         {index + 1}
-                      </motion.span>
+                      </span>
+
+                      {/* Icon */}
+                      <Icon
+                        size={16}
+                        className={
+                          isActive
+                            ? "text-[#5425d8]"
+                            : "text-slate-400"
+                        }
+                      />
 
                       {/* Title */}
-
-                      <span className="text-[11px] leading-4">
+                      <span className="text-[13px] font-medium leading-5">
                         {section.title}
                       </span>
+
                     </motion.button>
                   );
                 })}
+
               </div>
+
             </div>
           </motion.aside>
 
-          {/* =====================================================
+          {/* =================================================
               RIGHT CONTENT
-          ===================================================== */}
+          ================================================= */}
 
           <div className="min-w-0">
 
-            {sections.map((section, index) => (
-              <motion.section
-                key={section.id}
-                id={section.id}
-                initial={{
-                  opacity: 0,
-                  y: 25,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                  amount: 0.15,
-                }}
-                transition={{
-                  duration: 0.55,
-                  delay: index * 0.03,
-                  ease: "easeOut",
-                }}
-                className="scroll-mt-6 border-b border-[#e7e7ef] py-[11px] first:pt-0"
-              >
-                <div className="flex gap-4">
+            {sections.map((section, index) => {
 
-                  {/* NUMBER */}
+              const Icon = section.icon;
 
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      scale: 0.7,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      scale: 1,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      delay: 0.08,
-                    }}
-                    whileHover={{
-                      scale: 1.08,
-                    }}
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5425d8] text-[11px] font-bold text-white shadow-[0_3px_8px_rgba(84,37,216,0.2)]"
-                  >
-                    {index + 1}
-                  </motion.div>
+              return (
+                <motion.section
+                  key={section.id}
+                  id={section.id}
+                  initial={{
+                    opacity: 0,
+                    y: 25,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                    amount: 0.12,
+                  }}
+                  transition={{
+                    duration: 0.55,
+                    delay: index * 0.03,
+                    ease: "easeOut",
+                  }}
+                  className="scroll-mt-6 border-b border-[#e7e7ef] py-8 first:pt-0"
+                >
 
-                  {/* TEXT */}
+                  <div className="flex gap-5">
 
-                  <div className="min-w-0 flex-1">
-
-                    <motion.h2
-                      initial={{
-                        opacity: 0,
-                        x: 10,
+                    {/* Number */}
+                    <motion.div
+                      whileHover={{
+                        scale: 1.08,
                       }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      transition={{
-                        duration: 0.4,
-                        delay: 0.12,
-                      }}
-                      className="text-[13px] font-bold leading-6 text-[#11134d]"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5425d8] text-[13px] font-bold text-white shadow-[0_4px_10px_rgba(84,37,216,0.2)]"
                     >
-                      {section.title}
-                    </motion.h2>
+                      {index + 1}
+                    </motion.div>
 
-                    <motion.p
-                      initial={{
-                        opacity: 0,
-                        x: 10,
-                      }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      transition={{
-                        duration: 0.45,
-                        delay: 0.18,
-                      }}
-                      className="max-w-[720px] text-[11.5px] leading-[1.45] text-[#46617b]"
-                    >
-                      {section.content}
-                    </motion.p>
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
 
-                    {/* =================================================
-                        CONTACT DETAILS
-                    ================================================= */}
+                      {/* Heading */}
+                      <div className="flex items-center gap-3">
 
-                    {section.id === "contact" && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          y: 10,
-                        }}
-                        whileInView={{
-                          opacity: 1,
-                          y: 0,
-                        }}
-                        viewport={{
-                          once: true,
-                        }}
-                        transition={{
-                          duration: 0.45,
-                          delay: 0.25,
-                        }}
-                        className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10.5px] text-[#46617b]"
-                      >
-                        {/* Email */}
+                        <Icon
+                          size={20}
+                          className="text-[#5425d8]"
+                          strokeWidth={1.8}
+                        />
 
-                        <motion.a
-                          href="mailto:info@globalscion.com"
-                          whileHover={{
-                            x: 3,
-                          }}
-                          className="flex items-center gap-2 transition hover:text-[#5425d8]"
-                        >
-                          <Mail
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
+                        <h2 className="text-[19px] font-bold leading-7 text-[#11134d]">
+                          {section.title}
+                        </h2>
 
-                          <span>
+                      </div>
+
+                      {/* Paragraphs */}
+                      <div className="mt-4 space-y-4">
+
+                        {section.content.map(
+                          (paragraph, paragraphIndex) => (
+                            <p
+                              key={paragraphIndex}
+                              className="text-[14px] leading-[1.8] text-[#46617b]"
+                            >
+                              {paragraph}
+                            </p>
+                          )
+                        )}
+
+                      </div>
+
+                      {/* Transfer List */}
+                      {section.list && (
+                        <div className="mt-5 rounded-xl border border-violet-100 bg-violet-50/50 p-5">
+
+                          <p className="mb-4 text-[13px] font-semibold text-[#5425d8]">
+                            Replacement participant details required:
+                          </p>
+
+                          <ul className="space-y-3">
+
+                            {section.list.map(
+                              (item, listIndex) => (
+                                <li
+                                  key={listIndex}
+                                  className="flex items-start gap-3 text-[13px] leading-6 text-[#46617b]"
+                                >
+
+                                  <span className="mt-[9px] h-2 w-2 shrink-0 rounded-full bg-[#5425d8]" />
+
+                                  <span>
+                                    {item}
+                                  </span>
+
+                                </li>
+                              )
+                            )}
+
+                          </ul>
+
+                        </div>
+                      )}
+
+                      {/* Contact Section */}
+                      {section.id === "contact" && (
+                        <div className="mt-5 flex flex-wrap gap-x-7 gap-y-4">
+
+                          {/* Email */}
+                          <motion.a
+                            href="mailto:info@globalscion.com"
+                            whileHover={{ x: 4 }}
+                            className="flex items-center gap-2.5 text-[13px] text-[#46617b] transition hover:text-[#5425d8]"
+                          >
+                            <Mail
+                              size={17}
+                              className="text-[#5425d8]"
+                            />
+
                             info@globalscion.com
-                          </span>
-                        </motion.a>
+                          </motion.a>
 
-                        <span className="hidden h-4 w-px bg-gray-300 sm:block" />
+                          {/* Phone */}
+                          <motion.a
+                            href="tel:+443308088650"
+                            whileHover={{ x: 4 }}
+                            className="flex items-center gap-2.5 text-[13px] text-[#46617b] transition hover:text-[#5425d8]"
+                          >
+                            <Phone
+                              size={17}
+                              className="text-[#5425d8]"
+                            />
 
-                        {/* Phone */}
+                            +44 330 808 8650
+                          </motion.a>
 
-                        <motion.a
-                          href="tel:+15551234567"
-                          whileHover={{
-                            x: 3,
-                          }}
-                          className="flex items-center gap-2 transition hover:text-[#5425d8]"
-                        >
-                          <Phone
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
+                          {/* Location */}
+                          <div className="flex items-center gap-2.5 text-[13px] text-[#46617b]">
 
-                          <span>
-                            +1 (555) 123-4567
-                          </span>
-                        </motion.a>
+                            <MapPin
+                              size={17}
+                              className="text-[#5425d8]"
+                            />
 
-                        <span className="hidden h-4 w-px bg-gray-300 sm:block" />
+                            GlobalScion Conferences
 
-                        {/* Address */}
+                          </div>
 
-                        <motion.div
-                          whileHover={{
-                            x: 3,
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <MapPin
-                            size={13}
-                            className="text-[#11134d]"
-                            strokeWidth={2}
-                          />
+                        </div>
+                      )}
 
-                          <span>
-                            123 Innovation Drive, Dubai, UAE
-                          </span>
-                        </motion.div>
-                      </motion.div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </motion.section>
-            ))}
+
+                </motion.section>
+              );
+            })}
+
           </div>
         </div>
+
+        {/* =================================================
+            FINAL NOTE
+        ================================================= */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+          }}
+          className="mt-10 rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-50 to-purple-50 p-6"
+        >
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white">
+              <ShieldCheck size={19} />
+            </div>
+
+            <div>
+
+              <h3 className="text-[15px] font-bold text-[#11134d]">
+                Our Commitment
+              </h3>
+
+              <p className="mt-2 text-[13px] leading-6 text-[#46617b]">
+                Our goal is to ensure a smooth and transparent
+                experience for all attendees, and we remain committed
+                to supporting participants throughout the registration
+                and travel preparation process.
+              </p>
+
+            </div>
+
+          </div>
+
+        </motion.div>
+
       </main>
     </div>
   );

@@ -77,10 +77,22 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    ["linkedin.svg", "LinkedIn", "#"],
-    ["instagram.svg", "Instagram", "#"],
-    ["youtube.svg", "YouTube", "#"],
-    ["facebook.svg", "Facebook", "#"],
+    [
+      "linkedin.svg",
+      "LinkedIn",
+      "https://www.linkedin.com/in/gedala-sonu-5bb823405",
+    ],
+    [
+      "instagram.svg",
+      "Instagram",
+      "https://www.instagram.com/global_scion_conferences",
+    ],
+    [
+      "youtube.svg",
+      "YouTube",
+      "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
+    ],
+    ["facebook.svg", "Facebook", "https://www.facebook.com/share/14KW4MrpefS/"],
   ];
 
   return (
@@ -354,14 +366,8 @@ const Footer = () => {
               BRAND
           ===================================================== */}
           <motion.div variants={fadeUp}>
-            <motion.div
-              {...linkHover}
-              className="mb-3 inline-flex"
-            >
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2.5"
-              >
+            <motion.div {...linkHover} className="mb-3 inline-flex">
+              <Link to="/" className="inline-flex items-center gap-2.5">
                 <motion.div
                   whileHover={{
                     scale: 1.06,
@@ -421,6 +427,7 @@ const Footer = () => {
                   key={label}
                   href={href}
                   aria-label={label}
+                  target="_blank"
                   whileHover={{
                     y: -3,
                     scale: 1.04,
@@ -446,7 +453,6 @@ const Footer = () => {
               ))}
             </div>
           </motion.div>
-
           {/* =====================================================
               QUICK LINKS
           ===================================================== */}
@@ -489,7 +495,6 @@ const Footer = () => {
               ))}
             </ul>
           </motion.div>
-
           {/* =====================================================
               CONFERENCES
           ===================================================== */}
@@ -532,7 +537,6 @@ const Footer = () => {
               ))}
             </ul>
           </motion.div>
-
           {/* =====================================================
               RESOURCES
           ===================================================== */}
@@ -575,10 +579,9 @@ const Footer = () => {
               ))}
             </ul>
           </motion.div>
-
           {/* =====================================================
-              CONTACT
-          ===================================================== */}
+    CONTACT
+===================================================== */}
           <motion.div variants={fadeUp}>
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
@@ -611,10 +614,16 @@ const Footer = () => {
                   }}
                 />
 
-                <span>Bangalore, India</span>
+                <div className="leading-5">
+                  <p>United Kingdom</p>
+                  <p>United States</p>
+                  <p>India</p>
+                  <p>Germany</p>
+                  <p>UAE</p>
+                </div>
               </motion.div>
 
-              {/* PHONE */}
+              {/* WHATSAPP */}
               <motion.div
                 whileHover={{
                   x: 3,
@@ -631,7 +640,9 @@ const Footer = () => {
                 />
 
                 <a
-                  href="tel:+918045679710"
+                  href="https://wa.me/443308088650"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="transition-colors"
                   style={{
                     color: textColor,
@@ -643,7 +654,7 @@ const Footer = () => {
                     e.currentTarget.style.color = textColor;
                   }}
                 >
-                  +91 8045 679 710
+                  +44 330 808 8650
                 </a>
               </motion.div>
 
@@ -682,10 +693,7 @@ const Footer = () => {
             </div>
 
             {/* NEWSLETTER */}
-            <motion.div
-              variants={fadeUp}
-              className="mt-4"
-            >
+            <motion.div variants={fadeUp} className="mt-4">
               <h4
                 className="mb-2 text-[12px] font-semibold"
                 style={{
@@ -725,10 +733,7 @@ const Footer = () => {
                     backgroundColor: violet,
                   }}
                 >
-                  <Send
-                    size={16}
-                    strokeWidth={1.8}
-                  />
+                  <Send size={16} strokeWidth={1.8} />
                 </motion.button>
               </div>
             </motion.div>
@@ -770,9 +775,7 @@ const Footer = () => {
             color: textColor,
           }}
         >
-          <p>
-            © 2025 GlobalScion Conferences. All rights reserved.
-          </p>
+          <p>© GlobalScion Conferences. All rights reserved.</p>
 
           <div className="flex flex-wrap items-center gap-3.5">
             <Link
