@@ -552,31 +552,6 @@ const conferences = [
     "https://globalscion.com/wp-content/uploads/2025/05/Logo-6.jpg",
   ],
 
-  sponsorLogos: [
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-1.jpg",
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-2.jpg",
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-3.jpg",
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-4.jpg",
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-5.jpg",
-    "https://globalscion.com/wp-content/uploads/2025/05/Logo-6.jpg",
-  ],
-
-  contact: {
-    phone: "+44 3308088650",
-    whatsapp: "https://wa.me/443308088650",
-    emails: ["info@globalscion.com", "support@globalscion.com"],
-    headquarters:
-      "United Kingdom | United States | India | Germany | UAE",
-  },
-
-  socialLinks: {
-    facebook: "https://www.facebook.com/share/14KW4MrpefS/",
-    twitter: "https://x.com/GGlobalscion",
-    instagram: "https://www.instagram.com/global_scion_conferences",
-    youtube: "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
-    linkedin:
-      "https://www.linkedin.com/in/global-conferences-6025b23b6/",
-  },
 }
 ]
 export default conferences;
