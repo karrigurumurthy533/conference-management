@@ -1,5 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  MapPin,
+  Mail,
+  Phone,
+  User,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const conferences = [
@@ -113,10 +120,6 @@ const Conferences = () => {
         backgroundColor: colors.pageBg,
       }}
     >
-      {/* ======================================================
-    HEADER
-====================================================== */}
-
       <section
         className="
     relative
@@ -221,9 +224,139 @@ const Conferences = () => {
         </div>
       </section>
       {/* ======================================================
-          CONFERENCES
-      ====================================================== */}
+    SUBSCRIBE TO MAILING LIST
+====================================================== */}
+      <section
+        className="border-y px-6 py-5"
+        style={{
+          backgroundColor: "#FAF7FF",
+          borderColor: "#E9DDFB",
+        }}
+      >
+        <div className="mx-auto max-w-7xl">
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              duration: 0.4,
+            }}
+            className="flex flex-col items-center gap-4 lg:flex-row"
+          >
+            {/* TITLE */}
 
+            <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+                style={{
+                  color: "#7C3AED",
+                }}
+              >
+                Stay Connected
+              </p>
+
+              <h2
+                className="mt-0.5 text-base font-bold"
+                style={{
+                  color: "#4C1D95",
+                }}
+              >
+                Subscribe to Our Mailing List
+              </h2>
+            </div>
+
+            {/* NAME */}
+
+            <div className="w-full lg:flex-1">
+              <input
+                type="text"
+                placeholder="Name"
+                className="h-10 w-full rounded-lg border bg-white px-3 text-xs outline-none transition-all focus:ring-2 focus:ring-purple-200"
+                style={{
+                  borderColor: "#E9DDFB",
+                }}
+              />
+            </div>
+
+            {/* EMAIL */}
+
+            <div className="w-full lg:flex-1">
+              <input
+                type="email"
+                placeholder="Email"
+                className="h-10 w-full rounded-lg border bg-white px-3 text-xs outline-none transition-all focus:ring-2 focus:ring-purple-200"
+                style={{
+                  borderColor: "#E9DDFB",
+                }}
+              />
+            </div>
+
+            {/* PHONE */}
+
+            <div className="w-full lg:flex-1">
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                className="h-10 w-full rounded-lg border bg-white px-3 text-xs outline-none transition-all focus:ring-2 focus:ring-purple-200"
+                style={{
+                  borderColor: "#E9DDFB",
+                }}
+              />
+            </div>
+
+            {/* CONFERENCE */}
+
+            <div className="w-full lg:flex-1">
+              <select
+                defaultValue=""
+                className="h-10 w-full rounded-lg border bg-white px-3 text-xs outline-none transition-all focus:ring-2 focus:ring-purple-200"
+                style={{
+                  borderColor: "#E9DDFB",
+                  color: "#6B7280",
+                }}
+              >
+                <option value="" disabled>
+                  Select Conference
+                </option>
+
+                {conferences.map((conference) => (
+                  <option key={conference.id} value={conference.id}>
+                    {conference.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* SUBSCRIBE BUTTON */}
+
+            <button
+              type="button"
+              className="h-10 shrink-0 rounded-lg px-5 text-xs font-semibold text-white transition-all duration-300 hover:-translate-y-0.5"
+              style={{
+                backgroundColor: "#7C3AED",
+                boxShadow: "0 5px 14px rgba(124,58,237,0.15)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#5B21B6";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#7C3AED";
+              }}
+            >
+              Subscribe
+            </button>
+          </motion.div>
+        </div>
+      </section>
+    
       <section
         className="
           px-6

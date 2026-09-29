@@ -6,12 +6,9 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  CreditCard,
-  Globe2,
   Mail,
   MapPin,
   Phone,
-  User,
   Users,
 } from "lucide-react";
 
@@ -22,36 +19,52 @@ const RegisterPage = () => {
 
   const conference = conferences.find((item) => item.id === id);
 
+  // =========================================================
+  // COLORS
+  // =========================================================
+
   const colors = {
     pageBg: "#FFFFFF",
     text: "#111827",
     cardBg: "#FFFFFF",
-    cardBgSecondary: "#F9FAFB",
+    cardBgSecondary: "#FAF8FF",
+
     border: "#E5E7EB",
     borderStrong: "#DDD6FE",
-    divider: "#F3F4F6",
+    divider: "#F1F0F5",
+
     primary: "#7C3AED",
     primaryHover: "#6D28D9",
     primarySoft: "#F5F3FF",
     primarySoft2: "#EDE9FE",
-    heading: "#7C3AED",
-    body: "#4B5563",
+
+    heading: "#6D28D9",
+    body: "#374151",
     muted: "#6B7280",
     mutedLight: "#9CA3AF",
+
     inputBg: "#FFFFFF",
     inputBorder: "#E5E7EB",
     inputText: "#111827",
+
     heroBg: "#1E1B4B",
     heroSecondary: "#312E81",
     heroAccent: "#C084FC",
     heroSoft: "#A78BFA",
+
     selectedBg: "#F5F3FF",
     selectedBorder: "#7C3AED",
+
     shadow: "0 10px 30px rgba(124,58,237,0.06)",
     summaryShadow: "0 12px 35px rgba(124,58,237,0.09)",
+
     supportBg: "#F5F3FF",
     overlay: "rgba(15,7,32,0.75)",
   };
+
+  // =========================================================
+  // FORM DATA
+  // =========================================================
 
   const [formData, setFormData] = useState({
     title: "",
@@ -70,91 +83,195 @@ const RegisterPage = () => {
 
   const [submitted, setSubmitted] = useState(false);
 
+  // =========================================================
+  // CURRENCY
+  // GBP IS THE BASE CURRENCY
+  // =========================================================
+
+  const [currency, setCurrency] = useState("GBP");
+
+  const currencyConfig = {
+    GBP: {
+      symbol: "£",
+      rate: 1,
+      label: "GBP (£)",
+    },
+
+    USD: {
+      symbol: "$",
+      rate: 1.35,
+      label: "USD ($)",
+    },
+
+    EUR: {
+      symbol: "€",
+      rate: 1.17,
+      label: "EUR (€)",
+    },
+  };
+
+  const selectedCurrency = currencyConfig[currency];
+
+  const convertPrice = (gbpPrice) => {
+    return gbpPrice * selectedCurrency.rate;
+  };
+
+  const formatPrice = (gbpPrice) => {
+    return `${selectedCurrency.symbol}${convertPrice(gbpPrice).toFixed(2)}`;
+  };
+
+  // =========================================================
+  // REGISTRATION GROUPS
+  // =========================================================
+
   const registrationGroups = [
     {
       title: "Academic",
-      description:
-        "Choose the registration category that best matches your participation.",
+      color: "#8CCB9F",
       options: [
-        {
-          id: "academic-early",
-          label: "Online Presentation Early Bird Offer",
-          price: 299,
-        },
         {
           id: "academic-speaker",
           label: "Speaker Registration",
-          price: 399,
+          price: 579,
         },
         {
           id: "academic-delegate",
           label: "Delegate Registration",
-          price: 450,
+          price: 521,
         },
         {
           id: "academic-poster",
-          label: "Poster Presentation",
-          price: 420,
+          label: "Poster Registration",
+          price: 629,
+        },
+        {
+          id: "academic-package-a",
+          label: "Package A (Registration + 2 Nights Accommodation)",
+          price: 979,
+        },
+        {
+          id: "academic-package-b",
+          label: "Package B (Registration + 3 Nights Accommodation)",
+          price: 1079,
         },
       ],
     },
+
     {
-      title: "Others",
-      description: "Professional and additional participation options.",
+      title: "Business",
+      color: "#7EA0BD",
       options: [
         {
-          id: "other-workshop",
-          label: "Workshop Registration",
-          price: 349,
+          id: "business-speaker",
+          label: "Speaker Registration",
+          price: 779,
         },
         {
-          id: "other-accompany",
-          label: "Accompany Person",
-          price: 249,
+          id: "business-delegate",
+          label: "Delegate Registration",
+          price: 629,
         },
         {
-          id: "other-video",
-          label: "Video Presentation",
-          price: 199,
+          id: "business-package-a",
+          label: "Package A (Registration + 2 Nights Accommodation)",
+          price: 1079,
         },
         {
-          id: "other-eposter",
-          label: "E-Poster",
-          price: 199,
+          id: "business-package-b",
+          label: "Package B (Registration + 3 Nights Accommodation)",
+          price: 1179,
         },
       ],
     },
+
+    {
+      title: "Others",
+      color: "#9BBEF5",
+      options: [
+        {
+          id: "other-token",
+          label: "Token Amount",
+          price: 299,
+        },
+        {
+          id: "other-exhibitor",
+          label: "Exhibitor",
+          price: 1979,
+        },
+        {
+          id: "other-elite",
+          label: "Elite Sponsor",
+          price: 3979,
+        },
+        {
+          id: "other-gold",
+          label: "Gold Sponsor",
+          price: 3979,
+        },
+        {
+          id: "other-silver",
+          label: "Silver Sponsor",
+          price: 2479,
+        },
+      ],
+    },
+
     {
       title: "Student",
-      description: "Special registration options for students.",
+      color: "#F29A9A",
       options: [
         {
           id: "student-speaker",
           label: "Speaker Registration",
-          price: 320,
+          price: 479,
         },
         {
           id: "student-delegate",
           label: "Delegate Registration",
-          price: 349,
+          price: 429,
+        },
+        {
+          id: "student-poster",
+          label: "Poster Registration",
+          price: 529,
+        },
+        {
+          id: "student-package-a",
+          label: "Package A (Registration + 2 Nights Accommodation)",
+          price: 951,
+        },
+        {
+          id: "student-package-b",
+          label: "Package B (Registration + 3 Nights Accommodation)",
+          price: 1059,
         },
       ],
     },
   ];
 
+  // =========================================================
+  // SELECTED REGISTRATION
+  // =========================================================
+
   const selectedRegistration = useMemo(() => {
     for (const group of registrationGroups) {
       const found = group.options.find(
-        (option) => option.id === formData.registrationType,
+        (option) => option.id === formData.registrationType
       );
 
-      if (found) return found;
+      if (found) {
+        return found;
+      }
     }
 
     return null;
   }, [formData.registrationType]);
 
   const total = selectedRegistration?.price || 0;
+
+  // =========================================================
+  // HANDLE CHANGE
+  // =========================================================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -165,16 +282,32 @@ const RegisterPage = () => {
     }));
   };
 
+  // =========================================================
+  // SUBMIT
+  // =========================================================
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!formData.registrationType) {
+      return;
+    }
 
     setSubmitted(true);
 
     console.log("Registration submitted:", {
       ...formData,
-      total,
+      currency,
+      currencySymbol: selectedCurrency.symbol,
+      basePriceGBP: total,
+      convertedPrice: convertPrice(total),
+      total: formatPrice(total),
     });
   };
+
+  // =========================================================
+  // CONFERENCE NOT FOUND
+  // =========================================================
 
   if (!conference) {
     return (
@@ -212,7 +345,7 @@ const RegisterPage = () => {
           </h1>
 
           <p
-            className="mt-2 text-base leading-5"
+            className="mt-2 text-sm leading-5"
             style={{
               color: colors.muted,
             }}
@@ -223,7 +356,7 @@ const RegisterPage = () => {
 
           <Link
             to="/conferences"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-base font-bold text-white transition hover:-translate-y-0.5"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
             style={{
               backgroundColor: colors.primary,
             }}
@@ -236,6 +369,10 @@ const RegisterPage = () => {
     );
   }
 
+  // =========================================================
+  // MAIN
+  // =========================================================
+
   return (
     <div
       className="min-h-screen"
@@ -244,7 +381,9 @@ const RegisterPage = () => {
         color: colors.text,
       }}
     >
-      {/* HERO */}
+      {/* ======================================================
+          HERO
+      ====================================================== */}
 
       <section
         className="relative overflow-hidden"
@@ -266,22 +405,22 @@ const RegisterPage = () => {
           }}
         />
 
-        <div className="relative mx-auto max-w-7xl px-5 py-3 lg:px-8 lg:py-4">
+        <div className="relative mx-auto max-w-7xl px-5 py-4 lg:px-8 lg:py-5">
           <Link
             to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-1 text-sm font-semibold transition"
+            className="inline-flex items-center gap-1 text-sm font-semibold transition hover:text-white"
             style={{
               color: colors.heroSoft,
             }}
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={14} />
             Back to Conference
           </Link>
 
-          <div className="mt-3 grid items-center gap-4 lg:grid-cols-[1fr_auto]">
+          <div className="mt-4 grid items-center gap-5 lg:grid-cols-[1fr_auto]">
             <div>
               <div
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em]"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em]"
                 style={{
                   border: "1px solid rgba(192,132,252,0.22)",
                   backgroundColor: "rgba(168,85,247,0.12)",
@@ -292,7 +431,7 @@ const RegisterPage = () => {
                 Conference Registration
               </div>
 
-              <h1 className="mt-2 max-w-4xl text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
+              <h1 className="mt-2 max-w-4xl text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
                 Register for
                 <span
                   className="block"
@@ -304,31 +443,31 @@ const RegisterPage = () => {
                 </span>
               </h1>
 
-              <p className="mt-1 max-w-2xl text-sm leading-5 text-white/65">
+              <p className="mt-2 max-w-2xl text-sm leading-5 text-white/65">
                 Complete your registration details below and select the
                 participation category that suits you best.
               </p>
             </div>
 
             <div
-              className="hidden min-w-[210px] rounded-lg p-3 backdrop-blur-md lg:block"
+              className="hidden min-w-[230px] rounded-xl p-4 backdrop-blur-md lg:block"
               style={{
                 border: "1px solid rgba(192,132,252,0.18)",
                 backgroundColor: "rgba(13,7,28,0.72)",
               }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-white"
                   style={{
                     backgroundColor: colors.primary,
                   }}
                 >
-                  <CalendarDays size={15} />
+                  <CalendarDays size={16} />
                 </div>
 
                 <div>
-                  <p className="text-[8px] font-bold uppercase tracking-wider text-white/45">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-white/45">
                     Conference Date
                   </p>
 
@@ -338,19 +477,19 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <div className="mt-2.5 flex items-center gap-2">
+              <div className="mt-3 flex items-center gap-3">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-md"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg"
                   style={{
                     backgroundColor: "rgba(168,85,247,0.12)",
                     color: colors.heroAccent,
                   }}
                 >
-                  <MapPin size={14} />
+                  <MapPin size={15} />
                 </div>
 
                 <div>
-                  <p className="text-[8px] font-bold uppercase tracking-wider text-white/45">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-white/45">
                     Location
                   </p>
 
@@ -364,635 +503,541 @@ const RegisterPage = () => {
         </div>
       </section>
 
-      {/* MAIN */}
+      {/* ======================================================
+          MAIN
+      ====================================================== */}
 
       <main className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
         <form onSubmit={handleSubmit}>
-          <div className="grid items-start gap-5 lg:grid-cols-[1fr_300px]">
-            {/* LEFT */}
+          <div
+            className="overflow-hidden rounded-2xl"
+            style={{
+              backgroundColor: colors.cardBg,
+              border: `1px solid ${colors.border}`,
+              boxShadow: colors.shadow,
+            }}
+          >
+            {/* ==================================================
+                FORM HEADER
+            ================================================== */}
 
-            <div className="space-y-5">
-              {/* PERSONAL */}
-
-              <section
-                className="overflow-hidden rounded-2xl"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: colors.shadow,
-                }}
-              >
-                <FormSectionHeader
-                  number="01"
-                  icon={<User size={17} />}
-                  title="Personal Information"
-                  description="Tell us a little about yourself."
-                />
-
-                <div className="p-4 md:p-5">
-                  <div className="grid gap-3.5 md:grid-cols-[150px_1fr_1fr]">
-                    <SelectField
-                      label="Title"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      required
-                      options={["Mr.", "Ms.", "Mrs.", "Dr.", "Prof."]}
-                      placeholder="Select Title"
-                    />
-
-                    <InputField
-                      label="First Name"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      placeholder="Enter first name"
-                      required
-                    />
-
-                    <InputField
-                      label="Last Name"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      placeholder="Enter last name"
-                      required
-                    />
-                  </div>
-
-                  <div className="mt-3.5 grid gap-3.5 md:grid-cols-2">
-                    <InputField
-                      label="Email Address"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="you@example.com"
-                      icon={<Mail size={15} />}
-                      required
-                    />
-
-                    <InputField
-                      label="Phone Number"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+91 98765 43210"
-                      icon={<Phone size={15} />}
-                      required
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* CONFERENCE */}
-
-              <section
-                className="overflow-hidden rounded-2xl"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: colors.shadow,
-                }}
-              >
-                <FormSectionHeader
-                  number="02"
-                  icon={<Globe2 size={17} />}
-                  title="Conference Details"
-                  description="Confirm the conference you want to attend."
-                />
-
-                <div className="p-4 md:p-5">
-                  <div
-                    className="rounded-xl p-3"
+            <div
+              className="px-5 py-5 md:px-7"
+              style={{
+                borderBottom: `1px solid ${colors.border}`,
+              }}
+            >
+              <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[0.16em]"
                     style={{
-                      border: `1px solid ${colors.borderStrong}`,
-                      backgroundColor: colors.cardBgSecondary,
+                      color: colors.primary,
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-white shadow-sm"
-                        style={{
-                          backgroundColor: colors.primary,
-                        }}
-                      >
-                        <CalendarDays size={18} />
-                      </div>
+                    Conference Registration
+                  </p>
 
-                      <div className="min-w-0">
-                        <p
-                          className="text-[11px] font-bold uppercase tracking-wider"
-                          style={{
-                            color: colors.primary,
-                          }}
-                        >
-                          Selected Conference
-                        </p>
+                  <h2 className="mt-1 text-xl font-bold text-gray-900">
+                    Complete Your Registration
+                  </h2>
 
-                        <h3
-                          className="mt-0.5 text-base font-bold leading-5"
-                          style={{
-                            color: colors.heading,
-                          }}
-                        >
-                          {conference.title}
-                        </h3>
-
-                        <p
-                          className="mt-0.5 text-xs"
-                          style={{
-                            color: colors.muted,
-                          }}
-                        >
-                          {conference.date} · {conference.location}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <input
-                    type="hidden"
-                    name="conference"
-                    value={conference.id}
-                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Enter your details and select your preferred registration
+                    category.
+                  </p>
                 </div>
-              </section>
-
-              {/* ADDRESS */}
-
-              <section
-                className="overflow-hidden rounded-2xl"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: colors.shadow,
-                }}
-              >
-                <FormSectionHeader
-                  number="03"
-                  icon={<MapPin size={17} />}
-                  title="Location & Address"
-                  description="Provide your current contact location."
-                />
-
-                <div className="p-4 md:p-5">
-                  <div className="grid gap-3.5 md:grid-cols-2">
-                    <InputField
-                      label="City"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      placeholder="Enter city"
-                      required
-                    />
-
-                    <InputField
-                      label="State / Province"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                      placeholder="Enter state / province"
-                      required
-                    />
-
-                    <InputField
-                      label="Postal Code"
-                      name="postalCode"
-                      value={formData.postalCode}
-                      onChange={handleChange}
-                      placeholder="Enter postal code"
-                      required
-                    />
-
-                    <InputField
-                      label="Country"
-                      name="country"
-                      value={formData.country}
-                      onChange={handleChange}
-                      placeholder="Select country"
-                      required
-                    />
-                  </div>
-
-                  <div className="mt-3.5">
-                    <label
-                      className="mb-1.5 block text-sm font-bold"
-                      style={{
-                        color: "#374151",
-                      }}
-                    >
-                      Address
-                      <span
-                        className="ml-1"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      >
-                        *
-                      </span>
-                    </label>
-
-                    <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      required
-                      rows={3}
-                      placeholder="Enter your complete address"
-                      className="w-full resize-none rounded-xl px-3.5 py-2.5 text-base outline-none transition"
-                      style={{
-                        backgroundColor: colors.inputBg,
-                        border: `1px solid ${colors.inputBorder}`,
-                        color: colors.inputText,
-                      }}
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* REGISTRATION */}
-
-              <section
-                className="overflow-hidden rounded-2xl"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: colors.shadow,
-                }}
-              >
-                <FormSectionHeader
-                  number="04"
-                  icon={<CreditCard size={17} />}
-                  title="Registration Category"
-                  description="Select one registration option."
-                />
-
-                <div className="p-4 md:p-5">
-                  <div className="space-y-5">
-                    {registrationGroups.map((group) => (
-                      <div key={group.title}>
-                        <div className="mb-2.5">
-                          <h3
-                            className="text-base font-bold"
-                            style={{
-                              color: colors.heading,
-                            }}
-                          >
-                            {group.title}
-                          </h3>
-
-                          <p
-                            className="mt-0.5 text-xs"
-                            style={{
-                              color: colors.muted,
-                            }}
-                          >
-                            {group.description}
-                          </p>
-                        </div>
-
-                        <div className="grid gap-2 md:grid-cols-2">
-                          {group.options.map((option) => {
-                            const selected =
-                              formData.registrationType === option.id;
-
-                            return (
-                              <label
-                                key={option.id}
-                                className="group relative flex cursor-pointer items-center justify-between gap-3 rounded-xl p-3 transition-all hover:-translate-y-0.5"
-                                style={{
-                                  border: `1px solid ${
-                                    selected
-                                      ? colors.selectedBorder
-                                      : colors.border
-                                  }`,
-                                  backgroundColor: selected
-                                    ? colors.selectedBg
-                                    : colors.cardBg,
-                                  boxShadow: selected
-                                    ? "0 5px 16px rgba(124,58,237,0.10)"
-                                    : "none",
-                                }}
-                              >
-                                <div className="flex min-w-0 items-center gap-2.5">
-                                  <div
-                                    className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border-2"
-                                    style={{
-                                      borderColor: selected
-                                        ? colors.primary
-                                        : "#D1D5DB",
-                                    }}
-                                  >
-                                    {selected && (
-                                      <span
-                                        className="h-2 w-2 rounded-full"
-                                        style={{
-                                          backgroundColor: colors.primary,
-                                        }}
-                                      />
-                                    )}
-                                  </div>
-
-                                  <input
-                                    type="radio"
-                                    name="registrationType"
-                                    value={option.id}
-                                    checked={selected}
-                                    onChange={handleChange}
-                                    className="sr-only"
-                                  />
-
-                                  <span
-                                    className="text-sm font-medium leading-4"
-                                    style={{
-                                      color: colors.body,
-                                    }}
-                                  >
-                                    {option.label}
-                                  </span>
-                                </div>
-
-                                <span
-                                  className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-bold"
-                                  style={{
-                                    backgroundColor: selected
-                                      ? colors.primary
-                                      : colors.primarySoft2,
-                                    color: selected
-                                      ? "#FFFFFF"
-                                      : colors.primary,
-                                  }}
-                                >
-                                  €{option.price}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            {/* RIGHT SUMMARY */}
-
-            <aside className="lg:sticky lg:top-5">
-              <div
-                className="overflow-hidden rounded-2xl"
-                style={{
-                  backgroundColor: colors.cardBg,
-                  border: `1px solid ${colors.borderStrong}`,
-                  boxShadow: colors.summaryShadow,
-                }}
-              >
-                {/* SUMMARY HEADER */}
 
                 <div
-                  className="relative overflow-hidden p-4"
+                  className="rounded-xl px-4 py-2.5"
                   style={{
-                    backgroundColor: colors.heroBg,
+                    backgroundColor: colors.primarySoft,
+                    border: `1px solid ${colors.borderStrong}`,
                   }}
                 >
-                  <div
-                    className="absolute -right-8 -top-8 h-24 w-24 rounded-full"
-                    style={{
-                      border: "1px solid rgba(192,132,252,0.20)",
-                    }}
-                  />
-
-                  <div className="relative">
-                    <p
-                      className="text-[11px] font-bold uppercase tracking-[0.16em]"
-                      style={{
-                        color: colors.heroAccent,
-                      }}
-                    >
-                      Registration Summary
-                    </p>
-
-                    <h2 className="mt-1 text-lg font-bold text-white">
-                      Your Registration
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  {/* CONFERENCE */}
-
-                  <div
-                    className="rounded-xl p-3"
-                    style={{
-                      backgroundColor: colors.cardBgSecondary,
-                    }}
-                  >
-                    <div className="flex gap-2.5">
-                      <div
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-white"
-                        style={{
-                          backgroundColor: colors.primary,
-                        }}
-                      >
-                        <CalendarDays size={16} />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p
-                          className="text-[11px] font-bold uppercase tracking-wider"
-                          style={{
-                            color: colors.primary,
-                          }}
-                        >
-                          Conference
-                        </p>
-
-                        <p
-                          className="mt-0.5 text-sm font-bold leading-4"
-                          style={{
-                            color: colors.body,
-                          }}
-                        >
-                          {conference.title}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SELECTED */}
-
-                  <div className="mt-4">
-                    <p
-                      className="text-[11px] font-bold uppercase tracking-wider"
-                      style={{
-                        color: colors.mutedLight,
-                      }}
-                    >
-                      Selected Category
-                    </p>
-
-                    {selectedRegistration ? (
-                      <div className="mt-2 flex items-start justify-between gap-2">
-                        <div className="flex min-w-0 items-start gap-1.5">
-                          <CheckCircle2
-                            size={15}
-                            className="mt-0.5 flex-shrink-0"
-                            style={{
-                              color: colors.primary,
-                            }}
-                          />
-
-                          <span
-                            className="text-sm font-semibold leading-4"
-                            style={{
-                              color: colors.body,
-                            }}
-                          >
-                            {selectedRegistration.label}
-                          </span>
-                        </div>
-
-                        <span
-                          className="text-base font-bold"
-                          style={{
-                            color: colors.heading,
-                          }}
-                        >
-                          €{total}
-                        </span>
-                      </div>
-                    ) : (
-                      <p
-                        className="mt-2 rounded-lg p-3 text-xs leading-4"
-                        style={{
-                          border: `1px dashed ${colors.borderStrong}`,
-                          color: colors.mutedLight,
-                        }}
-                      >
-                        Select a registration category to see the total.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* DIVIDER */}
-
-                  <div
-                    className="my-4 h-px"
-                    style={{
-                      backgroundColor: colors.divider,
-                    }}
-                  />
-
-                  {/* TOTAL */}
-
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p
-                        className="text-[11px] font-bold uppercase tracking-wider"
-                        style={{
-                          color: colors.mutedLight,
-                        }}
-                      >
-                        Total
-                      </p>
-
-                      <p
-                        className="mt-0.5 text-[11px]"
-                        style={{
-                          color: colors.mutedLight,
-                        }}
-                      >
-                        Registration fee
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p
-                        className="text-2xl font-bold"
-                        style={{
-                          color: colors.heading,
-                        }}
-                      >
-                        €{total.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* SUBMIT */}
-
-                  <button
-                    type="submit"
-                    className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
-                    style={{
-                      backgroundColor: colors.primary,
-                      boxShadow: "0 8px 22px rgba(124,58,237,0.18)",
-                    }}
-                  >
-                    Complete Registration
-                    <ArrowRight size={15} />
-                  </button>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
+                    Selected Conference
+                  </p>
 
                   <p
-                    className="mt-3 text-center text-[11px] leading-4"
+                    className="mt-0.5 text-sm font-bold"
                     style={{
-                      color: colors.mutedLight,
+                      color: colors.primary,
                     }}
                   >
-                    By submitting this form, you confirm that the information
-                    provided is accurate.
+                    {conference.title}
                   </p>
                 </div>
               </div>
 
-              {/* SUPPORT */}
+              {/* STEPS */}
+
+              <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-1">
+                {[
+                  ["01", "Personal"],
+                  ["02", "Conference"],
+                  ["03", "Address"],
+                  ["04", "Registration"],
+                ].map(([number, label], index) => (
+                  <React.Fragment key={number}>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{
+                          backgroundColor: colors.primary,
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        {number}
+                      </span>
+
+                      <span
+                        className="text-xs font-semibold"
+                        style={{
+                          color: colors.body,
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </div>
+
+                    {index !== 3 && (
+                      <div
+                        className="h-px min-w-6 flex-1"
+                        style={{
+                          backgroundColor: colors.border,
+                        }}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* ==================================================
+                STEP 01
+            ================================================== */}
+
+            <div className="px-5 py-6 md:px-7">
+              <FormTitle
+                number="01"
+                title="Personal Information"
+                description="Tell us a little about yourself."
+              />
+
+              <div className="mt-4 grid gap-3.5 md:grid-cols-[150px_1fr_1fr]">
+                <SelectField
+                  label="Title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  options={["Mr.", "Ms.", "Mrs.", "Dr.", "Prof."]}
+                  placeholder="Select Title"
+                />
+
+                <InputField
+                  label="First Name"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Enter first name"
+                  required
+                />
+
+                <InputField
+                  label="Last Name"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Enter last name"
+                  required
+                />
+              </div>
+
+              <div className="mt-3.5 grid gap-3.5 md:grid-cols-2">
+                <InputField
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  icon={<Mail size={15} />}
+                  required
+                />
+
+                <InputField
+                  label="Phone Number"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+91 98765 43210"
+                  icon={<Phone size={15} />}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* ==================================================
+                STEP 02
+            ================================================== */}
+
+            <div
+              className="px-5 py-6 md:px-7"
+              style={{
+                borderTop: `1px solid ${colors.divider}`,
+              }}
+            >
+              <FormTitle
+                number="02"
+                title="Conference Details"
+                description="Confirm the conference you want to attend."
+              />
 
               <div
-                className="mt-3 rounded-xl p-3.5"
+                className="mt-4 flex items-center gap-3 rounded-xl p-3.5"
                 style={{
-                  border: `1px solid ${colors.border}`,
-                  backgroundColor: colors.supportBg,
+                  backgroundColor: colors.primarySoft,
+                  border: `1px solid ${colors.borderStrong}`,
                 }}
               >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-lg shadow-sm"
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-white"
+                  style={{
+                    backgroundColor: colors.primary,
+                  }}
+                >
+                  <CalendarDays size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider"
                     style={{
-                      backgroundColor: colors.cardBg,
                       color: colors.primary,
                     }}
                   >
-                    <Phone size={14} />
-                  </div>
+                    Selected Conference
+                  </p>
 
-                  <div>
-                    <p
-                      className="text-xs font-bold"
-                      style={{
-                        color: colors.heading,
-                      }}
-                    >
-                      Need assistance?
-                    </p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-900">
+                    {conference.title}
+                  </p>
 
-                    <p
-                      className="mt-0.5 text-[11px]"
-                      style={{
-                        color: colors.muted,
-                      }}
-                    >
-                      Contact the GlobalScion team.
-                    </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {conference.date} · {conference.location}
+                  </p>
+                </div>
+              </div>
+
+              <input
+                type="hidden"
+                name="conference"
+                value={conference.id}
+              />
+            </div>
+
+            {/* ==================================================
+                STEP 03
+            ================================================== */}
+
+            <div
+              className="px-5 py-6 md:px-7"
+              style={{
+                borderTop: `1px solid ${colors.divider}`,
+              }}
+            >
+              <FormTitle
+                number="03"
+                title="Location & Address"
+                description="Provide your current contact location."
+              />
+
+              <div className="mt-4 grid gap-3.5 md:grid-cols-2">
+                <InputField
+                  label="City"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="Enter city"
+                  required
+                />
+
+                <InputField
+                  label="State / Province"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  placeholder="Enter state / province"
+                  required
+                />
+
+                <InputField
+                  label="Postal Code"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  placeholder="Enter postal code"
+                  required
+                />
+
+                <InputField
+                  label="Country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  placeholder="Enter country"
+                  required
+                />
+              </div>
+
+              <div className="mt-3.5">
+                <label
+                  className="mb-1.5 block text-sm font-bold"
+                  style={{
+                    color: "#374151",
+                  }}
+                >
+                  Address
+
+                  <span
+                    className="ml-1"
+                    style={{
+                      color: colors.primary,
+                    }}
+                  >
+                    *
+                  </span>
+                </label>
+
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                  rows={3}
+                  placeholder="Enter your complete address"
+                  className="w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none transition"
+                  style={{
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.inputBorder}`,
+                    color: colors.inputText,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* ==================================================
+                STEP 04
+            ================================================== */}
+
+            <div
+              className="px-5 py-6 md:px-7"
+              style={{
+                borderTop: `1px solid ${colors.divider}`,
+              }}
+            >
+              <FormTitle
+                number="04"
+                title="Registration Category"
+                description="Select one registration option."
+              />
+
+              {/* ==================================================
+                  CURRENCY SELECTOR
+              ================================================== */}
+
+              <div
+                className="mt-5 rounded-xl p-4"
+                style={{
+                  backgroundColor: "#F8F7FC",
+                  border: `1px solid ${colors.border}`,
+                }}
+              >
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Choose your Currency
+                  </h3>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-5">
+                    {Object.entries(currencyConfig).map(
+                      ([code, config]) => (
+                        <label
+                          key={code}
+                          className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-700"
+                        >
+                          <input
+                            type="radio"
+                            name="currency"
+                            value={code}
+                            checked={currency === code}
+                            onChange={(e) =>
+                              setCurrency(e.target.value)
+                            }
+                            className="accent-violet-600"
+                          />
+
+                          {config.label}
+                        </label>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
-            </aside>
+
+              {/* ==================================================
+                  PRICING TABLES
+              ================================================== */}
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {registrationGroups.map((group) => (
+                  <RegistrationGroup
+                    key={group.title}
+                    group={group}
+                    formData={formData}
+                    handleChange={handleChange}
+                    colors={colors}
+                    selectedCurrency={selectedCurrency}
+                    convertPrice={convertPrice}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* ==================================================
+                BOTTOM SUMMARY
+            ================================================== */}
+
+            <div
+              className="px-5 py-6 md:px-7"
+              style={{
+                borderTop: `1px solid ${colors.divider}`,
+                backgroundColor: "#FCFAFF",
+              }}
+            >
+              {/* SELECTED REGISTRATION */}
+
+              <div className="text-center">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                  style={{
+                    color: colors.muted,
+                  }}
+                >
+                  Selected Registration
+                </p>
+
+                {selectedRegistration ? (
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <CheckCircle2
+                      size={18}
+                      style={{
+                        color: colors.primary,
+                      }}
+                    />
+
+                    <span className="text-sm font-bold text-gray-900">
+                      {selectedRegistration.label}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">
+                    Please select a registration category.
+                  </p>
+                )}
+              </div>
+
+              {/* TOTAL */}
+
+              <div className="mt-5 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Total Registration Fee
+                </p>
+
+                <p
+                  className="mt-1 text-3xl font-bold"
+                  style={{
+                    color: colors.primary,
+                  }}
+                >
+                  {selectedCurrency.symbol}
+                  {convertPrice(total).toFixed(2)}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  Currency: {selectedCurrency.label}
+                </p>
+              </div>
+
+              {/* PROCEED TO PAY */}
+
+              <div className="mt-5 flex justify-center">
+                <button
+                  type="submit"
+                  disabled={!selectedRegistration}
+                  className="flex h-12 min-w-[220px] items-center justify-center gap-2 rounded-xl px-8 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    backgroundColor: colors.primary,
+                    boxShadow: "0 8px 20px rgba(124,58,237,0.18)",
+                  }}
+                >
+                  Proceed to Pay
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+
+              <p className="mt-3 text-center text-[11px] text-gray-400">
+                You will be redirected to the secure payment process after
+                continuing.
+              </p>
+            </div>
           </div>
         </form>
+
+        {/* ======================================================
+            SUPPORT
+        ====================================================== */}
+
+        <div
+          className="mt-4 rounded-xl px-4 py-3.5"
+          style={{
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.supportBg,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm"
+              style={{
+                color: colors.primary,
+              }}
+            >
+              <Phone size={15} />
+            </div>
+
+            <div>
+              <p
+                className="text-xs font-bold"
+                style={{
+                  color: colors.heading,
+                }}
+              >
+                Need assistance?
+              </p>
+
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                Contact the GlobalScion team for registration support.
+              </p>
+            </div>
+          </div>
+        </div>
       </main>
 
-      {/* SUCCESS MODAL */}
+      {/* ======================================================
+          REGISTRATION CONFIRMATION MODAL
+      ====================================================== */}
 
       {submitted && (
         <div
@@ -1025,31 +1070,52 @@ const RegisterPage = () => {
                 color: colors.heading,
               }}
             >
-              Registration Submitted
+              Registration Ready
             </h2>
 
-            <p
-              className="mt-2 text-base leading-5"
-              style={{
-                color: colors.muted,
-              }}
-            >
-              Thank you for registering for{" "}
-              <span
-                className="font-semibold"
-                style={{
-                  color: colors.body,
-                }}
-              >
+            <p className="mt-2 text-sm leading-5 text-gray-500">
+              Your registration details are ready for payment for{" "}
+              <span className="font-semibold text-gray-900">
                 {conference.title}
               </span>
               .
             </p>
 
+            <div
+              className="mt-4 rounded-xl p-3 text-left"
+              style={{
+                backgroundColor: colors.primarySoft,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  Registration
+                </span>
+
+                <span
+                  className="text-sm font-bold"
+                  style={{
+                    color: colors.primary,
+                  }}
+                >
+                  {selectedCurrency.symbol}
+                  {convertPrice(total).toFixed(2)}
+                </span>
+              </div>
+
+              <p className="mt-1 text-xs font-semibold text-gray-700">
+                {selectedRegistration?.label}
+              </p>
+
+              <p className="mt-1 text-[10px] text-gray-400">
+                Currency: {selectedCurrency.label}
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="mt-5 rounded-lg px-6 py-2.5 text-base font-bold text-white transition hover:-translate-y-0.5"
+              className="mt-5 rounded-lg px-6 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
               style={{
                 backgroundColor: colors.primary,
               }}
@@ -1063,84 +1129,147 @@ const RegisterPage = () => {
   );
 };
 
-const FormSectionHeader = ({ number, icon, title, description }) => {
-  const colors = {
-    border: "#E5E7EB",
-    iconBg: "#F5F3FF",
-    icon: "#7C3AED",
-    step: "#7C3AED",
-    dot: "#C4B5FD",
-    required: "#9CA3AF",
-    heading: "#7C3AED",
-    description: "#6B7280",
-  };
+// ============================================================
+// FORM TITLE
+// ============================================================
 
+const FormTitle = ({ number, title, description }) => {
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-3.5 md:px-5"
-      style={{
-        borderBottom: `1px solid ${colors.border}`,
-      }}
-    >
+    <div className="flex items-center gap-3">
       <div
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
         style={{
-          backgroundColor: colors.iconBg,
-          color: colors.icon,
+          backgroundColor: "#F5F3FF",
+          color: "#7C3AED",
+          border: "1px solid #DDD6FE",
         }}
       >
-        {icon}
+        {number}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="text-[11px] font-bold uppercase tracking-wider"
-            style={{
-              color: colors.step,
-            }}
-          >
-            Step {number}
-          </span>
-
-          <span
-            className="h-1 w-1 rounded-full"
-            style={{
-              backgroundColor: colors.dot,
-            }}
-          />
-
-          <span
-            className="text-[11px] font-medium uppercase tracking-wider"
-            style={{
-              color: colors.required,
-            }}
-          >
-            Required Details
-          </span>
-        </div>
-
-        <h2
-          className="mt-0.5 text-base font-bold"
-          style={{
-            color: colors.heading,
-          }}
-        >
+      <div className="min-w-0">
+        <h3 className="text-base font-bold text-gray-900">
           {title}
-        </h2>
+        </h3>
 
-        <p
-          className="mt-0.5 text-xs"
-          style={{
-            color: colors.description,
-          }}
-        >
+        <p className="mt-0.5 text-xs text-gray-500">
           {description}
         </p>
       </div>
     </div>
   );
 };
+
+// ============================================================
+// REGISTRATION GROUP
+// ============================================================
+
+const RegistrationGroup = ({
+  group,
+  formData,
+  handleChange,
+  colors,
+  selectedCurrency,
+  convertPrice,
+}) => {
+  return (
+    <div
+      className="overflow-hidden rounded-xl"
+      style={{
+        border: `1px solid ${colors.border}`,
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      {/* CATEGORY HEADER */}
+
+      <div
+        className="px-3 py-2.5 text-center"
+        style={{
+          backgroundColor: group.color,
+        }}
+      >
+        <h3 className="text-lg font-bold text-white">
+          {group.title}
+        </h3>
+      </div>
+
+      {/* OPTIONS */}
+
+      <div className="px-3">
+        {group.options.map((option, index) => {
+          const selected =
+            formData.registrationType === option.id;
+
+          const isLast =
+            index === group.options.length - 1;
+
+          return (
+            <label
+              key={option.id}
+              className="flex cursor-pointer items-center justify-between gap-2 py-2.5 transition hover:bg-gray-50"
+              style={{
+                borderBottom: isLast
+                  ? "none"
+                  : `1px solid ${colors.border}`,
+              }}
+            >
+              <div className="flex min-w-0 items-start gap-2">
+                <input
+                  type="radio"
+                  name="registrationType"
+                  value={option.id}
+                  checked={selected}
+                  onChange={handleChange}
+                  className="mt-1 flex-shrink-0 accent-violet-600"
+                />
+
+                <span
+                  className="text-xs leading-4"
+                  style={{
+                    color: selected
+                      ? colors.primary
+                      : colors.body,
+                    fontWeight: selected ? 700 : 500,
+                  }}
+                >
+                  {option.label}
+                </span>
+              </div>
+
+              {/* CONVERTED PRICE */}
+
+              <span
+                className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
+                style={{
+                  backgroundColor: selected
+                    ? colors.primary
+                    : colors.primarySoft,
+
+                  color: selected
+                    ? "#FFFFFF"
+                    : colors.primary,
+
+                  border: `1px solid ${
+                    selected
+                      ? colors.primary
+                      : colors.borderStrong
+                  }`,
+                }}
+              >
+                {selectedCurrency.symbol}
+                {convertPrice(option.price).toFixed(2)}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// INPUT FIELD
+// ============================================================
 
 const InputField = ({
   label,
@@ -1202,7 +1331,7 @@ const InputField = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`h-10 w-full rounded-xl px-3 text-base outline-none transition ${
+          className={`h-10 w-full rounded-xl text-sm outline-none transition ${
             icon ? "pl-9 pr-3" : "px-3"
           }`}
           style={{
@@ -1215,6 +1344,10 @@ const InputField = ({
     </div>
   );
 };
+
+// ============================================================
+// SELECT FIELD
+// ============================================================
 
 const SelectField = ({
   label,
@@ -1262,7 +1395,7 @@ const SelectField = ({
           value={value}
           onChange={onChange}
           required={required}
-          className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-base outline-none transition"
+          className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-sm outline-none transition"
           style={{
             backgroundColor: colors.bg,
             border: `1px solid ${colors.border}`,
