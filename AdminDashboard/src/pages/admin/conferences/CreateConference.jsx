@@ -1,42 +1,100 @@
-import React, { useState } from "react";
+import { useState } from "react";
+
 import {
   ArrowLeft,
   CalendarDays,
   Check,
   ChevronDown,
-  FileText,
   Globe2,
-  Image,
+  Image as ImageIcon,
   Info,
   Link2,
   Plus,
   Save,
   Trash2,
-  Upload,
   Users,
+  BookOpen,
+  Mic2,
+  Layers,
+  DollarSign,
+  ListChecks,
+  Presentation,
+  BarChart3,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
+
+
+import { createConference } from "../../../redux/conferenceSlice";
+import ImageUploader from "../../../components/admin/ImageUploader";
+import MultiImageUploader from "../../../components/admin/MultiImageUploader";
+
+
+
+const emptyRegistrationItem = () => ({
+  speakerRegistration: "",
+  delegateRegistration: "",
+  posterRegistration: "",
+  packageA: "",
+  packageB: "",
+});
+
+const defaultRegistrationCategory = (name) => ({
+  category: name,
+  prices: {
+    GBP: emptyRegistrationItem(),
+    USD: emptyRegistrationItem(),
+    EUR: emptyRegistrationItem(),
+  },
+});
+
 
 const CreateConference = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // =========================================================
+  // REDUX STATE
+  // =========================================================
+
+  const {
+    loading: conferenceLoading,
+    error: conferenceError,
+  } = useSelector((state) => state.conference);
+
+  // =========================================================
+  // LOCAL STATE
+  // =========================================================
 
   const [activeSection, setActiveSection] = useState("basic");
+  const [saving, setSaving] = useState(false);
+
+  // =========================================================
+  // BASIC DATA
+  // =========================================================
 
   const [formData, setFormData] = useState({
-    conferenceName: "",
-    shortName: "",
+    id: "",
     category: "",
-    type: "Physical",
-    status: "Draft",
+    title: "",
+    subtitle: "",
     description: "",
 
+    image: null,
+    aboutImage: null,
+
+    date: "",
+    time: "Webinar",
     startDate: "",
     endDate: "",
-    registrationStartDate: "",
-    registrationDeadline: "",
-    abstractDeadline: "",
-    paperDeadline: "",
-    timezone: "Asia/Kolkata",
+
+    location: "",
+    mode: "Webinar",
+    participants: "Global",
+
+    status: "Draft",
 
     venueName: "",
     address: "",
@@ -45,6 +103,13 @@ const CreateConference = () => {
     country: "India",
     mapUrl: "",
     onlineLink: "",
+
+    timezone: "Asia/Kolkata",
+
+    registrationStartDate: "",
+    registrationDeadline: "",
+    abstractDeadline: "",
+    paperDeadline: "",
 
     contactEmail: "",
     phone: "",
@@ -55,36 +120,82 @@ const CreateConference = () => {
     instagram: "",
     facebook: "",
 
-    logo: null,
-    banner: null,
-    brochure: null,
+    welcomeHeading: "Welcome Message",
+    welcomeParagraphs: [""],
+    welcomeSignature: "",
 
-    abstractSubmission: true,
-    paperSubmission: false,
-    oralPresentation: true,
-    posterPresentation: true,
-    virtualPresentation: false,
+    whoShouldAttendDescription: "",
 
-    reviewType: "Single Blind",
-    maxAbstractWords: "300",
+    marketHeading: "",
+    marketParagraphs: [""],
+    marketImage: null,
 
-    topics: [],
+    submission: {
+      abstractSubmission: true,
+      paperSubmission: false,
+      oralPresentation: true,
+      posterPresentation: true,
+      virtualPresentation: false,
+      reviewType: "Single Blind",
+      maxAbstractWords: 300,
+    },
   });
 
-  const [registrationTypes, setRegistrationTypes] = useState([
-    {
-      id: Date.now(),
-      type: "Student",
-      earlyBird: "",
-      regular: "",
-      currency: "USD",
-    },
-  ]);
+  // =========================================================
+  // REGISTRATION
+  // =========================================================
+
+  const [registrationCategories, setRegistrationCategories] =
+    useState([
+      defaultRegistrationCategory("Academic"),
+      defaultRegistrationCategory("Business"),
+      defaultRegistrationCategory("Others"),
+      defaultRegistrationCategory("Student"),
+    ]);
+
+  // =========================================================
+  // ARRAYS
+  // =========================================================
 
   const [speakers, setSpeakers] = useState([]);
   const [committee, setCommittee] = useState([]);
+  const [topics, setTopics] = useState([]);
+  const [tracks, setTracks] = useState([]);
+  const [keyHighlights, setKeyHighlights] = useState([]);
+  const [whoShouldAttend, setWhoShouldAttend] = useState([]);
+  const [whyToAttend, setWhyToAttend] = useState([]);
+  const [benefitsOfAttending, setBenefitsOfAttending] =
+    useState([]);
+  const [delegates, setDelegates] = useState([]);
+  const [posterPresentersLive, setPosterPresentersLive] =
+    useState([]);
   const [sessions, setSessions] = useState([]);
-  const [newTopic, setNewTopic] = useState("");
+  const [sponsors, setSponsors] = useState([]);
+
+  // =========================================================
+  // E-POSTER
+  // =========================================================
+
+  const [ePoster, setEPoster] = useState({
+    benefits: [],
+    guidelinesIntro: "",
+
+    specifications: {
+      Format: "PDF or PowerPoint (PPT/PPTX)",
+      Orientation: "Portrait",
+      "Recommended Size": "A0 (841 mm × 1189 mm)",
+      Language: "English",
+      "Maximum File Size": "20 MB",
+    },
+
+    posterContent: [],
+    designRequirements: [],
+    submissionGuidelines: [],
+    reviewAndAcceptance: [],
+    presentation: [],
+    certificate: [],
+    closingNotes: [],
+  });
 
   // =========================================================
   // SECTIONS
@@ -103,61 +214,88 @@ const CreateConference = () => {
     },
     {
       id: "registration",
-      label: "Registration",
-      icon: Users,
+      label: "Registration & Pricing",
+      icon: DollarSign,
     },
     {
-      id: "submission",
-      label: "Submissions",
-      icon: FileText,
+      id: "welcome",
+      label: "Welcome Message",
+      icon: BookOpen,
     },
     {
       id: "speakers",
-      label: "Speakers",
-      icon: Users,
+      label: "Speakers & Committee",
+      icon: Mic2,
     },
     {
-      id: "program",
-      label: "Program",
+      id: "content",
+      label: "Topics & Tracks",
+      icon: Layers,
+    },
+    {
+      id: "highlights",
+      label: "Highlights",
+      icon: ListChecks,
+    },
+    {
+      id: "agenda",
+      label: "Agenda",
       icon: CalendarDays,
     },
     {
+      id: "attendees",
+      label: "Who Should Attend",
+      icon: Users,
+    },
+    {
+      id: "benefits",
+      label: "Benefits",
+      icon: Check,
+    },
+    {
+      id: "poster",
+      label: "Poster / E-Poster",
+      icon: Presentation,
+    },
+    {
+      id: "market",
+      label: "Market Analysis",
+      icon: BarChart3,
+    },
+    {
       id: "media",
-      label: "Media",
-      icon: Image,
+      label: "Media & Sponsors",
+      icon: ImageIcon,
     },
     {
       id: "contact",
-      label: "Contact",
+      label: "Contact & Social",
       icon: Globe2,
     },
   ];
 
   const currentIndex = sections.findIndex(
-    (section) => section.id === activeSection
+    (item) => item.id === activeSection
   );
 
   // =========================================================
-  // COMMON CLASSES
+  // CLASSES
   // =========================================================
 
   const inputClass =
-    "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
+    "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
 
   const textareaClass =
-    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
-
-  const labelClass =
-    "mb-1.5 block text-[12px] font-semibold text-slate-700";
+    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
 
   const cardClass =
     "rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.035)]";
 
-  const compactButton =
+  const buttonClass =
     "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition";
 
   // =========================================================
-  // FORM CHANGE
+  // CHANGE
   // =========================================================
 
   const handleChange = (e) => {
@@ -169,83 +307,37 @@ const CreateConference = () => {
     }));
   };
 
-  // =========================================================
-  // FILE CHANGE
-  // =========================================================
-
-  const handleFileChange = (e, field) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
+  const handleSubmissionChange = (e) => {
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [field]: file,
-    }));
-  };
-
-  // =========================================================
-  // TOPICS
-  // =========================================================
-
-  const addTopic = () => {
-    const topic = newTopic.trim();
-
-    if (!topic) return;
-
-    if (formData.topics.includes(topic)) {
-      setNewTopic("");
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      topics: [...prev.topics, topic],
-    }));
-
-    setNewTopic("");
-  };
-
-  const removeTopic = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      topics: prev.topics.filter((_, i) => i !== index),
-    }));
-  };
-
-  // =========================================================
-  // REGISTRATION
-  // =========================================================
-
-  const addRegistrationType = () => {
-    setRegistrationTypes((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        type: "",
-        earlyBird: "",
-        regular: "",
-        currency: "USD",
+      submission: {
+        ...prev.submission,
+        [name]: type === "checkbox" ? checked : value,
       },
-    ]);
+    }));
   };
 
-  const updateRegistrationType = (id, field, value) => {
-    setRegistrationTypes((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item
-      )
+  // =========================================================
+  // ARRAY HELPERS
+  // =========================================================
+
+  const addArrayItem = (setter, value) => {
+    setter((prev) => [...prev, value]);
+  };
+
+  const removeArrayItem = (setter, index) => {
+    setter((prev) =>
+      prev.filter((_, i) => i !== index)
     );
   };
 
-  const removeRegistrationType = (id) => {
-    setRegistrationTypes((prev) =>
-      prev.filter((item) => item.id !== id)
+  const updateArrayItem = (setter, index, value) => {
+    setter((prev) =>
+      prev.map((item, i) =>
+        i === index ? value : item
+      )
     );
   };
 
@@ -254,235 +346,680 @@ const CreateConference = () => {
   // =========================================================
 
   const addSpeaker = () => {
-    setSpeakers((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: "",
-        designation: "",
-        organization: "",
-        country: "",
-        bio: "",
-      },
-    ]);
-  };
-
-  const updateSpeaker = (id, field, value) => {
-    setSpeakers((prev) =>
-      prev.map((speaker) =>
-        speaker.id === id
-          ? {
-              ...speaker,
-              [field]: value,
-            }
-          : speaker
-      )
-    );
-  };
-
-  const removeSpeaker = (id) => {
-    setSpeakers((prev) =>
-      prev.filter((speaker) => speaker.id !== id)
-    );
+    addArrayItem(setSpeakers, {
+      id: crypto.randomUUID(),
+      name: "",
+      role: "",
+      organization: "",
+      specialty: "",
+      country: "",
+      image: null,
+      bio: "",
+    });
   };
 
   // =========================================================
   // COMMITTEE
   // =========================================================
 
-  const addCommitteeMember = () => {
-    setCommittee((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: "",
-        role: "",
-        organization: "",
-      },
-    ]);
-  };
-
-  const updateCommitteeMember = (id, field, value) => {
-    setCommittee((prev) =>
-      prev.map((member) =>
-        member.id === id
-          ? {
-              ...member,
-              [field]: value,
-            }
-          : member
-      )
-    );
-  };
-
-  const removeCommitteeMember = (id) => {
-    setCommittee((prev) =>
-      prev.filter((member) => member.id !== id)
-    );
+  const addCommittee = () => {
+    addArrayItem(setCommittee, {
+      id: crypto.randomUUID(),
+      name: "",
+      role: "",
+      organization: "",
+      image: null,
+    });
   };
 
   // =========================================================
-  // SESSIONS
+  // TOPIC
+  // =========================================================
+
+  const addTopic = () => {
+    addArrayItem(setTopics, "");
+  };
+
+  // =========================================================
+  // TRACK
+  // =========================================================
+
+  const addTrack = () => {
+    addArrayItem(setTracks, {
+      title: "",
+      description: "",
+    });
+  };
+
+  // =========================================================
+  // HIGHLIGHT
+  // =========================================================
+
+  const addHighlight = () => {
+    addArrayItem(setKeyHighlights, {
+      title: "",
+      description: "",
+    });
+  };
+
+  // =========================================================
+  // ATTENDEE
+  // =========================================================
+
+  const addAttendee = () => {
+    addArrayItem(setWhoShouldAttend, "");
+  };
+
+  // =========================================================
+  // WHY ATTEND
+  // =========================================================
+
+  const addWhyAttend = () => {
+    addArrayItem(setWhyToAttend, {
+      title: "",
+      description: "",
+    });
+  };
+
+  // =========================================================
+  // BENEFITS
+  // =========================================================
+
+  const addBenefit = () => {
+    addArrayItem(setBenefitsOfAttending, {
+      title: "",
+      description: "",
+    });
+  };
+
+  // =========================================================
+  // DELEGATES
+  // =========================================================
+
+  const addDelegate = () => {
+    addArrayItem(setDelegates, {
+      title: "",
+      description: "",
+    });
+  };
+
+  // =========================================================
+  // POSTER
+  // =========================================================
+
+  const addPosterPoint = (field) => {
+    setEPoster((prev) => ({
+      ...prev,
+      [field]: [...prev[field], ""],
+    }));
+  };
+
+  const updatePosterPoint = (
+    field,
+    index,
+    value
+  ) => {
+    setEPoster((prev) => ({
+      ...prev,
+      [field]: prev[field].map((item, i) =>
+        i === index ? value : item
+      ),
+    }));
+  };
+
+  const removePosterPoint = (
+    field,
+    index
+  ) => {
+    setEPoster((prev) => ({
+      ...prev,
+      [field]: prev[field].filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
+  // =========================================================
+  // AGENDA
   // =========================================================
 
   const addSession = () => {
-    setSessions((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        title: "",
-        date: "",
-        startTime: "",
-        endTime: "",
-        speaker: "",
-        room: "",
-        type: "Keynote",
-      },
-    ]);
+    addArrayItem(setSessions, {
+      day: "",
+      schedule: [
+        {
+          time: "",
+          session: "",
+        },
+      ],
+    });
   };
 
-  const updateSession = (id, field, value) => {
+  const addSchedule = (dayIndex) => {
     setSessions((prev) =>
-      prev.map((session) =>
-        session.id === id
+      prev.map((day, index) =>
+        index === dayIndex
           ? {
-              ...session,
-              [field]: value,
+              ...day,
+              schedule: [
+                ...day.schedule,
+                {
+                  time: "",
+                  session: "",
+                },
+              ],
             }
-          : session
+          : day
       )
     );
   };
 
-  const removeSession = (id) => {
+  const updateSchedule = (
+    dayIndex,
+    scheduleIndex,
+    field,
+    value
+  ) => {
     setSessions((prev) =>
-      prev.filter((session) => session.id !== id)
+      prev.map((day, i) =>
+        i === dayIndex
+          ? {
+              ...day,
+              schedule: day.schedule.map(
+                (item, j) =>
+                  j === scheduleIndex
+                    ? {
+                        ...item,
+                        [field]: value,
+                      }
+                    : item
+              ),
+            }
+          : day
+      )
     );
   };
 
   // =========================================================
-  // SAVE
+  // REGISTRATION
   // =========================================================
 
-  const saveConference = (publish = false) => {
-    const payload = {
-      ...formData,
-      registrationTypes,
-      speakers,
-      committee,
-      sessions,
-      status: publish ? "Published" : "Draft",
+  const updateRegistrationPrice = (
+    categoryIndex,
+    currency,
+    field,
+    value
+  ) => {
+    setRegistrationCategories((prev) =>
+      prev.map((category, index) =>
+        index === categoryIndex
+          ? {
+              ...category,
+              prices: {
+                ...category.prices,
+                [currency]: {
+                  ...category.prices[currency],
+                  [field]: value,
+                },
+              },
+            }
+          : category
+      )
+    );
+  };
+
+  // =========================================================
+  // BUILD JSON DATA
+  // =========================================================
+
+  const buildConferenceData = () => {
+    return {
+      id: formData.id,
+      category: formData.category,
+      title: formData.title,
+      subtitle: formData.subtitle,
+
+      date: formData.date,
+      time: formData.time,
+
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+
+      location: formData.location,
+      mode: formData.mode,
+      participants: formData.participants,
+
+      description: formData.description,
+
+      venue: {
+        venueName: formData.venueName,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        mapUrl: formData.mapUrl,
+        onlineLink: formData.onlineLink,
+        timezone: formData.timezone,
+      },
+
+      registrationDates: {
+        registrationStartDate:
+          formData.registrationStartDate,
+
+        registrationDeadline:
+          formData.registrationDeadline,
+
+        abstractDeadline:
+          formData.abstractDeadline,
+
+        paperDeadline:
+          formData.paperDeadline,
+      },
+
+      registration: registrationCategories,
+
+      welcomeMessage: {
+        heading: formData.welcomeHeading,
+
+        paragraphs:
+          formData.welcomeParagraphs.filter(Boolean),
+
+        signature: formData.welcomeSignature,
+      },
+
+      speakers: speakers.map(
+        ({ id, image, ...speaker }) => ({
+          ...speaker,
+          image: null,
+        })
+      ),
+
+      committee: committee.map(
+        ({ id, image, ...member }) => ({
+          ...member,
+          image: null,
+        })
+      ),
+
+      whoShouldAttend:
+        whoShouldAttend.filter(Boolean),
+
+      whoShouldAttendDescription:
+        formData.whoShouldAttendDescription,
+
+      keyHighlights,
+
+      topics: topics.filter(Boolean),
+
+      tracks,
+
+      otherData: {
+        whyToAttend,
+
+        sampleAgenda: sessions,
+
+        benefitsOfAttending,
+
+        delegates,
+
+        posterPresentersLive:
+          posterPresentersLive.filter(Boolean),
+
+        ePosterPresenters: {
+          ...ePoster,
+        },
+
+        marketAnalysis: {
+          heading: formData.marketHeading,
+
+          paragraphs:
+            formData.marketParagraphs.filter(Boolean),
+
+          image: null,
+        },
+      },
+
+      submission: formData.submission,
+
+      contact: {
+        email: formData.contactEmail,
+        phone: formData.phone,
+        whatsapp: formData.whatsapp,
+        website: formData.website,
+        linkedin: formData.linkedin,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+      },
+
+      status: formData.status,
     };
-
-    console.log("Conference Payload:", payload);
-
-    alert(
-      publish
-        ? "Conference published successfully!"
-        : "Conference saved as draft!"
-    );
   };
 
   // =========================================================
-  // BASIC INFORMATION
+  // SAVE / CREATE CONFERENCE
   // =========================================================
 
-  const renderBasicSection = () => (
+  const saveConference = async (
+    publish = false
+  ) => {
+    try {
+      setSaving(true);
+
+      const conferenceData =
+        buildConferenceData();
+
+      conferenceData.status = publish
+        ? "Published"
+        : "Draft";
+
+      const form = new FormData();
+
+      // =====================================================
+      // JSON DATA
+      // =====================================================
+
+      form.append(
+        "conferenceData",
+        JSON.stringify(conferenceData)
+      );
+
+      // =====================================================
+      // MAIN IMAGES
+      // =====================================================
+
+      if (formData.image instanceof File) {
+        form.append(
+          "conferenceImage",
+          formData.image
+        );
+      }
+
+      if (
+        formData.aboutImage instanceof File
+      ) {
+        form.append(
+          "aboutImage",
+          formData.aboutImage
+        );
+      }
+
+      if (
+        formData.marketImage instanceof File
+      ) {
+        form.append(
+          "marketImage",
+          formData.marketImage
+        );
+      }
+
+      // =====================================================
+      // SPEAKER IMAGES
+      // =====================================================
+
+      speakers.forEach((speaker) => {
+        if (speaker.image instanceof File) {
+          form.append(
+            "speakerImages",
+            speaker.image
+          );
+        }
+      });
+
+      // =====================================================
+      // COMMITTEE IMAGES
+      // =====================================================
+
+      committee.forEach((member) => {
+        if (member.image instanceof File) {
+          form.append(
+            "committeeImages",
+            member.image
+          );
+        }
+      });
+
+      // =====================================================
+      // SPONSOR LOGOS
+      // =====================================================
+
+      sponsors.forEach((sponsor) => {
+        if (sponsor.file instanceof File) {
+          form.append(
+            "sponsorImages",
+            sponsor.file
+          );
+        }
+      });
+
+      // =====================================================
+      // DEBUG
+      // =====================================================
+
+      console.log(
+        "======================================"
+      );
+
+      console.log(
+        "CREATE CONFERENCE"
+      );
+
+      console.log(
+        "Conference Data:",
+        conferenceData
+      );
+
+      console.log(
+        "Publish:",
+        publish
+      );
+
+      console.log(
+        "======================================"
+      );
+
+      // =====================================================
+      // REDUX API CALL
+      // =====================================================
+
+      const result = await dispatch(
+        createConference(form)
+      ).unwrap();
+
+      console.log(
+        "CREATE CONFERENCE RESPONSE:",
+        result
+      );
+
+      // =====================================================
+      // SUCCESS
+      // =====================================================
+
+      alert(
+        publish
+          ? "Conference published successfully!"
+          : "Conference saved as draft!"
+      );
+
+      navigate("/admin/conferences");
+    } catch (error) {
+      console.error(
+        "CREATE CONFERENCE ERROR:",
+        error
+      );
+
+      alert(
+        error ||
+          conferenceError ||
+          "Something went wrong while creating conference"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // =========================================================
+  // BASIC
+  // =========================================================
+
+  const renderBasic = () => (
     <div className={cardClass}>
       <SectionHeader
-        title="Basic Information"
-        description="Add the primary information about your conference."
+        title="Basic Conference Information"
+        description="This information will be used throughout the public conference website."
       />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Field label="Conference Name *" full>
+        <Field label="Conference ID / Slug *">
           <input
-            name="conferenceName"
-            value={formData.conferenceName}
+            name="id"
+            value={formData.id}
             onChange={handleChange}
-            placeholder="International Conference on Healthcare Innovation"
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="Short Name">
-          <input
-            name="shortName"
-            value={formData.shortName}
-            onChange={handleChange}
-            placeholder="ICHI 2026"
+            placeholder="autism-research"
             className={inputClass}
           />
         </Field>
 
         <Field label="Category *">
-          <select
+          <input
             name="category"
             value={formData.category}
             onChange={handleChange}
+            placeholder="Autism Research"
             className={inputClass}
-          >
-            <option value="">Select category</option>
-            <option value="Healthcare">Healthcare</option>
-            <option value="Medical">Medical</option>
-            <option value="Technology">Technology</option>
-            <option value="Research">Research</option>
-            <option value="Science">Science</option>
-            <option value="Education">Education</option>
-            <option value="Business">Business</option>
-          </select>
+          />
         </Field>
 
-        <Field label="Conference Type">
-          <select
-            name="type"
-            value={formData.type}
+        <Field
+          label="Conference Title *"
+          full
+        >
+          <input
+            name="title"
+            value={formData.title}
             onChange={handleChange}
+            placeholder="2nd International Conference on Autism Research and Innovations"
             className={inputClass}
-          >
-            <option value="Physical">Physical</option>
-            <option value="Virtual">Virtual</option>
-            <option value="Hybrid">Hybrid</option>
-          </select>
+          />
         </Field>
 
-        <Field label="Status">
+        <Field label="Subtitle" full>
+          <input
+            name="subtitle"
+            value={formData.subtitle}
+            onChange={handleChange}
+            placeholder="Next-Generation Autism Research..."
+            className={inputClass}
+          />
+        </Field>
+
+        <Field label="Description" full>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows={5}
+            className={textareaClass}
+          />
+        </Field>
+
+        <ImageUploader
+          label="Conference Hero Image"
+          value={formData.image}
+          onChange={(file) =>
+            setFormData((prev) => ({
+              ...prev,
+              image: file,
+            }))
+          }
+        />
+
+        <ImageUploader
+          label="About Conference Image"
+          value={formData.aboutImage}
+          onChange={(file) =>
+            setFormData((prev) => ({
+              ...prev,
+              aboutImage: file,
+            }))
+          }
+        />
+
+        <Field label="Conference Status">
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
             className={inputClass}
           >
-            <option value="Draft">Draft</option>
-            <option value="Published">Published</option>
-            <option value="Closed">Closed</option>
+            <option value="Draft">
+              Draft
+            </option>
+
+            <option value="Published">
+              Published
+            </option>
+
+            <option value="Closed">
+              Closed
+            </option>
           </select>
         </Field>
 
-        <Field label="Conference Description *" full>
-          <textarea
-            name="description"
-            value={formData.description}
+        <Field label="Conference Mode">
+          <select
+            name="mode"
+            value={formData.mode}
             onChange={handleChange}
-            rows={4}
-            placeholder="Write a detailed description about the conference..."
-            className={textareaClass}
-          />
+            className={inputClass}
+          >
+            <option value="Webinar">
+              Webinar
+            </option>
+
+            <option value="Physical">
+              Physical
+            </option>
+
+            <option value="Hybrid">
+              Hybrid
+            </option>
+          </select>
+        </Field>
+
+        <Field label="Participants">
+          <select
+            name="participants"
+            value={formData.participants}
+            onChange={handleChange}
+            className={inputClass}
+          >
+            <option value="Global">
+              Global
+            </option>
+
+            <option value="National">
+              National
+            </option>
+
+            <option value="Regional">
+              Regional
+            </option>
+          </select>
         </Field>
       </div>
     </div>
   );
 
   // =========================================================
-  // DATES & VENUE
+  // DATES
   // =========================================================
 
-  const renderDatesSection = () => (
+  const renderDates = () => (
     <div className="space-y-3">
       <div className={cardClass}>
         <SectionHeader
           title="Conference Dates"
-          description="Configure conference and submission deadlines."
+          description="Configure all conference and registration dates."
         />
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -496,7 +1033,7 @@ const CreateConference = () => {
             />
           </Field>
 
-          <Field label="End Date *">
+          <Field label="End Date">
             <input
               type="date"
               name="endDate"
@@ -506,11 +1043,33 @@ const CreateConference = () => {
             />
           </Field>
 
+          <Field label="Display Date">
+            <input
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              placeholder="April 06-07, 2027"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Time">
+            <input
+              name="time"
+              value={formData.time}
+              onChange={handleChange}
+              placeholder="Webinar"
+              className={inputClass}
+            />
+          </Field>
+
           <Field label="Registration Start Date">
             <input
               type="date"
               name="registrationStartDate"
-              value={formData.registrationStartDate}
+              value={
+                formData.registrationStartDate
+              }
               onChange={handleChange}
               className={inputClass}
             />
@@ -520,23 +1079,27 @@ const CreateConference = () => {
             <input
               type="date"
               name="registrationDeadline"
-              value={formData.registrationDeadline}
+              value={
+                formData.registrationDeadline
+              }
               onChange={handleChange}
               className={inputClass}
             />
           </Field>
 
-          <Field label="Abstract Submission Deadline">
+          <Field label="Abstract Deadline">
             <input
               type="date"
               name="abstractDeadline"
-              value={formData.abstractDeadline}
+              value={
+                formData.abstractDeadline
+              }
               onChange={handleChange}
               className={inputClass}
             />
           </Field>
 
-          <Field label="Full Paper Submission Deadline">
+          <Field label="Paper Deadline">
             <input
               type="date"
               name="paperDeadline"
@@ -545,29 +1108,6 @@ const CreateConference = () => {
               className={inputClass}
             />
           </Field>
-
-          <Field label="Time Zone" full>
-            <select
-              name="timezone"
-              value={formData.timezone}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="Asia/Kolkata">
-                India Standard Time (IST)
-              </option>
-              <option value="UTC">UTC</option>
-              <option value="America/New_York">
-                Eastern Time
-              </option>
-              <option value="Europe/London">
-                London Time
-              </option>
-              <option value="Asia/Dubai">
-                Gulf Standard Time
-              </option>
-            </select>
-          </Field>
         </div>
       </div>
 
@@ -575,12 +1115,21 @@ const CreateConference = () => {
         <SectionHeader title="Venue Information" />
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Field label="Venue Name" full>
+          <Field label="Venue Name">
             <input
               name="venueName"
               value={formData.venueName}
               onChange={handleChange}
-              placeholder="Grand Convention Center"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Location">
+            <input
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              placeholder="Webinar"
               className={inputClass}
             />
           </Field>
@@ -591,7 +1140,6 @@ const CreateConference = () => {
               value={formData.address}
               onChange={handleChange}
               rows={2}
-              placeholder="Complete venue address"
               className={textareaClass}
             />
           </Field>
@@ -601,7 +1149,6 @@ const CreateConference = () => {
               name="city"
               value={formData.city}
               onChange={handleChange}
-              placeholder="Hyderabad"
               className={inputClass}
             />
           </Field>
@@ -611,7 +1158,6 @@ const CreateConference = () => {
               name="state"
               value={formData.state}
               onChange={handleChange}
-              placeholder="Telangana"
               className={inputClass}
             />
           </Field>
@@ -625,28 +1171,48 @@ const CreateConference = () => {
             />
           </Field>
 
+          <Field label="Timezone">
+            <select
+              name="timezone"
+              value={formData.timezone}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="Asia/Kolkata">
+                Asia/Kolkata
+              </option>
+
+              <option value="UTC">
+                UTC
+              </option>
+
+              <option value="Europe/London">
+                Europe/London
+              </option>
+
+              <option value="America/New_York">
+                America/New_York
+              </option>
+            </select>
+          </Field>
+
           <Field label="Google Maps URL">
             <input
               name="mapUrl"
               value={formData.mapUrl}
               onChange={handleChange}
-              placeholder="https://maps.google.com/..."
               className={inputClass}
             />
           </Field>
 
-          {(formData.type === "Virtual" ||
-            formData.type === "Hybrid") && (
-            <Field label="Online Meeting Link" full>
-              <input
-                name="onlineLink"
-                value={formData.onlineLink}
-                onChange={handleChange}
-                placeholder="https://zoom.us/..."
-                className={inputClass}
-              />
-            </Field>
-          )}
+          <Field label="Online Link">
+            <input
+              name="onlineLink"
+              value={formData.onlineLink}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
         </div>
       </div>
     </div>
@@ -656,128 +1222,1337 @@ const CreateConference = () => {
   // REGISTRATION
   // =========================================================
 
-  const renderRegistrationSection = () => (
-    <div className={cardClass}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <SectionHeader
-          title="Registration Types"
-          description="Configure registration categories and fees."
-        />
+  const registrationFields = [
+    [
+      "speakerRegistration",
+      "Speaker Registration",
+    ],
+    [
+      "delegateRegistration",
+      "Delegate Registration",
+    ],
+    [
+      "posterRegistration",
+      "Poster Registration",
+    ],
+    [
+      "packageA",
+      "Package A (Registration + 2 Nights Accommodation)",
+    ],
+    [
+      "packageB",
+      "Package B (Registration + 3 Nights Accommodation)",
+    ],
+  ];
 
-        <button
-          type="button"
-          onClick={addRegistrationType}
-          className={`${compactButton} shrink-0 bg-violet-600 text-white hover:bg-violet-700`}
-        >
-          <Plus size={15} />
-          <span className="hidden sm:inline">Add Type</span>
-        </button>
+  const renderRegistration = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Registration & Currency Pricing"
+        description="Each registration category can have separate GBP, USD and EUR prices."
+      />
+
+      <div className="mb-4 rounded-xl border border-violet-100 bg-violet-50/50 p-3">
+        <div className="flex items-center gap-2">
+          <DollarSign
+            size={18}
+            className="text-violet-600"
+          />
+
+          <div>
+            <p className="text-[13px] font-bold text-slate-800">
+              Currency Based Registration
+            </p>
+
+            <p className="text-[11px] text-slate-500">
+              Public registration page can switch
+              currency without changing conference
+              data.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-2.5">
-        {registrationTypes.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-          >
-            <div className="grid grid-cols-1 gap-2.5 md:grid-cols-5">
-              <Field label="Registration Type">
-                <input
-                  value={item.type}
-                  onChange={(e) =>
-                    updateRegistrationType(
-                      item.id,
-                      "type",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Student"
-                  className={inputClass}
-                />
-              </Field>
+      <div className="space-y-5">
+        {registrationCategories.map(
+          (category, categoryIndex) => (
+            <div
+              key={category.category}
+              className="overflow-hidden rounded-xl border border-slate-200"
+            >
+              <div className="flex items-center justify-between bg-slate-800 px-4 py-3">
+                <h3 className="text-sm font-bold text-white">
+                  {category.category}
+                </h3>
 
-              <Field label="Early Bird">
-                <input
-                  type="number"
-                  value={item.earlyBird}
-                  onChange={(e) =>
-                    updateRegistrationType(
-                      item.id,
-                      "earlyBird",
-                      e.target.value
-                    )
-                  }
-                  placeholder="99"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Regular Fee">
-                <input
-                  type="number"
-                  value={item.regular}
-                  onChange={(e) =>
-                    updateRegistrationType(
-                      item.id,
-                      "regular",
-                      e.target.value
-                    )
-                  }
-                  placeholder="149"
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Currency">
-                <select
-                  value={item.currency}
-                  onChange={(e) =>
-                    updateRegistrationType(
-                      item.id,
-                      "currency",
-                      e.target.value
-                    )
-                  }
-                  className={inputClass}
-                >
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-              </Field>
-
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeRegistrationType(item.id)
-                  }
-                  className="h-10 w-full rounded-lg border border-red-200 bg-white text-red-500 transition hover:bg-red-50"
-                >
-                  <Trash2 size={15} className="mx-auto" />
-                </button>
+                <span className="text-[11px] text-slate-300">
+                  Registration Pricing
+                </span>
               </div>
+
+              {[
+                "GBP",
+                "USD",
+                "EUR",
+              ].map((currency) => (
+                <div
+                  key={currency}
+                  className="border-t border-slate-200 p-3"
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700">
+                      {currency}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {registrationFields.map(
+                      ([field, label]) => (
+                        <Field
+                          key={field}
+                          label={label}
+                        >
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              value={
+                                category.prices[
+                                  currency
+                                ][field]
+                              }
+                              onChange={(e) =>
+                                updateRegistrationPrice(
+                                  categoryIndex,
+                                  currency,
+                                  field,
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className={`${inputClass} pr-12`}
+                            />
+
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">
+                              {currency}
+                            </span>
+                          </div>
+                        </Field>
+                      )
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );
 
   // =========================================================
-  // SUBMISSION
+  // WELCOME
   // =========================================================
 
-  const renderSubmissionSection = () => (
+  const renderWelcome = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Welcome Message"
+        description="This content will appear on the conference details page."
+      />
+
+      <Field label="Heading">
+        <input
+          name="welcomeHeading"
+          value={formData.welcomeHeading}
+          onChange={handleChange}
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="mt-4 space-y-3">
+        {formData.welcomeParagraphs.map(
+          (paragraph, index) => (
+            <div key={index}>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="text-[12px] font-semibold text-slate-700">
+                  Paragraph {index + 1}
+                </label>
+
+                {formData.welcomeParagraphs
+                  .length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        welcomeParagraphs:
+                          prev.welcomeParagraphs.filter(
+                            (_, i) =>
+                              i !== index
+                          ),
+                      }))
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+
+              <textarea
+                value={paragraph}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    welcomeParagraphs:
+                      prev.welcomeParagraphs.map(
+                        (item, i) =>
+                          i === index
+                            ? e.target.value
+                            : item
+                      ),
+                  }))
+                }
+                rows={5}
+                className={textareaClass}
+              />
+            </div>
+          )
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          setFormData((prev) => ({
+            ...prev,
+            welcomeParagraphs: [
+              ...prev.welcomeParagraphs,
+              "",
+            ],
+          }))
+        }
+        className={`${buttonClass} mt-3 bg-violet-600 text-white hover:bg-violet-700`}
+      >
+        <Plus size={15} />
+        Add Paragraph
+      </button>
+
+      <div className="mt-4">
+        <Field label="Signature">
+          <input
+            name="welcomeSignature"
+            value={formData.welcomeSignature}
+            onChange={handleChange}
+            placeholder="Warm Regards, Grace | Autism Conference 2027"
+            className={inputClass}
+          />
+        </Field>
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // SPEAKERS
+  // =========================================================
+
+  const renderSpeakers = () => (
     <div className="space-y-3">
       <div className={cardClass}>
-        <SectionHeader
-          title="Submission Settings"
-          description="Configure abstract and paper submission options."
+        <HeaderButton
+          title="Speakers"
+          description="Add speakers exactly as required by the public conference page."
+          buttonText="Add Speaker"
+          onClick={addSpeaker}
         />
 
-        <div className="space-y-1.5">
+        <div className="space-y-3">
+          {speakers.length === 0 && (
+            <EmptyState
+              icon={Users}
+              text="No speakers added."
+            />
+          )}
+
+          {speakers.map(
+            (speaker, index) => (
+              <div
+                key={speaker.id}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-[13px] font-bold">
+                    Speaker {index + 1}
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeArrayItem(
+                        setSpeakers,
+                        index
+                      )
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {[
+                    ["name", "Name"],
+                    ["role", "Role / Designation"],
+                    [
+                      "organization",
+                      "Organization",
+                    ],
+                    ["specialty", "Specialty"],
+                    ["country", "Country"],
+                  ].map(
+                    ([field, label]) => (
+                      <Field
+                        key={field}
+                        label={label}
+                      >
+                        <input
+                          value={speaker[field]}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              setSpeakers,
+                              index,
+                              {
+                                ...speaker,
+                                [field]:
+                                  e.target.value,
+                              }
+                            )
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+                    )
+                  )}
+
+                  <ImageUploader
+                    label="Speaker Image"
+                    value={speaker.image}
+                    onChange={(file) =>
+                      updateArrayItem(
+                        setSpeakers,
+                        index,
+                        {
+                          ...speaker,
+                          image: file,
+                        }
+                      )
+                    }
+                  />
+
+                  <Field
+                    label="Biography"
+                    full
+                  >
+                    <textarea
+                      value={speaker.bio}
+                      onChange={(e) =>
+                        updateArrayItem(
+                          setSpeakers,
+                          index,
+                          {
+                            ...speaker,
+                            bio: e.target.value,
+                          }
+                        )
+                      }
+                      rows={4}
+                      className={textareaClass}
+                    />
+                  </Field>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <HeaderButton
+          title="Organizing Committee"
+          buttonText="Add Member"
+          onClick={addCommittee}
+        />
+
+        <div className="space-y-3">
+          {committee.map(
+            (member, index) => (
+              <div
+                key={member.id}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-[13px] font-bold">
+                    Committee Member{" "}
+                    {index + 1}
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeArrayItem(
+                        setCommittee,
+                        index
+                      )
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {[
+                    ["name", "Name"],
+                    ["role", "Role"],
+                    [
+                      "organization",
+                      "Organization",
+                    ],
+                  ].map(
+                    ([field, label]) => (
+                      <Field
+                        key={field}
+                        label={label}
+                      >
+                        <input
+                          value={member[field]}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              setCommittee,
+                              index,
+                              {
+                                ...member,
+                                [field]:
+                                  e.target.value,
+                              }
+                            )
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+                    )
+                  )}
+
+                  <ImageUploader
+                    label="Committee Image"
+                    value={member.image}
+                    onChange={(file) =>
+                      updateArrayItem(
+                        setCommittee,
+                        index,
+                        {
+                          ...member,
+                          image: file,
+                        }
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // CONTENT
+  // =========================================================
+
+  const renderContent = () => (
+    <div className="space-y-3">
+      <div className={cardClass}>
+        <HeaderButton
+          title="Conference Topics"
+          description="Add scientific topics."
+          buttonText="Add Topic"
+          onClick={addTopic}
+        />
+
+        <div className="space-y-2">
+          {topics.map(
+            (topic, index) => (
+              <div
+                key={index}
+                className="flex gap-2"
+              >
+                <input
+                  value={topic}
+                  onChange={(e) =>
+                    updateArrayItem(
+                      setTopics,
+                      index,
+                      e.target.value
+                    )
+                  }
+                  className={inputClass}
+                  placeholder="Autism Research"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeArrayItem(
+                      setTopics,
+                      index
+                    )
+                  }
+                  className="w-10 rounded-lg border border-red-200 text-red-500"
+                >
+                  <Trash2
+                    size={14}
+                    className="mx-auto"
+                  />
+                </button>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <HeaderButton
+          title="Scientific Tracks"
+          description="Create expandable tracks for conference details."
+          buttonText="Add Track"
+          onClick={addTrack}
+        />
+
+        <div className="space-y-3">
+          {tracks.map(
+            (track, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+              >
+                <div className="mb-2 flex justify-between">
+                  <span className="text-[12px] font-bold">
+                    Track {index + 1}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeArrayItem(
+                        setTracks,
+                        index
+                      )
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                <input
+                  value={track.title}
+                  onChange={(e) =>
+                    updateArrayItem(
+                      setTracks,
+                      index,
+                      {
+                        ...track,
+                        title: e.target.value,
+                      }
+                    )
+                  }
+                  placeholder="Track Title"
+                  className={inputClass}
+                />
+
+                <textarea
+                  value={track.description}
+                  onChange={(e) =>
+                    updateArrayItem(
+                      setTracks,
+                      index,
+                      {
+                        ...track,
+                        description:
+                          e.target.value,
+                      }
+                    )
+                  }
+                  placeholder="Track Description"
+                  rows={3}
+                  className={`${textareaClass} mt-2`}
+                />
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // HIGHLIGHTS
+  // =========================================================
+
+  const renderHighlights = () => (
+    <div className="space-y-3">
+      <div className={cardClass}>
+        <HeaderButton
+          title="Key Highlights"
+          description="Highlights shown on the conference details page."
+          buttonText="Add Highlight"
+          onClick={addHighlight}
+        />
+
+        {keyHighlights.map(
+          (item, index) => (
+            <div
+              key={index}
+              className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
+            >
+              <div className="flex gap-2">
+                <input
+                  value={item.title}
+                  onChange={(e) =>
+                    updateArrayItem(
+                      setKeyHighlights,
+                      index,
+                      {
+                        ...item,
+                        title: e.target.value,
+                      }
+                    )
+                  }
+                  placeholder="Live Keynote Presentations"
+                  className={inputClass}
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeArrayItem(
+                      setKeyHighlights,
+                      index
+                    )
+                  }
+                  className="w-10 text-red-500"
+                >
+                  <Trash2
+                    size={14}
+                    className="mx-auto"
+                  />
+                </button>
+              </div>
+
+              <textarea
+                value={item.description}
+                onChange={(e) =>
+                  updateArrayItem(
+                    setKeyHighlights,
+                    index,
+                    {
+                      ...item,
+                      description:
+                        e.target.value,
+                    }
+                  )
+                }
+                placeholder="Description"
+                rows={3}
+                className={`${textareaClass} mt-2`}
+              />
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // ATTENDEES
+  // =========================================================
+
+  const renderAttendees = () => (
+    <div className={cardClass}>
+      <HeaderButton
+        title="Who Should Attend"
+        description="Define the target audience for this conference."
+        buttonText="Add Audience"
+        onClick={addAttendee}
+      />
+
+      <Field label="Description">
+        <textarea
+          name="whoShouldAttendDescription"
+          value={
+            formData.whoShouldAttendDescription
+          }
+          onChange={handleChange}
+          rows={4}
+          className={textareaClass}
+        />
+      </Field>
+
+      <div className="mt-4 space-y-2">
+        {whoShouldAttend.map(
+          (item, index) => (
+            <div
+              key={index}
+              className="flex gap-2"
+            >
+              <input
+                value={item}
+                onChange={(e) =>
+                  updateArrayItem(
+                    setWhoShouldAttend,
+                    index,
+                    e.target.value
+                  )
+                }
+                className={inputClass}
+                placeholder="Autism Researchers"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  removeArrayItem(
+                    setWhoShouldAttend,
+                    index
+                  )
+                }
+                className="w-10 text-red-500"
+              >
+                <Trash2
+                  size={14}
+                  className="mx-auto"
+                />
+              </button>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // BENEFITS
+  // =========================================================
+
+  const renderBenefits = () => (
+    <div className="space-y-3">
+      <div className={cardClass}>
+        <HeaderButton
+          title="Why To Attend"
+          buttonText="Add Item"
+          onClick={addWhyAttend}
+        />
+
+        {whyToAttend.map(
+          (item, index) => (
+            <ObjectItem
+              key={index}
+              item={item}
+              index={index}
+              setter={setWhyToAttend}
+              titlePlaceholder="Stay Updated on Latest Developments"
+            />
+          )
+        )}
+      </div>
+
+      <div className={cardClass}>
+        <HeaderButton
+          title="Benefits Of Attending"
+          buttonText="Add Benefit"
+          onClick={addBenefit}
+        />
+
+        {benefitsOfAttending.map(
+          (item, index) => (
+            <ObjectItem
+              key={index}
+              item={item}
+              index={index}
+              setter={setBenefitsOfAttending}
+              titlePlaceholder="Showcase Your Expertise"
+            />
+          )
+        )}
+      </div>
+
+      <div className={cardClass}>
+        <HeaderButton
+          title="Delegate Benefits"
+          buttonText="Add Delegate Benefit"
+          onClick={addDelegate}
+        />
+
+        {delegates.map(
+          (item, index) => (
+            <ObjectItem
+              key={index}
+              item={item}
+              index={index}
+              setter={setDelegates}
+              titlePlaceholder="Latest Knowledge"
+            />
+          )
+        )}
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // AGENDA
+  // =========================================================
+
+  const renderAgenda = () => (
+    <div className={cardClass}>
+      <HeaderButton
+        title="Sample Agenda"
+        description="Create Day 1, Day 2 and session schedules."
+        buttonText="Add Day"
+        onClick={addSession}
+      />
+
+      {sessions.map(
+        (day, dayIndex) => (
+          <div
+            key={dayIndex}
+            className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
+          >
+            <div className="mb-3 flex gap-2">
+              <input
+                value={day.day}
+                onChange={(e) =>
+                  updateArrayItem(
+                    setSessions,
+                    dayIndex,
+                    {
+                      ...day,
+                      day: e.target.value,
+                    }
+                  )
+                }
+                placeholder="Day 1 – April 06, 2027 | Webinar"
+                className={inputClass}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  removeArrayItem(
+                    setSessions,
+                    dayIndex
+                  )
+                }
+                className="w-10 text-red-500"
+              >
+                <Trash2
+                  size={14}
+                  className="mx-auto"
+                />
+              </button>
+            </div>
+
+            {day.schedule.map(
+              (
+                schedule,
+                scheduleIndex
+              ) => (
+                <div
+                  key={scheduleIndex}
+                  className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-[150px_1fr_40px]"
+                >
+                  <input
+                    value={schedule.time}
+                    onChange={(e) =>
+                      updateSchedule(
+                        dayIndex,
+                        scheduleIndex,
+                        "time",
+                        e.target.value
+                      )
+                    }
+                    placeholder="9:00 AM"
+                    className={inputClass}
+                  />
+
+                  <input
+                    value={
+                      schedule.session
+                    }
+                    onChange={(e) =>
+                      updateSchedule(
+                        dayIndex,
+                        scheduleIndex,
+                        "session",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Opening Remarks & Welcome Address"
+                    className={inputClass}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSessions(
+                        (prev) =>
+                          prev.map(
+                            (
+                              item,
+                              i
+                            ) =>
+                              i ===
+                              dayIndex
+                                ? {
+                                    ...item,
+                                    schedule:
+                                      item.schedule.filter(
+                                        (
+                                          _,
+                                          j
+                                        ) =>
+                                          j !==
+                                          scheduleIndex
+                                      ),
+                                  }
+                                : item
+                          )
+                      )
+                    }
+                    className="rounded-lg border border-red-200 text-red-500"
+                  >
+                    <Trash2
+                      size={14}
+                      className="mx-auto"
+                    />
+                  </button>
+                </div>
+              )
+            )}
+
+            <button
+              type="button"
+              onClick={() =>
+                addSchedule(dayIndex)
+              }
+              className={`${buttonClass} bg-violet-50 text-violet-700`}
+            >
+              <Plus size={14} />
+              Add Session
+            </button>
+          </div>
+        )
+      )}
+    </div>
+  );
+
+  // =========================================================
+  // POSTER
+  // =========================================================
+
+  const posterFields = [
+    ["benefits", "E-Poster Benefits"],
+    ["posterContent", "Poster Content"],
+    [
+      "designRequirements",
+      "Design Requirements",
+    ],
+    [
+      "submissionGuidelines",
+      "Submission Guidelines",
+    ],
+    [
+      "reviewAndAcceptance",
+      "Review & Acceptance",
+    ],
+    ["presentation", "Presentation"],
+    ["certificate", "Certificate"],
+    ["closingNotes", "Closing Notes"],
+  ];
+
+  const renderPoster = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Poster & E-Poster"
+        description="Manage poster presentation information."
+      />
+
+      <Field label="E-Poster Guidelines Introduction">
+        <textarea
+          value={ePoster.guidelinesIntro}
+          onChange={(e) =>
+            setEPoster((prev) => ({
+              ...prev,
+              guidelinesIntro:
+                e.target.value,
+            }))
+          }
+          rows={5}
+          className={textareaClass}
+        />
+      </Field>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+        {Object.entries(
+          ePoster.specifications
+        ).map(([key, value]) => (
+          <Field
+            key={key}
+            label={key}
+          >
+            <input
+              value={value}
+              onChange={(e) =>
+                setEPoster((prev) => ({
+                  ...prev,
+                  specifications: {
+                    ...prev.specifications,
+                    [key]: e.target.value,
+                  },
+                }))
+              }
+              className={inputClass}
+            />
+          </Field>
+        ))}
+      </div>
+
+      <div className="mt-5 space-y-5">
+        {posterFields.map(
+          ([field, title]) => (
+            <div key={field}>
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-[13px] font-bold">
+                  {title}
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    addPosterPoint(field)
+                  }
+                  className="text-[11px] font-bold text-violet-600"
+                >
+                  + Add
+                </button>
+              </div>
+
+              {ePoster[field].map(
+                (item, index) => (
+                  <div
+                    key={index}
+                    className="mb-2 flex gap-2"
+                  >
+                    <input
+                      value={item}
+                      onChange={(e) =>
+                        updatePosterPoint(
+                          field,
+                          index,
+                          e.target.value
+                        )
+                      }
+                      className={inputClass}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removePosterPoint(
+                          field,
+                          index
+                        )
+                      }
+                      className="w-10 text-red-500"
+                    >
+                      <Trash2
+                        size={14}
+                        className="mx-auto"
+                      />
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="mt-6">
+        <SectionHeader title="Live Poster Presenters" />
+
+        {posterPresentersLive.map(
+          (item, index) => (
+            <div
+              key={index}
+              className="mb-2 flex gap-2"
+            >
+              <input
+                value={item}
+                onChange={(e) =>
+                  updateArrayItem(
+                    setPosterPresentersLive,
+                    index,
+                    e.target.value
+                  )
+                }
+                className={inputClass}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  removeArrayItem(
+                    setPosterPresentersLive,
+                    index
+                  )
+                }
+                className="w-10 text-red-500"
+              >
+                <Trash2
+                  size={14}
+                  className="mx-auto"
+                />
+              </button>
+            </div>
+          )
+        )}
+
+        <button
+          type="button"
+          onClick={() =>
+            addArrayItem(
+              setPosterPresentersLive,
+              ""
+            )
+          }
+          className={`${buttonClass} bg-violet-600 text-white`}
+        >
+          <Plus size={14} />
+          Add Point
+        </button>
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // MARKET
+  // =========================================================
+
+  const renderMarket = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Market Analysis"
+        description="Conference-specific market analysis content."
+      />
+
+      <Field label="Heading">
+        <input
+          name="marketHeading"
+          value={formData.marketHeading}
+          onChange={handleChange}
+          placeholder="Autism Market Analysis"
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="mt-4">
+        {formData.marketParagraphs.map(
+          (paragraph, index) => (
+            <div
+              key={index}
+              className="mb-3"
+            >
+              <div className="mb-1 flex justify-between">
+                <label className="text-[12px] font-semibold">
+                  Paragraph {index + 1}
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      marketParagraphs:
+                        prev.marketParagraphs.filter(
+                          (_, i) =>
+                            i !== index
+                        ),
+                    }))
+                  }
+                  className="text-red-500"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
+              <textarea
+                value={paragraph}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    marketParagraphs:
+                      prev.marketParagraphs.map(
+                        (item, i) =>
+                          i === index
+                            ? e.target.value
+                            : item
+                      ),
+                  }))
+                }
+                rows={5}
+                className={textareaClass}
+              />
+            </div>
+          )
+        )}
+
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((prev) => ({
+              ...prev,
+              marketParagraphs: [
+                ...prev.marketParagraphs,
+                "",
+              ],
+            }))
+          }
+          className={`${buttonClass} bg-violet-600 text-white`}
+        >
+          <Plus size={14} />
+          Add Paragraph
+        </button>
+      </div>
+
+      <div className="mt-5">
+        <ImageUploader
+          label="Market Analysis Image"
+          value={formData.marketImage}
+          onChange={(file) =>
+            setFormData((prev) => ({
+              ...prev,
+              marketImage: file,
+            }))
+          }
+        />
+      </div>
+    </div>
+  );
+
+  // =========================================================
+  // MEDIA
+  // =========================================================
+
+  const renderMedia = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Media & Sponsors"
+        description="Upload sponsor logos using drag and drop."
+      />
+
+      <MultiImageUploader
+        label="Sponsor Logos"
+        values={sponsors}
+        onChange={setSponsors}
+      />
+    </div>
+  );
+
+  // =========================================================
+  // CONTACT
+  // =========================================================
+
+  const renderContact = () => (
+    <div className="space-y-3">
+      <div className={cardClass}>
+        <SectionHeader title="Contact Information" />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label="Contact Email">
+            <input
+              name="contactEmail"
+              value={formData.contactEmail}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Phone">
+            <input
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="WhatsApp">
+            <input
+              name="whatsapp"
+              value={formData.whatsapp}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Website">
+            <input
+              name="website"
+              value={formData.website}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <SectionHeader title="Social Media" />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {[
+            ["linkedin", "LinkedIn"],
+            ["instagram", "Instagram"],
+            ["facebook", "Facebook"],
+          ].map(([name, label]) => (
+            <Field
+              key={name}
+              label={label}
+            >
+              <div className="relative">
+                <Link2
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400"
+                />
+
+                <input
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+            </Field>
+          ))}
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <SectionHeader title="Submission Settings" />
+
+        <div className="space-y-2">
           {[
             [
               "abstractSubmission",
@@ -802,34 +2577,51 @@ const CreateConference = () => {
           ].map(([name, label]) => (
             <label
               key={name}
-              className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-violet-200 hover:bg-violet-50/30"
+              className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-3"
             >
-              <span className="text-[13px] font-medium text-slate-700">
+              <span className="text-[13px] font-medium">
                 {label}
               </span>
 
               <input
                 type="checkbox"
                 name={name}
-                checked={formData[name]}
-                onChange={handleChange}
+                checked={
+                  formData.submission[name]
+                }
+                onChange={
+                  handleSubmissionChange
+                }
                 className="h-4 w-4 accent-violet-600"
               />
             </label>
           ))}
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Review Type">
             <select
               name="reviewType"
-              value={formData.reviewType}
-              onChange={handleChange}
+              value={
+                formData.submission
+                  .reviewType
+              }
+              onChange={
+                handleSubmissionChange
+              }
               className={inputClass}
             >
-              <option value="Single Blind">Single Blind</option>
-              <option value="Double Blind">Double Blind</option>
-              <option value="Open Review">Open Review</option>
+              <option>
+                Single Blind
+              </option>
+
+              <option>
+                Double Blind
+              </option>
+
+              <option>
+                Open Review
+              </option>
             </select>
           </Field>
 
@@ -837,577 +2629,16 @@ const CreateConference = () => {
             <input
               type="number"
               name="maxAbstractWords"
-              value={formData.maxAbstractWords}
-              onChange={handleChange}
-              className={inputClass}
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div className={cardClass}>
-        <SectionHeader
-          title="Conference Topics"
-          description="Add topics or scientific tracks covered by the conference."
-        />
-
-        <div className="flex gap-2">
-          <input
-            value={newTopic}
-            onChange={(e) => setNewTopic(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTopic();
+              value={
+                formData.submission
+                  .maxAbstractWords
               }
-            }}
-            placeholder="Enter conference topic"
-            className={inputClass}
-          />
-
-          <button
-            type="button"
-            onClick={addTopic}
-            className="h-10 w-10 shrink-0 rounded-lg bg-violet-600 text-white transition hover:bg-violet-700"
-          >
-            <Plus size={17} className="mx-auto" />
-          </button>
-        </div>
-
-        {formData.topics.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {formData.topics.map((topic, index) => (
-              <div
-                key={`${topic}-${index}`}
-                className="flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-[12px] font-medium text-violet-700"
-              >
-                {topic}
-
-                <button
-                  type="button"
-                  onClick={() => removeTopic(index)}
-                  className="text-violet-500 hover:text-red-600"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // =========================================================
-  // SPEAKERS
-  // =========================================================
-
-  const renderSpeakersSection = () => (
-    <div className="space-y-3">
-      <div className={cardClass}>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <SectionHeader
-            title="Speakers"
-            description="Add keynote and invited speakers."
-          />
-
-          <button
-            type="button"
-            onClick={addSpeaker}
-            className={`${compactButton} shrink-0 bg-violet-600 text-white hover:bg-violet-700`}
-          >
-            <Plus size={15} />
-            <span className="hidden sm:inline">Add Speaker</span>
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {speakers.length === 0 && (
-            <EmptyState
-              icon={Users}
-              text="No speakers added yet."
-            />
-          )}
-
-          {speakers.map((speaker, index) => (
-            <div
-              key={speaker.id}
-              className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-            >
-              <div className="mb-2.5 flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold text-slate-800">
-                  Speaker {index + 1}
-                </h3>
-
-                <button
-                  type="button"
-                  onClick={() => removeSpeaker(speaker.id)}
-                  className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                <input
-                  value={speaker.name}
-                  onChange={(e) =>
-                    updateSpeaker(
-                      speaker.id,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Speaker Name"
-                  className={inputClass}
-                />
-
-                <input
-                  value={speaker.designation}
-                  onChange={(e) =>
-                    updateSpeaker(
-                      speaker.id,
-                      "designation",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Designation"
-                  className={inputClass}
-                />
-
-                <input
-                  value={speaker.organization}
-                  onChange={(e) =>
-                    updateSpeaker(
-                      speaker.id,
-                      "organization",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Organization"
-                  className={inputClass}
-                />
-
-                <input
-                  value={speaker.country}
-                  onChange={(e) =>
-                    updateSpeaker(
-                      speaker.id,
-                      "country",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Country"
-                  className={inputClass}
-                />
-
-                <textarea
-                  value={speaker.bio}
-                  onChange={(e) =>
-                    updateSpeaker(
-                      speaker.id,
-                      "bio",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Speaker biography"
-                  rows={2}
-                  className={`${textareaClass} md:col-span-2`}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={cardClass}>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <SectionHeader title="Organizing Committee" />
-
-          <button
-            type="button"
-            onClick={addCommitteeMember}
-            className={`${compactButton} shrink-0 bg-violet-600 text-white hover:bg-violet-700`}
-          >
-            <Plus size={15} />
-            <span className="hidden sm:inline">Add Member</span>
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {committee.map((member) => (
-            <div
-              key={member.id}
-              className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 md:grid-cols-4"
-            >
-              <input
-                value={member.name}
-                onChange={(e) =>
-                  updateCommitteeMember(
-                    member.id,
-                    "name",
-                    e.target.value
-                  )
-                }
-                placeholder="Name"
-                className={inputClass}
-              />
-
-              <input
-                value={member.role}
-                onChange={(e) =>
-                  updateCommitteeMember(
-                    member.id,
-                    "role",
-                    e.target.value
-                  )
-                }
-                placeholder="Role"
-                className={inputClass}
-              />
-
-              <input
-                value={member.organization}
-                onChange={(e) =>
-                  updateCommitteeMember(
-                    member.id,
-                    "organization",
-                    e.target.value
-                  )
-                }
-                placeholder="Organization"
-                className={inputClass}
-              />
-
-              <button
-                type="button"
-                onClick={() =>
-                  removeCommitteeMember(member.id)
-                }
-                className="h-10 rounded-lg border border-red-200 bg-white text-red-500 transition hover:bg-red-50"
-              >
-                <Trash2 size={15} className="mx-auto" />
-              </button>
-            </div>
-          ))}
-
-          {committee.length === 0 && (
-            <p className="py-5 text-center text-[12px] text-slate-500">
-              No committee members added.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // =========================================================
-  // PROGRAM
-  // =========================================================
-
-  const renderProgramSection = () => (
-    <div className={cardClass}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <SectionHeader
-          title="Conference Program"
-          description="Create sessions and schedule."
-        />
-
-        <button
-          type="button"
-          onClick={addSession}
-          className={`${compactButton} shrink-0 bg-violet-600 text-white hover:bg-violet-700`}
-        >
-          <Plus size={15} />
-          <span className="hidden sm:inline">Add Session</span>
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {sessions.length === 0 && (
-          <EmptyState
-            icon={CalendarDays}
-            text="No sessions added yet."
-          />
-        )}
-
-        {sessions.map((session, index) => (
-          <div
-            key={session.id}
-            className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-          >
-            <div className="mb-2.5 flex items-center justify-between">
-              <h3 className="text-[13px] font-semibold text-slate-800">
-                Session {index + 1}
-              </h3>
-
-              <button
-                type="button"
-                onClick={() => removeSession(session.id)}
-                className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50"
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-              <input
-                value={session.title}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "title",
-                    e.target.value
-                  )
-                }
-                placeholder="Session Title"
-                className={inputClass}
-              />
-
-              <select
-                value={session.type}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "type",
-                    e.target.value
-                  )
-                }
-                className={inputClass}
-              >
-                <option value="Keynote">Keynote</option>
-                <option value="Plenary">Plenary</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Oral">
-                  Oral Presentation
-                </option>
-                <option value="Poster">Poster Session</option>
-                <option value="Panel">Panel Discussion</option>
-              </select>
-
-              <input
-                type="date"
-                value={session.date}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "date",
-                    e.target.value
-                  )
-                }
-                className={inputClass}
-              />
-
-              <input
-                value={session.room}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "room",
-                    e.target.value
-                  )
-                }
-                placeholder="Room / Hall"
-                className={inputClass}
-              />
-
-              <input
-                type="time"
-                value={session.startTime}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "startTime",
-                    e.target.value
-                  )
-                }
-                className={inputClass}
-              />
-
-              <input
-                type="time"
-                value={session.endTime}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "endTime",
-                    e.target.value
-                  )
-                }
-                className={inputClass}
-              />
-
-              <input
-                value={session.speaker}
-                onChange={(e) =>
-                  updateSession(
-                    session.id,
-                    "speaker",
-                    e.target.value
-                  )
-                }
-                placeholder="Speaker / Chair"
-                className={`${inputClass} md:col-span-2`}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // =========================================================
-  // MEDIA
-  // =========================================================
-
-  const renderMediaSection = () => (
-    <div className={cardClass}>
-      <SectionHeader
-        title="Conference Media"
-        description="Upload branding assets and conference documents."
-      />
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {[
-          {
-            field: "logo",
-            title: "Conference Logo",
-            accept: "image/png,image/jpeg,image/webp",
-            icon: Image,
-          },
-          {
-            field: "banner",
-            title: "Hero Banner",
-            accept: "image/png,image/jpeg,image/webp",
-            icon: Image,
-          },
-          {
-            field: "brochure",
-            title: "Conference Brochure",
-            accept: "application/pdf",
-            icon: FileText,
-          },
-        ].map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <label
-              key={item.field}
-              className="group flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-violet-400 hover:bg-violet-50/30"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                <Icon size={22} />
-              </div>
-
-              <p className="mt-2.5 text-[13px] font-semibold text-slate-800">
-                {item.title}
-              </p>
-
-              <p className="mt-1 max-w-full truncate px-2 text-[11px] text-slate-500">
-                {formData[item.field]
-                  ? formData[item.field].name
-                  : "Click to upload"}
-              </p>
-
-              <div className="mt-2.5 inline-flex h-8 items-center gap-1.5 rounded-lg bg-white px-3 text-[11px] font-semibold text-violet-600 shadow-sm">
-                <Upload size={13} />
-                Choose File
-              </div>
-
-              <input
-                type="file"
-                accept={item.accept}
-                onChange={(e) =>
-                  handleFileChange(e, item.field)
-                }
-                className="hidden"
-              />
-            </label>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // =========================================================
-  // CONTACT
-  // =========================================================
-
-  const renderContactSection = () => (
-    <div className="space-y-3">
-      <div className={cardClass}>
-        <SectionHeader title="Contact Information" />
-
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Field label="Contact Email">
-            <input
-              type="email"
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              placeholder="conference@example.com"
+              onChange={
+                handleSubmissionChange
+              }
               className={inputClass}
             />
           </Field>
-
-          <Field label="Phone">
-            <input
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+91 9876543210"
-              className={inputClass}
-            />
-          </Field>
-
-          <Field label="WhatsApp">
-            <input
-              name="whatsapp"
-              value={formData.whatsapp}
-              onChange={handleChange}
-              placeholder="+91 9876543210"
-              className={inputClass}
-            />
-          </Field>
-
-          <Field label="Website">
-            <input
-              name="website"
-              value={formData.website}
-              onChange={handleChange}
-              placeholder="https://example.com"
-              className={inputClass}
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div className={cardClass}>
-        <SectionHeader title="Social Media" />
-
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {[
-            ["linkedin", "LinkedIn", "LinkedIn URL"],
-            ["instagram", "Instagram", "Instagram URL"],
-            ["facebook", "Facebook", "Facebook URL"],
-          ].map(([name, label, placeholder]) => (
-            <Field key={name} label={label}>
-              <div className="relative">
-                <Link2
-                  size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400"
-                />
-
-                <input
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
-                  placeholder={placeholder}
-                  className={`${inputClass} pl-9`}
-                />
-              </div>
-            </Field>
-          ))}
         </div>
       </div>
     </div>
@@ -1420,31 +2651,49 @@ const CreateConference = () => {
   const renderSection = () => {
     switch (activeSection) {
       case "basic":
-        return renderBasicSection();
+        return renderBasic();
 
       case "dates":
-        return renderDatesSection();
+        return renderDates();
 
       case "registration":
-        return renderRegistrationSection();
+        return renderRegistration();
 
-      case "submission":
-        return renderSubmissionSection();
+      case "welcome":
+        return renderWelcome();
 
       case "speakers":
-        return renderSpeakersSection();
+        return renderSpeakers();
 
-      case "program":
-        return renderProgramSection();
+      case "content":
+        return renderContent();
+
+      case "highlights":
+        return renderHighlights();
+
+      case "agenda":
+        return renderAgenda();
+
+      case "attendees":
+        return renderAttendees();
+
+      case "benefits":
+        return renderBenefits();
+
+      case "poster":
+        return renderPoster();
+
+      case "market":
+        return renderMarket();
 
       case "media":
-        return renderMediaSection();
+        return renderMedia();
 
       case "contact":
-        return renderContactSection();
+        return renderContact();
 
       default:
-        return renderBasicSection();
+        return renderBasic();
     }
   };
 
@@ -1454,13 +2703,20 @@ const CreateConference = () => {
 
   const goPrevious = () => {
     if (currentIndex > 0) {
-      setActiveSection(sections[currentIndex - 1].id);
+      setActiveSection(
+        sections[currentIndex - 1].id
+      );
     }
   };
 
   const goNext = () => {
-    if (currentIndex < sections.length - 1) {
-      setActiveSection(sections[currentIndex + 1].id);
+    if (
+      currentIndex <
+      sections.length - 1
+    ) {
+      setActiveSection(
+        sections[currentIndex + 1].id
+      );
     }
   };
 
@@ -1469,20 +2725,18 @@ const CreateConference = () => {
   // =========================================================
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       {/* =====================================================
-          TOP HEADER
-      ===================================================== */}
+          HEADER
+      ====================================================== */}
 
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="flex min-h-[60px] items-center justify-between gap-3 px-3 sm:px-5">
-          {/* LEFT */}
-
+        <div className="flex min-h-[62px] items-center justify-between gap-3 px-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-violet-50 hover:text-violet-600"
             >
               <ArrowLeft size={17} />
             </button>
@@ -1492,35 +2746,44 @@ const CreateConference = () => {
                 Create Conference
               </h1>
 
-              <p className="hidden truncate text-[11px] text-slate-500 sm:block">
-                Create and publish a new conference.
+              <p className="hidden text-[11px] text-slate-500 sm:block">
+                Create complete conference
+                data for the public website.
               </p>
             </div>
           </div>
 
-          {/* RIGHT */}
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => saveConference(false)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-3"
+              disabled={
+                saving || conferenceLoading
+              }
+              onClick={() =>
+                saveConference(false)
+              }
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold disabled:opacity-50"
             >
               <Save size={15} />
 
-              <span className="hidden sm:inline">
-                Save Draft
-              </span>
+              Save Draft
             </button>
 
             <button
               type="button"
-              onClick={() => saveConference(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[12px] font-semibold text-white transition hover:bg-violet-700 sm:px-3.5"
+              disabled={
+                saving || conferenceLoading
+              }
+              onClick={() =>
+                saveConference(true)
+              }
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
             >
               <Check size={15} />
 
-              <span>Publish</span>
+              {saving || conferenceLoading
+                ? "Saving..."
+                : "Publish"}
             </button>
           </div>
         </div>
@@ -1528,115 +2791,95 @@ const CreateConference = () => {
 
       {/* =====================================================
           MAIN
-      ===================================================== */}
+      ====================================================== */}
 
-      <div className="mx-auto w-full max-w-[1450px] px-3 py-3 sm:px-4">
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_5px_rgba(0,0,0,0.035)]">
-          <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[215px_minmax(0,1fr)]">
+      <div className="mx-auto w-full max-w-[1500px] p-3">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="grid grid-cols-1 lg:grid-cols-[235px_minmax(0,1fr)]">
             {/* =================================================
-                STEP TRACKER
-            ================================================= */}
+                SIDEBAR
+            ================================================== */}
 
-            <aside className="border-b border-slate-200 bg-slate-50/80 p-3 lg:border-b-0 lg:border-r">
-              <div className="relative">
-                {sections.map((section, index) => {
-                  const Icon = section.icon;
+            <aside className="border-b border-slate-200 bg-slate-50 p-3 lg:border-b-0 lg:border-r">
+              {sections.map(
+                (section, index) => {
+                  const Icon =
+                    section.icon;
 
                   const active =
-                    activeSection === section.id;
+                    activeSection ===
+                    section.id;
 
-                  const completed = index < currentIndex;
-
-                  const upcoming = index > currentIndex;
+                  const completed =
+                    index <
+                    currentIndex;
 
                   return (
-                    <div
+                    <button
                       key={section.id}
-                      className="relative flex min-h-[61px]"
+                      type="button"
+                      onClick={() =>
+                        setActiveSection(
+                          section.id
+                        )
+                      }
+                      className={`mb-1.5 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition ${
+                        active
+                          ? "bg-violet-100 text-violet-700"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
                     >
-                      {index < sections.length - 1 && (
-                        <span
-                          className={`absolute left-[15px] top-[31px] h-[calc(100%-1px)] w-px ${
-                            index < currentIndex
-                              ? "bg-violet-500"
-                              : "bg-slate-200"
-                          }`}
-                        />
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveSection(section.id)
-                        }
-                        className="group relative z-10 flex w-full items-start gap-2.5 text-left"
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                          active ||
+                          completed
+                            ? "bg-violet-600 text-white"
+                            : "bg-white text-slate-400"
+                        }`}
                       >
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
-                            completed || active
-                              ? "border-violet-600 bg-violet-600 text-white"
-                              : "border-slate-300 bg-white text-slate-400 group-hover:border-violet-300 group-hover:text-violet-500"
-                          }`}
-                        >
-                          {completed ? (
-                            <Check
-                              size={14}
-                              strokeWidth={2.5}
-                            />
-                          ) : (
-                            <Icon size={14} />
-                          )}
-                        </span>
+                        {completed ? (
+                          <Check
+                            size={14}
+                          />
+                        ) : (
+                          <Icon
+                            size={14}
+                          />
+                        )}
+                      </span>
 
-                        <div className="min-w-0 pt-0.5">
-                          <p
-                            className={`text-[10px] font-bold uppercase tracking-wide ${
-                              active || completed
-                                ? "text-violet-600"
-                                : "text-slate-400"
-                            }`}
-                          >
-                            Step {index + 1}
-                          </p>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-wide opacity-60">
+                          Step {index + 1}
+                        </p>
 
-                          <p
-                            className={`mt-0.5 text-[12px] font-semibold leading-4 ${
-                              active
-                                ? "text-slate-900"
-                                : completed
-                                ? "text-violet-700"
-                                : upcoming
-                                ? "text-slate-500"
-                                : "text-slate-700"
-                            }`}
-                          >
-                            {section.label}
-                          </p>
-                        </div>
-                      </button>
-                    </div>
+                        <p className="text-[12px] font-semibold">
+                          {section.label}
+                        </p>
+                      </div>
+                    </button>
                   );
-                })}
-              </div>
+                }
+              )}
             </aside>
 
             {/* =================================================
                 CONTENT
-            ================================================= */}
+            ================================================== */}
 
             <main className="min-w-0 bg-slate-50/50 p-3 sm:p-4">
               {renderSection()}
 
-              {/* =================================================
-                  BOTTOM NAVIGATION
-              ================================================= */}
-
-              <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="mt-3 flex items-center justify-between">
                 <button
                   type="button"
-                  disabled={currentIndex === 0}
+                  disabled={
+                    currentIndex === 0 ||
+                    saving ||
+                    conferenceLoading
+                  }
                   onClick={goPrevious}
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-3.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-4 text-[12px] font-semibold disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -1645,8 +2888,12 @@ const CreateConference = () => {
                 sections.length - 1 ? (
                   <button
                     type="button"
+                    disabled={
+                      saving ||
+                      conferenceLoading
+                    }
                     onClick={goNext}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-[12px] font-semibold text-white disabled:opacity-50"
                   >
                     Continue
 
@@ -1658,11 +2905,23 @@ const CreateConference = () => {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => saveConference(true)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+                    disabled={
+                      saving ||
+                      conferenceLoading
+                    }
+                    onClick={() =>
+                      saveConference(true)
+                    }
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-[12px] font-semibold text-white disabled:opacity-50"
                   >
-                    <Check size={15} />
-                    Create Conference
+                    <Check
+                      size={15}
+                    />
+
+                    {saving ||
+                    conferenceLoading
+                      ? "Creating..."
+                      : "Create Conference"}
                   </button>
                 )}
               </div>
@@ -1675,58 +2934,167 @@ const CreateConference = () => {
 };
 
 // =========================================================
-// REUSABLE FIELD
+// FIELD
 // =========================================================
 
-const Field = ({ label, children, full = false }) => {
-  return (
-    <div className={full ? "md:col-span-2" : ""}>
-      <label className="mb-1.5 block text-[12px] font-semibold text-slate-700">
-        {label}
-      </label>
+const Field = ({
+  label,
+  children,
+  full = false,
+}) => (
+  <div
+    className={
+      full ? "md:col-span-2" : ""
+    }
+  >
+    <label className="mb-1.5 block text-[12px] font-semibold text-slate-700">
+      {label}
+    </label>
 
-      {children}
-    </div>
-  );
-};
+    {children}
+  </div>
+);
 
 // =========================================================
 // SECTION HEADER
 // =========================================================
 
-const SectionHeader = ({ title, description }) => {
-  return (
-    <div className="mb-4 min-w-0">
-      <h2 className="text-[15px] font-bold text-slate-900">
-        {title}
-      </h2>
+const SectionHeader = ({
+  title,
+  description,
+}) => (
+  <div className="mb-4">
+    <h2 className="text-[15px] font-bold text-slate-900">
+      {title}
+    </h2>
 
-      {description && (
-        <p className="mt-0.5 text-[12px] leading-5 text-slate-500">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-};
+    {description && (
+      <p className="mt-0.5 text-[12px] leading-5 text-slate-500">
+        {description}
+      </p>
+    )}
+  </div>
+);
+
+// =========================================================
+// HEADER BUTTON
+// =========================================================
+
+const HeaderButton = ({
+  title,
+  description,
+  buttonText,
+  onClick,
+}) => (
+  <div className="mb-4 flex items-center justify-between gap-3">
+    <SectionHeader
+      title={title}
+      description={description}
+    />
+
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[12px] font-semibold text-white hover:bg-violet-700"
+    >
+      <Plus size={15} />
+
+      {buttonText}
+    </button>
+  </div>
+);
 
 // =========================================================
 // EMPTY STATE
 // =========================================================
 
-const EmptyState = ({ icon: Icon, text }) => {
-  return (
-    <div className="rounded-lg border border-dashed border-slate-300 py-8 text-center">
-      <Icon
-        className="mx-auto text-slate-300"
-        size={30}
+const EmptyState = ({
+  icon: Icon,
+  text,
+}) => (
+  <div className="rounded-lg border border-dashed border-slate-300 py-8 text-center">
+    <Icon
+      size={28}
+      className="mx-auto text-slate-300"
+    />
+
+    <p className="mt-2 text-[12px] text-slate-500">
+      {text}
+    </p>
+  </div>
+);
+
+// =========================================================
+// OBJECT ITEM
+// =========================================================
+
+const ObjectItem = ({
+  item,
+  index,
+  setter,
+  titlePlaceholder,
+}) => (
+  <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <div className="flex gap-2">
+      <input
+        value={item.title}
+        onChange={(e) =>
+          setter((prev) =>
+            prev.map((x, i) =>
+              i === index
+                ? {
+                    ...x,
+                    title:
+                      e.target.value,
+                  }
+                : x
+            )
+          )
+        }
+        placeholder={
+          titlePlaceholder
+        }
+        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px]"
       />
 
-      <p className="mt-2 text-[12px] text-slate-500">
-        {text}
-      </p>
+      <button
+        type="button"
+        onClick={() =>
+          setter((prev) =>
+            prev.filter(
+              (_, i) => i !== index
+            )
+          )
+        }
+        className="w-10 text-red-500"
+      >
+        <Trash2
+          size={14}
+          className="mx-auto"
+        />
+      </button>
     </div>
-  );
-};
+
+    <textarea
+      value={item.description}
+      onChange={(e) =>
+        setter((prev) =>
+          prev.map((x, i) =>
+            i === index
+              ? {
+                  ...x,
+                  description:
+                    e.target.value,
+                }
+              : x
+          )
+        )
+      }
+      placeholder="Description"
+      rows={3}
+      className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px]"
+    />
+  </div>
+);
 
 export default CreateConference;

@@ -96,7 +96,7 @@ const registrationSchema = new mongoose.Schema(
       category: {
         type: String,
         required: true,
-        enum: ["Academic", "Others", "Student"],
+        enum: ["Academic","Business","Others", "Student"]
       },
 
       option: {

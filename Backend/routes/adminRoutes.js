@@ -3,6 +3,10 @@ const express = require("express");
 const adminController = require("../controllers/adminController");
 
 const authMiddleware = require("../middlewares/authMiddleware");
+const {
+    conferenceUpload,
+} = require("../middlewares/uploadMiddleware");
+
 
 const {
     createConferenceValidation,
@@ -26,37 +30,12 @@ const handleValidation = (req, res, next) => {
     next();
 };
 
-router.post(
-    "/conference",
-    authMiddleware("admin"),
-    createConferenceValidation,
-    handleValidation,
-    adminController.createConference
-);
-
-router.get(
-    "/conferences",
-    authMiddleware("admin"),
-    adminController.getAllConferences
-);
-
-router.get(
-    "/conference/:conferenceId",
-    authMiddleware("admin"),
-    adminController.getConferenceById
-);
-
-router.delete(
-    "/conference/:conferenceId",
-    authMiddleware("admin"),
-    adminController.deleteConference
-);
-
-router.put(
-    "/conference/:conferenceId",
-    authMiddleware("admin"),
-    adminController.updateConference
-);
+router.post("/conferences", conferenceUpload, adminController.createConference);
+router.get("/conferences", adminController.getAllConferences);
+router.get("/conferences/:id", adminController.getConferenceById);
+router.put("/conferences/:id", conferenceUpload, adminController.updateConference);
+router.delete("/conferences/:id", adminController.deleteConference);
+router.patch("/conferences/:id/publish", adminController.publishConference);
 
 router.post(
     "/employee",
@@ -86,6 +65,63 @@ router.delete(
     "/employee/:employeeId",
     authMiddleware("admin"),
     adminController.deleteEmployee
+);
+
+
+// Add Speaker
+router.post(
+    "/",
+    authMiddleware("admin"),
+    adminController.createSpeaker
+);
+
+// Get All Speakers
+router.get(
+    "/",
+    authMiddleware("admin"),
+    adminController.getAllSpeakers
+);
+
+// Delete All Speakers
+router.delete(
+    "/",
+    authMiddleware("admin"),
+    adminController.deleteAllSpeakers
+);
+
+// Get Speakers By Conference
+router.get(
+    "/conference/:conferenceId",
+    authMiddleware("admin"),
+    adminController.getSpeakersByConference
+);
+
+// Delete All Speakers Of Conference
+router.delete(
+    "/conference/:conferenceId",
+    authMiddleware("admin"),
+    adminController.deleteConferenceSpeakers
+);
+
+// Get Speaker By ID
+router.get(
+    "/:speakerId",
+    authMiddleware("admin"),
+    adminController.getSpeakerById
+);
+
+// Update Speaker
+router.patch(
+    "/:speakerId",
+    authMiddleware("admin"),
+    adminController.updateSpeaker
+);
+
+// Delete Speaker
+router.delete(
+    "/:speakerId",
+    authMiddleware("admin"),
+    adminController.deleteSpeaker
 );
 
 module.exports = router;

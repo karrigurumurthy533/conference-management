@@ -1,453 +1,768 @@
 const mongoose = require("mongoose");
 
-const registrationTypeSchema = new mongoose.Schema(
-    {
-        registrationType: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        earlyBirdFee: {
-            type: Number,
-            required: true,
-            min: 0,
-        },
-
-        regularFee: {
-            type: Number,
-            required: true,
-            min: 0,
-        },
-
-        currency: {
-            type: String,
-            default: "USD",
-            trim: true,
-        },
+const registrationCategorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    { _id: true }
+    price: {
+      type: Number,
+      default: 0,
+    },
+    currency: {
+      type: String,
+      default: "USD",
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    earlyBirdPrice: {
+      type: Number,
+      default: 0,
+    },
+    earlyBirdDeadline: {
+      type: Date,
+      default: null,
+    },
+    regularPrice: {
+      type: Number,
+      default: 0,
+    },
+    onsitePrice: {
+      type: Number,
+      default: 0,
+    },
+    benefits: {
+      type: [String],
+      default: [],
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: false }
 );
 
-const speakerSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        designation: {
-            type: String,
-            trim: true,
-        },
-
-        organization: {
-            type: String,
-            trim: true,
-        },
-
-        country: {
-            type: String,
-            trim: true,
-        },
-
-        biography: {
-            type: String,
-            trim: true,
-        },
-
-        image: {
-            url: {
-                type: String,
-                default: "",
-            },
-
-            publicId: {
-                type: String,
-                default: "",
-            },
-        },
-
-        linkedin: {
-            type: String,
-            default: "",
-            trim: true,
-        },
+const welcomeMessageSchema = new mongoose.Schema(
+  {
+    heading: {
+      type: String,
+      default: "Welcome Message",
     },
-    { _id: true }
+    paragraphs: {
+      type: [String],
+      default: [],
+    },
+    signature: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const organizingCommitteeSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-        },
+const speakerSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  role: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  organization: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  specialty: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  country: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  image: {
+    type: String,
+    default: "",
+  },
+  bio: {
+    type: String,
+    default: "",
+  },
+});
 
-        role: {
-            type: String,
-            required: true,
-            trim: true,
-        },
+const committeeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  role: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  organization: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  image: {
+    type: String,
+    default: "",
+  },
+});
 
-        organization: {
-            type: String,
-            trim: true,
-        },
+const highlightSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: true }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const conferenceProgramSchema = new mongoose.Schema(
-    {
-        sessionTitle: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        sessionType: {
-            type: String,
-            enum: [
-                "Keynote",
-                "Workshop",
-                "Panel Discussion",
-                "Oral Presentation",
-                "Poster Presentation",
-                "Networking",
-                "Break",
-                "Other",
-            ],
-            default: "Keynote",
-        },
-
-        date: {
-            type: Date,
-        },
-
-        roomHall: {
-            type: String,
-            trim: true,
-        },
-
-        startTime: {
-            type: String,
-            trim: true,
-        },
-
-        endTime: {
-            type: String,
-            trim: true,
-        },
-
-        speakerChair: {
-            type: String,
-            trim: true,
-        },
+const trackSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: true }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const mediaSchema = new mongoose.Schema(
-    {
-        url: {
-            type: String,
-            default: "",
-        },
-
-        publicId: {
-            type: String,
-            default: "",
-        },
-
-        resourceType: {
-            type: String,
-            default: "image",
-        },
-
-        format: {
-            type: String,
-            default: "",
-        },
+const topicSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: false }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const venueInformationSchema = new mongoose.Schema(
-    {
-        venueName: {
-            type: String,
-            trim: true,
-        },
-
-        address: {
-            type: String,
-            trim: true,
-        },
-
-        city: {
-            type: String,
-            trim: true,
-        },
-
-        state: {
-            type: String,
-            trim: true,
-        },
-
-        country: {
-            type: String,
-            trim: true,
-            default: "India",
-        },
-
-        googleMapsUrl: {
-            type: String,
-            trim: true,
-        },
+const whyAttendSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: false }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const submissionSettingsSchema = new mongoose.Schema(
-    {
-        enableAbstractSubmission: {
-            type: Boolean,
-            default: true,
-        },
-
-        enableFullPaperSubmission: {
-            type: Boolean,
-            default: false,
-        },
-
-        allowOralPresentation: {
-            type: Boolean,
-            default: true,
-        },
-
-        allowPosterPresentation: {
-            type: Boolean,
-            default: false,
-        },
-
-        allowVirtualPresentation: {
-            type: Boolean,
-            default: false,
-        },
-
-        reviewType: {
-            type: String,
-            enum: [
-                "Single Blind",
-                "Double Blind",
-                "Open Review",
-            ],
-            default: "Single Blind",
-        },
-
-        maximumAbstractWords: {
-            type: Number,
-            default: 300,
-            min: 1,
-        },
+const benefitSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: false }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const contactInformationSchema = new mongoose.Schema(
-    {
-        contactEmail: {
-            type: String,
-            trim: true,
-            lowercase: true,
-        },
-
-        phone: {
-            type: String,
-            trim: true,
-        },
-
-        whatsApp: {
-            type: String,
-            trim: true,
-        },
-
-        website: {
-            type: String,
-            trim: true,
-        },
+const delegateSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      default: "",
     },
-    { _id: false }
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
 );
 
-const socialMediaSchema = new mongoose.Schema(
-    {
-        linkedin: {
-            type: String,
-            default: "",
-            trim: true,
-        },
-
-        instagram: {
-            type: String,
-            default: "",
-            trim: true,
-        },
-
-        facebook: {
-            type: String,
-            default: "",
-            trim: true,
-        },
+const sessionSchema = new mongoose.Schema(
+  {
+    time: {
+      type: String,
+      default: "",
     },
-    { _id: false }
+    session: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
+);
+
+const agendaSchema = new mongoose.Schema(
+  {
+    day: {
+      type: String,
+      default: "",
+    },
+    schedule: {
+      type: [sessionSchema],
+      default: [],
+    },
+  },
+  { _id: false }
+);
+
+const ePosterSchema = new mongoose.Schema(
+  {
+    benefits: {
+      type: [String],
+      default: [],
+    },
+
+    guidelinesIntro: {
+      type: String,
+      default: "",
+    },
+
+    specifications: {
+      type: Map,
+      of: String,
+      default: {},
+    },
+
+    posterContent: {
+      type: [String],
+      default: [],
+    },
+
+    designRequirements: {
+      type: [String],
+      default: [],
+    },
+
+    submissionGuidelines: {
+      type: [String],
+      default: [],
+    },
+
+    reviewAndAcceptance: {
+      type: [String],
+      default: [],
+    },
+
+    presentation: {
+      type: [String],
+      default: [],
+    },
+
+    certificate: {
+      type: [String],
+      default: [],
+    },
+
+    closingNotes: {
+      type: [String],
+      default: [],
+    },
+  },
+  { _id: false }
+);
+
+const marketAnalysisSchema = new mongoose.Schema(
+  {
+    heading: {
+      type: String,
+      default: "",
+    },
+    paragraphs: {
+      type: [String],
+      default: [],
+    },
+    image: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false }
+);
+
+const otherDataSchema = new mongoose.Schema(
+  {
+    whyToAttend: {
+      type: [whyAttendSchema],
+      default: [],
+    },
+
+    sampleAgenda: {
+      type: [agendaSchema],
+      default: [],
+    },
+
+    benefitsOfAttending: {
+      type: [benefitSchema],
+      default: [],
+    },
+
+    delegates: {
+      type: [delegateSchema],
+      default: [],
+    },
+
+    posterPresentersLive: {
+      type: [String],
+      default: [],
+    },
+
+    ePosterPresenters: {
+      type: ePosterSchema,
+      default: () => ({}),
+    },
+
+    marketAnalysis: {
+      type: marketAnalysisSchema,
+      default: () => ({}),
+    },
+  },
+  { _id: false }
+);
+
+const submissionSchema = new mongoose.Schema(
+  {
+    abstractSubmission: {
+      type: Boolean,
+      default: true,
+    },
+
+    paperSubmission: {
+      type: Boolean,
+      default: false,
+    },
+
+    oralPresentation: {
+      type: Boolean,
+      default: true,
+    },
+
+    posterPresentation: {
+      type: Boolean,
+      default: true,
+    },
+
+    virtualPresentation: {
+      type: Boolean,
+      default: false,
+    },
+
+    reviewType: {
+      type: String,
+      default: "Single Blind",
+      trim: true,
+    },
+
+    maxAbstractWords: {
+      type: Number,
+      default: 300,
+    },
+  },
+  { _id: false }
+);
+
+const venueSchema = new mongoose.Schema(
+  {
+    venueName: {
+      type: String,
+      default: "",
+    },
+
+    address: {
+      type: String,
+      default: "",
+    },
+
+    city: {
+      type: String,
+      default: "",
+    },
+
+    state: {
+      type: String,
+      default: "",
+    },
+
+    country: {
+      type: String,
+      default: "",
+    },
+
+    mapUrl: {
+      type: String,
+      default: "",
+    },
+
+    onlineLink: {
+      type: String,
+      default: "",
+    },
+
+    timezone: {
+      type: String,
+      default: "Asia/Kolkata",
+    },
+  },
+  { _id: false }
+);
+
+const registrationDatesSchema = new mongoose.Schema(
+  {
+    registrationStartDate: {
+      type: Date,
+      default: null,
+    },
+
+    registrationDeadline: {
+      type: Date,
+      default: null,
+    },
+
+    abstractDeadline: {
+      type: Date,
+      default: null,
+    },
+
+    paperDeadline: {
+      type: Date,
+      default: null,
+    },
+  },
+  { _id: false }
+);
+
+const contactSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      default: "",
+      trim: true,
+      lowercase: true,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    whatsapp: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    website: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    linkedin: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    instagram: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    facebook: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+  },
+  { _id: false }
 );
 
 const conferenceSchema = new mongoose.Schema(
-    {
-        basicInformation: {
-            conferenceName: {
-                type: String,
-                required: true,
-                trim: true,
-            },
+  {
+    /* =========================================
+       BASIC INFORMATION
+    ========================================= */
 
-            shortName: {
-                type: String,
-                required: true,
-                trim: true,
-            },
-
-            category: {
-                type: String,
-                required: true,
-                trim: true,
-            },
-
-            conferenceType: {
-                type: String,
-                enum: ["Physical", "Virtual", "Hybrid"],
-                default: "Physical",
-            },
-
-            status: {
-                type: String,
-                enum: [
-                    "Draft",
-                    "Published",
-                    "Completed",
-                    "Cancelled",
-                ],
-                default: "Draft",
-            },
-
-            conferenceDescription: {
-                type: String,
-                trim: true,
-            },
-        },
-
-        conferenceDates: {
-            startDate: {
-                type: Date,
-                required: true,
-            },
-
-            endDate: {
-                type: Date,
-                required: true,
-            },
-
-            registrationStartDate: {
-                type: Date,
-            },
-
-            registrationDeadline: {
-                type: Date,
-            },
-
-            abstractSubmissionDeadline: {
-                type: Date,
-            },
-
-            fullPaperSubmissionDeadline: {
-                type: Date,
-            },
-
-            timeZone: {
-                type: String,
-                default: "Asia/Kolkata",
-            },
-        },
-
-        venueInformation: venueInformationSchema,
-
-        registrationTypes: {
-            type: [registrationTypeSchema],
-            default: [],
-        },
-
-        submissionSettings: submissionSettingsSchema,
-
-        conferenceTopics: {
-            type: [String],
-            default: [],
-        },
-
-        speakers: {
-            type: [speakerSchema],
-            default: [],
-        },
-
-        organizingCommittee: {
-            type: [organizingCommitteeSchema],
-            default: [],
-        },
-
-        conferenceProgram: {
-            type: [conferenceProgramSchema],
-            default: [],
-        },
-
-        conferenceMedia: {
-            conferenceLogo: {
-                type: mediaSchema,
-                default: () => ({}),
-            },
-
-            heroBanner: {
-                type: mediaSchema,
-                default: () => ({}),
-            },
-
-            conferenceBrochure: {
-                type: mediaSchema,
-                default: () => ({}),
-            },
-        },
-
-        contactInformation: contactInformationSchema,
-
-        socialMedia: socialMediaSchema,
-
-        slug: {
-            type: String,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
+    id: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
-    {
-        timestamps: true,
-    }
+
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    subtitle: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
+    aboutImage: {
+      type: String,
+      default: "",
+    },
+
+    /* =========================================
+       DATE / LOCATION
+    ========================================= */
+
+    date: {
+      type: String,
+      default: "",
+    },
+
+    time: {
+      type: String,
+      default: "Webinar",
+    },
+
+    startDate: {
+      type: Date,
+      default: null,
+    },
+
+    endDate: {
+      type: Date,
+      default: null,
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    mode: {
+      type: String,
+      enum: ["Webinar", "Physical", "Hybrid", "Online"],
+      default: "Webinar",
+    },
+
+    participants: {
+      type: String,
+      default: "Global",
+    },
+
+    status: {
+      type: String,
+      enum: ["Draft", "Published", "Archived"],
+      default: "Draft",
+    },
+
+    /* =========================================
+       VENUE
+    ========================================= */
+
+    venue: {
+      type: venueSchema,
+      default: () => ({}),
+    },
+
+    /* =========================================
+       REGISTRATION
+    ========================================= */
+
+    registrationDates: {
+      type: registrationDatesSchema,
+      default: () => ({}),
+    },
+
+    registrationCategories: {
+      type: [registrationCategorySchema],
+      default: [],
+    },
+
+    /* =========================================
+       WELCOME MESSAGE
+    ========================================= */
+
+    welcomeMessage: {
+      type: welcomeMessageSchema,
+      default: () => ({
+        heading: "Welcome Message",
+        paragraphs: [],
+        signature: "",
+      }),
+    },
+
+    /* =========================================
+       SPEAKERS
+    ========================================= */
+
+    speakers: {
+      type: [speakerSchema],
+      default: [],
+    },
+
+    /* =========================================
+       COMMITTEE
+    ========================================= */
+
+    committee: {
+      type: [committeeSchema],
+      default: [],
+    },
+
+    /* =========================================
+       WHO SHOULD ATTEND
+    ========================================= */
+
+    whoShouldAttend: {
+      type: [String],
+      default: [],
+    },
+
+    whoShouldAttendDescription: {
+      type: String,
+      default: "",
+    },
+
+    /* =========================================
+       KEY HIGHLIGHTS
+    ========================================= */
+
+    keyHighlights: {
+      type: [highlightSchema],
+      default: [],
+    },
+
+    /* =========================================
+       TOPICS
+    ========================================= */
+
+    topics: {
+      type: [topicSchema],
+      default: [],
+    },
+
+    /* =========================================
+       TRACKS
+    ========================================= */
+
+    tracks: {
+      type: [trackSchema],
+      default: [],
+    },
+
+    /* =========================================
+       OTHER DATA
+    ========================================= */
+
+    otherData: {
+      type: otherDataSchema,
+      default: () => ({}),
+    },
+
+    /* =========================================
+       SUBMISSION
+    ========================================= */
+
+    submission: {
+      type: submissionSchema,
+      default: () => ({}),
+    },
+
+    /* =========================================
+       CONTACT
+    ========================================= */
+
+    contact: {
+      type: contactSchema,
+      default: () => ({}),
+    },
+
+    /* =========================================
+       SPONSORS
+    ========================================= */
+
+    sponsors: {
+      type: [String],
+      default: [],
+    },
+
+    /* =========================================
+       ADMIN INFO
+    ========================================= */
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-const Conference = mongoose.model(
-    "Conference",
-    conferenceSchema
-);
+/* =========================================
+   INDEXES
+========================================= */
 
-module.exports = Conference;
+conferenceSchema.index({ title: "text", description: "text" });
+conferenceSchema.index({ category: 1 });
+conferenceSchema.index({ status: 1 });
+conferenceSchema.index({ startDate: 1 });
+
+module.exports = mongoose.model("Conference", conferenceSchema);

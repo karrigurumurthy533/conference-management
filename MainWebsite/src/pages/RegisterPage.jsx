@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import { useDispatch, useSelector } from "react-redux";
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,10 +22,27 @@ import {
 
 import conferences from "../../data/conferences";
 
+import { createRegistration } from "../redux/userSlice";
+
 const RegisterPage = () => {
   const { id } = useParams();
 
-  const conference = conferences.find((item) => item.id === id);
+  const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
+  // =========================================================
+  // REDUX
+  // =========================================================
+
+  const {
+    registrationLoading,
+    registrationError,
+  } = useSelector((state) => state.user);
+
+  const conference = conferences.find(
+    (item) => item.id === id
+  );
 
   // =========================================================
   // COLORS
@@ -55,8 +80,11 @@ const RegisterPage = () => {
     selectedBg: "#F5F3FF",
     selectedBorder: "#7C3AED",
 
-    shadow: "0 10px 30px rgba(124,58,237,0.06)",
-    summaryShadow: "0 12px 35px rgba(124,58,237,0.09)",
+    shadow:
+      "0 10px 30px rgba(124,58,237,0.06)",
+
+    summaryShadow:
+      "0 12px 35px rgba(124,58,237,0.09)",
 
     supportBg: "#F5F3FF",
     overlay: "rgba(15,7,32,0.75)",
@@ -81,14 +109,15 @@ const RegisterPage = () => {
     registrationType: "",
   });
 
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] =
+    useState(false);
 
   // =========================================================
   // CURRENCY
-  // GBP IS THE BASE CURRENCY
   // =========================================================
 
-  const [currency, setCurrency] = useState("GBP");
+  const [currency, setCurrency] =
+    useState("GBP");
 
   const currencyConfig = {
     GBP: {
@@ -110,14 +139,17 @@ const RegisterPage = () => {
     },
   };
 
-  const selectedCurrency = currencyConfig[currency];
+  const selectedCurrency =
+    currencyConfig[currency];
 
   const convertPrice = (gbpPrice) => {
     return gbpPrice * selectedCurrency.rate;
   };
 
   const formatPrice = (gbpPrice) => {
-    return `${selectedCurrency.symbol}${convertPrice(gbpPrice).toFixed(2)}`;
+    return `${selectedCurrency.symbol}${convertPrice(
+      gbpPrice
+    ).toFixed(2)}`;
   };
 
   // =========================================================
@@ -128,6 +160,7 @@ const RegisterPage = () => {
     {
       title: "Academic",
       color: "#8CCB9F",
+
       options: [
         {
           id: "academic-speaker",
@@ -146,12 +179,14 @@ const RegisterPage = () => {
         },
         {
           id: "academic-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
+          label:
+            "Package A (Registration + 2 Nights Accommodation)",
           price: 979,
         },
         {
           id: "academic-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
+          label:
+            "Package B (Registration + 3 Nights Accommodation)",
           price: 1079,
         },
       ],
@@ -160,6 +195,7 @@ const RegisterPage = () => {
     {
       title: "Business",
       color: "#7EA0BD",
+
       options: [
         {
           id: "business-speaker",
@@ -173,12 +209,14 @@ const RegisterPage = () => {
         },
         {
           id: "business-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
+          label:
+            "Package A (Registration + 2 Nights Accommodation)",
           price: 1079,
         },
         {
           id: "business-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
+          label:
+            "Package B (Registration + 3 Nights Accommodation)",
           price: 1179,
         },
       ],
@@ -187,6 +225,7 @@ const RegisterPage = () => {
     {
       title: "Others",
       color: "#9BBEF5",
+
       options: [
         {
           id: "other-token",
@@ -219,6 +258,7 @@ const RegisterPage = () => {
     {
       title: "Student",
       color: "#F29A9A",
+
       options: [
         {
           id: "student-speaker",
@@ -237,12 +277,14 @@ const RegisterPage = () => {
         },
         {
           id: "student-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
+          label:
+            "Package A (Registration + 2 Nights Accommodation)",
           price: 951,
         },
         {
           id: "student-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
+          label:
+            "Package B (Registration + 3 Nights Accommodation)",
           price: 1059,
         },
       ],
@@ -256,7 +298,9 @@ const RegisterPage = () => {
   const selectedRegistration = useMemo(() => {
     for (const group of registrationGroups) {
       const found = group.options.find(
-        (option) => option.id === formData.registrationType
+        (option) =>
+          option.id ===
+          formData.registrationType
       );
 
       if (found) {
@@ -267,7 +311,8 @@ const RegisterPage = () => {
     return null;
   }, [formData.registrationType]);
 
-  const total = selectedRegistration?.price || 0;
+  const total =
+    selectedRegistration?.price || 0;
 
   // =========================================================
   // HANDLE CHANGE
@@ -286,23 +331,141 @@ const RegisterPage = () => {
   // SUBMIT
   // =========================================================
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.registrationType) {
+    // No registration selected
+    if (!selectedRegistration) {
       return;
     }
 
-    setSubmitted(true);
+    // =======================================================
+    // API PAYLOAD
+    // =======================================================
 
-    console.log("Registration submitted:", {
-      ...formData,
-      currency,
-      currencySymbol: selectedCurrency.symbol,
+    const payload = {
+      // Personal Information
+      title: formData.title,
+
+      firstName: formData.firstName,
+
+      lastName: formData.lastName,
+
+      email: formData.email,
+
+      phone: formData.phone,
+
+      // Conference
+      conference: conference.id,
+
+      conferenceId: conference.id,
+
+      conferenceName: conference.title,
+
+      // Location
+      city: formData.city,
+
+      state: formData.state,
+
+      postalCode: formData.postalCode,
+
+      country: formData.country,
+
+      address: formData.address,
+
+      // Registration
+      registrationType:
+        formData.registrationType,
+
+      registrationLabel:
+        selectedRegistration.label,
+
+      // Currency
+      currency: currency,
+
+      currencySymbol:
+        selectedCurrency.symbol,
+
+      // Pricing
       basePriceGBP: total,
-      convertedPrice: convertPrice(total),
-      total: formatPrice(total),
-    });
+
+      convertedPrice: Number(
+        convertPrice(total).toFixed(2)
+      ),
+
+      total: Number(
+        convertPrice(total).toFixed(2)
+      ),
+    };
+
+    console.log(
+      "Registration Payload:",
+      payload
+    );
+
+    try {
+      // =====================================================
+      // CREATE REGISTRATION
+      // =====================================================
+
+      const result = await dispatch(
+        createRegistration(payload)
+      ).unwrap();
+
+      console.log(
+        "Registration API Success:",
+        result
+      );
+
+      // =====================================================
+      // GET REGISTRATION ID
+      // =====================================================
+
+      const registrationData =
+        result?.data || result;
+
+      const registrationId =
+        registrationData?._id ||
+        registrationData?.id;
+
+      // =====================================================
+      // ID NOT FOUND
+      // =====================================================
+
+      if (!registrationId) {
+        console.error(
+          "Registration ID not found in API response:",
+          result
+        );
+
+        return;
+      }
+
+      // =====================================================
+      // REDIRECT TO PAYMENT PAGE
+      // =====================================================
+
+      navigate(
+        `/payment/${registrationId}`,
+        {
+          state: {
+            registration:
+              registrationData,
+
+            conferenceId:
+              conference.id,
+
+            conferenceName:
+              conference.title,
+          },
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Registration failed:",
+        error
+      );
+    }
   };
 
   // =========================================================
@@ -328,7 +491,8 @@ const RegisterPage = () => {
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl"
             style={{
-              backgroundColor: colors.primarySoft,
+              backgroundColor:
+                colors.primarySoft,
               color: colors.primary,
             }}
           >
@@ -350,18 +514,20 @@ const RegisterPage = () => {
               color: colors.muted,
             }}
           >
-            Please select a valid conference before continuing with
-            registration.
+            Please select a valid conference
+            before continuing with registration.
           </p>
 
           <Link
             to="/conferences"
             className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor:
+                colors.primary,
             }}
           >
             <ArrowLeft size={15} />
+
             Back to Conferences
           </Link>
         </div>
@@ -394,14 +560,16 @@ const RegisterPage = () => {
         <div
           className="absolute -right-16 -top-16 h-40 w-40 rounded-full"
           style={{
-            border: "1px solid rgba(192,132,252,0.20)",
+            border:
+              "1px solid rgba(192,132,252,0.20)",
           }}
         />
 
         <div
           className="absolute -bottom-16 left-[8%] h-32 w-32 rounded-full"
           style={{
-            border: "1px solid rgba(192,132,252,0.12)",
+            border:
+              "1px solid rgba(192,132,252,0.12)",
           }}
         />
 
@@ -414,6 +582,7 @@ const RegisterPage = () => {
             }}
           >
             <ArrowLeft size={14} />
+
             Back to Conference
           </Link>
 
@@ -422,17 +591,21 @@ const RegisterPage = () => {
               <div
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em]"
                 style={{
-                  border: "1px solid rgba(192,132,252,0.22)",
-                  backgroundColor: "rgba(168,85,247,0.12)",
+                  border:
+                    "1px solid rgba(192,132,252,0.22)",
+                  backgroundColor:
+                    "rgba(168,85,247,0.12)",
                   color: colors.heroAccent,
                 }}
               >
                 <Users size={11} />
+
                 Conference Registration
               </div>
 
               <h1 className="mt-2 max-w-4xl text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
                 Register for
+
                 <span
                   className="block"
                   style={{
@@ -444,23 +617,27 @@ const RegisterPage = () => {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-5 text-white/65">
-                Complete your registration details below and select the
-                participation category that suits you best.
+                Complete your registration details
+                below and select the participation
+                category that suits you best.
               </p>
             </div>
 
             <div
               className="hidden min-w-[230px] rounded-xl p-4 backdrop-blur-md lg:block"
               style={{
-                border: "1px solid rgba(192,132,252,0.18)",
-                backgroundColor: "rgba(13,7,28,0.72)",
+                border:
+                  "1px solid rgba(192,132,252,0.18)",
+                backgroundColor:
+                  "rgba(13,7,28,0.72)",
               }}
             >
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-lg text-white"
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <CalendarDays size={16} />
@@ -481,7 +658,8 @@ const RegisterPage = () => {
                 <div
                   className="flex h-9 w-9 items-center justify-center rounded-lg"
                   style={{
-                    backgroundColor: "rgba(168,85,247,0.12)",
+                    backgroundColor:
+                      "rgba(168,85,247,0.12)",
                     color: colors.heroAccent,
                   }}
                 >
@@ -524,7 +702,8 @@ const RegisterPage = () => {
             <div
               className="px-5 py-5 md:px-7"
               style={{
-                borderBottom: `1px solid ${colors.border}`,
+                borderBottom:
+                  `1px solid ${colors.border}`,
               }}
             >
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -543,7 +722,8 @@ const RegisterPage = () => {
                   </h2>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    Enter your details and select your preferred registration
+                    Enter your details and select
+                    your preferred registration
                     category.
                   </p>
                 </div>
@@ -551,8 +731,10 @@ const RegisterPage = () => {
                 <div
                   className="rounded-xl px-4 py-2.5"
                   style={{
-                    backgroundColor: colors.primarySoft,
-                    border: `1px solid ${colors.borderStrong}`,
+                    backgroundColor:
+                      colors.primarySoft,
+                    border:
+                      `1px solid ${colors.borderStrong}`,
                   }}
                 >
                   <p className="text-[9px] font-bold uppercase tracking-wider text-gray-500">
@@ -578,39 +760,43 @@ const RegisterPage = () => {
                   ["02", "Conference"],
                   ["03", "Address"],
                   ["04", "Registration"],
-                ].map(([number, label], index) => (
-                  <React.Fragment key={number}>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold"
-                        style={{
-                          backgroundColor: colors.primary,
-                          color: "#FFFFFF",
-                        }}
-                      >
-                        {number}
-                      </span>
+                ].map(
+                  ([number, label], index) => (
+                    <React.Fragment key={number}>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{
+                            backgroundColor:
+                              colors.primary,
+                            color: "#FFFFFF",
+                          }}
+                        >
+                          {number}
+                        </span>
 
-                      <span
-                        className="text-xs font-semibold"
-                        style={{
-                          color: colors.body,
-                        }}
-                      >
-                        {label}
-                      </span>
-                    </div>
+                        <span
+                          className="text-xs font-semibold"
+                          style={{
+                            color: colors.body,
+                          }}
+                        >
+                          {label}
+                        </span>
+                      </div>
 
-                    {index !== 3 && (
-                      <div
-                        className="h-px min-w-6 flex-1"
-                        style={{
-                          backgroundColor: colors.border,
-                        }}
-                      />
-                    )}
-                  </React.Fragment>
-                ))}
+                      {index !== 3 && (
+                        <div
+                          className="h-px min-w-6 flex-1"
+                          style={{
+                            backgroundColor:
+                              colors.border,
+                          }}
+                        />
+                      )}
+                    </React.Fragment>
+                  )
+                )}
               </div>
             </div>
 
@@ -632,7 +818,13 @@ const RegisterPage = () => {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  options={["Mr.", "Ms.", "Mrs.", "Dr.", "Prof."]}
+                  options={[
+                    "Mr.",
+                    "Ms.",
+                    "Mrs.",
+                    "Dr.",
+                    "Prof.",
+                  ]}
                   placeholder="Select Title"
                 />
 
@@ -687,7 +879,8 @@ const RegisterPage = () => {
             <div
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop: `1px solid ${colors.divider}`,
+                borderTop:
+                  `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -699,14 +892,17 @@ const RegisterPage = () => {
               <div
                 className="mt-4 flex items-center gap-3 rounded-xl p-3.5"
                 style={{
-                  backgroundColor: colors.primarySoft,
-                  border: `1px solid ${colors.borderStrong}`,
+                  backgroundColor:
+                    colors.primarySoft,
+                  border:
+                    `1px solid ${colors.borderStrong}`,
                 }}
               >
                 <div
                   className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-white"
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <CalendarDays size={18} />
@@ -727,7 +923,8 @@ const RegisterPage = () => {
                   </p>
 
                   <p className="mt-0.5 text-xs text-gray-500">
-                    {conference.date} · {conference.location}
+                    {conference.date} ·{" "}
+                    {conference.location}
                   </p>
                 </div>
               </div>
@@ -746,7 +943,8 @@ const RegisterPage = () => {
             <div
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop: `1px solid ${colors.divider}`,
+                borderTop:
+                  `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -821,8 +1019,10 @@ const RegisterPage = () => {
                   placeholder="Enter your complete address"
                   className="w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none transition"
                   style={{
-                    backgroundColor: colors.inputBg,
-                    border: `1px solid ${colors.inputBorder}`,
+                    backgroundColor:
+                      colors.inputBg,
+                    border:
+                      `1px solid ${colors.inputBorder}`,
                     color: colors.inputText,
                   }}
                 />
@@ -836,7 +1036,8 @@ const RegisterPage = () => {
             <div
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop: `1px solid ${colors.divider}`,
+                borderTop:
+                  `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -845,15 +1046,14 @@ const RegisterPage = () => {
                 description="Select one registration option."
               />
 
-              {/* ==================================================
-                  CURRENCY SELECTOR
-              ================================================== */}
+              {/* CURRENCY */}
 
               <div
                 className="mt-5 rounded-xl p-4"
                 style={{
                   backgroundColor: "#F8F7FC",
-                  border: `1px solid ${colors.border}`,
+                  border:
+                    `1px solid ${colors.border}`,
                 }}
               >
                 <div className="text-center">
@@ -862,7 +1062,9 @@ const RegisterPage = () => {
                   </h3>
 
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-5">
-                    {Object.entries(currencyConfig).map(
+                    {Object.entries(
+                      currencyConfig
+                    ).map(
                       ([code, config]) => (
                         <label
                           key={code}
@@ -872,9 +1074,13 @@ const RegisterPage = () => {
                             type="radio"
                             name="currency"
                             value={code}
-                            checked={currency === code}
+                            checked={
+                              currency === code
+                            }
                             onChange={(e) =>
-                              setCurrency(e.target.value)
+                              setCurrency(
+                                e.target.value
+                              )
                             }
                             className="accent-violet-600"
                           />
@@ -887,22 +1093,28 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              {/* ==================================================
-                  PRICING TABLES
-              ================================================== */}
+              {/* PRICING */}
 
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {registrationGroups.map((group) => (
-                  <RegistrationGroup
-                    key={group.title}
-                    group={group}
-                    formData={formData}
-                    handleChange={handleChange}
-                    colors={colors}
-                    selectedCurrency={selectedCurrency}
-                    convertPrice={convertPrice}
-                  />
-                ))}
+                {registrationGroups.map(
+                  (group) => (
+                    <RegistrationGroup
+                      key={group.title}
+                      group={group}
+                      formData={formData}
+                      handleChange={
+                        handleChange
+                      }
+                      colors={colors}
+                      selectedCurrency={
+                        selectedCurrency
+                      }
+                      convertPrice={
+                        convertPrice
+                      }
+                    />
+                  )
+                )}
               </div>
             </div>
 
@@ -913,12 +1125,11 @@ const RegisterPage = () => {
             <div
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop: `1px solid ${colors.divider}`,
+                borderTop:
+                  `1px solid ${colors.divider}`,
                 backgroundColor: "#FCFAFF",
               }}
             >
-              {/* SELECTED REGISTRATION */}
-
               <div className="text-center">
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.16em]"
@@ -939,12 +1150,15 @@ const RegisterPage = () => {
                     />
 
                     <span className="text-sm font-bold text-gray-900">
-                      {selectedRegistration.label}
+                      {
+                        selectedRegistration.label
+                      }
                     </span>
                   </div>
                 ) : (
                   <p className="mt-2 text-sm text-gray-500">
-                    Please select a registration category.
+                    Please select a registration
+                    category.
                   </p>
                 )}
               </div>
@@ -967,30 +1181,57 @@ const RegisterPage = () => {
                 </p>
 
                 <p className="mt-1 text-xs text-gray-400">
-                  Currency: {selectedCurrency.label}
+                  Currency:{" "}
+                  {selectedCurrency.label}
                 </p>
               </div>
 
-              {/* PROCEED TO PAY */}
+              {/* ERROR */}
+
+              {registrationError && (
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
+                  <p className="text-sm font-semibold text-red-600">
+                    {registrationError}
+                  </p>
+                </div>
+              )}
+
+              {/* PAY NOW */}
 
               <div className="mt-5 flex justify-center">
                 <button
                   type="submit"
-                  disabled={!selectedRegistration}
+                  disabled={
+                    !selectedRegistration ||
+                    registrationLoading
+                  }
                   className="flex h-12 min-w-[220px] items-center justify-center gap-2 rounded-xl px-8 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
-                    backgroundColor: colors.primary,
-                    boxShadow: "0 8px 20px rgba(124,58,237,0.18)",
+                    backgroundColor:
+                      colors.primary,
+                    boxShadow:
+                      "0 8px 20px rgba(124,58,237,0.18)",
                   }}
                 >
-                  Proceed to Pay
-                  <ArrowRight size={16} />
+                  {registrationLoading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+
+                      PROCESSING...
+                    </>
+                  ) : (
+                    <>
+                      PAY NOW
+
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
 
               <p className="mt-3 text-center text-[11px] text-gray-400">
-                You will be redirected to the secure payment process after
-                continuing.
+                You will be redirected to the secure
+                payment process after continuing.
               </p>
             </div>
           </div>
@@ -1003,8 +1244,10 @@ const RegisterPage = () => {
         <div
           className="mt-4 rounded-xl px-4 py-3.5"
           style={{
-            border: `1px solid ${colors.border}`,
-            backgroundColor: colors.supportBg,
+            border:
+              `1px solid ${colors.border}`,
+            backgroundColor:
+              colors.supportBg,
           }}
         >
           <div className="flex items-center gap-3">
@@ -1028,7 +1271,8 @@ const RegisterPage = () => {
               </p>
 
               <p className="mt-0.5 text-[11px] text-gray-500">
-                Contact the GlobalScion team for registration support.
+                Contact the GlobalScion team for
+                registration support.
               </p>
             </div>
           </div>
@@ -1043,21 +1287,26 @@ const RegisterPage = () => {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
           style={{
-            backgroundColor: colors.overlay,
+            backgroundColor:
+              colors.overlay,
           }}
         >
           <div
             className="w-full max-w-sm rounded-2xl p-6 text-center"
             style={{
-              backgroundColor: colors.cardBg,
-              border: `1px solid ${colors.border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+              backgroundColor:
+                colors.cardBg,
+              border:
+                `1px solid ${colors.border}`,
+              boxShadow:
+                "0 20px 60px rgba(0,0,0,0.25)",
             }}
           >
             <div
               className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
               style={{
-                backgroundColor: colors.primarySoft,
+                backgroundColor:
+                  colors.primarySoft,
                 color: colors.primary,
               }}
             >
@@ -1074,7 +1323,8 @@ const RegisterPage = () => {
             </h2>
 
             <p className="mt-2 text-sm leading-5 text-gray-500">
-              Your registration details are ready for payment for{" "}
+              Your registration details are ready
+              for payment for{" "}
               <span className="font-semibold text-gray-900">
                 {conference.title}
               </span>
@@ -1084,7 +1334,8 @@ const RegisterPage = () => {
             <div
               className="mt-4 rounded-xl p-3 text-left"
               style={{
-                backgroundColor: colors.primarySoft,
+                backgroundColor:
+                  colors.primarySoft,
               }}
             >
               <div className="flex items-center justify-between">
@@ -1099,7 +1350,9 @@ const RegisterPage = () => {
                   }}
                 >
                   {selectedCurrency.symbol}
-                  {convertPrice(total).toFixed(2)}
+                  {convertPrice(total).toFixed(
+                    2
+                  )}
                 </span>
               </div>
 
@@ -1108,16 +1361,20 @@ const RegisterPage = () => {
               </p>
 
               <p className="mt-1 text-[10px] text-gray-400">
-                Currency: {selectedCurrency.label}
+                Currency:{" "}
+                {selectedCurrency.label}
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() => setSubmitted(false)}
+              onClick={() =>
+                setSubmitted(false)
+              }
               className="mt-5 rounded-lg px-6 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor:
+                  colors.primary,
               }}
             >
               Continue
@@ -1133,7 +1390,11 @@ const RegisterPage = () => {
 // FORM TITLE
 // ============================================================
 
-const FormTitle = ({ number, title, description }) => {
+const FormTitle = ({
+  number,
+  title,
+  description,
+}) => {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -1176,12 +1437,11 @@ const RegistrationGroup = ({
     <div
       className="overflow-hidden rounded-xl"
       style={{
-        border: `1px solid ${colors.border}`,
+        border:
+          `1px solid ${colors.border}`,
         backgroundColor: "#FFFFFF",
       }}
     >
-      {/* CATEGORY HEADER */}
-
       <div
         className="px-3 py-2.5 text-center"
         style={{
@@ -1193,75 +1453,79 @@ const RegistrationGroup = ({
         </h3>
       </div>
 
-      {/* OPTIONS */}
-
       <div className="px-3">
-        {group.options.map((option, index) => {
-          const selected =
-            formData.registrationType === option.id;
+        {group.options.map(
+          (option, index) => {
+            const selected =
+              formData.registrationType ===
+              option.id;
 
-          const isLast =
-            index === group.options.length - 1;
+            const isLast =
+              index ===
+              group.options.length - 1;
 
-          return (
-            <label
-              key={option.id}
-              className="flex cursor-pointer items-center justify-between gap-2 py-2.5 transition hover:bg-gray-50"
-              style={{
-                borderBottom: isLast
-                  ? "none"
-                  : `1px solid ${colors.border}`,
-              }}
-            >
-              <div className="flex min-w-0 items-start gap-2">
-                <input
-                  type="radio"
-                  name="registrationType"
-                  value={option.id}
-                  checked={selected}
-                  onChange={handleChange}
-                  className="mt-1 flex-shrink-0 accent-violet-600"
-                />
-
-                <span
-                  className="text-xs leading-4"
-                  style={{
-                    color: selected
-                      ? colors.primary
-                      : colors.body,
-                    fontWeight: selected ? 700 : 500,
-                  }}
-                >
-                  {option.label}
-                </span>
-              </div>
-
-              {/* CONVERTED PRICE */}
-
-              <span
-                className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
+            return (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center justify-between gap-2 py-2.5 transition hover:bg-gray-50"
                 style={{
-                  backgroundColor: selected
-                    ? colors.primary
-                    : colors.primarySoft,
-
-                  color: selected
-                    ? "#FFFFFF"
-                    : colors.primary,
-
-                  border: `1px solid ${
-                    selected
-                      ? colors.primary
-                      : colors.borderStrong
-                  }`,
+                  borderBottom: isLast
+                    ? "none"
+                    : `1px solid ${colors.border}`,
                 }}
               >
-                {selectedCurrency.symbol}
-                {convertPrice(option.price).toFixed(2)}
-              </span>
-            </label>
-          );
-        })}
+                <div className="flex min-w-0 items-start gap-2">
+                  <input
+                    type="radio"
+                    name="registrationType"
+                    value={option.id}
+                    checked={selected}
+                    onChange={handleChange}
+                    className="mt-1 flex-shrink-0 accent-violet-600"
+                  />
+
+                  <span
+                    className="text-xs leading-4"
+                    style={{
+                      color: selected
+                        ? colors.primary
+                        : colors.body,
+
+                      fontWeight:
+                        selected ? 700 : 500,
+                    }}
+                  >
+                    {option.label}
+                  </span>
+                </div>
+
+                <span
+                  className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
+                  style={{
+                    backgroundColor: selected
+                      ? colors.primary
+                      : colors.primarySoft,
+
+                    color: selected
+                      ? "#FFFFFF"
+                      : colors.primary,
+
+                    border: `1px solid ${
+                      selected
+                        ? colors.primary
+                        : colors.borderStrong
+                    }`,
+                  }}
+                >
+                  {selectedCurrency.symbol}
+                  {convertPrice(
+                    option.price
+                  ).toFixed(2)}
+                </span>
+              </label>
+            );
+          }
+        )}
       </div>
     </div>
   );
@@ -1332,11 +1596,14 @@ const InputField = ({
           placeholder={placeholder}
           required={required}
           className={`h-10 w-full rounded-xl text-sm outline-none transition ${
-            icon ? "pl-9 pr-3" : "px-3"
+            icon
+              ? "pl-9 pr-3"
+              : "px-3"
           }`}
           style={{
             backgroundColor: colors.bg,
-            border: `1px solid ${colors.border}`,
+            border:
+              `1px solid ${colors.border}`,
             color: colors.text,
           }}
         />
@@ -1398,7 +1665,8 @@ const SelectField = ({
           className="h-10 w-full appearance-none rounded-xl px-3 pr-8 text-sm outline-none transition"
           style={{
             backgroundColor: colors.bg,
-            border: `1px solid ${colors.border}`,
+            border:
+              `1px solid ${colors.border}`,
             color: colors.text,
           }}
         >
@@ -1417,7 +1685,8 @@ const SelectField = ({
               key={option}
               value={option}
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor:
+                  colors.bg,
                 color: colors.text,
               }}
             >

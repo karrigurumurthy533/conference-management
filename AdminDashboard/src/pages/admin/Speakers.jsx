@@ -1,4 +1,7 @@
+
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Search,
   Users,
@@ -18,11 +21,15 @@ import {
 } from "lucide-react";
 
 const Speakers = () => {
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
   const [conferenceFilter, setConferenceFilter] =
     useState("All Conferences");
+
   const [statusFilter, setStatusFilter] =
     useState("All Status");
+
   const [openMenu, setOpenMenu] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -110,7 +117,8 @@ const Speakers = () => {
       role: "Healthcare Innovation Lead",
       organization: "Precision Medicine Alliance",
       email: "vikram.reddy@example.com",
-      conference: "Healthcare Innovation & Precision Medicine",
+      conference:
+        "Healthcare Innovation & Precision Medicine",
       country: "India",
       sessions: 2,
       status: "Confirmed",
@@ -132,7 +140,8 @@ const Speakers = () => {
       role: "Medical AI Researcher",
       organization: "Institute of Medical Technology",
       email: "daniel.miller@example.com",
-      conference: "Oncology Research & AI Innovations",
+      conference:
+        "Oncology Research & AI Innovations",
       country: "Germany",
       sessions: 3,
       status: "Confirmed",
@@ -142,21 +151,31 @@ const Speakers = () => {
   const conferences = [
     "All Conferences",
     ...new Set(
-      speakers.map((speaker) => speaker.conference)
+      speakers.map(
+        (speaker) => speaker.conference
+      )
     ),
   ];
 
   const filteredSpeakers = useMemo(() => {
     return speakers.filter((speaker) => {
-      const searchValue = search.toLowerCase().trim();
+      const searchValue = search
+        .toLowerCase()
+        .trim();
 
       const matchesSearch =
-        speaker.name.toLowerCase().includes(searchValue) ||
-        speaker.role.toLowerCase().includes(searchValue) ||
+        speaker.name
+          .toLowerCase()
+          .includes(searchValue) ||
+        speaker.role
+          .toLowerCase()
+          .includes(searchValue) ||
         speaker.organization
           .toLowerCase()
           .includes(searchValue) ||
-        speaker.email.toLowerCase().includes(searchValue);
+        speaker.email
+          .toLowerCase()
+          .includes(searchValue);
 
       const matchesConference =
         conferenceFilter === "All Conferences" ||
@@ -172,14 +191,19 @@ const Speakers = () => {
         matchesStatus
       );
     });
-  }, [search, conferenceFilter, statusFilter]);
+  }, [
+    search,
+    conferenceFilter,
+    statusFilter,
+  ]);
 
   const itemsPerPage = 6;
 
   const totalPages = Math.max(
     1,
     Math.ceil(
-      filteredSpeakers.length / itemsPerPage
+      filteredSpeakers.length /
+        itemsPerPage
     )
   );
 
@@ -188,26 +212,32 @@ const Speakers = () => {
     totalPages
   );
 
-  const paginatedSpeakers = filteredSpeakers.slice(
-    (safePage - 1) * itemsPerPage,
-    safePage * itemsPerPage
-  );
+  const paginatedSpeakers =
+    filteredSpeakers.slice(
+      (safePage - 1) * itemsPerPage,
+      safePage * itemsPerPage
+    );
 
   const totalSpeakers = speakers.length;
 
-  const confirmedSpeakers = speakers.filter(
-    (speaker) => speaker.status === "Confirmed"
-  ).length;
+  const confirmedSpeakers =
+    speakers.filter(
+      (speaker) =>
+        speaker.status === "Confirmed"
+    ).length;
 
-  const pendingSpeakers = speakers.filter(
-    (speaker) => speaker.status === "Pending"
-  ).length;
+  const pendingSpeakers =
+    speakers.filter(
+      (speaker) =>
+        speaker.status === "Pending"
+    ).length;
 
-  const totalSessions = speakers.reduce(
-    (total, speaker) =>
-      total + speaker.sessions,
-    0
-  );
+  const totalSessions =
+    speakers.reduce(
+      (total, speaker) =>
+        total + speaker.sessions,
+      0
+    );
 
   const getInitials = (name) => {
     return name
@@ -244,6 +274,14 @@ const Speakers = () => {
     setOpenMenu(null);
   };
 
+  // =====================================================
+  // ADD SPEAKER NAVIGATION
+  // =====================================================
+
+  const handleAddSpeaker = () => {
+    navigate("/admin/speakers/add");
+  };
+
   return (
     <div className="min-w-0 w-full overflow-hidden space-y-3">
 
@@ -254,8 +292,10 @@ const Speakers = () => {
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
 
         {/* TOTAL SPEAKERS */}
+
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm">
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[12px] font-medium text-gray-500">
                 Total Speakers
@@ -272,12 +312,15 @@ const Speakers = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
         </div>
 
         {/* CONFIRMED */}
+
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm">
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[12px] font-medium text-gray-500">
                 Confirmed Speakers
@@ -294,12 +337,15 @@ const Speakers = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
         </div>
 
         {/* PENDING */}
+
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm">
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[12px] font-medium text-gray-500">
                 Pending Invitations
@@ -316,12 +362,15 @@ const Speakers = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
         </div>
 
         {/* SESSIONS */}
+
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm">
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[12px] font-medium text-gray-500">
                 Total Sessions
@@ -338,8 +387,10 @@ const Speakers = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
         </div>
+
       </div>
 
       {/* =====================================================
@@ -355,6 +406,7 @@ const Speakers = () => {
           {/* SEARCH */}
 
           <div className="relative min-w-0 flex-1">
+
             <Search
               size={15}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -383,6 +435,7 @@ const Speakers = () => {
                 <X size={14} />
               </button>
             )}
+
           </div>
 
           {/* CONFERENCE FILTER */}
@@ -397,14 +450,16 @@ const Speakers = () => {
             }
             className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-[11px] text-gray-600 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 lg:w-52"
           >
-            {conferences.map((conference) => (
-              <option
-                key={conference}
-                value={conference}
-              >
-                {conference}
-              </option>
-            ))}
+            {conferences.map(
+              (conference) => (
+                <option
+                  key={conference}
+                  value={conference}
+                >
+                  {conference}
+                </option>
+              )
+            )}
           </select>
 
           {/* STATUS FILTER */}
@@ -429,11 +484,13 @@ const Speakers = () => {
 
           <button
             type="button"
+            onClick={handleAddSpeaker}
             className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[11px] font-semibold text-white transition hover:bg-violet-700"
           >
             <UserPlus size={14} />
             Add Speaker
           </button>
+
         </div>
 
         {/* =====================================================
@@ -441,6 +498,7 @@ const Speakers = () => {
         ===================================================== */}
 
         <div className="w-full overflow-hidden">
+
           <table className="w-full table-fixed">
 
             <thead>
@@ -473,183 +531,251 @@ const Speakers = () => {
                 <th className="w-[7%] px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   Action
                 </th>
+
               </tr>
             </thead>
 
             <tbody>
+
               {paginatedSpeakers.length > 0 ? (
-                paginatedSpeakers.map((speaker) => (
-                  <tr
-                    key={speaker.id}
-                    className="border-b border-gray-50 transition hover:bg-violet-50/30"
-                  >
+                paginatedSpeakers.map(
+                  (speaker) => (
+                    <tr
+                      key={speaker.id}
+                      className="border-b border-gray-50 transition hover:bg-violet-50/30"
+                    >
 
-                    {/* SPEAKER */}
+                      {/* SPEAKER */}
 
-                    <td className="px-3 py-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
+                      <td className="px-3 py-3">
 
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[11px] font-bold text-violet-700">
-                          {getInitials(speaker.name)}
-                        </div>
+                        <div className="flex min-w-0 items-center gap-2.5">
 
-                        <div className="min-w-0">
-                          <p className="truncate text-[12px] font-semibold text-gray-800">
-                            {speaker.name}
-                          </p>
-
-                          <div className="mt-0.5 flex items-center gap-1">
-                            <BriefcaseBusiness
-                              size={11}
-                              className="shrink-0 text-violet-500"
-                            />
-
-                            <p className="truncate text-[10px] text-gray-500">
-                              {speaker.role}
-                            </p>
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[11px] font-bold text-violet-700">
+                            {getInitials(
+                              speaker.name
+                            )}
                           </div>
+
+                          <div className="min-w-0">
+
+                            <p className="truncate text-[12px] font-semibold text-gray-800">
+                              {speaker.name}
+                            </p>
+
+                            <div className="mt-0.5 flex items-center gap-1">
+
+                              <BriefcaseBusiness
+                                size={11}
+                                className="shrink-0 text-violet-500"
+                              />
+
+                              <p className="truncate text-[10px] text-gray-500">
+                                {speaker.role}
+                              </p>
+
+                            </div>
+
+                          </div>
+
                         </div>
-                      </div>
-                    </td>
 
-                    {/* CONFERENCE */}
+                      </td>
 
-                    <td className="px-2 py-3">
-                      <p
-                        title={speaker.conference}
-                        className="truncate text-[11px] font-medium text-gray-700"
-                      >
-                        {speaker.conference}
-                      </p>
-                    </td>
+                      {/* CONFERENCE */}
 
-                    {/* ORGANIZATION */}
-
-                    <td className="px-2 py-3">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <BriefcaseBusiness
-                          size={11}
-                          className="shrink-0 text-violet-500"
-                        />
+                      <td className="px-2 py-3">
 
                         <p
-                          title={speaker.organization}
-                          className="truncate text-[11px] text-gray-600"
+                          title={
+                            speaker.conference
+                          }
+                          className="truncate text-[11px] font-medium text-gray-700"
                         >
-                          {speaker.organization}
+                          {speaker.conference}
                         </p>
-                      </div>
-                    </td>
 
-                    {/* LOCATION */}
+                      </td>
 
-                    <td className="px-2 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin
-                          size={11}
-                          className="shrink-0 text-violet-500"
-                        />
+                      {/* ORGANIZATION */}
 
-                        <span className="truncate text-[11px] text-gray-600">
-                          {speaker.country}
-                        </span>
-                      </div>
-                    </td>
+                      <td className="px-2 py-3">
 
-                    {/* SESSIONS */}
+                        <div className="flex min-w-0 items-center gap-1.5">
 
-                    <td className="px-2 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-violet-50 px-1.5 text-[11px] font-semibold text-violet-700">
-                        {speaker.sessions}
-                      </span>
-                    </td>
+                          <BriefcaseBusiness
+                            size={11}
+                            className="shrink-0 text-violet-500"
+                          />
 
-                    {/* STATUS */}
-
-                    <td className="px-2 py-3">
-                      <span
-                        className={`inline-flex rounded-md border px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
-                          speaker.status
-                        )}`}
-                      >
-                        {speaker.status}
-                      </span>
-                    </td>
-
-                    {/* ACTION */}
-
-                    <td className="relative px-2 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu(
-                            openMenu === speaker.id
-                              ? null
-                              : speaker.id
-                          )
-                        }
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition hover:bg-violet-50 hover:text-violet-600"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-
-                      {openMenu === speaker.id && (
-                        <div className="absolute right-3 top-11 z-30 w-34 rounded-lg border border-gray-100 bg-white p-1 text-left shadow-lg">
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenu(null)
+                          <p
+                            title={
+                              speaker.organization
                             }
-                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                            className="truncate text-[11px] text-gray-600"
                           >
-                            <Eye size={13} />
-                            View
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenu(null)
+                            {
+                              speaker.organization
                             }
-                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
-                          >
-                            <Pencil size={13} />
-                            Edit
-                          </button>
+                          </p>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenu(null)
-                            }
-                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
-                          >
-                            <Mail size={13} />
-                            Contact
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenu(null)
-                            }
-                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
-                          >
-                            <Trash2 size={13} />
-                            Delete
-                          </button>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
+
+                      </td>
+
+                      {/* LOCATION */}
+
+                      <td className="px-2 py-3">
+
+                        <div className="flex items-center gap-1.5">
+
+                          <MapPin
+                            size={11}
+                            className="shrink-0 text-violet-500"
+                          />
+
+                          <span className="truncate text-[11px] text-gray-600">
+                            {speaker.country}
+                          </span>
+
+                        </div>
+
+                      </td>
+
+                      {/* SESSIONS */}
+
+                      <td className="px-2 py-3 text-center">
+
+                        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-violet-50 px-1.5 text-[11px] font-semibold text-violet-700">
+                          {speaker.sessions}
+                        </span>
+
+                      </td>
+
+                      {/* STATUS */}
+
+                      <td className="px-2 py-3">
+
+                        <span
+                          className={`inline-flex rounded-md border px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
+                            speaker.status
+                          )}`}
+                        >
+                          {speaker.status}
+                        </span>
+
+                      </td>
+
+                      {/* ACTION */}
+
+                      <td className="relative px-2 py-3 text-center">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenMenu(
+                              openMenu ===
+                                speaker.id
+                                ? null
+                                : speaker.id
+                            )
+                          }
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition hover:bg-violet-50 hover:text-violet-600"
+                        >
+                          <MoreVertical
+                            size={16}
+                          />
+                        </button>
+
+                        {openMenu ===
+                          speaker.id && (
+                          <div className="absolute right-3 top-11 z-30 w-34 rounded-lg border border-gray-100 bg-white p-1 text-left shadow-lg">
+
+                            {/* VIEW */}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenu(
+                                  null
+                                )
+                              }
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                            >
+                              <Eye
+                                size={13}
+                              />
+                              View
+                            </button>
+
+                            {/* EDIT */}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenu(
+                                  null
+                                )
+                              }
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                            >
+                              <Pencil
+                                size={13}
+                              />
+                              Edit
+                            </button>
+
+                            {/* CONTACT */}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenu(
+                                  null
+                                )
+                              }
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                            >
+                              <Mail
+                                size={13}
+                              />
+                              Contact
+                            </button>
+
+                            {/* DELETE */}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenu(
+                                  null
+                                )
+                              }
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                            >
+                              <Trash2
+                                size={13}
+                              />
+                              Delete
+                            </button>
+
+                          </div>
+                        )}
+
+                      </td>
+
+                    </tr>
+                  )
+                )
               ) : (
+
                 <tr>
+
                   <td
                     colSpan="7"
                     className="px-4 py-10 text-center"
                   >
+
                     <div className="flex flex-col items-center justify-center">
 
                       <Users
@@ -662,14 +788,22 @@ const Speakers = () => {
                       </p>
 
                       <p className="mt-1 text-[10px] text-gray-400">
-                        Try changing your search or filters.
+                        Try changing your
+                        search or filters.
                       </p>
+
                     </div>
+
                   </td>
+
                 </tr>
+
               )}
+
             </tbody>
+
           </table>
+
         </div>
 
         {/* =====================================================
@@ -679,45 +813,71 @@ const Speakers = () => {
         <div className="flex items-center justify-between border-t border-gray-100 px-3.5 py-3">
 
           <p className="text-[11px] text-gray-500">
+
             Showing{" "}
+
             <span className="font-semibold text-gray-700">
-              {filteredSpeakers.length === 0
+              {filteredSpeakers.length ===
+              0
                 ? 0
-                : (safePage - 1) * itemsPerPage + 1}
-            </span>{" "}
-            to{" "}
+                : (safePage - 1) *
+                    itemsPerPage +
+                  1}
+            </span>
+
+            {" "}to{" "}
+
             <span className="font-semibold text-gray-700">
               {Math.min(
-                safePage * itemsPerPage,
+                safePage *
+                  itemsPerPage,
                 filteredSpeakers.length
               )}
-            </span>{" "}
-            of{" "}
+            </span>
+
+            {" "}of{" "}
+
             <span className="font-semibold text-gray-700">
               {filteredSpeakers.length}
-            </span>{" "}
-            speakers
+            </span>
+
+            {" "}speakers
+
           </p>
 
           <div className="flex items-center gap-1">
+
+            {/* PREVIOUS */}
 
             <button
               type="button"
               disabled={safePage === 1}
               onClick={() =>
-                setCurrentPage((page) =>
-                  Math.max(page - 1, 1)
+                setCurrentPage(
+                  (page) =>
+                    Math.max(
+                      page - 1,
+                      1
+                    )
                 )
               }
               className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft
+                size={15}
+              />
             </button>
 
+            {/* PAGE NUMBERS */}
+
             {Array.from(
-              { length: totalPages },
-              (_, index) => index + 1
+              {
+                length: totalPages,
+              },
+              (_, index) =>
+                index + 1
             ).map((page) => (
+
               <button
                 key={page}
                 type="button"
@@ -732,29 +892,39 @@ const Speakers = () => {
               >
                 {page}
               </button>
+
             ))}
+
+            {/* NEXT */}
 
             <button
               type="button"
               disabled={
-                safePage === totalPages
+                safePage ===
+                totalPages
               }
               onClick={() =>
-                setCurrentPage((page) =>
-                  Math.min(
-                    page + 1,
-                    totalPages
-                  )
+                setCurrentPage(
+                  (page) =>
+                    Math.min(
+                      page + 1,
+                      totalPages
+                    )
                 )
               }
               className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ChevronRight size={15} />
+              <ChevronRight
+                size={15}
+              />
             </button>
 
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 };

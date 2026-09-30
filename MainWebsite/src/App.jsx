@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Conferences from "./pages/Conferences";
 import Speakers from "./pages/Speakers";
 import ConferenceDetails from "./pages/ConferenceDetails";
+import PaymentPage from "./pages/PaymentPage";
 
 import Reviews from "./pages/Reviews";
 import Terms from "./pages/Terms";
@@ -29,32 +30,23 @@ const App = () => {
       <Navbar />
 
       <Routes>
-      
         <Route path="/" element={<Home />} />
 
         <Route path="/about" element={<About />} />
 
-    
-        <Route
-          path="/conferences"
-          element={<Conferences />}
-        />
+        <Route path="/conferences" element={<Conferences />} />
 
         {/* =====================================================
             CONFERENCE DETAILS
         ====================================================== */}
-        <Route
-          path="/conference/:id"
-          element={<ConferenceDetails />}
-        />
+        <Route path="/conference/:id" element={<ConferenceDetails />} />
 
         {/* =====================================================
             REGISTER
         ====================================================== */}
-        <Route
-          path="/conferences/:id/register"
-          element={<RegisterPage />}
-        />
+        <Route path="/conferences/:id/register" element={<RegisterPage />} />
+
+        <Route path="/payment/:registrationId" element={<PaymentPage />} />
 
         {/* =====================================================
             ABSTRACT SUBMISSION
@@ -64,11 +56,10 @@ const App = () => {
           element={<AbstractSubmissionPage />}
         />
 
-          <Route
+        <Route
           path="/conferences/:id/scientific-program"
-          element={<ScientificProgram/>}
+          element={<ScientificProgram />}
         />
-
 
         {/* =====================================================
             BROCHURE
@@ -81,47 +72,31 @@ const App = () => {
         {/* =====================================================
             SPEAKERS
         ====================================================== */}
-        <Route
-          path="/speakers"
-          element={<Speakers />}
-        />
+        <Route path="/speakers" element={<Speakers />} />
 
         {/* =====================================================
             REVIEWS
         ====================================================== */}
-        <Route
-          path="/reviews"
-          element={<Reviews />}
-        />
+        <Route path="/reviews" element={<Reviews />} />
 
         {/* =====================================================
             TERMS & CONDITIONS
         ====================================================== */}
-        <Route
-          path="/terms"
-          element={<Terms />}
-        />
+        <Route path="/terms" element={<Terms />} />
 
         {/* =====================================================
             GLOBAL PRIVACY POLICY
         ====================================================== */}
-        <Route
-          path="/privacy"
-          element={<Privacy />}
-        />
+        <Route path="/privacy" element={<Privacy />} />
 
         {/* =====================================================
             CONTACT
         ====================================================== */}
-        <Route
-          path="/contact"
-          element={<ContactPage />}
-        />
+        <Route path="/contact" element={<ContactPage />} />
       </Routes>
 
       <Footer />
       <TawkChat />
-
     </div>
   );
 };

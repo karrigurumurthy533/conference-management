@@ -31,9 +31,7 @@ const AdminSidebar = () => {
 
   const iconClass = ({ isActive }) =>
     `shrink-0 transition-all duration-200 ${
-      isActive
-        ? "text-[#7C3AED]"
-        : "text-gray-500 group-hover:text-[#7C3AED]"
+      isActive ? "text-[#7C3AED]" : "text-gray-500 group-hover:text-[#7C3AED]"
     }`;
 
   const handleLogout = async () => {
@@ -105,6 +103,19 @@ const AdminSidebar = () => {
                 className={iconClass({ isActive })}
               />
               <span>Create New Employee</span>
+            </>
+          )}
+        </NavLink>
+
+        <NavLink to="/admin/employees" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <UserCircle
+                size={18}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Employees</span>
             </>
           )}
         </NavLink>

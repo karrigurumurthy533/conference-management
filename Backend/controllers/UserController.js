@@ -275,8 +275,6 @@ exports.deleteDownloadBrochure = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 exports.createAbstract = catchAsync(async (req, res, next) => {
   const {
     registrationId,

@@ -51,9 +51,17 @@ const speakerSchema = new mongoose.Schema(
       trim: true,
     },
 
-    profileImage: {
+    // Cloudinary
+    imageUrl: {
       type: String,
       default: "",
+      trim: true,
+    },
+
+    publicId: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     email: {

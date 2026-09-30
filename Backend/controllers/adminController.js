@@ -2,422 +2,674 @@ const Conference = require("../models/conference");
 
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
+const Speaker = require("../models/Speaker");
+const cloudinary = require("../config/cloudinary");
 
-exports.createConference = catchAsync(async (req, res, next) => {
-    const {
-        basicInformation,
-        conferenceDates,
-        venueInformation,
-        registrationTypes,
-        submissionSettings,
-        conferenceTopics,
-        speakers,
-        organizingCommittee,
-        conferenceProgram,
-        conferenceMedia,
-        contactInformation,
-        socialMedia,
-        slug,
-    } = req.body;
 
-    if (
-        !basicInformation ||
-        !basicInformation.conferenceName ||
-        !basicInformation.shortName ||
-        !basicInformation.category
-    ) {
-        return next(
-            new AppError(
-                "Conference name, short name and category are required",
-                400
-            )
-        );
+
+const uploadToCloudinary = (file, folder = "globalscion/conferences") => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(result);
+      }
+    );
+
+    uploadStream.end(file.buffer);
+  });
+};
+
+
+const deleteFromCloudinary = async (imageUrl) => {
+  try {
+    if (!imageUrl) return;
+
+    const uploadIndex = imageUrl.indexOf("/upload/");
+
+    if (uploadIndex === -1) return;
+
+    let publicId = imageUrl.substring(uploadIndex + 8);
+
+    publicId = publicId.substring(publicId.indexOf("/") + 1);
+
+    publicId = publicId.replace(/\.[^/.]+$/, "");
+
+    await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image",
+    });
+  } catch (error) {
+    console.error("Cloudinary delete error:", error.message);
+  }
+};
+
+const parseConferenceData = (req) => {
+  let data = req.body.data;
+
+  if (!data) {
+    data = req.body;
+  }
+
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      throw new Error("Invalid conference JSON data");
+    }
+  }
+
+  return data;
+};
+
+exports.createConference = async (req, res) => {
+  try {
+    const data = parseConferenceData(req);
+
+    if (!data.title) {
+      return res.status(400).json({
+        success: false,
+        message: "Conference title is required",
+      });
     }
 
-    if (
-        !conferenceDates ||
-        !conferenceDates.startDate ||
-        !conferenceDates.endDate
-    ) {
-        return next(
-            new AppError(
-                "Conference start date and end date are required",
-                400
-            )
-        );
+    if (!data.category) {
+      return res.status(400).json({
+        success: false,
+        message: "Conference category is required",
+      });
     }
 
-    if (
-        new Date(conferenceDates.endDate) <
-        new Date(conferenceDates.startDate)
-    ) {
-        return next(
-            new AppError(
-                "Conference end date cannot be before start date",
-                400
-            )
-        );
+    if (!data.id) {
+      return res.status(400).json({
+        success: false,
+        message: "Conference ID is required",
+      });
     }
+
+    /* =====================================================
+       CHECK DUPLICATE ID
+    ===================================================== */
 
     const existingConference = await Conference.findOne({
-        $or: [
-            {
-                "basicInformation.conferenceName":
-                    basicInformation.conferenceName.trim(),
-            },
-            {
-                "basicInformation.shortName":
-                    basicInformation.shortName.trim(),
-            },
-            ...(slug
-                ? [
-                      {
-                          slug: slug.toLowerCase().trim(),
-                      },
-                  ]
-                : []),
-        ],
+      id: data.id,
     });
 
     if (existingConference) {
-        return next(
-            new AppError(
-                "Conference with the same name, short name or slug already exists",
-                409
-            )
-        );
+      return res.status(409).json({
+        success: false,
+        message: "Conference with this ID already exists",
+      });
     }
+
+    const files = req.files || [];
+
+    /* =====================================================
+       HERO IMAGE
+    ===================================================== */
+
+    const heroImage = files.find(
+      (file) => file.fieldname === "heroImage"
+    );
+
+    if (heroImage) {
+      const result = await uploadToCloudinary(
+        heroImage,
+        "globalscion/conferences/hero"
+      );
+
+      data.image = result.secure_url;
+    }
+
+    /* =====================================================
+       ABOUT IMAGE
+    ===================================================== */
+
+    const aboutImage = files.find(
+      (file) => file.fieldname === "aboutImage"
+    );
+
+    if (aboutImage) {
+      const result = await uploadToCloudinary(
+        aboutImage,
+        "globalscion/conferences/about"
+      );
+
+      data.aboutImage = result.secure_url;
+    }
+
+    /* =====================================================
+       MARKET IMAGE
+    ===================================================== */
+
+    const marketImage = files.find(
+      (file) => file.fieldname === "marketImage"
+    );
+
+    if (marketImage) {
+      const result = await uploadToCloudinary(
+        marketImage,
+        "globalscion/conferences/market"
+      );
+
+      if (!data.otherData) {
+        data.otherData = {};
+      }
+
+      if (!data.otherData.marketAnalysis) {
+        data.otherData.marketAnalysis = {};
+      }
+
+      data.otherData.marketAnalysis.image = result.secure_url;
+    }
+
+    /* =====================================================
+       SPEAKER IMAGES
+    ===================================================== */
+
+    if (Array.isArray(data.speakers)) {
+      for (let index = 0; index < data.speakers.length; index++) {
+        const speakerFile = files.find(
+          (file) => file.fieldname === `speakerImage_${index}`
+        );
+
+        if (speakerFile) {
+          const result = await uploadToCloudinary(
+            speakerFile,
+            "globalscion/conferences/speakers"
+          );
+
+          data.speakers[index].image = result.secure_url;
+        }
+      }
+    }
+
+    /* =====================================================
+       COMMITTEE IMAGES
+    ===================================================== */
+
+    if (Array.isArray(data.committee)) {
+      for (let index = 0; index < data.committee.length; index++) {
+        const committeeFile = files.find(
+          (file) => file.fieldname === `committeeImage_${index}`
+        );
+
+        if (committeeFile) {
+          const result = await uploadToCloudinary(
+            committeeFile,
+            "globalscion/conferences/committee"
+          );
+
+          data.committee[index].image = result.secure_url;
+        }
+      }
+    }
+
+    /* =====================================================
+       SPONSOR IMAGES
+    ===================================================== */
+
+    const sponsorFiles = files.filter((file) =>
+      file.fieldname.startsWith("sponsorImage_")
+    );
+
+    if (sponsorFiles.length > 0) {
+      data.sponsors = Array.isArray(data.sponsors)
+        ? data.sponsors
+        : [];
+
+      for (const file of sponsorFiles) {
+        const result = await uploadToCloudinary(
+          file,
+          "globalscion/conferences/sponsors"
+        );
+
+        const index = Number(
+          file.fieldname.replace("sponsorImage_", "")
+        );
+
+        data.sponsors[index] = result.secure_url;
+      }
+
+      data.sponsors = data.sponsors.filter(Boolean);
+    }
+
+    /* =====================================================
+       CREATE DATABASE DOCUMENT
+    ===================================================== */
 
     const conference = await Conference.create({
-        basicInformation: {
-            conferenceName:
-                basicInformation.conferenceName.trim(),
-
-            shortName:
-                basicInformation.shortName.trim(),
-
-            category:
-                basicInformation.category.trim(),
-
-            conferenceType:
-                basicInformation.conferenceType || "Physical",
-
-            status:
-                basicInformation.status || "Draft",
-
-            conferenceDescription:
-                basicInformation.conferenceDescription || "",
-        },
-
-        conferenceDates: {
-            startDate: conferenceDates.startDate,
-
-            endDate: conferenceDates.endDate,
-
-            registrationStartDate:
-                conferenceDates.registrationStartDate || null,
-
-            registrationDeadline:
-                conferenceDates.registrationDeadline || null,
-
-            abstractSubmissionDeadline:
-                conferenceDates.abstractSubmissionDeadline || null,
-
-            fullPaperSubmissionDeadline:
-                conferenceDates.fullPaperSubmissionDeadline || null,
-
-            timeZone:
-                conferenceDates.timeZone || "Asia/Kolkata",
-        },
-
-        venueInformation:
-            venueInformation || {},
-
-        registrationTypes:
-            Array.isArray(registrationTypes)
-                ? registrationTypes
-                : [],
-
-        submissionSettings:
-            submissionSettings || {},
-
-        conferenceTopics:
-            Array.isArray(conferenceTopics)
-                ? conferenceTopics
-                : [],
-
-        speakers:
-            Array.isArray(speakers)
-                ? speakers
-                : [],
-
-        organizingCommittee:
-            Array.isArray(organizingCommittee)
-                ? organizingCommittee
-                : [],
-
-        conferenceProgram:
-            Array.isArray(conferenceProgram)
-                ? conferenceProgram
-                : [],
-
-        conferenceMedia:
-            conferenceMedia || {},
-
-        contactInformation:
-            contactInformation || {},
-
-        socialMedia:
-            socialMedia || {},
-
-        slug: slug
-            ? slug.toLowerCase().trim()
-            : basicInformation.shortName
-                  .toLowerCase()
-                  .trim()
-                  .replace(/[^a-z0-9]+/g, "-")
-                  .replace(/^-+|-+$/g, ""),
+      ...data,
+      createdBy: req.user?._id || null,
     });
 
-    res.status(201).json({
-        success: true,
-        message: "Conference created successfully",
-        data: conference,
+    return res.status(201).json({
+      success: true,
+      message: "Conference created successfully",
+      data: conference,
     });
-});
+  } catch (error) {
+    console.error("Create conference error:", error);
 
-exports.getAllConferences = catchAsync(async (req, res, next) => {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create conference",
+    });
+  }
+};
+
+exports.getAllConferences = async (req, res) => {
+  try {
     const conferences = await Conference.find()
-        .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.status(200).json({
-        success: true,
-        message: "Conferences fetched successfully",
-        count: conferences.length,
-        data: conferences,
+    return res.status(200).json({
+      success: true,
+      count: conferences.length,
+      data: conferences,
     });
-});
+  } catch (error) {
+    console.error("Get conferences error:", error);
 
-exports.updateConference = catchAsync(async (req, res, next) => {
-    const { conferenceId } = req.params;
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch conferences",
+    });
+  }
+};
 
-    const conference = await Conference.findById(conferenceId);
+exports.getConferenceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const conference = await Conference.findOne({
+      id,
+    }).lean();
 
     if (!conference) {
-        return next(
-            new AppError(
-                "Conference not found",
-                404
-            )
-        );
+      return res.status(404).json({
+        success: false,
+        message: "Conference not found",
+      });
     }
 
-    const {
-        basicInformation,
-        conferenceDates,
-        venueInformation,
-        registrationTypes,
-        submissionSettings,
-        conferenceTopics,
-        speakers,
-        organizingCommittee,
-        conferenceProgram,
-        conferenceMedia,
-        contactInformation,
-        socialMedia,
-        slug,
-    } = req.body;
-
-    if (basicInformation) {
-        if (basicInformation.conferenceName !== undefined) {
-            conference.basicInformation.conferenceName =
-                basicInformation.conferenceName.trim();
-        }
-
-        if (basicInformation.shortName !== undefined) {
-            conference.basicInformation.shortName =
-                basicInformation.shortName.trim();
-        }
-
-        if (basicInformation.category !== undefined) {
-            conference.basicInformation.category =
-                basicInformation.category.trim();
-        }
-
-        if (basicInformation.conferenceType !== undefined) {
-            conference.basicInformation.conferenceType =
-                basicInformation.conferenceType;
-        }
-
-        if (basicInformation.status !== undefined) {
-            conference.basicInformation.status =
-                basicInformation.status;
-        }
-
-        if (
-            basicInformation.conferenceDescription !==
-            undefined
-        ) {
-            conference.basicInformation.conferenceDescription =
-                basicInformation.conferenceDescription;
-        }
-    }
-
-    if (conferenceDates) {
-        if (conferenceDates.startDate !== undefined) {
-            conference.conferenceDates.startDate =
-                conferenceDates.startDate;
-        }
-
-        if (conferenceDates.endDate !== undefined) {
-            conference.conferenceDates.endDate =
-                conferenceDates.endDate;
-        }
-
-        if (
-            conferenceDates.registrationStartDate !==
-            undefined
-        ) {
-            conference.conferenceDates.registrationStartDate =
-                conferenceDates.registrationStartDate;
-        }
-
-        if (
-            conferenceDates.registrationDeadline !==
-            undefined
-        ) {
-            conference.conferenceDates.registrationDeadline =
-                conferenceDates.registrationDeadline;
-        }
-
-        if (
-            conferenceDates.abstractSubmissionDeadline !==
-            undefined
-        ) {
-            conference.conferenceDates.abstractSubmissionDeadline =
-                conferenceDates.abstractSubmissionDeadline;
-        }
-
-        if (
-            conferenceDates.fullPaperSubmissionDeadline !==
-            undefined
-        ) {
-            conference.conferenceDates.fullPaperSubmissionDeadline =
-                conferenceDates.fullPaperSubmissionDeadline;
-        }
-
-        if (conferenceDates.timeZone !== undefined) {
-            conference.conferenceDates.timeZone =
-                conferenceDates.timeZone;
-        }
-    }
-
-    if (venueInformation !== undefined) {
-        conference.venueInformation =
-            venueInformation;
-    }
-
-    if (registrationTypes !== undefined) {
-        conference.registrationTypes =
-            registrationTypes;
-    }
-
-    if (submissionSettings !== undefined) {
-        conference.submissionSettings =
-            submissionSettings;
-    }
-
-    if (conferenceTopics !== undefined) {
-        conference.conferenceTopics =
-            conferenceTopics;
-    }
-
-    if (speakers !== undefined) {
-        conference.speakers = speakers;
-    }
-
-    if (organizingCommittee !== undefined) {
-        conference.organizingCommittee =
-            organizingCommittee;
-    }
-
-    if (conferenceProgram !== undefined) {
-        conference.conferenceProgram =
-            conferenceProgram;
-    }
-
-    if (conferenceMedia !== undefined) {
-        conference.conferenceMedia =
-            conferenceMedia;
-    }
-
-    if (contactInformation !== undefined) {
-        conference.contactInformation =
-            contactInformation;
-    }
-
-    if (socialMedia !== undefined) {
-        conference.socialMedia =
-            socialMedia;
-    }
-
-    if (slug !== undefined) {
-        conference.slug = slug
-            .toLowerCase()
-            .trim();
-    }
-
-    await conference.save();
-
-    res.status(200).json({
-        success: true,
-        message: "Conference updated successfully",
-        data: conference,
+    return res.status(200).json({
+      success: true,
+      data: conference,
     });
-});
+  } catch (error) {
+    console.error("Get conference error:", error);
 
-exports.getConferenceById = catchAsync(async (req, res, next) => {
-    const { conferenceId } = req.params;
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch conference",
+    });
+  }
+};
 
-    const conference = await Conference.findById(conferenceId);
+exports.updateConference = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const data = parseConferenceData(req);
+
+    const conference = await Conference.findOne({ id });
 
     if (!conference) {
-        return next(
-            new AppError(
-                "Conference not found",
-                404
-            )
-        );
+      return res.status(404).json({
+        success: false,
+        message: "Conference not found",
+      });
     }
 
-    res.status(200).json({
-        success: true,
-        message: "Conference fetched successfully",
-        data: conference,
+    const files = req.files || [];
+
+    /* =====================================================
+       HERO IMAGE
+    ===================================================== */
+
+    const heroImage = files.find(
+      (file) => file.fieldname === "heroImage"
+    );
+
+    if (heroImage) {
+      if (conference.image) {
+        await deleteFromCloudinary(conference.image);
+      }
+
+      const result = await uploadToCloudinary(
+        heroImage,
+        "globalscion/conferences/hero"
+      );
+
+      data.image = result.secure_url;
+    } else {
+      data.image = conference.image;
+    }
+
+    /* =====================================================
+       ABOUT IMAGE
+    ===================================================== */
+
+    const aboutImage = files.find(
+      (file) => file.fieldname === "aboutImage"
+    );
+
+    if (aboutImage) {
+      if (conference.aboutImage) {
+        await deleteFromCloudinary(conference.aboutImage);
+      }
+
+      const result = await uploadToCloudinary(
+        aboutImage,
+        "globalscion/conferences/about"
+      );
+
+      data.aboutImage = result.secure_url;
+    } else {
+      data.aboutImage = conference.aboutImage;
+    }
+
+    /* =====================================================
+       MARKET IMAGE
+    ===================================================== */
+
+    const marketImage = files.find(
+      (file) => file.fieldname === "marketImage"
+    );
+
+    if (!data.otherData) {
+      data.otherData = {};
+    }
+
+    if (!data.otherData.marketAnalysis) {
+      data.otherData.marketAnalysis = {};
+    }
+
+    if (marketImage) {
+      const oldMarketImage =
+        conference.otherData?.marketAnalysis?.image;
+
+      if (oldMarketImage) {
+        await deleteFromCloudinary(oldMarketImage);
+      }
+
+      const result = await uploadToCloudinary(
+        marketImage,
+        "globalscion/conferences/market"
+      );
+
+      data.otherData.marketAnalysis.image = result.secure_url;
+    } else {
+      data.otherData.marketAnalysis.image =
+        conference.otherData?.marketAnalysis?.image || "";
+    }
+
+    /* =====================================================
+       SPEAKER IMAGES
+    ===================================================== */
+
+    if (Array.isArray(data.speakers)) {
+      for (let index = 0; index < data.speakers.length; index++) {
+        const speakerFile = files.find(
+          (file) => file.fieldname === `speakerImage_${index}`
+        );
+
+        if (speakerFile) {
+          const oldImage =
+            conference.speakers?.[index]?.image;
+
+          if (oldImage) {
+            await deleteFromCloudinary(oldImage);
+          }
+
+          const result = await uploadToCloudinary(
+            speakerFile,
+            "globalscion/conferences/speakers"
+          );
+
+          data.speakers[index].image = result.secure_url;
+        } else if (!data.speakers[index].image) {
+          data.speakers[index].image =
+            conference.speakers?.[index]?.image || "";
+        }
+      }
+    }
+
+    /* =====================================================
+       COMMITTEE IMAGES
+    ===================================================== */
+
+    if (Array.isArray(data.committee)) {
+      for (let index = 0; index < data.committee.length; index++) {
+        const committeeFile = files.find(
+          (file) =>
+            file.fieldname === `committeeImage_${index}`
+        );
+
+        if (committeeFile) {
+          const oldImage =
+            conference.committee?.[index]?.image;
+
+          if (oldImage) {
+            await deleteFromCloudinary(oldImage);
+          }
+
+          const result = await uploadToCloudinary(
+            committeeFile,
+            "globalscion/conferences/committee"
+          );
+
+          data.committee[index].image = result.secure_url;
+        } else if (!data.committee[index].image) {
+          data.committee[index].image =
+            conference.committee?.[index]?.image || "";
+        }
+      }
+    }
+
+    /* =====================================================
+       SPONSORS
+    ===================================================== */
+
+    const sponsorFiles = files.filter((file) =>
+      file.fieldname.startsWith("sponsorImage_")
+    );
+
+    if (sponsorFiles.length > 0) {
+      data.sponsors = Array.isArray(data.sponsors)
+        ? data.sponsors
+        : [];
+
+      for (const file of sponsorFiles) {
+        const result = await uploadToCloudinary(
+          file,
+          "globalscion/conferences/sponsors"
+        );
+
+        const index = Number(
+          file.fieldname.replace("sponsorImage_", "")
+        );
+
+        data.sponsors[index] = result.secure_url;
+      }
+
+      data.sponsors = data.sponsors.filter(Boolean);
+    } else {
+      data.sponsors = conference.sponsors || [];
+    }
+
+    data.updatedBy = req.user?._id || null;
+
+    /* =====================================================
+       UPDATE
+    ===================================================== */
+
+    const updatedConference =
+      await Conference.findOneAndUpdate(
+        { id },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    return res.status(200).json({
+      success: true,
+      message: "Conference updated successfully",
+      data: updatedConference,
     });
-});
+  } catch (error) {
+    console.error("Update conference error:", error);
 
-exports.deleteConference = catchAsync(async (req, res, next) => {
-    const { conferenceId } = req.params;
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update conference",
+    });
+  }
+};
 
-    const conference = await Conference.findById(conferenceId);
+exports.deleteConference = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const conference = await Conference.findOne({ id });
 
     if (!conference) {
-        return next(
-            new AppError(
-                "Conference not found",
-                404
-            )
-        );
+      return res.status(404).json({
+        success: false,
+        message: "Conference not found",
+      });
     }
 
-    await Conference.findByIdAndDelete(conferenceId);
+    /* =====================================================
+       DELETE HERO
+    ===================================================== */
 
-    res.status(200).json({
-        success: true,
-        message: "Conference deleted successfully",
+    if (conference.image) {
+      await deleteFromCloudinary(conference.image);
+    }
+
+    /* =====================================================
+       DELETE ABOUT IMAGE
+    ===================================================== */
+
+    if (conference.aboutImage) {
+      await deleteFromCloudinary(conference.aboutImage);
+    }
+
+    /* =====================================================
+       DELETE MARKET IMAGE
+    ===================================================== */
+
+    const marketImage =
+      conference.otherData?.marketAnalysis?.image;
+
+    if (marketImage) {
+      await deleteFromCloudinary(marketImage);
+    }
+
+    /* =====================================================
+       DELETE SPEAKER IMAGES
+    ===================================================== */
+
+    if (Array.isArray(conference.speakers)) {
+      for (const speaker of conference.speakers) {
+        if (speaker.image) {
+          await deleteFromCloudinary(speaker.image);
+        }
+      }
+    }
+
+    /* =====================================================
+       DELETE COMMITTEE IMAGES
+    ===================================================== */
+
+    if (Array.isArray(conference.committee)) {
+      for (const member of conference.committee) {
+        if (member.image) {
+          await deleteFromCloudinary(member.image);
+        }
+      }
+    }
+
+    /* =====================================================
+       DELETE SPONSOR IMAGES
+    ===================================================== */
+
+    if (Array.isArray(conference.sponsors)) {
+      for (const sponsor of conference.sponsors) {
+        if (sponsor) {
+          await deleteFromCloudinary(sponsor);
+        }
+      }
+    }
+
+    await Conference.findOneAndDelete({ id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Conference deleted successfully",
     });
-});
+  } catch (error) {
+    console.error("Delete conference error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete conference",
+    });
+  }
+};
+
+exports.publishConference = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const conference = await Conference.findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          status: "Published",
+          updatedBy: req.user?._id || null,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!conference) {
+      return res.status(404).json({
+        success: false,
+        message: "Conference not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Conference published successfully",
+      data: conference,
+    });
+  } catch (error) {
+    console.error("Publish conference error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to publish conference",
+    });
+  }
+};
+
 
 exports.createEmployee = async (req, res) => {
   try {
@@ -797,3 +1049,536 @@ exports.deleteEmployee = async (req, res) => {
     });
   }
 };
+
+
+exports.createSpeaker = catchAsync(async (req, res, next) => {
+  const {
+    conferenceId,
+    fullName,
+    designation,
+    speakerType,
+    organization,
+    country,
+    bio,
+    imageUrl,
+    publicId,
+    email,
+    linkedin,
+    website,
+    status,
+    displayOrder,
+  } = req.body;
+
+  // ----------------------------------------------------------
+  // REQUIRED FIELDS
+  // ----------------------------------------------------------
+
+  if (
+    !conferenceId ||
+    !fullName ||
+    !designation ||
+    !organization ||
+    !country ||
+    !bio
+  ) {
+    return next(
+      new AppError(
+        "Conference ID, full name, designation, organization, country and bio are required",
+        400
+      )
+    );
+  }
+
+  // ----------------------------------------------------------
+  // VALIDATE CONFERENCE ID
+  // ----------------------------------------------------------
+
+  if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
+    return next(
+      new AppError("Invalid conference ID", 400)
+    );
+  }
+
+  // ----------------------------------------------------------
+  // CHECK CONFERENCE
+  // ----------------------------------------------------------
+
+  const conference = await Conference.findById(conferenceId);
+
+  if (!conference) {
+    return next(
+      new AppError("Conference not found", 404)
+    );
+  }
+
+  // ----------------------------------------------------------
+  // CREATE SPEAKER
+  // ----------------------------------------------------------
+
+  const speaker = await Speaker.create({
+    conferenceId,
+
+    fullName: fullName.trim(),
+
+    designation: designation.trim(),
+
+    speakerType:
+      speakerType || "Invited Speaker",
+
+    organization: organization.trim(),
+
+    country: country.trim(),
+
+    bio: bio.trim(),
+
+    imageUrl: imageUrl?.trim() || "",
+
+    publicId: publicId?.trim() || "",
+
+    email: email?.trim().toLowerCase() || "",
+
+    linkedin: linkedin?.trim() || "",
+
+    website: website?.trim() || "",
+
+    status: status || "Active",
+
+    displayOrder:
+      displayOrder !== undefined
+        ? Number(displayOrder)
+        : 0,
+  });
+
+
+  return res.status(201).json({
+    success: true,
+    message: "Speaker created successfully",
+    data: speaker,
+  });
+});
+
+
+
+exports.getAllSpeakers = catchAsync(
+  async (req, res, next) => {
+    const speakers = await Speaker.find()
+      .populate(
+        "conferenceId",
+        "basicInformation conferenceDates"
+      )
+      .sort({
+        displayOrder: 1,
+        createdAt: -1,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message: "Speakers fetched successfully",
+      count: speakers.length,
+      data: speakers,
+    });
+  }
+);
+
+
+exports.getSpeakerById = catchAsync(
+  async (req, res, next) => {
+    const { speakerId } = req.params;
+
+    // --------------------------------------------------------
+    // VALIDATE ID
+    // --------------------------------------------------------
+
+    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+      return next(
+        new AppError("Invalid speaker ID", 400)
+      );
+    }
+
+    // --------------------------------------------------------
+    // FIND SPEAKER
+    // --------------------------------------------------------
+
+    const speaker = await Speaker.findById(
+      speakerId
+    ).populate(
+      "conferenceId",
+      "basicInformation conferenceDates venueInformation"
+    );
+
+    if (!speaker) {
+      return next(
+        new AppError("Speaker not found", 404)
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Speaker fetched successfully",
+      data: speaker,
+    });
+  }
+);
+
+
+
+exports.getSpeakersByConference =
+  catchAsync(async (req, res, next) => {
+    const { conferenceId } = req.params;
+
+    // --------------------------------------------------------
+    // VALIDATE CONFERENCE ID
+    // --------------------------------------------------------
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        conferenceId
+      )
+    ) {
+      return next(
+        new AppError(
+          "Invalid conference ID",
+          400
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // CHECK CONFERENCE
+    // --------------------------------------------------------
+
+    const conference =
+      await Conference.findById(
+        conferenceId
+      );
+
+    if (!conference) {
+      return next(
+        new AppError(
+          "Conference not found",
+          404
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // GET SPEAKERS
+    // --------------------------------------------------------
+
+    const speakers = await Speaker.find({
+      conferenceId,
+    }).sort({
+      displayOrder: 1,
+      createdAt: -1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Conference speakers fetched successfully",
+      conference: {
+        _id: conference._id,
+        conferenceName:
+          conference.basicInformation
+            ?.conferenceName,
+        shortName:
+          conference.basicInformation?.shortName,
+      },
+      count: speakers.length,
+      data: speakers,
+    });
+  });
+
+
+
+exports.updateSpeaker = catchAsync(
+  async (req, res, next) => {
+    const { speakerId } = req.params;
+
+    // --------------------------------------------------------
+    // VALIDATE SPEAKER ID
+    // --------------------------------------------------------
+
+    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+      return next(
+        new AppError("Invalid speaker ID", 400)
+      );
+    }
+
+    // --------------------------------------------------------
+    // FIND SPEAKER
+    // --------------------------------------------------------
+
+    const speaker =
+      await Speaker.findById(speakerId);
+
+    if (!speaker) {
+      return next(
+        new AppError("Speaker not found", 404)
+      );
+    }
+
+    const {
+      conferenceId,
+      fullName,
+      designation,
+      speakerType,
+      organization,
+      country,
+      bio,
+      imageUrl,
+      publicId,
+      email,
+      linkedin,
+      website,
+      status,
+      displayOrder,
+    } = req.body;
+
+    // --------------------------------------------------------
+    // CONFERENCE UPDATE
+    // --------------------------------------------------------
+
+    if (conferenceId !== undefined) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          conferenceId
+        )
+      ) {
+        return next(
+          new AppError(
+            "Invalid conference ID",
+            400
+          )
+        );
+      }
+
+      const conference =
+        await Conference.findById(
+          conferenceId
+        );
+
+      if (!conference) {
+        return next(
+          new AppError(
+            "Conference not found",
+            404
+          )
+        );
+      }
+
+      speaker.conferenceId =
+        conferenceId;
+    }
+
+    // --------------------------------------------------------
+    // BASIC DETAILS
+    // --------------------------------------------------------
+
+    if (fullName !== undefined) {
+      speaker.fullName =
+        fullName.trim();
+    }
+
+    if (designation !== undefined) {
+      speaker.designation =
+        designation.trim();
+    }
+
+    if (speakerType !== undefined) {
+      speaker.speakerType =
+        speakerType;
+    }
+
+    if (organization !== undefined) {
+      speaker.organization =
+        organization.trim();
+    }
+
+    if (country !== undefined) {
+      speaker.country =
+        country.trim();
+    }
+
+    if (bio !== undefined) {
+      speaker.bio =
+        bio.trim();
+    }
+
+    // --------------------------------------------------------
+    // CLOUDINARY
+    // --------------------------------------------------------
+
+    if (imageUrl !== undefined) {
+      speaker.imageUrl =
+        imageUrl.trim();
+    }
+
+    if (publicId !== undefined) {
+      speaker.publicId =
+        publicId.trim();
+    }
+
+    // --------------------------------------------------------
+    // CONTACT
+    // --------------------------------------------------------
+
+    if (email !== undefined) {
+      speaker.email =
+        email.trim().toLowerCase();
+    }
+
+    if (linkedin !== undefined) {
+      speaker.linkedin =
+        linkedin.trim();
+    }
+
+    if (website !== undefined) {
+      speaker.website =
+        website.trim();
+    }
+
+    // --------------------------------------------------------
+    // STATUS
+    // --------------------------------------------------------
+
+    if (status !== undefined) {
+      speaker.status = status;
+    }
+
+    if (displayOrder !== undefined) {
+      speaker.displayOrder =
+        Number(displayOrder);
+    }
+
+    // --------------------------------------------------------
+    // SAVE
+    // --------------------------------------------------------
+
+    await speaker.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Speaker updated successfully",
+      data: speaker,
+    });
+  }
+);
+
+
+
+exports.deleteSpeaker = catchAsync(
+  async (req, res, next) => {
+    const { speakerId } = req.params;
+
+    // --------------------------------------------------------
+    // VALIDATE ID
+    // --------------------------------------------------------
+
+    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+      return next(
+        new AppError("Invalid speaker ID", 400)
+      );
+    }
+
+    // --------------------------------------------------------
+    // FIND SPEAKER
+    // --------------------------------------------------------
+
+    const speaker =
+      await Speaker.findById(speakerId);
+
+    if (!speaker) {
+      return next(
+        new AppError("Speaker not found", 404)
+      );
+    }
+
+    // --------------------------------------------------------
+    // DELETE
+    // --------------------------------------------------------
+
+    await Speaker.findByIdAndDelete(
+      speakerId
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Speaker deleted successfully",
+    });
+  }
+);
+
+
+
+exports.deleteAllSpeakers =catchAsync(async (req, res, next) => {
+    const result =
+      await Speaker.deleteMany({});
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "All speakers deleted successfully",
+      deletedCount:
+        result.deletedCount,
+    });
+  });
+
+
+exports.deleteConferenceSpeakers =catchAsync(async (req, res, next) => {
+    const { conferenceId } = req.params;
+
+    // --------------------------------------------------------
+    // VALIDATE CONFERENCE ID
+    // --------------------------------------------------------
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        conferenceId
+      )
+    ) {
+      return next(
+        new AppError(
+          "Invalid conference ID",
+          400
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // CHECK CONFERENCE
+    // --------------------------------------------------------
+
+    const conference =
+      await Conference.findById(
+        conferenceId
+      );
+
+    if (!conference) {
+      return next(
+        new AppError(
+          "Conference not found",
+          404
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // DELETE CONFERENCE SPEAKERS
+    // --------------------------------------------------------
+
+    const result =
+      await Speaker.deleteMany({
+        conferenceId,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "All speakers of the conference deleted successfully",
+      deletedCount:
+        result.deletedCount,
+    });
+  });

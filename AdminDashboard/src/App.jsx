@@ -3,6 +3,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import AdminLogin from "./pages/auth/AdminLogin";
 import AdminLayout from "./components/admin/AdminLayout";
+import AddSpeakersPage from "./pages/admin/AddSpeakersPage";
+import EmployeeDetailsPage from "./pages/admin/employees/EmployeeDetailsPage";
+import RegistrationDetailsPage from "./pages/admin/RegistrationDetailsPage";
+import RegistrationUserDetailsPage from "./pages/admin/RegistrationUserDetailsPage";
 
 import Dashboard from "./pages/admin/Dashboard";
 
@@ -17,88 +21,64 @@ import Reports from "./pages/admin/Reports";
 import Speakers from "./pages/admin/Speakers";
 import Notifications from "./pages/admin/Notifications";
 import Profile from "./pages/admin/Profile";
+import Employees from "./pages/admin/employees/Employees";
 
 function App() {
   return (
     <Routes>
-
       {/* ================= LOGIN ================= */}
 
       <Route path="/admin/login" element={<AdminLogin />} />
 
-
       {/* ================= ADMIN ================= */}
 
       <Route path="/admin" element={<AdminLayout />}>
-
         {/* Dashboard */}
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
 
-        <Route
-          path="dashboard"
-          element={<Dashboard />}
-        />
-
+        <Route path="dashboard" element={<Dashboard />} />
 
         {/* Conferences */}
-        <Route
-          path="conferences/create"
-          element={<CreateConference />}
-        />
+        <Route path="conferences/create" element={<CreateConference />} />
 
-        <Route
-          path="conferences"
-          element={<AllConferences />}
-        />
+        <Route path="conferences" element={<AllConferences />} />
 
+        <Route path="/admin/employees" element={<Employees />} />
 
         {/* Employees */}
+        <Route path="employees/create" element={<CreateEmployee />} />
+
         <Route
-          path="employees/create"
-          element={<CreateEmployee />}
+          path="/admin/employees/:employeeId"
+          element={<EmployeeDetailsPage />}
         />
 
-
-        {/* Other Pages */}
-        <Route
-          path="registrations"
-          element={<Registrations />}
-        />
+        <Route path="/admin/registrations" element={<Registrations />} />
 
         <Route
-          path="payments"
-          element={<Payments />}
+          path="/admin/registrations/:registrationId"
+          element={<RegistrationDetailsPage />}
         />
 
         <Route
-          path="reports"
-          element={<Reports />}
+          path="/admin/registrations/:registrationId/user/:userId"
+          element={<RegistrationUserDetailsPage />}
         />
 
-        <Route
-          path="speakers"
-          element={<Speakers />}
-        />
+        <Route path="payments" element={<Payments />} />
 
-        <Route
-          path="notifications"
-          element={<Notifications />}
-        />
+        <Route path="reports" element={<Reports />} />
 
-        <Route
-          path="profile"
-          element={<Profile />}
-        />
+        <Route path="speakers" element={<Speakers />} />
+        <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
 
+        <Route path="notifications" element={<Notifications />} />
+
+        <Route path="profile" element={<Profile />} />
       </Route>
 
-
       {/* Default */}
-      <Route
-        path="*"
-        element={<Navigate to="/admin/login" replace />}
-      />
-
+      <Route path="*" element={<Navigate to="/admin/login" replace />} />
     </Routes>
   );
 }
