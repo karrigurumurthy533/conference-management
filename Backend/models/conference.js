@@ -512,18 +512,6 @@ const contactSchema = new mongoose.Schema(
 
 const conferenceSchema = new mongoose.Schema(
   {
-    /* =========================================
-       BASIC INFORMATION
-    ========================================= */
-
-    id: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-
     category: {
       type: String,
       required: true,
@@ -556,10 +544,6 @@ const conferenceSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    /* =========================================
-       DATE / LOCATION
-    ========================================= */
 
     date: {
       type: String,
@@ -603,18 +587,10 @@ const conferenceSchema = new mongoose.Schema(
       default: "Draft",
     },
 
-    /* =========================================
-       VENUE
-    ========================================= */
-
     venue: {
       type: venueSchema,
       default: () => ({}),
     },
-
-    /* =========================================
-       REGISTRATION
-    ========================================= */
 
     registrationDates: {
       type: registrationDatesSchema,

@@ -1,67 +1,25 @@
-const API_URL = "http://localhost:5000/api/v1/admin/";
+import axiosInstance from "../redux/axiosInstance";
 
-const handleResponse = async (response) => {
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
-  }
-
-  return data;
+export const createConferenceApi = (formData) => {
+  return axiosInstance.post("/admin/conferences", formData);
 };
 
-export const createConferenceApi = async (formData) => {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    credentials: "include",
-    body: formData,
-  });
-
-  return handleResponse(response);
+export const getConferencesApi = () => {
+  return axiosInstance.get("/admin/conferences");
 };
 
-export const getConferencesApi = async () => {
-  const response = await fetch(API_URL, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  return handleResponse(response);
+export const getConferenceByIdApi = (id) => {
+  return axiosInstance.get(`/admin/conferences/${id}`);
 };
 
-export const getConferenceByIdApi = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  return handleResponse(response);
+export const updateConferenceApi = ({ id, formData }) => {
+  return axiosInstance.put(`/admin/conferences/${id}`, formData);
 };
 
-export const updateConferenceApi = async ({ id, formData }) => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    credentials: "include",
-    body: formData,
-  });
-
-  return handleResponse(response);
+export const deleteConferenceApi = (id) => {
+  return axiosInstance.delete(`/admin/conferences/${id}`);
 };
 
-export const deleteConferenceApi = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-
-  return handleResponse(response);
-};
-
-export const publishConferenceApi = async (id) => {
-  const response = await fetch(`${API_URL}/${id}/publish`, {
-    method: "PATCH",
-    credentials: "include",
-  });
-
-  return handleResponse(response);
+export const publishConferenceApi = (id) => {
+  return axiosInstance.patch(`/admin/conferences/${id}/publish`);
 };

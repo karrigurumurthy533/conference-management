@@ -1,3 +1,4 @@
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import {
@@ -17,7 +18,9 @@ export const createConference = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -30,7 +33,9 @@ export const getConferences = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -43,7 +48,9 @@ export const getConferenceById = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -59,7 +66,9 @@ export const updateConference = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -68,11 +77,16 @@ export const deleteConference = createAsyncThunk(
   "conference/deleteConference",
   async (id, { rejectWithValue }) => {
     try {
-      await deleteConferenceApi(id);
+      const response = await deleteConferenceApi(id);
 
-      return id;
+      return {
+        id,
+        response: response.data,
+      };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -85,7 +99,9 @@ export const publishConference = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -93,13 +109,11 @@ export const publishConference = createAsyncThunk(
 const initialState = {
   conferences: [],
   selectedConference: null,
-
   loading: false,
   createLoading: false,
   updateLoading: false,
   deleteLoading: false,
   publishLoading: false,
-
   error: null,
   success: false,
   message: "",
@@ -107,6 +121,7 @@ const initialState = {
 
 const conferenceSlice = createSlice({
   name: "conference",
+
   initialState,
 
   reducers: {
@@ -127,9 +142,9 @@ const conferenceSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* =========================
-         CREATE
-      ========================= */
+      // =====================================================
+      // CREATE CONFERENCE
+      // =====================================================
 
       .addCase(createConference.pending, (state) => {
         state.createLoading = true;
@@ -140,20 +155,30 @@ const conferenceSlice = createSlice({
       .addCase(createConference.fulfilled, (state, action) => {
         state.createLoading = false;
         state.success = true;
-        state.message = "Conference created successfully";
 
-        state.conferences.unshift(action.payload);
+        state.message =
+          action.payload?.message ||
+          "Conference created successfully";
+
+        const conference =
+          action.payload?.data ||
+          action.payload;
+
+        if (conference) {
+          state.conferences.unshift(conference);
+        }
       })
 
       .addCase(createConference.rejected, (state, action) => {
         state.createLoading = false;
         state.error =
-          action.payload || "Failed to create conference";
+          action.payload ||
+          "Failed to create conference";
       })
 
-      /* =========================
-         GET ALL
-      ========================= */
+      // =====================================================
+      // GET ALL CONFERENCES
+      // =====================================================
 
       .addCase(getConferences.pending, (state) => {
         state.loading = true;
@@ -162,18 +187,21 @@ const conferenceSlice = createSlice({
 
       .addCase(getConferences.fulfilled, (state, action) => {
         state.loading = false;
-        state.conferences = action.payload || [];
+
+        state.conferences =
+          action.payload?.data || [];
       })
 
       .addCase(getConferences.rejected, (state, action) => {
         state.loading = false;
         state.error =
-          action.payload || "Failed to fetch conferences";
+          action.payload ||
+          "Failed to fetch conferences";
       })
 
-      /* =========================
-         GET SINGLE
-      ========================= */
+      // =====================================================
+      // GET CONFERENCE BY MONGODB _id
+      // =====================================================
 
       .addCase(getConferenceById.pending, (state) => {
         state.loading = true;
@@ -182,18 +210,22 @@ const conferenceSlice = createSlice({
 
       .addCase(getConferenceById.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedConference = action.payload;
+
+        state.selectedConference =
+          action.payload?.data ||
+          action.payload;
       })
 
       .addCase(getConferenceById.rejected, (state, action) => {
         state.loading = false;
         state.error =
-          action.payload || "Failed to fetch conference";
+          action.payload ||
+          "Failed to fetch conference";
       })
 
-      /* =========================
-         UPDATE
-      ========================= */
+      // =====================================================
+      // UPDATE CONFERENCE
+      // =====================================================
 
       .addCase(updateConference.pending, (state) => {
         state.updateLoading = true;
@@ -204,28 +236,45 @@ const conferenceSlice = createSlice({
       .addCase(updateConference.fulfilled, (state, action) => {
         state.updateLoading = false;
         state.success = true;
-        state.message = "Conference updated successfully";
 
-        const index = state.conferences.findIndex(
-          (item) => item.id === action.payload.id
-        );
+        state.message =
+          action.payload?.message ||
+          "Conference updated successfully";
 
-        if (index !== -1) {
-          state.conferences[index] = action.payload;
+        const updatedConference =
+          action.payload?.data ||
+          action.payload;
+
+        if (!updatedConference) {
+          return;
         }
 
-        state.selectedConference = action.payload;
+        const index =
+          state.conferences.findIndex(
+            (item) =>
+              item._id ===
+              updatedConference._id
+          );
+
+        if (index !== -1) {
+          state.conferences[index] =
+            updatedConference;
+        }
+
+        state.selectedConference =
+          updatedConference;
       })
 
       .addCase(updateConference.rejected, (state, action) => {
         state.updateLoading = false;
         state.error =
-          action.payload || "Failed to update conference";
+          action.payload ||
+          "Failed to update conference";
       })
 
-      /* =========================
-         DELETE
-      ========================= */
+      // =====================================================
+      // DELETE CONFERENCE
+      // =====================================================
 
       .addCase(deleteConference.pending, (state) => {
         state.deleteLoading = true;
@@ -235,13 +284,24 @@ const conferenceSlice = createSlice({
       .addCase(deleteConference.fulfilled, (state, action) => {
         state.deleteLoading = false;
         state.success = true;
-        state.message = "Conference deleted successfully";
 
-        state.conferences = state.conferences.filter(
-          (item) => item.id !== action.payload
-        );
+        state.message =
+          action.payload?.response?.message ||
+          "Conference deleted successfully";
 
-        if (state.selectedConference?.id === action.payload) {
+        const deletedId =
+          action.payload?.id;
+
+        state.conferences =
+          state.conferences.filter(
+            (item) =>
+              item._id !== deletedId
+          );
+
+        if (
+          state.selectedConference?._id ===
+          deletedId
+        ) {
           state.selectedConference = null;
         }
       })
@@ -249,12 +309,13 @@ const conferenceSlice = createSlice({
       .addCase(deleteConference.rejected, (state, action) => {
         state.deleteLoading = false;
         state.error =
-          action.payload || "Failed to delete conference";
+          action.payload ||
+          "Failed to delete conference";
       })
 
-      /* =========================
-         PUBLISH
-      ========================= */
+      // =====================================================
+      // PUBLISH CONFERENCE
+      // =====================================================
 
       .addCase(publishConference.pending, (state) => {
         state.publishLoading = true;
@@ -264,23 +325,40 @@ const conferenceSlice = createSlice({
       .addCase(publishConference.fulfilled, (state, action) => {
         state.publishLoading = false;
         state.success = true;
-        state.message = "Conference published successfully";
 
-        const index = state.conferences.findIndex(
-          (item) => item.id === action.payload.id
-        );
+        state.message =
+          action.payload?.message ||
+          "Conference published successfully";
 
-        if (index !== -1) {
-          state.conferences[index] = action.payload;
+        const publishedConference =
+          action.payload?.data ||
+          action.payload;
+
+        if (!publishedConference) {
+          return;
         }
 
-        state.selectedConference = action.payload;
+        const index =
+          state.conferences.findIndex(
+            (item) =>
+              item._id ===
+              publishedConference._id
+          );
+
+        if (index !== -1) {
+          state.conferences[index] =
+            publishedConference;
+        }
+
+        state.selectedConference =
+          publishedConference;
       })
 
       .addCase(publishConference.rejected, (state, action) => {
         state.publishLoading = false;
         state.error =
-          action.payload || "Failed to publish conference";
+          action.payload ||
+          "Failed to publish conference";
       });
   },
 });

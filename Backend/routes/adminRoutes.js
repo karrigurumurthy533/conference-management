@@ -30,12 +30,12 @@ const handleValidation = (req, res, next) => {
     next();
 };
 
-router.post("/conferences", conferenceUpload, adminController.createConference);
+router.post("/conferences",authMiddleware("admin"),conferenceUpload, adminController.createConference);
 router.get("/conferences", adminController.getAllConferences);
 router.get("/conferences/:id", adminController.getConferenceById);
 router.put("/conferences/:id", conferenceUpload, adminController.updateConference);
-router.delete("/conferences/:id", adminController.deleteConference);
-router.patch("/conferences/:id/publish", adminController.publishConference);
+router.delete("/conferences/:id", authMiddleware("admin"),adminController.deleteConference);
+router.patch("/conferences/:id/publish",authMiddleware("admin"), adminController.publishConference);
 
 router.post(
     "/employee",

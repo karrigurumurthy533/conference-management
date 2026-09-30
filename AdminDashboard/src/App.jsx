@@ -22,6 +22,7 @@ import Speakers from "./pages/admin/Speakers";
 import Notifications from "./pages/admin/Notifications";
 import Profile from "./pages/admin/Profile";
 import Employees from "./pages/admin/employees/Employees";
+import ConferenceDetails from "./pages/admin/conferences/ConferenceDetails";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
         <Route path="conferences/create" element={<CreateConference />} />
 
         <Route path="conferences" element={<AllConferences />} />
+        <Route path="conferences/:id" element={<ConferenceDetails />} />
 
         <Route path="/admin/employees" element={<Employees />} />
 

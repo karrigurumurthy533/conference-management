@@ -1,10 +1,8 @@
+
 import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: "http://localhost:5000/api/v1",
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 axiosInstance.interceptors.request.use(
@@ -15,6 +13,12 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
+
     return config;
   },
   (error) => {
@@ -23,3 +27,4 @@ axiosInstance.interceptors.request.use(
 );
 
 export default axiosInstance;
+

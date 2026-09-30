@@ -27,9 +27,11 @@ import { useDispatch, useSelector } from "react-redux";
 
 
 
-import { createConference } from "../../../redux/conferenceSlice";
+
 import ImageUploader from "../../../components/admin/ImageUploader";
 import MultiImageUploader from "../../../components/admin/MultiImageUploader";
+import { createConference } from "../../../redux/conferenceSlice";
+
 
 
 
@@ -869,16 +871,6 @@ const CreateConference = () => {
       />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <Field label="Conference ID / Slug *">
-          <input
-            name="id"
-            value={formData.id}
-            onChange={handleChange}
-            placeholder="autism-research"
-            className={inputClass}
-          />
-        </Field>
-
         <Field label="Category *">
           <input
             name="category"

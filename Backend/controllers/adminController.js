@@ -1,4 +1,6 @@
 const Conference = require("../models/conference");
+const mongoose = require("mongoose");
+
 
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
@@ -51,7 +53,11 @@ const deleteFromCloudinary = async (imageUrl) => {
 };
 
 const parseConferenceData = (req) => {
-  let data = req.body.data;
+  let data = req.body?.conferenceData;
+
+  if (!data) {
+    data = req.body?.data;
+  }
 
   if (!data) {
     data = req.body;
@@ -86,36 +92,10 @@ exports.createConference = async (req, res) => {
       });
     }
 
-    if (!data.id) {
-      return res.status(400).json({
-        success: false,
-        message: "Conference ID is required",
-      });
-    }
-
-    /* =====================================================
-       CHECK DUPLICATE ID
-    ===================================================== */
-
-    const existingConference = await Conference.findOne({
-      id: data.id,
-    });
-
-    if (existingConference) {
-      return res.status(409).json({
-        success: false,
-        message: "Conference with this ID already exists",
-      });
-    }
-
     const files = req.files || [];
 
-    /* =====================================================
-       HERO IMAGE
-    ===================================================== */
-
     const heroImage = files.find(
-      (file) => file.fieldname === "heroImage"
+      (file) => file.fieldname === "conferenceImage"
     );
 
     if (heroImage) {
@@ -126,10 +106,6 @@ exports.createConference = async (req, res) => {
 
       data.image = result.secure_url;
     }
-
-    /* =====================================================
-       ABOUT IMAGE
-    ===================================================== */
 
     const aboutImage = files.find(
       (file) => file.fieldname === "aboutImage"
@@ -144,20 +120,11 @@ exports.createConference = async (req, res) => {
       data.aboutImage = result.secure_url;
     }
 
-    /* =====================================================
-       MARKET IMAGE
-    ===================================================== */
-
     const marketImage = files.find(
       (file) => file.fieldname === "marketImage"
     );
 
     if (marketImage) {
-      const result = await uploadToCloudinary(
-        marketImage,
-        "globalscion/conferences/market"
-      );
-
       if (!data.otherData) {
         data.otherData = {};
       }
@@ -166,17 +133,24 @@ exports.createConference = async (req, res) => {
         data.otherData.marketAnalysis = {};
       }
 
-      data.otherData.marketAnalysis.image = result.secure_url;
+      const result = await uploadToCloudinary(
+        marketImage,
+        "globalscion/conferences/market"
+      );
+
+      data.otherData.marketAnalysis.image =
+        result.secure_url;
     }
 
-    /* =====================================================
-       SPEAKER IMAGES
-    ===================================================== */
-
     if (Array.isArray(data.speakers)) {
-      for (let index = 0; index < data.speakers.length; index++) {
+      for (
+        let index = 0;
+        index < data.speakers.length;
+        index++
+      ) {
         const speakerFile = files.find(
-          (file) => file.fieldname === `speakerImage_${index}`
+          (file) =>
+            file.fieldname === `speakerImage_${index}`
         );
 
         if (speakerFile) {
@@ -185,19 +159,22 @@ exports.createConference = async (req, res) => {
             "globalscion/conferences/speakers"
           );
 
-          data.speakers[index].image = result.secure_url;
+          data.speakers[index].image =
+            result.secure_url;
         }
       }
     }
 
-    /* =====================================================
-       COMMITTEE IMAGES
-    ===================================================== */
-
     if (Array.isArray(data.committee)) {
-      for (let index = 0; index < data.committee.length; index++) {
+      for (
+        let index = 0;
+        index < data.committee.length;
+        index++
+      ) {
         const committeeFile = files.find(
-          (file) => file.fieldname === `committeeImage_${index}`
+          (file) =>
+            file.fieldname ===
+            `committeeImage_${index}`
         );
 
         if (committeeFile) {
@@ -206,14 +183,11 @@ exports.createConference = async (req, res) => {
             "globalscion/conferences/committee"
           );
 
-          data.committee[index].image = result.secure_url;
+          data.committee[index].image =
+            result.secure_url;
         }
       }
     }
-
-    /* =====================================================
-       SPONSOR IMAGES
-    ===================================================== */
 
     const sponsorFiles = files.filter((file) =>
       file.fieldname.startsWith("sponsorImage_")
@@ -231,44 +205,60 @@ exports.createConference = async (req, res) => {
         );
 
         const index = Number(
-          file.fieldname.replace("sponsorImage_", "")
+          file.fieldname.replace(
+            "sponsorImage_",
+            ""
+          )
         );
 
-        data.sponsors[index] = result.secure_url;
+        data.sponsors[index] =
+          result.secure_url;
       }
 
-      data.sponsors = data.sponsors.filter(Boolean);
+      data.sponsors =
+        data.sponsors.filter(Boolean);
     }
 
-    /* =====================================================
-       CREATE DATABASE DOCUMENT
-    ===================================================== */
-
-    const conference = await Conference.create({
-      ...data,
-      createdBy: req.user?._id || null,
-    });
+    const conference =
+      await Conference.create({
+        ...data,
+        createdBy:
+          req.user?._id || null,
+      });
 
     return res.status(201).json({
       success: true,
-      message: "Conference created successfully",
+      message:
+        "Conference created successfully",
       data: conference,
     });
   } catch (error) {
-    console.error("Create conference error:", error);
+    console.error(
+      "Create conference error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to create conference",
+      message:
+        error.message ||
+        "Failed to create conference",
     });
   }
 };
 
-exports.getAllConferences = async (req, res) => {
+
+exports.getAllConferences = async (
+  req,
+  res
+) => {
   try {
-    const conferences = await Conference.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const conferences =
+      await Conference.find()
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
 
     return res.status(200).json({
       success: true,
@@ -276,22 +266,39 @@ exports.getAllConferences = async (req, res) => {
       data: conferences,
     });
   } catch (error) {
-    console.error("Get conferences error:", error);
+    console.error(
+      "Get conferences error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch conferences",
+      message:
+        "Failed to fetch conferences",
     });
   }
 };
+
 
 exports.getConferenceById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const conference = await Conference.findOne({
-      id,
-    }).lean();
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Conference ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid conference ID",
+      });
+    }
+
+    const conference = await Conference.findById(id).lean();
 
     if (!conference) {
       return res.status(404).json({
@@ -302,87 +309,117 @@ exports.getConferenceById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Conference fetched successfully",
       data: conference,
     });
   } catch (error) {
-    console.error("Get conference error:", error);
+    console.error("Get Conference By ID Error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch conference",
+      error: error.message,
     });
   }
 };
 
-exports.updateConference = async (req, res) => {
+
+exports.updateConference = async (
+  req,
+  res
+) => {
   try {
     const { id } = req.params;
 
-    const data = parseConferenceData(req);
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Conference ID is required",
+      });
+    }
 
-    const conference = await Conference.findOne({ id });
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid conference ID",
+      });
+    }
+
+    const data =
+      parseConferenceData(req);
+
+    const conference =
+      await Conference.findById(id);
 
     if (!conference) {
       return res.status(404).json({
         success: false,
-        message: "Conference not found",
+        message:
+          "Conference not found",
       });
     }
 
     const files = req.files || [];
 
-    /* =====================================================
-       HERO IMAGE
-    ===================================================== */
-
     const heroImage = files.find(
-      (file) => file.fieldname === "heroImage"
+      (file) =>
+        file.fieldname === "heroImage" ||
+        file.fieldname ===
+          "conferenceImage"
     );
 
     if (heroImage) {
       if (conference.image) {
-        await deleteFromCloudinary(conference.image);
+        await deleteFromCloudinary(
+          conference.image
+        );
       }
 
-      const result = await uploadToCloudinary(
-        heroImage,
-        "globalscion/conferences/hero"
-      );
+      const result =
+        await uploadToCloudinary(
+          heroImage,
+          "globalscion/conferences/hero"
+        );
 
-      data.image = result.secure_url;
+      data.image =
+        result.secure_url;
     } else {
-      data.image = conference.image;
+      data.image =
+        conference.image;
     }
 
-    /* =====================================================
-       ABOUT IMAGE
-    ===================================================== */
-
     const aboutImage = files.find(
-      (file) => file.fieldname === "aboutImage"
+      (file) =>
+        file.fieldname === "aboutImage"
     );
 
     if (aboutImage) {
       if (conference.aboutImage) {
-        await deleteFromCloudinary(conference.aboutImage);
+        await deleteFromCloudinary(
+          conference.aboutImage
+        );
       }
 
-      const result = await uploadToCloudinary(
-        aboutImage,
-        "globalscion/conferences/about"
-      );
+      const result =
+        await uploadToCloudinary(
+          aboutImage,
+          "globalscion/conferences/about"
+        );
 
-      data.aboutImage = result.secure_url;
+      data.aboutImage =
+        result.secure_url;
     } else {
-      data.aboutImage = conference.aboutImage;
+      data.aboutImage =
+        conference.aboutImage;
     }
 
-    /* =====================================================
-       MARKET IMAGE
-    ===================================================== */
-
     const marketImage = files.find(
-      (file) => file.fieldname === "marketImage"
+      (file) =>
+        file.fieldname === "marketImage"
     );
 
     if (!data.otherData) {
@@ -390,131 +427,162 @@ exports.updateConference = async (req, res) => {
     }
 
     if (!data.otherData.marketAnalysis) {
-      data.otherData.marketAnalysis = {};
+      data.otherData.marketAnalysis =
+        {};
     }
 
     if (marketImage) {
       const oldMarketImage =
-        conference.otherData?.marketAnalysis?.image;
+        conference.otherData
+          ?.marketAnalysis?.image;
 
       if (oldMarketImage) {
-        await deleteFromCloudinary(oldMarketImage);
+        await deleteFromCloudinary(
+          oldMarketImage
+        );
       }
 
-      const result = await uploadToCloudinary(
-        marketImage,
-        "globalscion/conferences/market"
-      );
+      const result =
+        await uploadToCloudinary(
+          marketImage,
+          "globalscion/conferences/market"
+        );
 
-      data.otherData.marketAnalysis.image = result.secure_url;
+      data.otherData.marketAnalysis.image =
+        result.secure_url;
     } else {
       data.otherData.marketAnalysis.image =
-        conference.otherData?.marketAnalysis?.image || "";
+        conference.otherData
+          ?.marketAnalysis?.image || "";
     }
 
-    /* =====================================================
-       SPEAKER IMAGES
-    ===================================================== */
-
     if (Array.isArray(data.speakers)) {
-      for (let index = 0; index < data.speakers.length; index++) {
+      for (
+        let index = 0;
+        index < data.speakers.length;
+        index++
+      ) {
         const speakerFile = files.find(
-          (file) => file.fieldname === `speakerImage_${index}`
+          (file) =>
+            file.fieldname ===
+            `speakerImage_${index}`
         );
 
         if (speakerFile) {
           const oldImage =
-            conference.speakers?.[index]?.image;
+            conference.speakers?.[index]
+              ?.image;
 
           if (oldImage) {
-            await deleteFromCloudinary(oldImage);
+            await deleteFromCloudinary(
+              oldImage
+            );
           }
 
-          const result = await uploadToCloudinary(
-            speakerFile,
-            "globalscion/conferences/speakers"
-          );
+          const result =
+            await uploadToCloudinary(
+              speakerFile,
+              "globalscion/conferences/speakers"
+            );
 
-          data.speakers[index].image = result.secure_url;
-        } else if (!data.speakers[index].image) {
           data.speakers[index].image =
-            conference.speakers?.[index]?.image || "";
+            result.secure_url;
+        } else if (
+          !data.speakers[index].image
+        ) {
+          data.speakers[index].image =
+            conference.speakers?.[index]
+              ?.image || "";
         }
       }
     }
 
-    /* =====================================================
-       COMMITTEE IMAGES
-    ===================================================== */
-
     if (Array.isArray(data.committee)) {
-      for (let index = 0; index < data.committee.length; index++) {
-        const committeeFile = files.find(
-          (file) =>
-            file.fieldname === `committeeImage_${index}`
-        );
+      for (
+        let index = 0;
+        index < data.committee.length;
+        index++
+      ) {
+        const committeeFile =
+          files.find(
+            (file) =>
+              file.fieldname ===
+              `committeeImage_${index}`
+          );
 
         if (committeeFile) {
           const oldImage =
-            conference.committee?.[index]?.image;
+            conference.committee?.[index]
+              ?.image;
 
           if (oldImage) {
-            await deleteFromCloudinary(oldImage);
+            await deleteFromCloudinary(
+              oldImage
+            );
           }
 
-          const result = await uploadToCloudinary(
-            committeeFile,
-            "globalscion/conferences/committee"
-          );
+          const result =
+            await uploadToCloudinary(
+              committeeFile,
+              "globalscion/conferences/committee"
+            );
 
-          data.committee[index].image = result.secure_url;
-        } else if (!data.committee[index].image) {
           data.committee[index].image =
-            conference.committee?.[index]?.image || "";
+            result.secure_url;
+        } else if (
+          !data.committee[index].image
+        ) {
+          data.committee[index].image =
+            conference.committee?.[index]
+              ?.image || "";
         }
       }
     }
 
-    /* =====================================================
-       SPONSORS
-    ===================================================== */
-
-    const sponsorFiles = files.filter((file) =>
-      file.fieldname.startsWith("sponsorImage_")
+    const sponsorFiles = files.filter(
+      (file) =>
+        file.fieldname.startsWith(
+          "sponsorImage_"
+        )
     );
 
     if (sponsorFiles.length > 0) {
-      data.sponsors = Array.isArray(data.sponsors)
-        ? data.sponsors
-        : [];
+      data.sponsors =
+        Array.isArray(data.sponsors)
+          ? data.sponsors
+          : [];
 
       for (const file of sponsorFiles) {
-        const result = await uploadToCloudinary(
-          file,
-          "globalscion/conferences/sponsors"
-        );
+        const result =
+          await uploadToCloudinary(
+            file,
+            "globalscion/conferences/sponsors"
+          );
 
         const index = Number(
-          file.fieldname.replace("sponsorImage_", "")
+          file.fieldname.replace(
+            "sponsorImage_",
+            ""
+          )
         );
 
-        data.sponsors[index] = result.secure_url;
+        data.sponsors[index] =
+          result.secure_url;
       }
 
-      data.sponsors = data.sponsors.filter(Boolean);
+      data.sponsors =
+        data.sponsors.filter(Boolean);
     } else {
-      data.sponsors = conference.sponsors || [];
+      data.sponsors =
+        conference.sponsors || [];
     }
 
-    data.updatedBy = req.user?._id || null;
-
-    /* =====================================================
-       UPDATE
-    ===================================================== */
+    data.updatedBy =
+      req.user?._id || null;
 
     const updatedConference =
-      await Conference.findOneAndUpdate(
-        { id },
+      await Conference.findByIdAndUpdate(
+        id,
         {
           $set: data,
         },
@@ -526,150 +594,221 @@ exports.updateConference = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Conference updated successfully",
+      message:
+        "Conference updated successfully",
       data: updatedConference,
     });
   } catch (error) {
-    console.error("Update conference error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to update conference",
-    });
-  }
-};
-
-exports.deleteConference = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const conference = await Conference.findOne({ id });
-
-    if (!conference) {
-      return res.status(404).json({
-        success: false,
-        message: "Conference not found",
-      });
-    }
-
-    /* =====================================================
-       DELETE HERO
-    ===================================================== */
-
-    if (conference.image) {
-      await deleteFromCloudinary(conference.image);
-    }
-
-    /* =====================================================
-       DELETE ABOUT IMAGE
-    ===================================================== */
-
-    if (conference.aboutImage) {
-      await deleteFromCloudinary(conference.aboutImage);
-    }
-
-    /* =====================================================
-       DELETE MARKET IMAGE
-    ===================================================== */
-
-    const marketImage =
-      conference.otherData?.marketAnalysis?.image;
-
-    if (marketImage) {
-      await deleteFromCloudinary(marketImage);
-    }
-
-    /* =====================================================
-       DELETE SPEAKER IMAGES
-    ===================================================== */
-
-    if (Array.isArray(conference.speakers)) {
-      for (const speaker of conference.speakers) {
-        if (speaker.image) {
-          await deleteFromCloudinary(speaker.image);
-        }
-      }
-    }
-
-    /* =====================================================
-       DELETE COMMITTEE IMAGES
-    ===================================================== */
-
-    if (Array.isArray(conference.committee)) {
-      for (const member of conference.committee) {
-        if (member.image) {
-          await deleteFromCloudinary(member.image);
-        }
-      }
-    }
-
-    /* =====================================================
-       DELETE SPONSOR IMAGES
-    ===================================================== */
-
-    if (Array.isArray(conference.sponsors)) {
-      for (const sponsor of conference.sponsors) {
-        if (sponsor) {
-          await deleteFromCloudinary(sponsor);
-        }
-      }
-    }
-
-    await Conference.findOneAndDelete({ id });
-
-    return res.status(200).json({
-      success: true,
-      message: "Conference deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete conference error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete conference",
-    });
-  }
-};
-
-exports.publishConference = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const conference = await Conference.findOneAndUpdate(
-      { id },
-      {
-        $set: {
-          status: "Published",
-          updatedBy: req.user?._id || null,
-        },
-      },
-      {
-        new: true,
-      }
+    console.error(
+      "Update conference error:",
+      error
     );
 
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to update conference",
+    });
+  }
+};
+
+
+exports.deleteConference = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Conference ID is required",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid conference ID",
+      });
+    }
+
+    const conference =
+      await Conference.findById(id);
+
     if (!conference) {
       return res.status(404).json({
         success: false,
-        message: "Conference not found",
+        message:
+          "Conference not found",
+      });
+    }
+
+    if (conference.image) {
+      await deleteFromCloudinary(
+        conference.image
+      );
+    }
+
+    if (conference.aboutImage) {
+      await deleteFromCloudinary(
+        conference.aboutImage
+      );
+    }
+
+    const marketImage =
+      conference.otherData
+        ?.marketAnalysis?.image;
+
+    if (marketImage) {
+      await deleteFromCloudinary(
+        marketImage
+      );
+    }
+
+    if (
+      Array.isArray(
+        conference.speakers
+      )
+    ) {
+      for (
+        const speaker of conference.speakers
+      ) {
+        if (speaker.image) {
+          await deleteFromCloudinary(
+            speaker.image
+          );
+        }
+      }
+    }
+
+    if (
+      Array.isArray(
+        conference.committee
+      )
+    ) {
+      for (
+        const member of conference.committee
+      ) {
+        if (member.image) {
+          await deleteFromCloudinary(
+            member.image
+          );
+        }
+      }
+    }
+
+    if (
+      Array.isArray(
+        conference.sponsors
+      )
+    ) {
+      for (
+        const sponsor of conference.sponsors
+      ) {
+        if (sponsor) {
+          await deleteFromCloudinary(
+            sponsor
+          );
+        }
+      }
+    }
+
+    await Conference.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Conference deleted successfully",
+    });
+  } catch (error) {
+    console.error(
+      "Delete conference error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete conference",
+    });
+  }
+};
+
+exports.publishConference = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Conference ID is required",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid conference ID",
+      });
+    }
+
+    const conference =
+      await Conference.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            status: "Published",
+            updatedBy:
+              req.user?._id || null,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!conference) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Conference not found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Conference published successfully",
+      message:
+        "Conference published successfully",
       data: conference,
     });
   } catch (error) {
-    console.error("Publish conference error:", error);
+    console.error(
+      "Publish conference error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to publish conference",
+      message:
+        "Failed to publish conference",
     });
   }
 };
-
 
 exports.createEmployee = async (req, res) => {
   try {
