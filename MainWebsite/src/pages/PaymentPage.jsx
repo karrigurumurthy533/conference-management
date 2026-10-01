@@ -21,13 +21,17 @@ const PaymentPage = () => {
   useEffect(() => {
     const script = document.createElement("script");
 
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.src =
+      "https://checkout.razorpay.com/v1/checkout.js";
+
     script.async = true;
 
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -112,6 +116,7 @@ const PaymentPage = () => {
 
       if (!registrationId) {
         setPaymentError("Registration ID is missing");
+        setPaymentLoading(false);
         return;
       }
 
@@ -119,6 +124,7 @@ const PaymentPage = () => {
         setPaymentError(
           "This registration is already paid"
         );
+        setPaymentLoading(false);
         return;
       }
 
@@ -126,6 +132,7 @@ const PaymentPage = () => {
         setPaymentError(
           "Razorpay is not loaded. Please refresh the page and try again."
         );
+        setPaymentLoading(false);
         return;
       }
 
@@ -141,6 +148,7 @@ const PaymentPage = () => {
         setPaymentError(
           "Unable to create payment order"
         );
+        setPaymentLoading(false);
         return;
       }
 
@@ -151,10 +159,11 @@ const PaymentPage = () => {
         keyId,
       } = orderData;
 
-      if (!orderId || !keyId) {
+      if (!orderId || !amount || !currency || !keyId) {
         setPaymentError(
           "Invalid Razorpay order response"
         );
+        setPaymentLoading(false);
         return;
       }
 
@@ -172,7 +181,9 @@ const PaymentPage = () => {
           name: `${registration?.firstName || ""} ${
             registration?.lastName || ""
           }`.trim(),
+
           email: registration?.email || "",
+
           contact: registration?.phone || "",
         },
 
@@ -450,9 +461,7 @@ const PaymentPage = () => {
 
                   <p className="mt-1 text-lg font-bold text-violet-600">
                     {registrationCurrency}{" "}
-                    {Number(
-                      registrationPrice
-                    ).toFixed(2)}
+                    {Number(registrationPrice).toFixed(2)}
                   </p>
                 </div>
 

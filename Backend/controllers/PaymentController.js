@@ -25,21 +25,58 @@ exports.createPaymentOrder = catchAsync(async (req, res, next) => {
     return next(new AppError("Registration is already paid", 400));
   }
 
-  const amount = Math.round(
-    registration.registration.price * 100
+  const selectedCurrency =
+    registration.registration.currency || "GBP";
+
+  const conversionRates = {
+    GBP: Number(process.env.GBP_TO_INR),
+    USD: Number(process.env.USD_TO_INR),
+    EUR: Number(process.env.EUR_TO_INR),
+  };
+
+  const conversionRate = conversionRates[selectedCurrency];
+
+  if (!conversionRate || conversionRate <= 0) {
+    return next(
+      new AppError(
+        `INR conversion rate is not configured for ${selectedCurrency}`,
+        500
+      )
+    );
+  }
+
+  const registrationPrice = Number(
+    registration.registration.price
   );
 
-  const currency = registration.registration.currency || "INR";
+  if (!registrationPrice || registrationPrice <= 0) {
+    return next(
+      new AppError("Invalid registration amount", 400)
+    );
+  }
+
+  const amountInInr = Number(
+    (registrationPrice * conversionRate).toFixed(2)
+  );
+
+  const amount = Math.round(amountInInr * 100);
+
+  if (amount <= 0) {
+    return next(
+      new AppError("Invalid Razorpay payment amount", 400)
+    );
+  }
 
   const options = {
     amount,
-    currency,
+    currency: "INR",
     receipt: `REG_${registration._id}`,
   };
 
   const order = await razorpay.orders.create(options);
 
   registration.paymentOrderId = order.id;
+  registration.paymentStatus = "Pending";
 
   await registration.save();
 
@@ -52,6 +89,10 @@ exports.createPaymentOrder = catchAsync(async (req, res, next) => {
       currency: order.currency,
       keyId: process.env.RAZORPAY_KEY_ID,
       registrationId: registration._id,
+      displayAmount: registrationPrice,
+      displayCurrency: selectedCurrency,
+      conversionRate,
+      amountInInr,
     },
   });
 });
@@ -70,16 +111,22 @@ exports.verifyPayment = catchAsync(async (req, res, next) => {
     !razorpay_payment_id ||
     !razorpay_signature
   ) {
-    return next(new AppError("Payment details are required", 400));
+    return next(
+      new AppError("Payment details are required", 400)
+    );
   }
 
-  const registration = await Registration.findById(registrationId);
+  const registration = await Registration.findById(
+    registrationId
+  );
 
   if (!registration) {
     return next(new AppError("Registration not found", 404));
   }
 
-  if (registration.paymentOrderId !== razorpay_order_id) {
+  if (
+    registration.paymentOrderId !== razorpay_order_id
+  ) {
     return next(new AppError("Invalid payment order", 400));
   }
 
@@ -98,7 +145,9 @@ exports.verifyPayment = catchAsync(async (req, res, next) => {
 
     await registration.save();
 
-    return next(new AppError("Payment verification failed", 400));
+    return next(
+      new AppError("Payment verification failed", 400)
+    );
   }
 
   registration.paymentId = razorpay_payment_id;

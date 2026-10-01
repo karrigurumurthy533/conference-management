@@ -173,7 +173,6 @@ exports.createDownloadBrochure = catchAsync(async (req, res, next) => {
     email,
     phone,
     country,
-    address,
     requirements,
   } = req.body;
 
@@ -183,15 +182,19 @@ exports.createDownloadBrochure = catchAsync(async (req, res, next) => {
     !email ||
     !phone ||
     !country ||
-    !address
+    !requirements
   ) {
-    return next(new AppError("All required fields are required", 400));
+    return next(
+      new AppError("All required fields are required", 400)
+    );
   }
 
   const conference = await Conference.findById(conferenceId);
 
   if (!conference) {
-    return next(new AppError("Conference not found", 404));
+    return next(
+      new AppError("Conference not found", 404)
+    );
   }
 
   const brochure = await DownloadBrochure.create({
@@ -200,8 +203,7 @@ exports.createDownloadBrochure = catchAsync(async (req, res, next) => {
     email: email.toLowerCase(),
     phone,
     country,
-    address,
-    requirements: requirements || "",
+    requirements,
   });
 
   res.status(201).json({
@@ -210,7 +212,6 @@ exports.createDownloadBrochure = catchAsync(async (req, res, next) => {
     data: brochure,
   });
 });
-
 exports.getAllDownloadBrochures = catchAsync(async (req, res, next) => {
   const page = Math.max(parseInt(req.query.page) || 1, 1);
   const limit = Math.max(parseInt(req.query.limit) || 10, 1);

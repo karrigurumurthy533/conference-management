@@ -42,7 +42,7 @@ export const getRegistrationByIdApi = (id) => {
 
 export const createDownloadBrochureApi = async (data) => {
   const response = await axiosInstance.post(
-    "/user/download-brochure",
+    "/user/brochures",
     data
   );
 

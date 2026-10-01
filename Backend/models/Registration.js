@@ -96,7 +96,7 @@ const registrationSchema = new mongoose.Schema(
       category: {
         type: String,
         required: true,
-        enum: ["academic","business","athers", "student"]
+        enum: ["academic", "business", "other", "student"],
       },
 
       option: {
@@ -116,8 +116,24 @@ const registrationSchema = new mongoose.Schema(
         required: true,
         uppercase: true,
         trim: true,
-        default: "EUR",
+        enum: ["GBP", "USD", "EUR"],
+        default: "GBP",
       },
+    },
+
+    paymentOrderId: {
+      type: String,
+      default: null,
+    },
+
+    paymentId: {
+      type: String,
+      default: null,
+    },
+
+    paymentSignature: {
+      type: String,
+      default: null,
     },
 
     status: {
