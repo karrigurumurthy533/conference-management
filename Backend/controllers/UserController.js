@@ -278,27 +278,55 @@ exports.deleteDownloadBrochure = catchAsync(async (req, res, next) => {
 
 exports.createAbstract = catchAsync(async (req, res, next) => {
   const {
-    registrationId,
+    title,
+    firstName,
+    lastName,
+    email,
+    phone,
     category,
-    conferenceId,
+    conference,
     country,
-    fullPostalAddress,
+    address,
   } = req.body;
 
   if (
-    !registrationId ||
+    !title ||
+    !firstName ||
+    !lastName ||
+    !email ||
+    !phone ||
     !category ||
-    !conferenceId ||
+    !conference ||
     !country ||
-    !fullPostalAddress
+    !address
   ) {
-    return next(new AppError("All required fields are required", 400));
+    return next(
+      new AppError("All required fields are required", 400)
+    );
   }
 
-  const registration = await Registration.findById(registrationId);
+  const conferenceData = await Conference.findOne({
+    title: conference,
+  });
+
+  if (!conferenceData) {
+    return next(
+      new AppError("Conference not found", 404)
+    );
+  }
+
+  const registration = await Registration.findOne({
+    email: email.toLowerCase(),
+    "conference.conferenceId": conferenceData._id,
+  });
 
   if (!registration) {
-    return next(new AppError("Registration not found", 404));
+    return next(
+      new AppError(
+        "Registration not found for this conference",
+        404
+      )
+    );
   }
 
   if (registration.status === "Cancelled") {
@@ -310,28 +338,9 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     );
   }
 
-  if (
-    registration.conference &&
-    registration.conference.conferenceId &&
-    registration.conference.conferenceId.toString() !== conferenceId
-  ) {
-    return next(
-      new AppError(
-        "Conference does not match the registration",
-        400
-      )
-    );
-  }
-
-  const conference = await Conference.findById(conferenceId);
-
-  if (!conference) {
-    return next(new AppError("Conference not found", 404));
-  }
-
   const existingAbstract = await Abstract.findOne({
-    registrationId,
-    conferenceId,
+    registrationId: registration._id,
+    conferenceId: conferenceData._id,
   });
 
   if (existingAbstract) {
@@ -349,21 +358,25 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     abstractFile = {
       fileUrl: req.file.path || req.file.location || "",
       originalFileName: req.file.originalname,
-      fileType: req.file.mimetype.split("/")[1],
+      fileType: req.file.mimetype
+        ? req.file.mimetype.split("/")[1]
+        : "",
       fileSize: req.file.size,
     };
   }
 
   if (!abstractFile) {
-    return next(new AppError("Abstract file is required", 400));
+    return next(
+      new AppError("Abstract file is required", 400)
+    );
   }
 
   const abstract = await Abstract.create({
-    registrationId,
+    registrationId: registration._id,
     category,
-    conferenceId,
+    conferenceId: conferenceData._id,
     country,
-    fullPostalAddress,
+    fullPostalAddress: address,
     abstractFile,
     status: "Submitted",
   });
