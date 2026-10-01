@@ -1,5 +1,7 @@
-import React, { useRef, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useParams } from "react-router-dom";
 import {
   Upload,
   FileText,
@@ -9,13 +11,17 @@ import {
   Phone,
   MapPin,
   Globe2,
-  ChevronDown,
   X,
 } from "lucide-react";
 
-import { createAbstractApi } from "../api/api";
+import {
+  createAbstractApi,
+  getConferenceByIdApi,
+} from "../api/api";
 
 const AbstractSubmissionPage = () => {
+  const { conferenceId } = useParams();
+
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -25,10 +31,12 @@ const AbstractSubmissionPage = () => {
     email: "",
     phone: "",
     category: "",
-    conference: "",
     country: "",
     address: "",
   });
+
+  const [conferenceName, setConferenceName] = useState("");
+  const [conferenceLoading, setConferenceLoading] = useState(true);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [submitted, setSubmitted] = useState(false);
@@ -160,6 +168,43 @@ const AbstractSubmissionPage = () => {
     "Zimbabwe",
   ];
 
+  useEffect(() => {
+    const fetchConference = async () => {
+      if (!conferenceId) {
+        setConferenceLoading(false);
+        setError("Conference ID is missing.");
+        return;
+      }
+
+      try {
+        setConferenceLoading(true);
+        setError("");
+
+        const response = await getConferenceByIdApi(conferenceId);
+
+        const conference = response?.data?.data;
+
+        if (!conference) {
+          setError("Conference not found.");
+          return;
+        }
+
+        setConferenceName(conference.title || "");
+      } catch (error) {
+        console.error("Fetch Conference Error:", error);
+
+        setError(
+          error?.response?.data?.message ||
+            "Failed to load conference details."
+        );
+      } finally {
+        setConferenceLoading(false);
+      }
+    };
+
+    fetchConference();
+  }, [conferenceId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -196,6 +241,16 @@ const AbstractSubmissionPage = () => {
     setSubmitted(false);
     setError("");
 
+    if (!conferenceId) {
+      setError("Conference ID is missing.");
+      return;
+    }
+
+    if (!conferenceName) {
+      setError("Conference details could not be loaded.");
+      return;
+    }
+
     if (!selectedFile) {
       setError("Please select an abstract file.");
       return;
@@ -212,9 +267,9 @@ const AbstractSubmissionPage = () => {
       data.append("email", formData.email);
       data.append("phone", formData.phone);
       data.append("category", formData.category);
-      data.append("conference", formData.conference);
+      data.append("conferenceId", conferenceId);
       data.append("country", formData.country);
-      data.append("address", formData.address);
+      data.append("fullPostalAddress", formData.address);
       data.append("file", selectedFile);
 
       console.log("Abstract Submission Data:", {
@@ -224,9 +279,10 @@ const AbstractSubmissionPage = () => {
         email: formData.email,
         phone: formData.phone,
         category: formData.category,
-        conference: formData.conference,
+        conferenceId,
+        conferenceName,
         country: formData.country,
-        address: formData.address,
+        fullPostalAddress: formData.address,
         file: selectedFile.name,
       });
 
@@ -243,7 +299,6 @@ const AbstractSubmissionPage = () => {
         email: "",
         phone: "",
         category: "",
-        conference: "",
         country: "",
         address: "",
       });
@@ -258,10 +313,7 @@ const AbstractSubmissionPage = () => {
         setSubmitted(false);
       }, 4000);
     } catch (error) {
-      console.error(
-        "Abstract Submission Error:",
-        error
-      );
+      console.error("Abstract Submission Error:", error);
 
       setError(
         error?.response?.data?.message ||
@@ -379,8 +431,6 @@ const AbstractSubmissionPage = () => {
                         Assoc Prof Dr
                       </option>
                     </select>
-
-                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
                   </div>
                 </div>
 
@@ -485,7 +535,15 @@ const AbstractSubmissionPage = () => {
                       <option value="Workshop">Workshop</option>
                     </select>
 
-                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                    <svg
+                      className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
                   </div>
                 </div>
 
@@ -493,38 +551,14 @@ const AbstractSubmissionPage = () => {
                 <div>
                   <label className={labelClass}>Conference</label>
 
-                  <div className="relative">
-                    <select
-                      name="conference"
-                      value={formData.conference}
-                      onChange={handleChange}
-                      className={selectClass}
-                      required
-                    >
-                      <option value="">Select Conference</option>
-
-                      <option value="European Autism">
-                        European Autism
-                      </option>
-
-                      <option value="Autism Research">
-                        International Conference on Autism Research
-                      </option>
-
-                      <option value="Mental Health Psychiatry">
-                        International Conference on Mental Health & Psychiatry
-                      </option>
-
-                      <option value="Oncology Research">
-                        World Congress on Oncology Research & AI Innovations
-                      </option>
-
-                      <option value="Healthcare Innovation">
-                        World Congress on Healthcare Innovation
-                      </option>
-                    </select>
-
-                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                  <div className="flex min-h-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
+                    {conferenceLoading ? (
+                      <span className="text-gray-400">
+                        Loading conference...
+                      </span>
+                    ) : (
+                      conferenceName || "Conference not found"
+                    )}
                   </div>
                 </div>
               </div>
@@ -564,7 +598,15 @@ const AbstractSubmissionPage = () => {
                       ))}
                     </select>
 
-                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                    <svg
+                      className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
                   </div>
                 </div>
 
@@ -690,7 +732,7 @@ const AbstractSubmissionPage = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || conferenceLoading}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Submitting..." : "Submit Abstract"}
