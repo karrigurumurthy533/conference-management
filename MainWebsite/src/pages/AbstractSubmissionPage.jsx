@@ -13,6 +13,8 @@ import {
   X,
 } from "lucide-react";
 
+import { createAbstractApi } from "../api/api";
+
 const AbstractSubmissionPage = () => {
   const fileInputRef = useRef(null);
 
@@ -30,6 +32,8 @@ const AbstractSubmissionPage = () => {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const countries = [
     "Afghanistan",
@@ -163,6 +167,9 @@ const AbstractSubmissionPage = () => {
       ...prev,
       [name]: value,
     }));
+
+    setError("");
+    setSubmitted(false);
   };
 
   const handleFileChange = (e) => {
@@ -170,6 +177,8 @@ const AbstractSubmissionPage = () => {
 
     if (file) {
       setSelectedFile(file);
+      setError("");
+      setSubmitted(false);
     }
   };
 
@@ -181,19 +190,86 @@ const AbstractSubmissionPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Abstract Submission:", {
-      ...formData,
-      file: selectedFile,
-    });
+    setSubmitted(false);
+    setError("");
 
-    setSubmitted(true);
+    if (!selectedFile) {
+      setError("Please select an abstract file.");
+      return;
+    }
 
-    setTimeout(() => {
-      setSubmitted(false);
-    }, 4000);
+    try {
+      setLoading(true);
+
+      const data = new FormData();
+
+      data.append("title", formData.title);
+      data.append("firstName", formData.firstName);
+      data.append("lastName", formData.lastName);
+      data.append("email", formData.email);
+      data.append("phone", formData.phone);
+      data.append("category", formData.category);
+      data.append("conference", formData.conference);
+      data.append("country", formData.country);
+      data.append("address", formData.address);
+      data.append("file", selectedFile);
+
+      console.log("Abstract Submission Data:", {
+        title: formData.title,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        category: formData.category,
+        conference: formData.conference,
+        country: formData.country,
+        address: formData.address,
+        file: selectedFile.name,
+      });
+
+      const response = await createAbstractApi(data);
+
+      console.log("Abstract Submission Response:", response);
+
+      setSubmitted(true);
+
+      setFormData({
+        title: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        category: "",
+        conference: "",
+        country: "",
+        address: "",
+      });
+
+      setSelectedFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 4000);
+    } catch (error) {
+      console.error(
+        "Abstract Submission Error:",
+        error
+      );
+
+      setError(
+        error?.response?.data?.message ||
+          "Failed to submit abstract. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass =
@@ -212,6 +288,7 @@ const AbstractSubmissionPage = () => {
       ===================================================== */}
       <section className="relative overflow-hidden bg-[#442f74]">
         <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-400/10" />
+
         <div className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-white/5" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
@@ -295,8 +372,12 @@ const AbstractSubmissionPage = () => {
                       <option value="Ms">Ms</option>
                       <option value="Mrs">Mrs</option>
                       <option value="Prof Dr">Prof Dr</option>
-                      <option value="Assist Prof Dr">Assist Prof Dr</option>
-                      <option value="Assoc Prof Dr">Assoc Prof Dr</option>
+                      <option value="Assist Prof Dr">
+                        Assist Prof Dr
+                      </option>
+                      <option value="Assoc Prof Dr">
+                        Assoc Prof Dr
+                      </option>
                     </select>
 
                     <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -421,18 +502,23 @@ const AbstractSubmissionPage = () => {
                       required
                     >
                       <option value="">Select Conference</option>
+
                       <option value="European Autism">
                         European Autism
                       </option>
+
                       <option value="Autism Research">
                         International Conference on Autism Research
                       </option>
+
                       <option value="Mental Health Psychiatry">
                         International Conference on Mental Health & Psychiatry
                       </option>
+
                       <option value="Oncology Research">
                         World Congress on Oncology Research & AI Innovations
                       </option>
+
                       <option value="Healthcare Innovation">
                         World Congress on Healthcare Innovation
                       </option>
@@ -484,7 +570,9 @@ const AbstractSubmissionPage = () => {
 
                 {/* ADDRESS */}
                 <div>
-                  <label className={labelClass}>Full Postal Address</label>
+                  <label className={labelClass}>
+                    Full Postal Address
+                  </label>
 
                   <div className="relative">
                     <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -525,6 +613,8 @@ const AbstractSubmissionPage = () => {
 
                   if (file) {
                     setSelectedFile(file);
+                    setError("");
+                    setSubmitted(false);
                   }
                 }}
                 className="group cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center transition hover:border-violet-400 hover:bg-violet-50/40"
@@ -543,7 +633,9 @@ const AbstractSubmissionPage = () => {
 
                 <p className="mt-2 text-xs font-semibold text-gray-700">
                   Drop files here or{" "}
-                  <span className="text-violet-600">Select files</span>
+                  <span className="text-violet-600">
+                    Select files
+                  </span>
                 </p>
 
                 <p className="mt-1 text-[10px] text-gray-400">
@@ -567,7 +659,11 @@ const AbstractSubmissionPage = () => {
                       </p>
 
                       <p className="text-[10px] text-gray-400">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        {(
+                          selectedFile.size /
+                          (1024 * 1024)
+                        ).toFixed(2)}{" "}
+                        MB
                       </p>
                     </div>
                   </div>
@@ -594,12 +690,25 @@ const AbstractSubmissionPage = () => {
 
               <button
                 type="submit"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md"
+                disabled={loading}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Submit Abstract
+                {loading ? "Submitting..." : "Submit Abstract"}
+
                 <CheckCircle2 className="h-4 w-4" />
               </button>
             </div>
+
+            {/* ERROR MESSAGE */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700"
+              >
+                {error}
+              </motion.div>
+            )}
 
             {/* SUCCESS MESSAGE */}
             {submitted && (
