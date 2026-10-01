@@ -223,6 +223,172 @@ exports.login = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.updateProfile = catchAsync(async (req, res, next) => {
+    console.log("========== UPDATE PROFILE START ==========");
+
+    console.log("REQ ROLE:", req.role);
+    console.log("REQ BODY:", req.body);
+
+    const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        department,
+        location,
+        timezone,
+        about,
+        designation,
+        country,
+        assignedConference,
+        twoFactorEnabled,
+        permissions,
+    } = req.body;
+
+    if (!req.role) {
+        console.log("REQ ROLE IS MISSING");
+
+        return next(
+            new AppError(
+                "Authenticated role not found",
+                401
+            )
+        );
+    }
+
+    const roleId = req.role._id;
+
+    console.log("ROLE ID:", roleId);
+
+    const user = await Role.findById(roleId);
+
+    console.log("DATABASE USER:", user);
+
+    if (!user) {
+        console.log("USER NOT FOUND");
+
+        return next(
+            new AppError(
+                "User not found",
+                404
+            )
+        );
+    }
+
+    if (firstName !== undefined) {
+        user.firstName = firstName.trim();
+    }
+
+    if (lastName !== undefined) {
+        user.lastName = lastName.trim();
+    }
+
+    if (email !== undefined) {
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const existingRole = await Role.findOne({
+            email: normalizedEmail,
+            _id: { $ne: roleId },
+        });
+
+        if (existingRole) {
+            return next(
+                new AppError(
+                    "Email is already registered",
+                    409
+                )
+            );
+        }
+
+        user.email = normalizedEmail;
+    }
+
+    if (phone !== undefined) {
+        user.phone = phone.trim();
+    }
+
+    if (department !== undefined) {
+        user.department = department.trim();
+    }
+
+    if (location !== undefined) {
+        user.location = location.trim();
+    }
+
+    if (timezone !== undefined) {
+        user.timezone = timezone.trim();
+    }
+
+    if (about !== undefined) {
+        user.about = about.trim();
+    }
+
+    if (designation !== undefined) {
+        user.designation = designation.trim();
+    }
+
+    if (country !== undefined) {
+        user.country = country.trim();
+    }
+
+    if (assignedConference !== undefined) {
+        user.assignedConference = assignedConference || null;
+    }
+
+    if (twoFactorEnabled !== undefined) {
+        user.twoFactorEnabled = Boolean(twoFactorEnabled);
+    }
+
+    if (permissions !== undefined) {
+        if (!Array.isArray(permissions)) {
+            return next(
+                new AppError(
+                    "Permissions must be an array",
+                    400
+                )
+            );
+        }
+
+        user.permissions = permissions;
+    }
+
+    console.log("BEFORE SAVE");
+
+    await user.save();
+
+    console.log("AFTER SAVE");
+
+    const token = generateToken(user);
+
+    console.log("TOKEN GENERATED");
+
+    return res.status(200).json({
+        success: true,
+        message: "Profile updated successfully",
+        token,
+        data: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            department: user.department,
+            location: user.location,
+            timezone: user.timezone,
+            about: user.about,
+            designation: user.designation,
+            country: user.country,
+            assignedConference: user.assignedConference,
+            active: user.active,
+            verificationStatus: user.verificationStatus,
+            twoFactorEnabled: user.twoFactorEnabled,
+            permissions: user.permissions,
+            lastLogin: user.lastLogin,
+        },
+    });
+});
+
 exports.logout = catchAsync(async (req, res, next) => {
     res.status(200).json({
         success: true,

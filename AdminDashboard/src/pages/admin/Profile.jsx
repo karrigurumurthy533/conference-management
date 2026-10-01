@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   User,
   Mail,
@@ -16,10 +16,22 @@ import {
   CheckCircle2,
   BriefcaseBusiness,
   Globe2,
+  Loader2,
 } from "lucide-react";
 
+import {
+  updateProfile,
+  clearUpdateProfileError,
+} from "../../redux/authSlice";
+
 const Profile = () => {
-  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+
+  const {
+    user,
+    updateProfileLoading,
+    updateProfileError,
+  } = useSelector((state) => state.auth);
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,6 +45,9 @@ const Profile = () => {
     location: user?.location || "",
     timezone: user?.timezone || "",
     bio: user?.about || "",
+    designation: user?.designation || "",
+    country: user?.country || "",
+    assignedConference: user?.assignedConference || null,
     active: user?.active ?? false,
     verificationStatus: user?.verificationStatus || "",
     twoFactorEnabled: user?.twoFactorEnabled ?? false,
@@ -40,7 +55,7 @@ const Profile = () => {
     permissions: user?.permissions || [],
   };
 
-  const [formData, setFormData] = useState({
+  const getFormData = () => ({
     firstName: profile.firstName,
     lastName: profile.lastName,
     email: profile.email,
@@ -48,20 +63,20 @@ const Profile = () => {
     department: profile.department,
     location: profile.location,
     timezone: profile.timezone,
-    bio: profile.bio,
+    about: profile.bio,
+    designation: profile.designation,
+    country: profile.country,
+    assignedConference: profile.assignedConference,
+    twoFactorEnabled: profile.twoFactorEnabled,
+    permissions: profile.permissions,
   });
 
+  const [formData, setFormData] = useState(
+    getFormData()
+  );
+
   useEffect(() => {
-    setFormData({
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email: profile.email,
-      phone: profile.phone,
-      department: profile.department,
-      location: profile.location,
-      timezone: profile.timezone,
-      bio: profile.bio,
-    });
+    setFormData(getFormData());
   }, [
     user?.firstName,
     user?.lastName,
@@ -71,6 +86,11 @@ const Profile = () => {
     user?.location,
     user?.timezone,
     user?.about,
+    user?.designation,
+    user?.country,
+    user?.assignedConference,
+    user?.twoFactorEnabled,
+    user?.permissions,
   ]);
 
   const handleChange = (field, value) => {
@@ -78,23 +98,53 @@ const Profile = () => {
       ...prev,
       [field]: value,
     }));
+
+    if (updateProfileError) {
+      dispatch(clearUpdateProfileError());
+    }
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const handleEdit = () => {
+    setFormData(getFormData());
+    dispatch(clearUpdateProfileError());
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await dispatch(
+        updateProfile({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
+          department: formData.department.trim(),
+          location: formData.location.trim(),
+          timezone: formData.timezone.trim(),
+          about: formData.about.trim(),
+          designation: formData.designation.trim(),
+          country: formData.country.trim(),
+          assignedConference:
+            formData.assignedConference || null,
+          twoFactorEnabled:
+            formData.twoFactorEnabled,
+          permissions: formData.permissions,
+        })
+      ).unwrap();
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error(
+        "Profile update failed:",
+        error
+      );
+    }
   };
 
   const handleCancel = () => {
-    setFormData({
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email: profile.email,
-      phone: profile.phone,
-      department: profile.department,
-      location: profile.location,
-      timezone: profile.timezone,
-      bio: profile.bio,
-    });
+    setFormData(getFormData());
+
+    dispatch(clearUpdateProfileError());
 
     setIsEditing(false);
   };
@@ -118,7 +168,10 @@ const Profile = () => {
       return "—";
     }
 
-    return role.charAt(0).toUpperCase() + role.slice(1);
+    return (
+      role.charAt(0).toUpperCase() +
+      role.slice(1)
+    );
   };
 
   const formatVerification = (status) => {
@@ -126,7 +179,10 @@ const Profile = () => {
       return "—";
     }
 
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return (
+      status.charAt(0).toUpperCase() +
+      status.slice(1)
+    );
   };
 
   return (
@@ -150,7 +206,8 @@ const Profile = () => {
 
               <div className="pb-1">
                 <h2 className="text-[17px] font-bold leading-tight text-gray-900">
-                  {profile.firstName} {profile.lastName}
+                  {profile.firstName}{" "}
+                  {profile.lastName}
                 </h2>
 
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -163,10 +220,12 @@ const Profile = () => {
                     {formatRole(profile.role)}
                   </span>
 
-                  <span className="text-gray-300">•</span>
+                  <span className="text-gray-300">
+                    •
+                  </span>
 
                   <span className="text-[12px] text-gray-500">
-                    {profile.department}
+                    {profile.department || "—"}
                   </span>
                 </div>
               </div>
@@ -175,7 +234,7 @@ const Profile = () => {
             {!isEditing ? (
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
+                onClick={handleEdit}
                 className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
               >
                 <Pencil size={14} />
@@ -186,7 +245,8 @@ const Profile = () => {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 text-[12px] font-semibold text-gray-600 transition hover:bg-gray-50"
+                  disabled={updateProfileLoading}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 text-[12px] font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <X size={14} />
                   Cancel
@@ -195,16 +255,47 @@ const Profile = () => {
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+                  disabled={updateProfileLoading}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <Save size={14} />
-                  Save Changes
+                  {updateProfileLoading ? (
+                    <>
+                      <Loader2
+                        size={14}
+                        className="animate-spin"
+                      />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {updateProfileError && (
+        <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+          <span className="text-[12px] font-medium text-red-600">
+            {updateProfileError}
+          </span>
+
+          <button
+            type="button"
+            onClick={() =>
+              dispatch(clearUpdateProfileError())
+            }
+            className="text-red-500 hover:text-red-700"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2">
@@ -220,7 +311,10 @@ const Profile = () => {
             </div>
 
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-              <User size={17} className="text-violet-600" />
+              <User
+                size={17}
+                className="text-violet-600"
+              />
             </div>
           </div>
 
@@ -235,7 +329,10 @@ const Profile = () => {
                   type="text"
                   value={formData.firstName}
                   onChange={(e) =>
-                    handleChange("firstName", e.target.value)
+                    handleChange(
+                      "firstName",
+                      e.target.value
+                    )
                   }
                   className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                 />
@@ -256,7 +353,10 @@ const Profile = () => {
                   type="text"
                   value={formData.lastName}
                   onChange={(e) =>
-                    handleChange("lastName", e.target.value)
+                    handleChange(
+                      "lastName",
+                      e.target.value
+                    )
                   }
                   className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                 />
@@ -283,7 +383,10 @@ const Profile = () => {
                     type="email"
                     value={formData.email}
                     onChange={(e) =>
-                      handleChange("email", e.target.value)
+                      handleChange(
+                        "email",
+                        e.target.value
+                      )
                     }
                     className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                   />
@@ -311,7 +414,10 @@ const Profile = () => {
                     type="text"
                     value={formData.phone}
                     onChange={(e) =>
-                      handleChange("phone", e.target.value)
+                      handleChange(
+                        "phone",
+                        e.target.value
+                      )
                     }
                     className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                   />
@@ -333,7 +439,10 @@ const Profile = () => {
                   type="text"
                   value={formData.department}
                   onChange={(e) =>
-                    handleChange("department", e.target.value)
+                    handleChange(
+                      "department",
+                      e.target.value
+                    )
                   }
                   className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                 />
@@ -360,7 +469,10 @@ const Profile = () => {
                     type="text"
                     value={formData.location}
                     onChange={(e) =>
-                      handleChange("location", e.target.value)
+                      handleChange(
+                        "location",
+                        e.target.value
+                      )
                     }
                     className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                   />
@@ -388,7 +500,10 @@ const Profile = () => {
                     type="text"
                     value={formData.timezone}
                     onChange={(e) =>
-                      handleChange("timezone", e.target.value)
+                      handleChange(
+                        "timezone",
+                        e.target.value
+                      )
                     }
                     className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                   />
@@ -424,9 +539,12 @@ const Profile = () => {
               {isEditing ? (
                 <textarea
                   rows={3}
-                  value={formData.bio}
+                  value={formData.about}
                   onChange={(e) =>
-                    handleChange("bio", e.target.value)
+                    handleChange(
+                      "about",
+                      e.target.value
+                    )
                   }
                   className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-[12px] leading-5 text-gray-700 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
                 />
@@ -472,7 +590,9 @@ const Profile = () => {
                 </div>
 
                 <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
-                  {profile.active ? "Active" : "Inactive"}
+                  {profile.active
+                    ? "Active"
+                    : "Inactive"}
                 </span>
               </div>
 
@@ -489,7 +609,9 @@ const Profile = () => {
                 </div>
 
                 <span className="text-[11px] font-semibold text-violet-600">
-                  {formatVerification(profile.verificationStatus)}
+                  {formatVerification(
+                    profile.verificationStatus
+                  )}
                 </span>
               </div>
 
@@ -523,7 +645,9 @@ const Profile = () => {
                 </div>
 
                 <span className="text-right text-[11px] text-gray-500">
-                  {formatLastLogin(profile.lastLogin)}
+                  {formatLastLogin(
+                    profile.lastLogin
+                  )}
                 </span>
               </div>
             </div>
@@ -532,7 +656,10 @@ const Profile = () => {
           <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-                <Lock size={17} className="text-violet-600" />
+                <Lock
+                  size={17}
+                  className="text-violet-600"
+                />
               </div>
 
               <div>
@@ -583,7 +710,9 @@ const Profile = () => {
                 </div>
 
                 <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
-                  {profile.twoFactorEnabled ? "ON" : "OFF"}
+                  {profile.twoFactorEnabled
+                    ? "ON"
+                    : "OFF"}
                 </span>
               </button>
             </div>
@@ -599,7 +728,8 @@ const Profile = () => {
             </h3>
 
             <p className="mt-0.5 text-[11px] text-gray-400">
-              Permissions assigned to your administrator account.
+              Permissions assigned to your
+              administrator account.
             </p>
           </div>
 

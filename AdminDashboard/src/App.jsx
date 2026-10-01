@@ -23,6 +23,8 @@ import Notifications from "./pages/admin/Notifications";
 import Profile from "./pages/admin/Profile";
 import Employees from "./pages/admin/employees/Employees";
 import ConferenceDetails from "./pages/admin/conferences/ConferenceDetails";
+import SpeakersDetailsPage from "./pages/admin/SpeakersDetailsPage";
+
 
 function App() {
   return (
@@ -46,6 +48,7 @@ function App() {
         <Route path="conferences/:id" element={<ConferenceDetails />} />
 
         <Route path="/admin/employees" element={<Employees />} />
+        <Route path="speakers/:id" element={<SpeakersDetailsPage />} />
 
         {/* Employees */}
         <Route path="employees/create" element={<CreateEmployee />} />
@@ -72,6 +75,7 @@ function App() {
         <Route path="reports" element={<Reports />} />
 
         <Route path="speakers" element={<Speakers />} />
+      
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
 
         <Route path="notifications" element={<Notifications />} />

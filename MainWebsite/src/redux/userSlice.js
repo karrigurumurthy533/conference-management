@@ -4,15 +4,13 @@ import {
   createRegistrationApi,
   createDownloadBrochureApi,
   createAbstractApi,
+  getRegistrationByIdApi,
+  createPaymentOrderApi,
+  verifyPaymentApi,
 } from "../api/api";
-
-// ============================================================
-// CREATE REGISTRATION
-// ============================================================
 
 export const createRegistration = createAsyncThunk(
   "user/createRegistration",
-
   async (data, { rejectWithValue }) => {
     try {
       const response = await createRegistrationApi(data);
@@ -27,13 +25,24 @@ export const createRegistration = createAsyncThunk(
   }
 );
 
-// ============================================================
-// DOWNLOAD BROCHURE
-// ============================================================
+export const getRegistrationById = createAsyncThunk(
+  "user/getRegistrationById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await getRegistrationByIdApi(id);
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch registration"
+      );
+    }
+  }
+);
 
 export const createDownloadBrochure = createAsyncThunk(
   "user/createDownloadBrochure",
-
   async (data, { rejectWithValue }) => {
     try {
       const response = await createDownloadBrochureApi(data);
@@ -48,13 +57,8 @@ export const createDownloadBrochure = createAsyncThunk(
   }
 );
 
-// ============================================================
-// CREATE ABSTRACT
-// ============================================================
-
 export const createAbstract = createAsyncThunk(
   "user/createAbstract",
-
   async (data, { rejectWithValue }) => {
     try {
       const response = await createAbstractApi(data);
@@ -69,15 +73,16 @@ export const createAbstract = createAsyncThunk(
   }
 );
 
-// ============================================================
-// INITIAL STATE
-// ============================================================
 
 const initialState = {
   registration: null,
   registrationLoading: false,
   registrationError: null,
   registrationSuccess: false,
+
+  registrationDetails: null,
+  registrationDetailsLoading: false,
+  registrationDetailsError: null,
 
   brochure: null,
   brochureLoading: false,
@@ -90,20 +95,12 @@ const initialState = {
   abstractSuccess: false,
 };
 
-// ============================================================
-// SLICE
-// ============================================================
-
 const userSlice = createSlice({
   name: "user",
 
   initialState,
 
   reducers: {
-    // ========================================================
-    // CLEAR REGISTRATION
-    // ========================================================
-
     clearRegistration: (state) => {
       state.registration = null;
       state.registrationLoading = false;
@@ -111,9 +108,11 @@ const userSlice = createSlice({
       state.registrationSuccess = false;
     },
 
-    // ========================================================
-    // CLEAR BROCHURE
-    // ========================================================
+    clearRegistrationDetails: (state) => {
+      state.registrationDetails = null;
+      state.registrationDetailsLoading = false;
+      state.registrationDetailsError = null;
+    },
 
     clearBrochure: (state) => {
       state.brochure = null;
@@ -122,10 +121,6 @@ const userSlice = createSlice({
       state.brochureSuccess = false;
     },
 
-    // ========================================================
-    // CLEAR ABSTRACT
-    // ========================================================
-
     clearAbstract: (state) => {
       state.abstract = null;
       state.abstractLoading = false;
@@ -133,15 +128,15 @@ const userSlice = createSlice({
       state.abstractSuccess = false;
     },
 
-    // ========================================================
-    // CLEAR ALL
-    // ========================================================
-
     clearUserState: (state) => {
       state.registration = null;
       state.registrationLoading = false;
       state.registrationError = null;
       state.registrationSuccess = false;
+
+      state.registrationDetails = null;
+      state.registrationDetailsLoading = false;
+      state.registrationDetailsError = null;
 
       state.brochure = null;
       state.brochureLoading = false;
@@ -155,16 +150,8 @@ const userSlice = createSlice({
     },
   },
 
-  // ==========================================================
-  // EXTRA REDUCERS
-  // ==========================================================
-
   extraReducers: (builder) => {
     builder
-
-      // ======================================================
-      // REGISTRATION
-      // ======================================================
 
       .addCase(
         createRegistration.pending,
@@ -179,11 +166,8 @@ const userSlice = createSlice({
         createRegistration.fulfilled,
         (state, action) => {
           state.registrationLoading = false;
-
           state.registration = action.payload;
-
           state.registrationSuccess = true;
-
           state.registrationError = null;
         }
       )
@@ -192,17 +176,46 @@ const userSlice = createSlice({
         createRegistration.rejected,
         (state, action) => {
           state.registrationLoading = false;
-
           state.registrationError =
             action.payload || "Registration failed";
-
           state.registrationSuccess = false;
         }
       )
 
-      // ======================================================
-      // BROCHURE
-      // ======================================================
+      .addCase(
+        getRegistrationById.pending,
+        (state) => {
+          state.registrationDetailsLoading = true;
+          state.registrationDetailsError = null;
+          state.registrationDetails = null;
+        }
+      )
+
+      .addCase(
+        getRegistrationById.fulfilled,
+        (state, action) => {
+          state.registrationDetailsLoading = false;
+
+          state.registrationDetails =
+            action.payload?.data ||
+            action.payload;
+
+          state.registrationDetailsError = null;
+        }
+      )
+
+      .addCase(
+        getRegistrationById.rejected,
+        (state, action) => {
+          state.registrationDetailsLoading = false;
+
+          state.registrationDetailsError =
+            action.payload ||
+            "Failed to fetch registration";
+
+          state.registrationDetails = null;
+        }
+      )
 
       .addCase(
         createDownloadBrochure.pending,
@@ -217,11 +230,8 @@ const userSlice = createSlice({
         createDownloadBrochure.fulfilled,
         (state, action) => {
           state.brochureLoading = false;
-
           state.brochure = action.payload;
-
           state.brochureSuccess = true;
-
           state.brochureError = null;
         }
       )
@@ -230,18 +240,12 @@ const userSlice = createSlice({
         createDownloadBrochure.rejected,
         (state, action) => {
           state.brochureLoading = false;
-
           state.brochureError =
             action.payload ||
             "Brochure request failed";
-
           state.brochureSuccess = false;
         }
       )
-
-      // ======================================================
-      // ABSTRACT
-      // ======================================================
 
       .addCase(
         createAbstract.pending,
@@ -256,11 +260,8 @@ const userSlice = createSlice({
         createAbstract.fulfilled,
         (state, action) => {
           state.abstractLoading = false;
-
           state.abstract = action.payload;
-
           state.abstractSuccess = true;
-
           state.abstractError = null;
         }
       )
@@ -269,30 +270,21 @@ const userSlice = createSlice({
         createAbstract.rejected,
         (state, action) => {
           state.abstractLoading = false;
-
           state.abstractError =
             action.payload ||
             "Abstract submission failed";
-
           state.abstractSuccess = false;
         }
       );
   },
 });
 
-// ============================================================
-// ACTIONS
-// ============================================================
-
 export const {
   clearRegistration,
+  clearRegistrationDetails,
   clearBrochure,
   clearAbstract,
   clearUserState,
 } = userSlice.actions;
-
-// ============================================================
-// REDUCER
-// ============================================================
 
 export default userSlice.reducer;

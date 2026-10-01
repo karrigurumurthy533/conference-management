@@ -5,6 +5,7 @@ const adminController = require("../controllers/adminController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const {
     conferenceUpload,
+    upload,
 } = require("../middlewares/uploadMiddleware");
 
 
@@ -38,7 +39,7 @@ router.delete("/conferences/:id", authMiddleware("admin"),adminController.delete
 router.patch("/conferences/:id/publish",authMiddleware("admin"), adminController.publishConference);
 
 router.post(
-    "/employee",
+    "/employees",
     authMiddleware("admin"),
     adminController.createEmployee
 );
@@ -50,19 +51,19 @@ router.get(
 );
 
 router.get(
-    "/employee/:employeeId",
+    "/employee/:id",
     authMiddleware("admin"),
     adminController.getEmployeeById
 );
 
 router.put(
-    "/employee/:employeeId",
+    "/employee/:id",
     authMiddleware("admin"),
     adminController.updateEmployee
 );
 
 router.delete(
-    "/employee/:employeeId",
+    "/employee/:id",
     authMiddleware("admin"),
     adminController.deleteEmployee
 );
@@ -70,56 +71,58 @@ router.delete(
 
 // Add Speaker
 router.post(
-    "/",
+    "/speakers",
+    
     authMiddleware("admin"),
+    upload.single("image"),
     adminController.createSpeaker
 );
 
 // Get All Speakers
 router.get(
-    "/",
+    "/speakers",
     authMiddleware("admin"),
     adminController.getAllSpeakers
 );
 
 // Delete All Speakers
 router.delete(
-    "/",
+    "/speakers",
     authMiddleware("admin"),
     adminController.deleteAllSpeakers
 );
 
 // Get Speakers By Conference
 router.get(
-    "/conference/:conferenceId",
+    "/speakers/conference/:id",
     authMiddleware("admin"),
     adminController.getSpeakersByConference
 );
 
 // Delete All Speakers Of Conference
 router.delete(
-    "/conference/:conferenceId",
+    "/speakers/conference/:id",
     authMiddleware("admin"),
     adminController.deleteConferenceSpeakers
 );
 
 // Get Speaker By ID
 router.get(
-    "/:speakerId",
+    "/speakers/:id",
     authMiddleware("admin"),
     adminController.getSpeakerById
 );
 
 // Update Speaker
 router.patch(
-    "/:speakerId",
+    "/speaker/:id",
     authMiddleware("admin"),
     adminController.updateSpeaker
 );
 
 // Delete Speaker
 router.delete(
-    "/:speakerId",
+    "/speaker/:id",
     authMiddleware("admin"),
     adminController.deleteSpeaker
 );

@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post("/register",validateRegister,authController.register);
 router.post("/login",validateLogin,authController.login);
+router.put("/profile",authMiddleware(),authController.updateProfile);
 router.post("/logout",authMiddleware(),authController.logout);
 
 

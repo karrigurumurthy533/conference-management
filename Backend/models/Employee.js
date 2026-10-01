@@ -20,10 +20,10 @@ const employeeSchema = new mongoose.Schema(
             type: String,
             required: true,
             enum: [
-                "manager",
+                "event manager",
                 "coordinator",
-                "editor",
-                "support",
+                "marketing",
+                "webiner",
             ],
             lowercase: true,
             trim: true,

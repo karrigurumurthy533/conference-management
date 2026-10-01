@@ -6,7 +6,7 @@ const registrationSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ["Mr", "Mrs", "Ms", "Dr", "Prof"],
+      enum: ["Mr.", "Mrs.", "Ms.", "Dr.", "Prof."],
     },
 
     firstName: {
@@ -96,7 +96,7 @@ const registrationSchema = new mongoose.Schema(
       category: {
         type: String,
         required: true,
-        enum: ["Academic","Business","Others", "Student"]
+        enum: ["academic","business","athers", "student"]
       },
 
       option: {

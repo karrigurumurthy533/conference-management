@@ -57,13 +57,6 @@ const speakerSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-
-    publicId: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
     email: {
       type: String,
       trim: true,

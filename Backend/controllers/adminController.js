@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 
 
 const AppError = require("../utils/AppError");
-const catchAsync = require("../utils/catchAsync");
+const catchAsync = require("../utils/catchAsync")
 const Speaker = require("../models/Speaker");
 const cloudinary = require("../config/cloudinary");
+const Employee = require("../models/Employee");
 
 
 
@@ -947,8 +948,6 @@ exports.getEmployeeById = async (req, res) => {
   try {
     const { id } = req.params;
 
-   
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -956,12 +955,7 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-   
-
-    const employee = await Employee.findById(id).populate(
-      "assignedConferences",
-      "basicInformation conferenceDates venueInformation"
-    );
+    const employee = await Employee.findById(id);
 
     if (!employee) {
       return res.status(404).json({
@@ -970,11 +964,38 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-  
+    const employeeData = employee.toObject();
+
+    const conferenceIds = (employeeData.assignedConferences || [])
+      .filter((conferenceId) =>
+        mongoose.Types.ObjectId.isValid(conferenceId)
+      )
+      .map((conferenceId) =>
+        new mongoose.Types.ObjectId(conferenceId)
+      );
+
+    const conferences = await Conference.find({
+      _id: {
+        $in: conferenceIds,
+      },
+    }).lean();
+
+    employeeData.conferenceDetails = conferences.map(
+      (conference) => ({
+        conferenceId: conference._id,
+        title: conference.title || "",
+        date: conference.date || null,
+        startDate: conference.startDate || null,
+        endDate: conference.endDate || null,
+        mode: conference.mode || "",
+        location: conference.location || "",
+        status: conference.status || "",
+      })
+    );
 
     return res.status(200).json({
       success: true,
-      data: employee,
+      data: employeeData,
     });
   } catch (error) {
     console.error("Get Employee Error:", error);
@@ -986,6 +1007,7 @@ exports.getEmployeeById = async (req, res) => {
     });
   }
 };
+
 
 exports.updateEmployee = async (req, res) => {
   try {
@@ -1199,18 +1221,11 @@ exports.createSpeaker = catchAsync(async (req, res, next) => {
     organization,
     country,
     bio,
-    imageUrl,
-    publicId,
     email,
     linkedin,
     website,
     status,
-    displayOrder,
   } = req.body;
-
-  // ----------------------------------------------------------
-  // REQUIRED FIELDS
-  // ----------------------------------------------------------
 
   if (
     !conferenceId ||
@@ -1228,19 +1243,11 @@ exports.createSpeaker = catchAsync(async (req, res, next) => {
     );
   }
 
-  // ----------------------------------------------------------
-  // VALIDATE CONFERENCE ID
-  // ----------------------------------------------------------
-
   if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
     return next(
       new AppError("Invalid conference ID", 400)
     );
   }
-
-  // ----------------------------------------------------------
-  // CHECK CONFERENCE
-  // ----------------------------------------------------------
 
   const conference = await Conference.findById(conferenceId);
 
@@ -1250,44 +1257,31 @@ exports.createSpeaker = catchAsync(async (req, res, next) => {
     );
   }
 
-  // ----------------------------------------------------------
-  // CREATE SPEAKER
-  // ----------------------------------------------------------
+  let imageUrl = "";
+
+  if (req.file) {
+    const uploadResult = await uploadToCloudinary(
+      req.file,
+      "globalscion/speakers"
+    );
+
+    imageUrl = uploadResult.secure_url || "";
+  }
 
   const speaker = await Speaker.create({
     conferenceId,
-
     fullName: fullName.trim(),
-
     designation: designation.trim(),
-
-    speakerType:
-      speakerType || "Invited Speaker",
-
+    speakerType: speakerType || "Invited Speaker",
     organization: organization.trim(),
-
     country: country.trim(),
-
     bio: bio.trim(),
-
-    imageUrl: imageUrl?.trim() || "",
-
-    publicId: publicId?.trim() || "",
-
+    imageUrl,
     email: email?.trim().toLowerCase() || "",
-
     linkedin: linkedin?.trim() || "",
-
     website: website?.trim() || "",
-
     status: status || "Active",
-
-    displayOrder:
-      displayOrder !== undefined
-        ? Number(displayOrder)
-        : 0,
   });
-
 
   return res.status(201).json({
     success: true,
@@ -1322,24 +1316,18 @@ exports.getAllSpeakers = catchAsync(
 
 exports.getSpeakerById = catchAsync(
   async (req, res, next) => {
-    const { speakerId } = req.params;
+    const { id } = req.params;
 
-    // --------------------------------------------------------
-    // VALIDATE ID
-    // --------------------------------------------------------
 
-    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(
         new AppError("Invalid speaker ID", 400)
       );
     }
 
-    // --------------------------------------------------------
-    // FIND SPEAKER
-    // --------------------------------------------------------
-
     const speaker = await Speaker.findById(
-      speakerId
+      id
     ).populate(
       "conferenceId",
       "basicInformation conferenceDates venueInformation"
@@ -1432,13 +1420,13 @@ exports.getSpeakersByConference =
 
 exports.updateSpeaker = catchAsync(
   async (req, res, next) => {
-    const { speakerId } = req.params;
+    const { id } = req.params;
 
     // --------------------------------------------------------
     // VALIDATE SPEAKER ID
     // --------------------------------------------------------
 
-    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(
         new AppError("Invalid speaker ID", 400)
       );
@@ -1449,7 +1437,7 @@ exports.updateSpeaker = catchAsync(
     // --------------------------------------------------------
 
     const speaker =
-      await Speaker.findById(speakerId);
+      await Speaker.findById(id);
 
     if (!speaker) {
       return next(
@@ -1466,12 +1454,10 @@ exports.updateSpeaker = catchAsync(
       country,
       bio,
       imageUrl,
-      publicId,
       email,
       linkedin,
       website,
       status,
-      displayOrder,
     } = req.body;
 
     // --------------------------------------------------------
@@ -1553,11 +1539,6 @@ exports.updateSpeaker = catchAsync(
         imageUrl.trim();
     }
 
-    if (publicId !== undefined) {
-      speaker.publicId =
-        publicId.trim();
-    }
-
     // --------------------------------------------------------
     // CONTACT
     // --------------------------------------------------------
@@ -1585,10 +1566,6 @@ exports.updateSpeaker = catchAsync(
       speaker.status = status;
     }
 
-    if (displayOrder !== undefined) {
-      speaker.displayOrder =
-        Number(displayOrder);
-    }
 
     // --------------------------------------------------------
     // SAVE
@@ -1609,13 +1586,13 @@ exports.updateSpeaker = catchAsync(
 
 exports.deleteSpeaker = catchAsync(
   async (req, res, next) => {
-    const { speakerId } = req.params;
+    const { id } = req.params;
 
     // --------------------------------------------------------
     // VALIDATE ID
     // --------------------------------------------------------
 
-    if (!mongoose.Types.ObjectId.isValid(speakerId)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(
         new AppError("Invalid speaker ID", 400)
       );
@@ -1626,7 +1603,7 @@ exports.deleteSpeaker = catchAsync(
     // --------------------------------------------------------
 
     const speaker =
-      await Speaker.findById(speakerId);
+      await Speaker.findById(id);
 
     if (!speaker) {
       return next(
@@ -1639,7 +1616,7 @@ exports.deleteSpeaker = catchAsync(
     // --------------------------------------------------------
 
     await Speaker.findByIdAndDelete(
-      speakerId
+      id
     );
 
     return res.status(200).json({
