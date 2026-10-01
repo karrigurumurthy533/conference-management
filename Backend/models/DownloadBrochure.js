@@ -33,12 +33,6 @@ const downloadBrochureSchema = new mongoose.Schema(
       trim: true,
     },
 
-    address: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
     requirements: {
       type: String,
       trim: true,
