@@ -4,14 +4,6 @@ const UserController = require("../controllers/UserController");
 
 const router = express.Router();
 
-router.post("/registrations", UserController.createRegistration);
-
-router.get("/registrations", UserController.getAllRegistrations);
-
-router.get("/registrations/:id", UserController.getRegistrationById);
-
-router.delete("/registrations/:id", UserController.deleteRegistration);
-
 router.post("/brochures", UserController.createDownloadBrochure);
 
 router.get("/brochures", UserController.getAllDownloadBrochures);
@@ -27,5 +19,11 @@ router.get("/registrations", UserController.getAllRegistrations);
 router.get("/registrations/:id", UserController.getRegistrationById);
 
 router.delete("/registrations/:id", UserController.deleteRegistration);
+
+router.post("/abstract", UserController.createAbstract);
+
+router.get("/abstracts", UserController.getAllAbstracts);
+router.get("/abstracts/:id", UserController.getAbstractById);
+router.delete("/abstracts/:id", UserController.deleteAbstract);
 
 module.exports = router;
