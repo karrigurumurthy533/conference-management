@@ -1,11 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CalendarDays,
-  MapPin,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getConferencesApi } from "../api/api";
 
@@ -59,8 +54,7 @@ const Conferences = () => {
         console.error("Fetch Conferences Error:", error);
 
         setError(
-          error?.response?.data?.message ||
-            "Failed to load conferences"
+          error?.response?.data?.message || "Failed to load conferences",
         );
       } finally {
         setLoading(false);
@@ -71,7 +65,11 @@ const Conferences = () => {
   }, []);
 
   const handleConferenceClick = (id) => {
-    navigate(`/conference/${id}`);
+    if (!id) {
+      return;
+    }
+
+    navigate(`/conferences/${id}`);
   };
 
   const getConferenceTitle = (conference) => {
@@ -137,10 +135,7 @@ const Conferences = () => {
   };
 
   const getConferenceLocation = (conference) => {
-    const venue =
-      conference?.venueInformation ||
-      conference?.venue ||
-      {};
+    const venue = conference?.venueInformation || conference?.venue || {};
 
     if (conference?.mode === "Webinar") {
       return "Webinar";
@@ -244,9 +239,8 @@ const Conferences = () => {
               color: colors.description,
             }}
           >
-            Join leading researchers, clinicians, educators,
-            advocates, families and professionals from around
-            the world at our upcoming conferences.
+            Join leading researchers, clinicians, educators, advocates, families
+            and professionals from around the world at our upcoming conferences.
           </motion.p>
         </div>
       </section>
@@ -358,16 +352,13 @@ const Conferences = () => {
               className="h-10 shrink-0 rounded-lg px-5 text-xs font-semibold text-white transition-all duration-300 hover:-translate-y-0.5"
               style={{
                 backgroundColor: "#7C3AED",
-                boxShadow:
-                  "0 5px 14px rgba(124,58,237,0.15)",
+                boxShadow: "0 5px 14px rgba(124,58,237,0.15)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "#5B21B6";
+                e.currentTarget.style.backgroundColor = "#5B21B6";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "#7C3AED";
+                e.currentTarget.style.backgroundColor = "#7C3AED";
               }}
             >
               Subscribe
@@ -399,223 +390,186 @@ const Conferences = () => {
             </div>
           )}
 
-          {!loading &&
-            !error &&
-            conferences.length === 0 && (
-              <div className="flex min-h-[250px] items-center justify-center">
-                <div className="text-sm text-gray-500">
-                  No conferences available.
-                </div>
+          {!loading && !error && conferences.length === 0 && (
+            <div className="flex min-h-[250px] items-center justify-center">
+              <div className="text-sm text-gray-500">
+                No conferences available.
               </div>
-            )}
+            </div>
+          )}
 
-          {!loading &&
-            !error &&
-            conferences.length > 0 && (
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {conferences.map((conference, index) => {
-                  const conferenceId =
-                    conference?._id || conference?.id;
+          {!loading && !error && conferences.length > 0 && (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {conferences.map((conference, index) => {
+                const conferenceId = conference?._id || conference?.id;
 
-                  const title =
-                    getConferenceTitle(conference);
+                const title = getConferenceTitle(conference);
 
-                  const subtitle =
-                    getConferenceSubtitle(conference);
+                const subtitle = getConferenceSubtitle(conference);
 
-                  const category =
-                    getConferenceCategory(conference);
+                const category = getConferenceCategory(conference);
 
-                  const date =
-                    getConferenceDate(conference);
+                const date = getConferenceDate(conference);
 
-                  const location =
-                    getConferenceLocation(conference);
+                const location = getConferenceLocation(conference);
 
-                  const image =
-                    getConferenceImage(conference);
+                const image = getConferenceImage(conference);
 
-                  return (
-                    <motion.article
-                      key={conferenceId}
-                      initial={{
-                        opacity: 0,
-                        y: 30,
-                      }}
-                      whileInView={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                        amount: 0.1,
-                      }}
-                      transition={{
-                        delay: index * 0.08,
-                        duration: 0.55,
-                      }}
-                      whileHover={{
-                        y: -7,
-                        boxShadow:
-                          colors.cardHoverShadow,
-                      }}
-                      onClick={() =>
-                        handleConferenceClick(
-                          conferenceId
-                        )
+                return (
+                  <motion.article
+                    key={conferenceId}
+                    initial={{
+                      opacity: 0,
+                      y: 30,
+                    }}
+                    whileInView={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    viewport={{
+                      once: true,
+                      amount: 0.1,
+                    }}
+                    transition={{
+                      delay: index * 0.08,
+                      duration: 0.55,
+                    }}
+                    whileHover={{
+                      y: -7,
+                      boxShadow: colors.cardHoverShadow,
+                    }}
+                    onClick={() => handleConferenceClick(conferenceId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+
+                        handleConferenceClick(conferenceId);
                       }
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" ||
-                          e.key === " "
-                        ) {
-                          e.preventDefault();
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className="group cursor-pointer overflow-hidden rounded-2xl border shadow-sm transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30"
+                    style={{
+                      backgroundColor: colors.cardBg,
+                      borderColor: colors.cardBorder,
+                      boxShadow: colors.cardShadow,
+                    }}
+                  >
+                    <div className="relative h-60 overflow-hidden">
+                      <img
+                        src={image}
+                        alt={title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://globalscion.com/wp-content/uploads/2026/09/vitaly-gariev-QRK_LW8-cKM-unsplash-scaled.jpg";
+                        }}
+                      />
 
-                          handleConferenceClick(
-                            conferenceId
-                          );
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      className="group cursor-pointer overflow-hidden rounded-2xl border shadow-sm transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30"
-                      style={{
-                        backgroundColor:
-                          colors.cardBg,
-                        borderColor:
-                          colors.cardBorder,
-                        boxShadow:
-                          colors.cardShadow,
-                      }}
-                    >
-                      <div className="relative h-60 overflow-hidden">
-                        <img
-                          src={image}
-                          alt={title}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "https://globalscion.com/wp-content/uploads/2026/09/vitaly-gariev-QRK_LW8-cKM-unsplash-scaled.jpg";
-                          }}
-                        />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <span
+                        className="absolute bottom-4 left-4 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm"
+                        style={{
+                          backgroundColor: colors.badgeBg,
+                          color: colors.badgeText,
+                        }}
+                      >
+                        {category}
+                      </span>
+                    </div>
 
-                        <span
-                          className="absolute bottom-4 left-4 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm"
+                    <div className="p-6">
+                      <h2
+                        className="text-xl font-bold leading-snug"
+                        style={{
+                          color: colors.cardTitle,
+                        }}
+                      >
+                        {title}
+                      </h2>
+
+                      {subtitle && (
+                        <p
+                          className="mt-3 text-sm leading-6"
                           style={{
-                            backgroundColor:
-                              colors.badgeBg,
-                            color: colors.badgeText,
+                            color: colors.infoText,
                           }}
                         >
-                          {category}
-                        </span>
-                      </div>
+                          {subtitle}
+                        </p>
+                      )}
 
-                      <div className="p-6">
-                        <h2
-                          className="text-xl font-bold leading-snug"
+                      <div className="mt-5 space-y-3">
+                        <div
+                          className="flex items-center gap-3 text-sm"
                           style={{
-                            color: colors.cardTitle,
+                            color: colors.infoText,
                           }}
                         >
-                          {title}
-                        </h2>
-
-                        {subtitle && (
-                          <p
-                            className="mt-3 text-sm leading-6"
+                          <CalendarDays
+                            size={17}
+                            strokeWidth={2}
                             style={{
-                              color:
-                                colors.infoText,
+                              color: colors.icon,
                             }}
-                          >
-                            {subtitle}
-                          </p>
-                        )}
+                          />
 
-                        <div className="mt-5 space-y-3">
-                          <div
-                            className="flex items-center gap-3 text-sm"
-                            style={{
-                              color:
-                                colors.infoText,
-                            }}
-                          >
-                            <CalendarDays
-                              size={17}
-                              strokeWidth={2}
-                              style={{
-                                color: colors.icon,
-                              }}
-                            />
-
-                            <span>{date}</span>
-                          </div>
-
-                          <div
-                            className="flex items-center gap-3 text-sm"
-                            style={{
-                              color:
-                                colors.infoText,
-                            }}
-                          >
-                            <MapPin
-                              size={17}
-                              strokeWidth={2}
-                              style={{
-                                color: colors.icon,
-                              }}
-                            />
-
-                            <span>
-                              {location}
-                            </span>
-                          </div>
+                          <span>{date}</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            handleConferenceClick(
-                              conferenceId
-                            );
-                          }}
-                          className="mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300"
+                        <div
+                          className="flex items-center gap-3 text-sm"
                           style={{
-                            color: colors.button,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color =
-                              colors.buttonHover;
-
-                            e.currentTarget.style.transform =
-                              "translateX(3px)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color =
-                              colors.button;
-
-                            e.currentTarget.style.transform =
-                              "translateX(0)";
+                            color: colors.infoText,
                           }}
                         >
-                          View Conference
-
-                          <ArrowRight
+                          <MapPin
                             size={17}
-                            className="transition-transform duration-300 group-hover:translate-x-1"
+                            strokeWidth={2}
+                            style={{
+                              color: colors.icon,
+                            }}
                           />
-                        </button>
+
+                          <span>{location}</span>
+                        </div>
                       </div>
-                    </motion.article>
-                  );
-                })}
-              </div>
-            )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          handleConferenceClick(conferenceId);
+                        }}
+                        className="mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300"
+                        style={{
+                          color: colors.button,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = colors.buttonHover;
+
+                          e.currentTarget.style.transform = "translateX(3px)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = colors.button;
+
+                          e.currentTarget.style.transform = "translateX(0)";
+                        }}
+                      >
+                        View Conference
+                        <ArrowRight
+                          size={17}
+                          className="transition-transform duration-300 group-hover:translate-x-1"
+                        />
+                      </button>
+                    </div>
+                  </motion.article>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     </main>

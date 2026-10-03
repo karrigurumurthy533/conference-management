@@ -9,27 +9,10 @@ const {
 } = require("../middlewares/uploadMiddleware");
 
 
-const {
-    createConferenceValidation,
-} = require("../validations/adminValidations");
-
 const { validationResult } = require("express-validator");
 
 const router = express.Router();
 
-const handleValidation = (req, res, next) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            message: "Validation failed",
-            errors: errors.array(),
-        });
-    }
-
-    next();
-};
 
 router.post("/conferences",authMiddleware("admin"),conferenceUpload, adminController.createConference);
 router.get("/conferences", adminController.getAllConferences);
@@ -122,9 +105,58 @@ router.patch(
 
 // Delete Speaker
 router.delete(
-    "/speaker/:id",
+    "/speakers/:id",
     authMiddleware("admin"),
     adminController.deleteSpeaker
+);
+
+router.post(
+    "/brochures",
+    authMiddleware("admin"),
+    upload.single("brochure"),
+    adminController.createConferenceBrochure
+);
+
+router.get(
+    "/brochures",
+    authMiddleware("admin"),
+    adminController.getAllConferenceBrochures
+);
+
+router.get(
+    "/brochures/download-requests",
+    authMiddleware("admin"),
+    adminController.getBrochureDownloadRequests
+);
+
+router.get(
+    "/brochures/download-stats",
+    authMiddleware("admin"),
+    adminController.getBrochureDownloadStats
+);
+
+router.get(
+    "/brochures/:id/download",
+    adminController.downloadConferenceBrochure
+);
+
+router.get(
+    "/brochures/:id",
+    authMiddleware("admin"),
+    adminController.getConferenceBrochureById
+);
+
+router.put(
+    "/brochures/:id",
+    authMiddleware("admin"),
+    upload.single("brochure"),
+    adminController.updateConferenceBrochure
+);
+
+router.delete(
+    "/brochures/:id",
+    authMiddleware("admin"),
+    adminController.deleteConferenceBrochure
 );
 
 module.exports = router;

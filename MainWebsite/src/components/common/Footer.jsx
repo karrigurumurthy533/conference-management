@@ -92,7 +92,11 @@ const Footer = () => {
       "YouTube",
       "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
     ],
-    ["facebook.svg", "Facebook", "https://www.facebook.com/share/14KW4MrpefS/"],
+    [
+      "facebook.svg",
+      "Facebook",
+      "https://www.facebook.com/share/14KW4MrpefS/",
+    ],
   ];
 
   return (
@@ -106,6 +110,7 @@ const Footer = () => {
       {/* =========================================================
           STATS SECTION
       ========================================================= */}
+
       <div
         className="border-b"
         style={{
@@ -115,11 +120,7 @@ const Footer = () => {
       >
         <motion.div
           initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.2,
-          }}
+          animate="visible"
           variants={{
             hidden: {},
             visible: {
@@ -139,6 +140,7 @@ const Footer = () => {
           "
         >
           {/* STAT 1 */}
+
           <motion.div
             variants={statAnimation}
             className="flex items-center gap-3"
@@ -188,6 +190,7 @@ const Footer = () => {
           </motion.div>
 
           {/* STAT 2 */}
+
           <motion.div
             variants={statAnimation}
             className="flex items-center gap-3"
@@ -237,6 +240,7 @@ const Footer = () => {
           </motion.div>
 
           {/* STAT 3 */}
+
           <motion.div
             variants={statAnimation}
             className="flex items-center gap-3"
@@ -286,6 +290,7 @@ const Footer = () => {
           </motion.div>
 
           {/* STAT 4 */}
+
           <motion.div
             variants={statAnimation}
             className="flex items-center gap-3"
@@ -339,14 +344,11 @@ const Footer = () => {
       {/* =========================================================
           MAIN FOOTER
       ========================================================= */}
+
       <div className="mx-auto max-w-7xl px-5 py-7 md:px-6 md:py-8">
         <motion.div
           initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.1,
-          }}
+          animate="visible"
           variants={{
             hidden: {},
             visible: {
@@ -362,12 +364,17 @@ const Footer = () => {
             lg:gap-7
           "
         >
-          {/* =====================================================
-              BRAND
-          ===================================================== */}
+          {/* BRAND */}
+
           <motion.div variants={fadeUp}>
-            <motion.div {...linkHover} className="mb-3 inline-flex">
-              <Link to="/" className="inline-flex items-center gap-2.5">
+            <motion.div
+              {...linkHover}
+              className="mb-3 inline-flex"
+            >
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2.5"
+              >
                 <motion.div
                   whileHover={{
                     scale: 1.06,
@@ -420,42 +427,44 @@ const Footer = () => {
               tomorrow.
             </p>
 
-            {/* SOCIAL ICONS */}
             <div className="mt-4 flex items-center gap-2.5">
-              {socialLinks.map(([icon, label, href]) => (
-                <motion.a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  target="_blank"
-                  whileHover={{
-                    y: -3,
-                    scale: 1.04,
-                  }}
-                  whileTap={{
-                    scale: 0.94,
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-md border"
-                  style={{
-                    borderColor: "#C4B5FD",
-                    backgroundColor: "#EDE9FE",
-                  }}
-                >
-                  <img
-                    src={`/svgs/${icon}`}
-                    alt={label}
-                    className="h-4 w-4 object-contain"
-                    style={{
-                      filter: violetFilter,
+              {socialLinks.map(
+                ([icon, label, href]) => (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    aria-label={label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{
+                      y: -3,
+                      scale: 1.04,
                     }}
-                  />
-                </motion.a>
-              ))}
+                    whileTap={{
+                      scale: 0.94,
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-md border"
+                    style={{
+                      borderColor: "#C4B5FD",
+                      backgroundColor: "#EDE9FE",
+                    }}
+                  >
+                    <img
+                      src={`/svgs/${icon}`}
+                      alt={label}
+                      className="h-4 w-4 object-contain"
+                      style={{
+                        filter: violetFilter,
+                      }}
+                    />
+                  </motion.a>
+                )
+              )}
             </div>
           </motion.div>
-          {/* =====================================================
-              QUICK LINKS
-          ===================================================== */}
+
+          {/* QUICK LINKS */}
+
           <motion.div variants={fadeUp}>
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
@@ -472,32 +481,36 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {quickLinks.map(([label, href]) => (
-                <li key={label}>
-                  <motion.div {...linkHover}>
-                    <Link
-                      to={href}
-                      className="inline-block transition-colors"
-                      style={{
-                        color: textColor,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = violet;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = textColor;
-                      }}
-                    >
-                      {label}
-                    </Link>
-                  </motion.div>
-                </li>
-              ))}
+              {quickLinks.map(
+                ([label, href]) => (
+                  <li key={label}>
+                    <motion.div {...linkHover}>
+                      <Link
+                        to={href}
+                        className="inline-block transition-colors"
+                        style={{
+                          color: textColor,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color =
+                            violet;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color =
+                            textColor;
+                        }}
+                      >
+                        {label}
+                      </Link>
+                    </motion.div>
+                  </li>
+                )
+              )}
             </ul>
           </motion.div>
-          {/* =====================================================
-              CONFERENCES
-          ===================================================== */}
+
+          {/* CONFERENCES */}
+
           <motion.div variants={fadeUp}>
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
@@ -514,32 +527,36 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {conferenceLinks.map(([label, href]) => (
-                <li key={label}>
-                  <motion.div {...linkHover}>
-                    <Link
-                      to={href}
-                      className="inline-block transition-colors"
-                      style={{
-                        color: textColor,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = violet;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = textColor;
-                      }}
-                    >
-                      {label}
-                    </Link>
-                  </motion.div>
-                </li>
-              ))}
+              {conferenceLinks.map(
+                ([label, href]) => (
+                  <li key={label}>
+                    <motion.div {...linkHover}>
+                      <Link
+                        to={href}
+                        className="inline-block transition-colors"
+                        style={{
+                          color: textColor,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color =
+                            violet;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color =
+                            textColor;
+                        }}
+                      >
+                        {label}
+                      </Link>
+                    </motion.div>
+                  </li>
+                )
+              )}
             </ul>
           </motion.div>
-          {/* =====================================================
-              RESOURCES
-          ===================================================== */}
+
+          {/* RESOURCES */}
+
           <motion.div variants={fadeUp}>
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
@@ -556,32 +573,36 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {resourceLinks.map(([label, href]) => (
-                <li key={label}>
-                  <motion.div {...linkHover}>
-                    <Link
-                      to={href}
-                      className="inline-block transition-colors"
-                      style={{
-                        color: textColor,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = violet;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = textColor;
-                      }}
-                    >
-                      {label}
-                    </Link>
-                  </motion.div>
-                </li>
-              ))}
+              {resourceLinks.map(
+                ([label, href]) => (
+                  <li key={label}>
+                    <motion.div {...linkHover}>
+                      <Link
+                        to={href}
+                        className="inline-block transition-colors"
+                        style={{
+                          color: textColor,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color =
+                            violet;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color =
+                            textColor;
+                        }}
+                      >
+                        {label}
+                      </Link>
+                    </motion.div>
+                  </li>
+                )
+              )}
             </ul>
           </motion.div>
-          {/* =====================================================
-    CONTACT
-===================================================== */}
+
+          {/* CONTACT */}
+
           <motion.div variants={fadeUp}>
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
@@ -598,7 +619,6 @@ const Footer = () => {
                 color: textColor,
               }}
             >
-              {/* LOCATION */}
               <motion.div
                 whileHover={{
                   x: 3,
@@ -623,7 +643,6 @@ const Footer = () => {
                 </div>
               </motion.div>
 
-              {/* WHATSAPP */}
               <motion.div
                 whileHover={{
                   x: 3,
@@ -648,17 +667,18 @@ const Footer = () => {
                     color: textColor,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = violet;
+                    e.currentTarget.style.color =
+                      violet;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = textColor;
+                    e.currentTarget.style.color =
+                      textColor;
                   }}
                 >
                   +44 330 808 8650
                 </a>
               </motion.div>
 
-              {/* EMAIL */}
               <motion.div
                 whileHover={{
                   x: 3,
@@ -681,10 +701,12 @@ const Footer = () => {
                     color: textColor,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = violet;
+                    e.currentTarget.style.color =
+                      violet;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = textColor;
+                    e.currentTarget.style.color =
+                      textColor;
                   }}
                 >
                   info@globalscion.com
@@ -693,7 +715,11 @@ const Footer = () => {
             </div>
 
             {/* NEWSLETTER */}
-            <motion.div variants={fadeUp} className="mt-4">
+
+            <motion.div
+              variants={fadeUp}
+              className="mt-4"
+            >
               <h4
                 className="mb-2 text-[12px] font-semibold"
                 style={{
@@ -733,7 +759,10 @@ const Footer = () => {
                     backgroundColor: violet,
                   }}
                 >
-                  <Send size={16} strokeWidth={1.8} />
+                  <Send
+                    size={16}
+                    strokeWidth={1.8}
+                  />
                 </motion.button>
               </div>
             </motion.div>
@@ -741,18 +770,14 @@ const Footer = () => {
         </motion.div>
       </div>
 
-      {/* =========================================================
-          COPYRIGHT
-      ========================================================= */}
+      {/* COPYRIGHT */}
+
       <motion.div
         initial={{
           opacity: 0,
         }}
-        whileInView={{
+        animate={{
           opacity: 1,
-        }}
-        viewport={{
-          once: true,
         }}
         transition={{
           duration: 0.5,
@@ -775,17 +800,24 @@ const Footer = () => {
             color: textColor,
           }}
         >
-          <p>© GlobalScion Conferences. All rights reserved.</p>
+          <p>
+            © GlobalScion Conferences. All rights reserved.
+          </p>
 
           <div className="flex flex-wrap items-center gap-3.5">
             <Link
               to="/terms"
               className="transition-colors"
+              style={{
+                color: textColor,
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = violet;
+                e.currentTarget.style.color =
+                  violet;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = textColor;
+                e.currentTarget.style.color =
+                  textColor;
               }}
             >
               Terms & Conditions
@@ -801,11 +833,16 @@ const Footer = () => {
             <Link
               to="/privacy"
               className="transition-colors"
+              style={{
+                color: textColor,
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = violet;
+                e.currentTarget.style.color =
+                  violet;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = textColor;
+                e.currentTarget.style.color =
+                  textColor;
               }}
             >
               Privacy Policy
@@ -821,11 +858,16 @@ const Footer = () => {
             <Link
               to="/help-center"
               className="transition-colors"
+              style={{
+                color: textColor,
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = violet;
+                e.currentTarget.style.color =
+                  violet;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = textColor;
+                e.currentTarget.style.color =
+                  textColor;
               }}
             >
               Help Center

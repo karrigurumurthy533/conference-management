@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,32 +37,33 @@ const ConferenceDetails = () => {
   const [openSection, setOpenSection] = useState(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchConference = async () => {
       try {
         setLoading(true);
         setError("");
+        setConference(null);
 
         const response = await getConferenceByIdApi(id);
 
-        const apiData =
-          response?.data?.data ||
-          response?.data ||
-          null;
+        if (!mounted) {
+          return;
+        }
+
+        const apiData = response?.data?.data || response?.data || null;
 
         if (!apiData) {
           setConference(null);
+          setError("Conference not found.");
           return;
         }
 
         const startDate =
-          apiData?.conferenceDates?.startDate ||
-          apiData?.startDate ||
-          "";
+          apiData?.conferenceDates?.startDate || apiData?.startDate || "";
 
         const endDate =
-          apiData?.conferenceDates?.endDate ||
-          apiData?.endDate ||
-          "";
+          apiData?.conferenceDates?.endDate || apiData?.endDate || "";
 
         const formattedDate =
           startDate && endDate
@@ -81,28 +81,12 @@ const ConferenceDetails = () => {
         const speakers = Array.isArray(apiData?.speakers)
           ? apiData.speakers.map((speaker) => ({
               ...speaker,
-              name:
-                speaker?.fullName ||
-                speaker?.name ||
-                "",
-              image:
-                speaker?.imageUrl ||
-                speaker?.image ||
-                "",
-              organization:
-                speaker?.organization ||
-                "",
-              role:
-                speaker?.designation ||
-                speaker?.role ||
-                "",
-              specialty:
-                speaker?.speakerType ||
-                speaker?.specialty ||
-                "",
-              linkedin:
-                speaker?.linkedin ||
-                "",
+              name: speaker?.fullName || speaker?.name || "",
+              image: speaker?.imageUrl || speaker?.image || "",
+              organization: speaker?.organization || "",
+              role: speaker?.designation || speaker?.role || "",
+              specialty: speaker?.speakerType || speaker?.specialty || "",
+              linkedin: speaker?.linkedin || "",
             }))
           : [];
 
@@ -110,23 +94,15 @@ const ConferenceDetails = () => {
           ? apiData.topics.map((topic) =>
               typeof topic === "string"
                 ? topic
-                : topic?.title ||
-                  topic?.name ||
-                  topic?.topic ||
-                  "",
+                : topic?.title || topic?.name || topic?.topic || "",
             )
           : [];
 
-        const whoShouldAttend = Array.isArray(
-          apiData?.whoShouldAttend,
-        )
+        const whoShouldAttend = Array.isArray(apiData?.whoShouldAttend)
           ? apiData.whoShouldAttend.map((item) =>
               typeof item === "string"
                 ? item
-                : item?.title ||
-                  item?.name ||
-                  item?.text ||
-                  "",
+                : item?.title || item?.name || item?.text || "",
             )
           : [];
 
@@ -134,48 +110,31 @@ const ConferenceDetails = () => {
           ? apiData.sponsors.map((sponsor) =>
               typeof sponsor === "string"
                 ? sponsor
-                : sponsor?.logoUrl ||
-                  sponsor?.imageUrl ||
-                  sponsor?.logo ||
-                  "",
+                : sponsor?.logoUrl || sponsor?.imageUrl || sponsor?.logo || "",
             )
           : [];
 
         const welcomeMessage = {
-          paragraphs: Array.isArray(
-            apiData?.welcomeMessage?.paragraphs,
-          )
+          paragraphs: Array.isArray(apiData?.welcomeMessage?.paragraphs)
             ? apiData.welcomeMessage.paragraphs
             : apiData?.welcomeMessage?.paragraph
               ? [apiData.welcomeMessage.paragraph]
               : [],
-          signature:
-            apiData?.welcomeMessage?.signature ||
-            "",
+          signature: apiData?.welcomeMessage?.signature || "",
         };
 
         const normalizedConference = {
           ...apiData,
 
-          id:
-            apiData?._id ||
-            apiData?.id ||
-            id,
+          id: apiData?._id || apiData?.id || id,
 
-          title:
-            apiData?.basicInformation?.title ||
-            apiData?.title ||
-            "",
+          title: apiData?.basicInformation?.title || apiData?.title || "",
 
           category:
-            apiData?.basicInformation?.category ||
-            apiData?.category ||
-            "",
+            apiData?.basicInformation?.category || apiData?.category || "",
 
           subtitle:
-            apiData?.basicInformation?.subtitle ||
-            apiData?.subtitle ||
-            "",
+            apiData?.basicInformation?.subtitle || apiData?.subtitle || "",
 
           description:
             apiData?.basicInformation?.description ||
@@ -188,10 +147,7 @@ const ConferenceDetails = () => {
 
           endDate,
 
-          time:
-            apiData?.conferenceDates?.time ||
-            apiData?.time ||
-            "",
+          time: apiData?.conferenceDates?.time || apiData?.time || "",
 
           location:
             apiData?.venueInformation?.city ||
@@ -207,8 +163,7 @@ const ConferenceDetails = () => {
             "",
 
           participants:
-            apiData?.registrationInformation
-              ?.expectedParticipants ||
+            apiData?.registrationInformation?.expectedParticipants ||
             apiData?.participants ||
             "",
 
@@ -224,129 +179,112 @@ const ConferenceDetails = () => {
 
           topics,
 
-          tracks: Array.isArray(apiData?.tracks)
-            ? apiData.tracks
-            : [],
+          tracks: Array.isArray(apiData?.tracks) ? apiData.tracks : [],
 
           sponsors,
 
-          keyHighlights: Array.isArray(
-            apiData?.keyHighlights,
-          )
+          keyHighlights: Array.isArray(apiData?.keyHighlights)
             ? apiData.keyHighlights
             : [],
 
           whoShouldAttend,
 
-          whoShouldAttendDescription:
-            apiData?.whoShouldAttendDescription ||
-            "",
+          whoShouldAttendDescription: apiData?.whoShouldAttendDescription || "",
 
           welcomeMessage,
 
-          otherData:
-            apiData?.otherData || {},
+          otherData: apiData?.otherData || {},
         };
 
         setConference(normalizedConference);
       } catch (error) {
-        console.error(
-          "Fetch Conference Details Error:",
-          error,
-        );
+        console.error("Fetch Conference Details Error:", error);
 
-        setError(
-          error?.response?.data?.message ||
-            "Failed to load conference details",
-        );
+        if (!mounted) {
+          return;
+        }
 
         setConference(null);
+
+        setError(
+          error?.response?.data?.message || "Failed to load conference details",
+        );
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     if (id) {
       fetchConference();
+    } else {
+      setConference(null);
+      setLoading(false);
+      setError("Conference ID is missing.");
     }
-  }, [id]);
 
-  /* =========================================================
-     COLORS
-  ========================================================= */
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
   const colors = {
     pageBg: "#FFFFFF",
     text: "#111827",
-
     heroBg: "#12091F",
-
     link: "#C084FC",
     linkHover: "#FFFFFF",
-
     categoryBg: "rgba(124,58,237,0.24)",
     categoryText: "#E9D5FF",
-
     heading: "#FFFFFF",
     headingAccent: "#7C3AED",
     subtitle: "#F5F3FF",
     description: "#DDD6FE",
-
     infoIconBg: "rgba(255,255,255,0.14)",
     infoIcon: "#D8B4FE",
     infoTitle: "#FFFFFF",
     muted: "rgba(255,255,255,0.68)",
-
     countdownIconBg: "#7C3AED",
     countdownHeading: "#FFFFFF",
     countdownCardBg: "rgba(20,10,35,0.78)",
     countdownCardBorder: "rgba(216,180,254,0.30)",
     countdownCardShadow: "0 10px 28px rgba(0,0,0,0.20)",
-
     countdownBoxBg: "rgba(255,255,255,0.07)",
     countdownBoxBorder: "rgba(255,255,255,0.14)",
     countdownBoxHoverBorder: "#A855F7",
     countdownNumber: "#FFFFFF",
     countdownLabel: "#D8B4FE",
-
     primary: "#7C3AED",
     primaryHover: "#6D28D9",
-
     actionBorder: "rgba(255,255,255,0.18)",
     actionBg: "rgba(255,255,255,0.08)",
     actionText: "#FFFFFF",
     actionIconBg: "rgba(168,85,247,0.22)",
     actionIcon: "#D8B4FE",
     actionDescription: "rgba(255,255,255,0.60)",
-
     featuredBg: "#FFFFFF",
     sectionBorder: "#EDE9FE",
-
     speakerRing: "#D8B4FE",
     speakerName: "#2E1065",
     speakerOrg: "#6B7280",
     speakerSpecialty: "#7C3AED",
-
     aboutBg: "#F8F7FF",
     aboutBody: "#4B5563",
     miniBorder: "#DDD6FE",
     miniTitle: "#4C1D95",
-
     quoteBg: "#F0EAFE",
     quoteMark: "#7C3AED",
     quoteText: "#4C1D95",
     quoteDivider: "#C4B5FD",
-
     topicsBg: "#FFFFFF",
     topicBorder: "#EDE9FE",
     topicText: "#405E58",
-
     whyBg: "#F0EAFE",
     whyDecor1: "#DDD6FE",
     whyDecor2: "#E9D5FF",
     whyText: "#4B5563",
     benefitBorder: "#C4B5FD",
-
     sessionsBg: "#F8F7FF",
     accordionBg: "#FFFFFF",
     accordionBorder: "#DDD6FE",
@@ -355,14 +293,9 @@ const ConferenceDetails = () => {
     closedNumberBg: "#F0EAFE",
     trackTitle: "#8352df",
     trackDesc: "#4B5563",
-
     finalBg: "#4C1D95",
     finalIcon: "#DDD6FE",
   };
-
-  /* =========================================================
-     COUNTDOWN
-  ========================================================= */
 
   const calculateTimeLeft = () => {
     if (!conference?.startDate) {
@@ -397,27 +330,19 @@ const ConferenceDetails = () => {
     }
 
     return {
-      days: Math.floor(
-        difference / (1000 * 60 * 60 * 24),
-      ),
-      hours: Math.floor(
-        (difference / (1000 * 60 * 60)) % 24,
-      ),
-      minutes: Math.floor(
-        (difference / (1000 * 60)) % 60,
-      ),
-      seconds: Math.floor(
-        (difference / 1000) % 60,
-      ),
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / (1000 * 60)) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
     };
   };
 
-  const [timeLeft, setTimeLeft] = useState(
-    calculateTimeLeft(),
-  );
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    if (!conference?.startDate) return;
+    if (!conference?.startDate) {
+      return;
+    }
 
     setTimeLeft(calculateTimeLeft());
 
@@ -428,49 +353,18 @@ const ConferenceDetails = () => {
     return () => clearInterval(timer);
   }, [conference?.startDate]);
 
-  /* =========================================================
-     INVALID CONFERENCE
-  ========================================================= */
-
+  /*
+    No loader component here.
+    The page keeps the same background while the API request is running.
+  */
   if (loading) {
     return (
       <div
-        className="flex min-h-[60vh] items-center justify-center px-6"
+        className="min-h-screen"
         style={{
           backgroundColor: colors.pageBg,
-          color: colors.text,
         }}
-      >
-        <div className="text-center">
-          <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: "#F0EAFE",
-              color: colors.primary,
-            }}
-          >
-            <Clock3 size={30} />
-          </div>
-
-          <h1
-            className="mt-5 text-2xl font-bold"
-            style={{
-              color: "#2E1065",
-            }}
-          >
-            Conference Details
-          </h1>
-
-          <p
-            className="mt-3 text-sm md:text-base"
-            style={{
-              color: "#6B7280",
-            }}
-          >
-            Loading conference details.
-          </p>
-        </div>
-      </div>
+      />
     );
   }
 
@@ -509,8 +403,7 @@ const ConferenceDetails = () => {
               color: "#6B7280",
             }}
           >
-            {error ||
-              "Please select a conference from the conferences page."}
+            {error || "Please select a conference from the conferences page."}
           </p>
 
           <Link
@@ -528,43 +421,32 @@ const ConferenceDetails = () => {
     );
   }
 
-  /* =========================================================
-     SOURCE CONTENT
-  ========================================================= */
-
-  const whyToAttend =
-    conference.otherData?.whyToAttend || [];
-
-  const sampleAgenda =
-    conference.otherData?.sampleAgenda || [];
-
-  const benefitsOfAttending =
-    conference.otherData?.benefitsOfAttending || [];
-
-  const delegates =
-    conference.otherData?.delegates || [];
-
-  const posterPresentersLive =
-    conference.otherData?.posterPresentersLive || [];
-
-  const ePosterPresenters =
-    conference.otherData?.ePosterPresenters || {};
-
-  const marketAnalysis =
-    conference.otherData?.marketAnalysis || {};
-
-  /* =========================================================
-     TOGGLE SECTION
-  ========================================================= */
+  const whyToAttend = conference.otherData?.whyToAttend || [];
+  const sampleAgenda = conference.otherData?.sampleAgenda || [];
+  const benefitsOfAttending = conference.otherData?.benefitsOfAttending || [];
+  const delegates = conference.otherData?.delegates || [];
+  const posterPresentersLive = conference.otherData?.posterPresentersLive || [];
+  const ePosterPresenters = conference.otherData?.ePosterPresenters || {};
+  const marketAnalysis = conference.otherData?.marketAnalysis || {};
 
   const toggleSection = (section) => {
-    setOpenSection((current) =>
-      current === section ? null : section,
-    );
+    setOpenSection((current) => (current === section ? null : section));
   };
 
   return (
-    <div
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.5,
+        ease: "easeOut",
+      }}
       className="min-h-screen transition-colors duration-500"
       style={{
         backgroundColor: colors.pageBg,
@@ -610,8 +492,6 @@ const ConferenceDetails = () => {
           />
         </div>
 
-        {/* DECORATION */}
-
         <div
           className="absolute right-[8%] top-10 h-14 w-14 rounded-full border"
           style={{
@@ -640,8 +520,6 @@ const ConferenceDetails = () => {
           }}
         />
 
-        {/* HERO CONTENT */}
-
         <div className="relative z-10 mx-auto max-w-7xl px-6 py-4 lg:px-10 lg:py-5">
           <Link
             to="/conferences"
@@ -650,8 +528,7 @@ const ConferenceDetails = () => {
               color: colors.link,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color =
-                colors.linkHover;
+              e.currentTarget.style.color = colors.linkHover;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = colors.link;
@@ -675,34 +552,26 @@ const ConferenceDetails = () => {
             }}
             className="mt-3 max-w-4xl"
           >
-            {/* CATEGORY */}
-
             <span
               className="inline-flex rounded-full border px-2.5 py-1 text-[9px] font-bold backdrop-blur-md"
               style={{
                 backgroundColor: colors.categoryBg,
-                borderColor:
-                  "rgba(216,180,254,0.25)",
+                borderColor: "rgba(216,180,254,0.25)",
                 color: colors.categoryText,
               }}
             >
               {conference.category}
             </span>
 
-            {/* TITLE */}
-
             <motion.h1
               className="mt-3 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-4xl xl:text-5xl"
               style={{
                 color: colors.heading,
-                textShadow:
-                  "0 4px 20px rgba(0,0,0,0.45)",
+                textShadow: "0 4px 20px rgba(0,0,0,0.45)",
               }}
             >
               {conference.title}
             </motion.h1>
-
-            {/* SUBTITLE */}
 
             <motion.p
               className="mt-3 max-w-3xl text-sm font-semibold leading-6 sm:text-base"
@@ -713,8 +582,6 @@ const ConferenceDetails = () => {
               {conference.subtitle}
             </motion.p>
 
-            {/* DESCRIPTION */}
-
             <motion.p
               className="mt-2 max-w-3xl text-sm leading-6 sm:text-base"
               style={{
@@ -723,8 +590,6 @@ const ConferenceDetails = () => {
             >
               {conference.description}
             </motion.p>
-
-            {/* INFO */}
 
             <motion.div className="mt-4 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
               <InfoItem
@@ -749,15 +614,12 @@ const ConferenceDetails = () => {
               />
             </motion.div>
 
-            {/* COUNTDOWN */}
-
             <motion.div className="mt-4 max-w-xl">
               <div className="mb-2 flex items-center gap-2">
                 <div
                   className="flex h-6 w-6 items-center justify-center rounded-md text-white"
                   style={{
-                    backgroundColor:
-                      colors.countdownIconBg,
+                    backgroundColor: colors.countdownIconBg,
                   }}
                 >
                   <Clock3 size={13} />
@@ -776,12 +638,9 @@ const ConferenceDetails = () => {
               <div
                 className="relative overflow-hidden rounded-lg border p-2 backdrop-blur-xl"
                 style={{
-                  borderColor:
-                    colors.countdownCardBorder,
-                  backgroundColor:
-                    colors.countdownCardBg,
-                  boxShadow:
-                    colors.countdownCardShadow,
+                  borderColor: colors.countdownCardBorder,
+                  backgroundColor: colors.countdownCardBg,
+                  boxShadow: colors.countdownCardShadow,
                 }}
               >
                 <div className="relative grid grid-cols-4 gap-2">
@@ -812,8 +671,6 @@ const ConferenceDetails = () => {
               </div>
             </motion.div>
 
-            {/* ACTIONS */}
-
             <motion.div className="mt-4 max-w-2xl">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white">
@@ -828,9 +685,9 @@ const ConferenceDetails = () => {
                   description="Conference details"
                   colors={colors}
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/brochure`,
-                    )
+                    navigate(`/conferences/${conference.id}/brochure`, {
+                      state: { conference },
+                    })
                   }
                 />
 
@@ -853,9 +710,7 @@ const ConferenceDetails = () => {
                   colors={colors}
                   primary
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/register`,
-                    )
+                    navigate(`/conferences/${conference.id}/register`)
                   }
                 />
 
@@ -865,9 +720,7 @@ const ConferenceDetails = () => {
                   description="View full program"
                   colors={colors}
                   onClick={() =>
-                    navigate(
-                      `/conferences/${conference.id}/scientific-program`,
-                    )
+                    navigate(`/conferences/${conference.id}/scientific-program`)
                   }
                 />
               </div>
@@ -876,9 +729,7 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-      {/* =====================================================
-          FEATURED SPEAKERS
-      ===================================================== */}
+      {/* FEATURED SPEAKERS */}
 
       <section
         className="border-b px-6 py-12 lg:px-10 lg:py-14"
@@ -895,110 +746,95 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-            {conference.speakers?.map(
-              (speaker, index) => (
-                <motion.div
-                  key={speaker.name || index}
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.05,
-                  }}
-                  className="group text-center"
-                >
-                  <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28">
-                    <div
-                      className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
-                      style={{
-                        borderColor:
-                          colors.speakerRing,
-                      }}
+            {conference.speakers?.map((speaker, index) => (
+              <motion.div
+                key={speaker.name || index}
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
+                transition={{
+                  delay: index * 0.05,
+                }}
+                className="group text-center"
+              >
+                <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28">
+                  <div
+                    className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
+                    style={{
+                      borderColor: colors.speakerRing,
+                    }}
+                  />
+
+                  {speaker.image && (
+                    <img
+                      src={speaker.image}
+                      alt={speaker.name}
+                      className="h-full w-full rounded-full object-cover"
                     />
+                  )}
 
-                    {speaker.image && (
-                      <img
-                        src={speaker.image}
-                        alt={speaker.name}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    )}
-
-                    <a
-                      href={
-                        speaker.linkedin ||
-                        "https://www.linkedin.com/"
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 shadow-md"
-                      style={{
-                        borderColor:
-                          colors.featuredBg,
-                        backgroundColor:
-                          colors.primary,
-                      }}
-                    >
-                      <img
-                        src="/svgs/linkedin.svg"
-                        alt="LinkedIn"
-                        className="h-3.5 w-3.5"
-                      />
-                    </a>
-                  </div>
-
-                  <h3
-                    className="mt-3 text-xs font-bold leading-5 sm:text-sm"
+                  <a
+                    href={speaker.linkedin || "https://www.linkedin.com/"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 shadow-md"
                     style={{
-                      color: colors.speakerName,
+                      borderColor: colors.featuredBg,
+                      backgroundColor: colors.primary,
                     }}
                   >
-                    {speaker.name}
-                  </h3>
+                    <img
+                      src="/svgs/linkedin.svg"
+                      alt="LinkedIn"
+                      className="h-3.5 w-3.5"
+                    />
+                  </a>
+                </div>
 
-                  <p
-                    className="mt-1 text-[10px] leading-4 sm:text-xs"
-                    style={{
-                      color: colors.speakerOrg,
-                    }}
-                  >
-                    {speaker.organization ||
-                      speaker.role}
-                  </p>
+                <h3
+                  className="mt-3 text-xs font-bold leading-5 sm:text-sm"
+                  style={{
+                    color: colors.speakerName,
+                  }}
+                >
+                  {speaker.name}
+                </h3>
 
-                  <p
-                    className="mt-1 text-[10px] font-medium leading-4"
-                    style={{
-                      color:
-                        colors.speakerSpecialty,
-                    }}
-                  >
-                    {speaker.specialty || ""}
-                  </p>
-                </motion.div>
-              ),
-            )}
+                <p
+                  className="mt-1 text-[10px] leading-4 sm:text-xs"
+                  style={{
+                    color: colors.speakerOrg,
+                  }}
+                >
+                  {speaker.organization || speaker.role}
+                </p>
+
+                <p
+                  className="mt-1 text-[10px] font-medium leading-4"
+                  style={{
+                    color: colors.speakerSpecialty,
+                  }}
+                >
+                  {speaker.specialty || ""}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          WELCOME MESSAGE
-          NO CARD
-      ===================================================== */}
+      {/* WELCOME MESSAGE */}
 
       <section className="relative bg-white px-6 py-20 md:py-24">
         <div className="mx-auto max-w-7xl lg:px-10">
-          {/* HEADER */}
-
           <motion.div
             initial={{
               opacity: 0,
@@ -1031,8 +867,6 @@ const ConferenceDetails = () => {
               </span>
             </h2>
           </motion.div>
-
-          {/* NORMAL CONTENT - NO CARD */}
 
           <motion.div
             initial={{
@@ -1078,8 +912,6 @@ const ConferenceDetails = () => {
                 ),
               )}
 
-              {/* SIGNATURE */}
-
               {conference?.welcomeMessage?.signature && (
                 <motion.div
                   initial={{
@@ -1107,9 +939,7 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-      {/* =====================================================
-          WHO SHOULD ATTEND
-      ===================================================== */}
+      {/* WHO SHOULD ATTEND */}
 
       {conference.whoShouldAttendDescription && (
         <section
@@ -1119,10 +949,7 @@ const ConferenceDetails = () => {
           }}
         >
           <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              label="Who Should Attend"
-              colors={colors}
-            />
+            <SectionHeading label="Who Should Attend" colors={colors} />
 
             <motion.div
               initial={{
@@ -1138,8 +965,7 @@ const ConferenceDetails = () => {
               }}
               className="mt-7 rounded-2xl border p-7"
               style={{
-                borderColor:
-                  colors.sectionBorder,
+                borderColor: colors.sectionBorder,
                 backgroundColor: "#FAF8FF",
               }}
             >
@@ -1149,50 +975,43 @@ const ConferenceDetails = () => {
                   color: colors.aboutBody,
                 }}
               >
-                {
-                  conference.whoShouldAttendDescription
-                }
+                {conference.whoShouldAttendDescription}
               </p>
 
               <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                {conference.whoShouldAttend?.map(
-                  (item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2 rounded-lg border bg-white p-4"
+                {conference.whoShouldAttend?.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className="flex items-start gap-2 rounded-lg border bg-white p-4"
+                    style={{
+                      borderColor: colors.topicBorder,
+                    }}
+                  >
+                    <CheckCircle2
+                      size={16}
+                      className="mt-0.5 flex-shrink-0"
                       style={{
-                        borderColor:
-                          colors.topicBorder,
+                        color: colors.primary,
+                      }}
+                    />
+
+                    <span
+                      className="text-xs font-semibold leading-5"
+                      style={{
+                        color: colors.topicText,
                       }}
                     >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-0.5 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <span
-                        className="text-xs font-semibold leading-5"
-                        style={{
-                          color: colors.topicText,
-                        }}
-                      >
-                        {item}
-                      </span>
-                    </div>
-                  ),
-                )}
+                      {item}
+                    </span>
+                  </div>
+                ))}
               </div>
             </motion.div>
           </div>
         </section>
       )}
 
-      {/* =====================================================
-          KEY HIGHLIGHTS
-      ===================================================== */}
+      {/* KEY HIGHLIGHTS */}
 
       {conference.keyHighlights?.length > 0 && (
         <section
@@ -1202,82 +1021,66 @@ const ConferenceDetails = () => {
           }}
         >
           <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              label="Key Highlights"
-              colors={colors}
-            />
+            <SectionHeading label="Key Highlights" colors={colors} />
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-              {conference.keyHighlights.map(
-                (highlight, index) => (
-                  <motion.div
-                    key={
-                      highlight?.title ||
-                      index
-                    }
-                    initial={{
-                      opacity: 0,
-                      y: 15,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: index * 0.05,
-                    }}
-                    className="rounded-xl border bg-white p-6"
+              {conference.keyHighlights.map((highlight, index) => (
+                <motion.div
+                  key={highlight?.title || index}
+                  initial={{
+                    opacity: 0,
+                    y: 15,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    delay: index * 0.05,
+                  }}
+                  className="rounded-xl border bg-white p-6"
+                  style={{
+                    borderColor: colors.sectionBorder,
+                  }}
+                >
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-full"
                     style={{
-                      borderColor:
-                        colors.sectionBorder,
+                      backgroundColor: colors.quoteBg,
+                      color: colors.primary,
                     }}
                   >
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full"
-                      style={{
-                        backgroundColor:
-                          colors.quoteBg,
-                        color: colors.primary,
-                      }}
-                    >
-                      <Lightbulb size={19} />
-                    </div>
+                    <Lightbulb size={19} />
+                  </div>
 
-                    <h3
-                      className="mt-4 text-sm font-bold"
-                      style={{
-                        color:
-                          colors.miniTitle,
-                      }}
-                    >
-                      {highlight?.title ||
-                        ""}
-                    </h3>
+                  <h3
+                    className="mt-4 text-sm font-bold"
+                    style={{
+                      color: colors.miniTitle,
+                    }}
+                  >
+                    {highlight?.title || ""}
+                  </h3>
 
-                    <p
-                      className="mt-3 text-sm leading-6"
-                      style={{
-                        color:
-                          colors.aboutBody,
-                      }}
-                    >
-                      {highlight?.description ||
-                        ""}
-                    </p>
-                  </motion.div>
-                ),
-              )}
+                  <p
+                    className="mt-3 text-sm leading-6"
+                    style={{
+                      color: colors.aboutBody,
+                    }}
+                  >
+                    {highlight?.description || ""}
+                  </p>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* =====================================================
-          KEY TOPICS
-      ===================================================== */}
+      {/* KEY TOPICS */}
 
       <section
         className="px-6 py-14 lg:px-10 lg:py-16"
@@ -1293,83 +1096,68 @@ const ConferenceDetails = () => {
           />
 
           <div className="mt-8 grid grid-cols-1 gap-x-14 md:grid-cols-2">
-            {conference.topics?.map(
-              (topic, index) => (
-                <motion.div
-                  key={`${topic}-${index}`}
-                  initial={{
-                    opacity: 0,
-                    x:
-                      index % 2 === 0
-                        ? -12
-                        : 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.03,
-                  }}
-                  className="flex items-start gap-3 border-b py-3"
+            {conference.topics?.map((topic, index) => (
+              <motion.div
+                key={`${topic}-${index}`}
+                initial={{
+                  opacity: 0,
+                  x: index % 2 === 0 ? -12 : 12,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                viewport={{
+                  once: true,
+                }}
+                transition={{
+                  delay: index * 0.03,
+                }}
+                className="flex items-start gap-3 border-b py-3"
+                style={{
+                  borderColor: colors.topicBorder,
+                }}
+              >
+                <CheckCircle2
+                  size={18}
+                  className="mt-0.5 flex-shrink-0"
                   style={{
-                    borderColor:
-                      colors.topicBorder,
+                    color: colors.primary,
+                  }}
+                />
+
+                <span
+                  className="text-sm leading-6 md:text-base"
+                  style={{
+                    color: colors.topicText,
                   }}
                 >
-                  <CheckCircle2
-                    size={18}
-                    className="mt-0.5 flex-shrink-0"
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
-
-                  <span
-                    className="text-sm leading-6 md:text-base"
-                    style={{
-                      color: colors.topicText,
-                    }}
-                  >
-                    {topic}
-                  </span>
-                </motion.div>
-              ),
-            )}
+                  {topic}
+                </span>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          SESSIONS & TRACKS
-      ===================================================== */}
+      {/* SESSIONS & TRACKS */}
 
       <section
         className="px-6 py-16 lg:px-10 lg:py-20"
         style={{
-          backgroundColor:
-            colors.sessionsBg,
+          backgroundColor: colors.sessionsBg,
         }}
       >
         <div className="mx-auto max-w-5xl">
-          {/* SECTION HEADER */}
-
           <div className="text-center">
             <div className="flex justify-center">
-              <SectionLabel
-                label="Conference Program"
-                colors={colors}
-              />
+              <SectionLabel label="Conference Program" colors={colors} />
             </div>
 
             <h2
               className="mt-4 text-4xl font-bold tracking-tight md:text-4xl"
               style={{
-                color:
-                  colors.headingAccent,
+                color: colors.headingAccent,
               }}
             >
               Sessions & Tracks
@@ -1381,157 +1169,118 @@ const ConferenceDetails = () => {
                 color: colors.trackDesc,
               }}
             >
-              Explore the major scientific and
-              professional themes covered during
-              the conference. Click any track to
-              expand the detailed content.
+              Explore the major scientific and professional themes covered
+              during the conference. Click any track to expand the detailed
+              content.
             </p>
           </div>
-
-          {/* TRACKS */}
 
           <div
             className="mt-10 overflow-hidden rounded-2xl border bg-white shadow-sm"
             style={{
-              borderColor:
-                colors.accordionBorder,
+              borderColor: colors.accordionBorder,
             }}
           >
-            {conference.tracks?.map(
-              (track, index) => {
-                const isOpen =
-                  openTrack === index;
+            {conference.tracks?.map((track, index) => {
+              const isOpen = openTrack === index;
 
-                return (
-                  <div
-                    key={
-                      track?.title ||
-                      index
-                    }
-                    className="border-b last:border-b-0"
-                    style={{
-                      borderColor:
-                        colors.rowBorder,
+              return (
+                <div
+                  key={track?.title || index}
+                  className="border-b last:border-b-0"
+                  style={{
+                    borderColor: colors.rowBorder,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenTrack(isOpen ? null : index)}
+                    className="flex w-full items-center justify-between gap-5 px-5 py-6 text-left transition-all duration-300 md:px-7 md:py-7"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.rowHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenTrack(
-                          isOpen
-                            ? null
-                            : index,
-                        )
-                      }
-                      className="flex w-full items-center justify-between gap-5 px-5 py-6 text-left transition-all duration-300 md:px-7 md:py-7"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          colors.rowHover;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          "transparent";
-                      }}
-                    >
-                      <div className="flex min-w-0 items-center gap-5">
-                        <span
-                          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
-                          style={{
-                            backgroundColor:
-                              isOpen
-                                ? colors.primary
-                                : colors.closedNumberBg,
-                            color: isOpen
-                              ? "#FFFFFF"
-                              : colors.primary,
-                          }}
-                        >
-                          {String(
-                            index + 1,
-                          ).padStart(2, "0")}
-                        </span>
-
-                        <span
-                          className="text-base font-semibold leading-7 tracking-tight md:text-sm lg:text-xl"
-                          style={{
-                            color:
-                              colors.trackTitle,
-                          }}
-                        >
-                          {track?.title ||
-                            ""}
-                        </span>
-                      </div>
-
+                    <div className="flex min-w-0 items-center gap-5">
                       <span
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300"
+                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
                         style={{
-                          backgroundColor:
-                            isOpen
-                              ? colors.primary
-                              : colors.closedNumberBg,
-                          color: isOpen
-                            ? "#FFFFFF"
-                            : colors.primary,
+                          backgroundColor: isOpen
+                            ? colors.primary
+                            : colors.closedNumberBg,
+                          color: isOpen ? "#FFFFFF" : colors.primary,
                         }}
                       >
-                        {isOpen ? (
-                          <Minus size={18} />
-                        ) : (
-                          <Plus size={18} />
-                        )}
+                        {String(index + 1).padStart(2, "0")}
                       </span>
-                    </button>
 
-                    <AnimatePresence
-                      initial={false}
+                      <span
+                        className="text-base font-semibold leading-7 tracking-tight md:text-sm lg:text-xl"
+                        style={{
+                          color: colors.trackTitle,
+                        }}
+                      >
+                        {track?.title || ""}
+                      </span>
+                    </div>
+
+                    <span
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300"
+                      style={{
+                        backgroundColor: isOpen
+                          ? colors.primary
+                          : colors.closedNumberBg,
+                        color: isOpen ? "#FFFFFF" : colors.primary,
+                      }}
                     >
-                      {isOpen && (
-                        <motion.div
-                          initial={{
-                            height: 0,
-                            opacity: 0,
-                          }}
-                          animate={{
-                            height: "auto",
-                            opacity: 1,
-                          }}
-                          exit={{
-                            height: 0,
-                            opacity: 0,
-                          }}
-                          transition={{
-                            duration: 0.35,
-                            ease: "easeInOut",
-                          }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t bg-[#FCFAFF] px-5 pb-7 pt-6 pl-[84px] md:px-7 md:pl-[100px]">
-                            <p
-                              className="max-w-2xl text-sm leading-7 md:text-base md:leading-8"
-                              style={{
-                                color:
-                                  colors.trackDesc,
-                              }}
-                            >
-                              {track?.description ||
-                                ""}
-                            </p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              },
-            )}
+                      {isOpen ? <Minus size={18} /> : <Plus size={18} />}
+                    </span>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{
+                          height: 0,
+                          opacity: 0,
+                        }}
+                        animate={{
+                          height: "auto",
+                          opacity: 1,
+                        }}
+                        exit={{
+                          height: 0,
+                          opacity: 0,
+                        }}
+                        transition={{
+                          duration: 0.35,
+                          ease: "easeInOut",
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t bg-[#FCFAFF] px-5 pb-7 pt-6 pl-[84px] md:px-7 md:pl-[100px]">
+                          <p
+                            className="max-w-2xl text-sm leading-7 md:text-base md:leading-8"
+                            style={{
+                              color: colors.trackDesc,
+                            }}
+                          >
+                            {track?.description || ""}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          SAMPLE AGENDA
-      ===================================================== */}
+      {/* SAMPLE AGENDA */}
 
       {sampleAgenda.length > 0 && (
         <AccordionSection
@@ -1539,103 +1288,82 @@ const ConferenceDetails = () => {
           title="Sample Agenda"
           label="Conference Schedule"
           icon={<CalendarDays size={18} />}
-          open={
-            openSection === "agenda"
-          }
-          onToggle={() =>
-            toggleSection("agenda")
-          }
+          open={openSection === "agenda"}
+          onToggle={() => toggleSection("agenda")}
           colors={colors}
         >
           <div className="grid gap-5 md:grid-cols-2">
-            {sampleAgenda.map(
-              (day, index) => (
-                <motion.div
-                  key={
-                    day?.day ||
-                    index
-                  }
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay: index * 0.08,
-                  }}
-                  className="overflow-hidden rounded-xl border"
+            {sampleAgenda.map((day, index) => (
+              <motion.div
+                key={day?.day || index}
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: index * 0.08,
+                }}
+                className="overflow-hidden rounded-xl border"
+                style={{
+                  borderColor: colors.accordionBorder,
+                }}
+              >
+                <div
+                  className="px-5 py-4"
                   style={{
-                    borderColor:
-                      colors.accordionBorder,
+                    backgroundColor: colors.quoteBg,
                   }}
                 >
-                  <div
-                    className="px-5 py-4"
+                  <h3
+                    className="text-sm font-bold md:text-base"
                     style={{
-                      backgroundColor:
-                        colors.quoteBg,
+                      color: colors.miniTitle,
                     }}
                   >
-                    <h3
-                      className="text-sm font-bold md:text-base"
+                    {day?.day || ""}
+                  </h3>
+                </div>
+
+                <div className="divide-y">
+                  {day?.schedule?.map((item, itemIndex) => (
+                    <div
+                      key={`${item?.time || ""}-${item?.session || ""}-${itemIndex}`}
+                      className="flex gap-4 px-5 py-4"
                       style={{
-                        color:
-                          colors.miniTitle,
+                        borderColor: colors.rowBorder,
                       }}
                     >
-                      {day?.day || ""}
-                    </h3>
-                  </div>
+                      <span
+                        className="w-20 flex-shrink-0 text-xs font-bold"
+                        style={{
+                          color: colors.primary,
+                        }}
+                      >
+                        {item?.time || ""}
+                      </span>
 
-                  <div className="divide-y">
-                    {day?.schedule?.map(
-                      (item, itemIndex) => (
-                        <div
-                          key={`${item?.time || ""}-${item?.session || ""}-${itemIndex}`}
-                          className="flex gap-4 px-5 py-4"
-                          style={{
-                            borderColor:
-                              colors.rowBorder,
-                          }}
-                        >
-                          <span
-                            className="w-20 flex-shrink-0 text-xs font-bold"
-                            style={{
-                              color:
-                                colors.primary,
-                            }}
-                          >
-                            {item?.time ||
-                              ""}
-                          </span>
-
-                          <span
-                            className="text-sm leading-6"
-                            style={{
-                              color:
-                                colors.trackDesc,
-                            }}
-                          >
-                            {item?.session ||
-                              ""}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </motion.div>
-              ),
-            )}
+                      <span
+                        className="text-sm leading-6"
+                        style={{
+                          color: colors.trackDesc,
+                        }}
+                      >
+                        {item?.session || ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          WHY ATTEND
-      ===================================================== */}
+      {/* WHY ATTEND */}
 
       {whyToAttend.length > 0 && (
         <AccordionSection
@@ -1643,78 +1371,62 @@ const ConferenceDetails = () => {
           title="Why Attend This Conference?"
           label="Why Attend?"
           icon={<HeartHandshake size={18} />}
-          open={
-            openSection === "why-attend"
-          }
-          onToggle={() =>
-            toggleSection("why-attend")
-          }
+          open={openSection === "why-attend"}
+          onToggle={() => toggleSection("why-attend")}
           colors={colors}
         >
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {whyToAttend.map(
-              (item, index) => (
-                <motion.div
-                  key={
-                    item?.title ||
-                    index
-                  }
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay: index * 0.04,
-                  }}
-                  className="rounded-xl border p-6"
+            {whyToAttend.map((item, index) => (
+              <motion.div
+                key={item?.title || index}
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: index * 0.04,
+                }}
+                className="rounded-xl border p-6"
+                style={{
+                  borderColor: colors.benefitBorder,
+                  backgroundColor: colors.whyBg,
+                }}
+              >
+                <CheckCircle2
+                  size={20}
                   style={{
-                    borderColor:
-                      colors.benefitBorder,
-                    backgroundColor:
-                      colors.whyBg,
+                    color: colors.primary,
+                  }}
+                />
+
+                <h3
+                  className="mt-4 text-sm font-bold md:text-base"
+                  style={{
+                    color: colors.miniTitle,
                   }}
                 >
-                  <CheckCircle2
-                    size={20}
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
+                  {item?.title || ""}
+                </h3>
 
-                  <h3
-                    className="mt-4 text-sm font-bold md:text-base"
-                    style={{
-                      color:
-                        colors.miniTitle,
-                    }}
-                  >
-                    {item?.title || ""}
-                  </h3>
-
-                  <p
-                    className="mt-3 text-sm leading-6"
-                    style={{
-                      color:
-                        colors.whyText,
-                    }}
-                  >
-                    {item?.description ||
-                      ""}
-                  </p>
-                </motion.div>
-              ),
-            )}
+                <p
+                  className="mt-3 text-sm leading-6"
+                  style={{
+                    color: colors.whyText,
+                  }}
+                >
+                  {item?.description || ""}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          BENEFITS OF ATTENDING
-      ===================================================== */}
+      {/* BENEFITS */}
 
       {benefitsOfAttending.length > 0 && (
         <AccordionSection
@@ -1722,76 +1434,61 @@ const ConferenceDetails = () => {
           title="Benefits of Attending"
           label="Participant Benefits"
           icon={<Award size={18} />}
-          open={
-            openSection === "benefits"
-          }
-          onToggle={() =>
-            toggleSection("benefits")
-          }
+          open={openSection === "benefits"}
+          onToggle={() => toggleSection("benefits")}
           colors={colors}
         >
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {benefitsOfAttending.map(
-              (item, index) => (
-                <motion.div
-                  key={
-                    item?.title ||
-                    index
-                  }
-                  initial={{
-                    opacity: 0,
-                    scale: 0.96,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  transition={{
-                    delay: index * 0.04,
-                  }}
-                  className="rounded-xl border bg-white p-6"
+            {benefitsOfAttending.map((item, index) => (
+              <motion.div
+                key={item?.title || index}
+                initial={{
+                  opacity: 0,
+                  scale: 0.96,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                transition={{
+                  delay: index * 0.04,
+                }}
+                className="rounded-xl border bg-white p-6"
+                style={{
+                  borderColor: colors.sectionBorder,
+                }}
+              >
+                <Award
+                  size={21}
                   style={{
-                    borderColor:
-                      colors.sectionBorder,
+                    color: colors.primary,
+                  }}
+                />
+
+                <h3
+                  className="mt-4 text-sm font-bold md:text-base"
+                  style={{
+                    color: colors.miniTitle,
                   }}
                 >
-                  <Award
-                    size={21}
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
+                  {item?.title || ""}
+                </h3>
 
-                  <h3
-                    className="mt-4 text-sm font-bold md:text-base"
-                    style={{
-                      color:
-                        colors.miniTitle,
-                    }}
-                  >
-                    {item?.title || ""}
-                  </h3>
-
-                  <p
-                    className="mt-3 text-sm leading-6"
-                    style={{
-                      color:
-                        colors.aboutBody,
-                    }}
-                  >
-                    {item?.description ||
-                      ""}
-                  </p>
-                </motion.div>
-              ),
-            )}
+                <p
+                  className="mt-3 text-sm leading-6"
+                  style={{
+                    color: colors.aboutBody,
+                  }}
+                >
+                  {item?.description || ""}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          DELEGATES
-      ===================================================== */}
+      {/* DELEGATES */}
 
       {delegates.length > 0 && (
         <AccordionSection
@@ -1799,71 +1496,55 @@ const ConferenceDetails = () => {
           title="Delegate Benefits"
           label="For Delegates"
           icon={<Users size={18} />}
-          open={
-            openSection === "delegates"
-          }
-          onToggle={() =>
-            toggleSection("delegates")
-          }
+          open={openSection === "delegates"}
+          onToggle={() => toggleSection("delegates")}
           colors={colors}
         >
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {delegates.map(
-              (item, index) => (
-                <div
-                  key={
-                    item?.title ||
-                    index
-                  }
-                  className="rounded-xl border p-5"
-                  style={{
-                    borderColor:
-                      colors.topicBorder,
-                  }}
-                >
-                  <div className="flex gap-3">
-                    <CheckCircle2
-                      size={18}
-                      className="mt-0.5 flex-shrink-0"
+            {delegates.map((item, index) => (
+              <div
+                key={item?.title || index}
+                className="rounded-xl border p-5"
+                style={{
+                  borderColor: colors.topicBorder,
+                }}
+              >
+                <div className="flex gap-3">
+                  <CheckCircle2
+                    size={18}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{
+                      color: colors.primary,
+                    }}
+                  />
+
+                  <div>
+                    <h3
+                      className="text-sm font-bold md:text-base"
                       style={{
-                        color:
-                          colors.primary,
+                        color: colors.miniTitle,
                       }}
-                    />
+                    >
+                      {item?.title || ""}
+                    </h3>
 
-                    <div>
-                      <h3
-                        className="text-sm font-bold md:text-base"
-                        style={{
-                          color:
-                            colors.miniTitle,
-                        }}
-                      >
-                        {item?.title || ""}
-                      </h3>
-
-                      <p
-                        className="mt-2 text-sm leading-6"
-                        style={{
-                          color:
-                            colors.aboutBody,
-                        }}
-                      >
-                        {item?.description ||
-                          ""}
-                      </p>
-                    </div>
+                    <p
+                      className="mt-2 text-sm leading-6"
+                      style={{
+                        color: colors.aboutBody,
+                      }}
+                    >
+                      {item?.description || ""}
+                    </p>
                   </div>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          POSTER PRESENTERS
-      ===================================================== */}
+      {/* POSTER PRESENTERS */}
 
       {posterPresentersLive.length > 0 && (
         <AccordionSection
@@ -1871,12 +1552,8 @@ const ConferenceDetails = () => {
           title="Poster Presenters"
           label="Poster Presentation"
           icon={<Presentation size={18} />}
-          open={
-            openSection === "poster"
-          }
-          onToggle={() =>
-            toggleSection("poster")
-          }
+          open={openSection === "poster"}
+          onToggle={() => toggleSection("poster")}
           colors={colors}
         >
           <div className="grid gap-8 lg:grid-cols-2">
@@ -1884,45 +1561,39 @@ const ConferenceDetails = () => {
               <h3
                 className="text-xl font-bold"
                 style={{
-                  color:
-                    colors.miniTitle,
+                  color: colors.miniTitle,
                 }}
               >
                 Live Poster Presenters
               </h3>
 
               <div className="mt-5 space-y-3">
-                {posterPresentersLive.map(
-                  (item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 rounded-lg border bg-white p-4"
+                {posterPresentersLive.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 rounded-lg border bg-white p-4"
+                    style={{
+                      borderColor: colors.topicBorder,
+                    }}
+                  >
+                    <Presentation
+                      size={18}
+                      className="mt-0.5 flex-shrink-0"
                       style={{
-                        borderColor:
-                          colors.topicBorder,
+                        color: colors.primary,
+                      }}
+                    />
+
+                    <p
+                      className="text-sm leading-6 md:text-base"
+                      style={{
+                        color: colors.aboutBody,
                       }}
                     >
-                      <Presentation
-                        size={18}
-                        className="mt-0.5 flex-shrink-0"
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
-
-                      <p
-                        className="text-sm leading-6 md:text-base"
-                        style={{
-                          color:
-                            colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </p>
-                    </div>
-                  ),
-                )}
+                      {item}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1930,50 +1601,40 @@ const ConferenceDetails = () => {
               <h3
                 className="text-xl font-bold"
                 style={{
-                  color:
-                    colors.miniTitle,
+                  color: colors.miniTitle,
                 }}
               >
                 E-Poster Presenters
               </h3>
 
               <div className="mt-5 space-y-4">
-                {ePosterPresenters.benefits?.map(
-                  (item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3"
-                    >
-                      <CheckCircle2
-                        size={18}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
+                {ePosterPresenters.benefits?.map((item, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle2
+                      size={18}
+                      className="mt-1 flex-shrink-0"
+                      style={{
+                        color: colors.primary,
+                      }}
+                    />
 
-                      <p
-                        className="text-sm leading-6 md:text-base"
-                        style={{
-                          color:
-                            colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </p>
-                    </div>
-                  ),
-                )}
+                    <p
+                      className="text-sm leading-6 md:text-base"
+                      style={{
+                        color: colors.aboutBody,
+                      }}
+                    >
+                      {item}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          E-POSTER GUIDELINES
-      ===================================================== */}
+      {/* E-POSTER GUIDELINES */}
 
       {ePosterPresenters.specifications && (
         <AccordionSection
@@ -1981,15 +1642,8 @@ const ConferenceDetails = () => {
           title="E-Poster Guidelines"
           label="Submission Guidelines"
           icon={<FileText size={18} />}
-          open={
-            openSection ===
-            "eposter-guidelines"
-          }
-          onToggle={() =>
-            toggleSection(
-              "eposter-guidelines",
-            )
-          }
+          open={openSection === "eposter-guidelines"}
+          onToggle={() => toggleSection("eposter-guidelines")}
           colors={colors}
         >
           <p
@@ -2005,38 +1659,32 @@ const ConferenceDetails = () => {
             <div
               className="rounded-xl border p-6"
               style={{
-                borderColor:
-                  colors.sectionBorder,
+                borderColor: colors.sectionBorder,
               }}
             >
               <h3
                 className="text-base font-bold"
                 style={{
-                  color:
-                    colors.miniTitle,
+                  color: colors.miniTitle,
                 }}
               >
                 Specifications
               </h3>
 
               <div className="mt-5 space-y-3">
-                {Object.entries(
-                  ePosterPresenters.specifications,
-                ).map(
+                {Object.entries(ePosterPresenters.specifications).map(
                   ([key, value]) => (
                     <div
                       key={key}
                       className="flex items-start justify-between gap-4 border-b pb-3"
                       style={{
-                        borderColor:
-                          colors.rowBorder,
+                        borderColor: colors.rowBorder,
                       }}
                     >
                       <span
                         className="text-sm font-semibold"
                         style={{
-                          color:
-                            colors.aboutBody,
+                          color: colors.aboutBody,
                         }}
                       >
                         {key}
@@ -2045,8 +1693,7 @@ const ConferenceDetails = () => {
                       <span
                         className="text-right text-sm font-bold"
                         style={{
-                          color:
-                            colors.primary,
+                          color: colors.primary,
                         }}
                       >
                         {value}
@@ -2060,96 +1707,84 @@ const ConferenceDetails = () => {
             <div
               className="rounded-xl border p-6"
               style={{
-                borderColor:
-                  colors.sectionBorder,
+                borderColor: colors.sectionBorder,
               }}
             >
               <h3
                 className="text-base font-bold"
                 style={{
-                  color:
-                    colors.miniTitle,
+                  color: colors.miniTitle,
                 }}
               >
                 Poster Content
               </h3>
 
               <div className="mt-5 space-y-3">
-                {ePosterPresenters.posterContent?.map(
-                  (item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2"
-                    >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
+                {ePosterPresenters.posterContent?.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className="flex items-start gap-2"
+                  >
+                    <CheckCircle2
+                      size={16}
+                      className="mt-1 flex-shrink-0"
+                      style={{
+                        color: colors.primary,
+                      }}
+                    />
 
-                      <span
-                        className="text-sm leading-6"
-                        style={{
-                          color:
-                            colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </span>
-                    </div>
-                  ),
-                )}
+                    <span
+                      className="text-sm leading-6"
+                      style={{
+                        color: colors.aboutBody,
+                      }}
+                    >
+                      {item}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div
               className="rounded-xl border p-6"
               style={{
-                borderColor:
-                  colors.sectionBorder,
+                borderColor: colors.sectionBorder,
               }}
             >
               <h3
                 className="text-base font-bold"
                 style={{
-                  color:
-                    colors.miniTitle,
+                  color: colors.miniTitle,
                 }}
               >
                 Design Requirements
               </h3>
 
               <div className="mt-5 space-y-3">
-                {ePosterPresenters.designRequirements?.map(
-                  (item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2"
-                    >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
+                {ePosterPresenters.designRequirements?.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className="flex items-start gap-2"
+                  >
+                    <CheckCircle2
+                      size={16}
+                      className="mt-1 flex-shrink-0"
+                      style={{
+                        color: colors.primary,
+                      }}
+                    />
 
-                      <span
-                        className="text-sm leading-6"
-                        style={{
-                          color:
-                            colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </span>
-                    </div>
-                  ),
-                )}
+                    <span
+                      className="text-sm leading-6"
+                      style={{
+                        color: colors.aboutBody,
+                      }}
+                    >
+                      {item}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -2157,80 +1792,57 @@ const ConferenceDetails = () => {
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <GuidelineList
               title="Submission Guidelines"
-              items={
-                ePosterPresenters.submissionGuidelines
-              }
+              items={ePosterPresenters.submissionGuidelines}
               colors={colors}
             />
 
             <GuidelineList
               title="Review & Acceptance"
-              items={
-                ePosterPresenters.reviewAndAcceptance
-              }
+              items={ePosterPresenters.reviewAndAcceptance}
               colors={colors}
             />
 
             <GuidelineList
               title="Presentation"
-              items={
-                ePosterPresenters.presentation
-              }
+              items={ePosterPresenters.presentation}
               colors={colors}
             />
 
             <GuidelineList
               title="Certificate"
-              items={
-                ePosterPresenters.certificate
-              }
+              items={ePosterPresenters.certificate}
               colors={colors}
             />
           </div>
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          MARKET ANALYSIS
-      ===================================================== */}
+      {/* MARKET ANALYSIS */}
 
       {marketAnalysis?.paragraphs?.length > 0 && (
         <AccordionSection
           id="market-analysis"
-          title={
-            marketAnalysis.heading ||
-            "Market Analysis"
-          }
+          title={marketAnalysis.heading || "Market Analysis"}
           label="Market Analysis"
           icon={<Globe2 size={18} />}
-          open={
-            openSection ===
-            "market-analysis"
-          }
-          onToggle={() =>
-            toggleSection(
-              "market-analysis",
-            )
-          }
+          open={openSection === "market-analysis"}
+          onToggle={() => toggleSection("market-analysis")}
           colors={colors}
         >
           <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
             <div>
               <div className="space-y-5">
-                {marketAnalysis.paragraphs.map(
-                  (paragraph, index) => (
-                    <p
-                      key={index}
-                      className="text-sm leading-7 md:text-base md:leading-8"
-                      style={{
-                        color:
-                          colors.aboutBody,
-                      }}
-                    >
-                      {paragraph}
-                    </p>
-                  ),
-                )}
+                {marketAnalysis.paragraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className="text-sm leading-7 md:text-base md:leading-8"
+                    style={{
+                      color: colors.aboutBody,
+                    }}
+                  >
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </div>
 
@@ -2249,9 +1861,7 @@ const ConferenceDetails = () => {
                 }}
               >
                 <img
-                  src={
-                    marketAnalysis.image
-                  }
+                  src={marketAnalysis.image}
                   alt="Market Analysis"
                   className="h-[360px] w-full rounded-2xl object-cover shadow-xl"
                 />
@@ -2261,10 +1871,7 @@ const ConferenceDetails = () => {
         </AccordionSection>
       )}
 
-      {/* =====================================================
-          SPONSORS - SEPARATE SECTION
-          NOT AN ACCORDION
-      ===================================================== */}
+      {/* SPONSORS */}
 
       {conference.sponsors?.length > 0 && (
         <section
@@ -2302,15 +1909,12 @@ const ConferenceDetails = () => {
               </div>
 
               <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-900 md:text-3xl lg:text-4xl">
-                Media Partners,
-                Collaborators & Sponsors
+                Media Partners, Collaborators & Sponsors
               </h2>
 
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-500 md:text-base">
-                We gratefully acknowledge our
-                media partners, collaborators,
-                and sponsors supporting this
-                conference.
+                We gratefully acknowledge our media partners, collaborators, and
+                sponsors supporting this conference.
               </p>
             </motion.div>
 
@@ -2332,47 +1936,41 @@ const ConferenceDetails = () => {
               }}
               className="mt-12 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
             >
-              {conference.sponsors.map(
-                (logo, index) => (
-                  <motion.div
-                    key={`${logo}-${index}`}
-                    initial={{
-                      opacity: 0,
-                      scale: 0.95,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      scale: 1,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: index * 0.05,
-                    }}
-                    className="group flex h-28 items-center justify-center rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-md"
-                  >
-                    {logo && (
-                      <img
-                        src={logo}
-                        alt={`Sponsor ${index + 1}`}
-                        className="max-h-20 max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                      />
-                    )}
-                  </motion.div>
-                ),
-              )}
+              {conference.sponsors.map((logo, index) => (
+                <motion.div
+                  key={`${logo}-${index}`}
+                  initial={{
+                    opacity: 0,
+                    scale: 0.95,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    scale: 1,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    delay: index * 0.05,
+                  }}
+                  className="group flex h-28 items-center justify-center rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-md"
+                >
+                  {logo && (
+                    <img
+                      src={logo}
+                      alt={`Sponsor ${index + 1}`}
+                      className="max-h-20 max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )}
+                </motion.div>
+              ))}
             </motion.div>
           </div>
         </section>
       )}
 
-      {/* =====================================================
-          EXTRA SPACE BEFORE FOOTER
-      ===================================================== */}
-
       <div className="h-10 bg-white md:h-14" />
-    </div>
+    </motion.div>
   );
 };
 
@@ -2391,12 +1989,8 @@ const AccordionSection = ({
     <section
       className="border-t px-6 py-4 lg:px-10"
       style={{
-        backgroundColor: dark
-          ? colors.finalBg
-          : colors.sessionsBg,
-        borderColor: dark
-          ? "rgba(255,255,255,0.12)"
-          : colors.sectionBorder,
+        backgroundColor: dark ? colors.finalBg : colors.sessionsBg,
+        borderColor: dark ? "rgba(255,255,255,0.12)" : colors.sectionBorder,
       }}
     >
       <div className="mx-auto max-w-7xl">
@@ -2419,9 +2013,7 @@ const AccordionSection = ({
                 backgroundColor: dark
                   ? "rgba(255,255,255,0.10)"
                   : colors.quoteBg,
-                color: dark
-                  ? colors.finalIcon
-                  : colors.primary,
+                color: dark ? colors.finalIcon : colors.primary,
               }}
             >
               {icon}
@@ -2431,9 +2023,7 @@ const AccordionSection = ({
               <p
                 className="text-[9px] font-bold uppercase tracking-[0.16em]"
                 style={{
-                  color: dark
-                    ? "#D8B4FE"
-                    : colors.primary,
+                  color: dark ? "#D8B4FE" : colors.primary,
                 }}
               >
                 {label}
@@ -2442,9 +2032,7 @@ const AccordionSection = ({
               <h2
                 className="mt-1 text-lg font-bold md:text-xl lg:text-2xl"
                 style={{
-                  color: dark
-                    ? "#FFFFFF"
-                    : colors.headingAccent,
+                  color: dark ? "#FFFFFF" : colors.headingAccent,
                 }}
               >
                 {title}
@@ -2460,18 +2048,10 @@ const AccordionSection = ({
                 : dark
                   ? "rgba(255,255,255,0.10)"
                   : colors.quoteBg,
-              color: open
-                ? "#FFFFFF"
-                : dark
-                  ? "#D8B4FE"
-                  : colors.primary,
+              color: open ? "#FFFFFF" : dark ? "#D8B4FE" : colors.primary,
             }}
           >
-            {open ? (
-              <Minus size={18} />
-            ) : (
-              <Plus size={18} />
-            )}
+            {open ? <Minus size={18} /> : <Plus size={18} />}
           </div>
         </button>
 
@@ -2497,9 +2077,7 @@ const AccordionSection = ({
               }}
               className="overflow-hidden"
             >
-              <div className="px-3 pb-8 pt-3">
-                {children}
-              </div>
+              <div className="px-3 pb-8 pt-3">{children}</div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -2508,25 +2086,16 @@ const AccordionSection = ({
   );
 };
 
-const PremiumCountdownBox = ({
-  value,
-  label,
-  colors,
-}) => {
-  const [hovered, setHovered] =
-    useState(false);
+const PremiumCountdownBox = ({ value, label, colors }) => {
+  const [hovered, setHovered] = useState(false);
 
   return (
     <motion.div
       whileHover={{
         y: -2,
       }}
-      onMouseEnter={() =>
-        setHovered(true)
-      }
-      onMouseLeave={() =>
-        setHovered(false)
-      }
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="group relative overflow-hidden rounded-md border px-2 py-2 text-center transition-all duration-300"
       style={{
         borderColor: hovered
@@ -2537,24 +2106,20 @@ const PremiumCountdownBox = ({
           ? "rgba(255,255,255,0.11)"
           : colors.countdownBoxBg,
 
-        boxShadow: hovered
-          ? `0 5px 12px ${colors.primary}35`
-          : "none",
+        boxShadow: hovered ? `0 5px 12px ${colors.primary}35` : "none",
       }}
     >
       <div
         className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-b-full"
         style={{
-          backgroundColor:
-            colors.primary,
+          backgroundColor: colors.primary,
         }}
       />
 
       <span
         className="block text-xl font-extrabold leading-none tracking-tight"
         style={{
-          color:
-            colors.countdownNumber,
+          color: colors.countdownNumber,
         }}
       >
         {String(value).padStart(2, "0")}
@@ -2563,8 +2128,7 @@ const PremiumCountdownBox = ({
       <span
         className="mt-1 block text-[8px] font-bold uppercase tracking-[0.08em]"
         style={{
-          color:
-            colors.countdownLabel,
+          color: colors.countdownLabel,
         }}
       >
         {label}
@@ -2581,8 +2145,7 @@ const PremiumActionButton = ({
   primary = false,
   colors,
 }) => {
-  const [hovered, setHovered] =
-    useState(false);
+  const [hovered, setHovered] = useState(false);
 
   return (
     <motion.button
@@ -2594,12 +2157,8 @@ const PremiumActionButton = ({
         scale: 0.98,
       }}
       onClick={onClick}
-      onMouseEnter={() =>
-        setHovered(true)
-      }
-      onMouseLeave={() =>
-        setHovered(false)
-      }
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="group relative flex min-h-[50px] max-w-[240px] items-center gap-2 overflow-hidden rounded-md border px-3 py-2.5 text-left backdrop-blur-md transition-all duration-300"
       style={{
         borderColor: primary
@@ -2634,11 +2193,7 @@ const PremiumActionButton = ({
               ? colors.primary
               : colors.actionIconBg,
 
-          color: primary
-            ? "#FFFFFF"
-            : hovered
-              ? "#FFFFFF"
-              : colors.actionIcon,
+          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.actionIcon,
         }}
       >
         {icon}
@@ -2670,30 +2225,20 @@ const PremiumActionButton = ({
         size={13}
         className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1"
         style={{
-          color: primary
-            ? "#FFFFFF"
-            : hovered
-              ? "#FFFFFF"
-              : colors.primary,
+          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.primary,
         }}
       />
     </motion.button>
   );
 };
 
-const InfoItem = ({
-  icon,
-  title,
-  subtitle,
-  colors,
-}) => {
+const InfoItem = ({ icon, title, subtitle, colors }) => {
   return (
     <div className="flex items-center gap-2">
       <div
         className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
         style={{
-          backgroundColor:
-            colors.infoIconBg,
+          backgroundColor: colors.infoIconBg,
           color: colors.infoIcon,
         }}
       >
@@ -2723,17 +2268,13 @@ const InfoItem = ({
   );
 };
 
-const SectionLabel = ({
-  label,
-  colors,
-}) => {
+const SectionLabel = ({ label, colors }) => {
   return (
     <div className="flex items-center gap-2.5">
       <span
         className="h-[2px] w-8"
         style={{
-          backgroundColor:
-            colors.primary,
+          backgroundColor: colors.primary,
         }}
       />
 
@@ -2749,27 +2290,21 @@ const SectionLabel = ({
   );
 };
 
-const SectionHeading = ({
-  label,
-  action,
-  colors,
-}) => {
+const SectionHeading = ({ label, action, colors }) => {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-2.5">
         <span
           className="h-[2px] w-8"
           style={{
-            backgroundColor:
-              colors.primary,
+            backgroundColor: colors.primary,
           }}
         />
 
         <h2
           className="text-xl font-bold md:text-2xl"
           style={{
-            color:
-              colors.headingAccent,
+            color: colors.headingAccent,
           }}
         >
           {label}
@@ -2791,19 +2326,16 @@ const SectionHeading = ({
   );
 };
 
-const GuidelineList = ({
-  title,
-  items,
-  colors,
-}) => {
-  if (!items?.length) return null;
+const GuidelineList = ({ title, items, colors }) => {
+  if (!items?.length) {
+    return null;
+  }
 
   return (
     <div
       className="rounded-xl border bg-white p-6"
       style={{
-        borderColor:
-          colors.sectionBorder,
+        borderColor: colors.sectionBorder,
       }}
     >
       <h3
@@ -2816,32 +2348,26 @@ const GuidelineList = ({
       </h3>
 
       <div className="mt-5 space-y-3">
-        {items.map(
-          (item, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-3"
-            >
-              <CheckCircle2
-                size={17}
-                className="mt-1 flex-shrink-0"
-                style={{
-                  color: colors.primary,
-                }}
-              />
+        {items.map((item, index) => (
+          <div key={index} className="flex items-start gap-3">
+            <CheckCircle2
+              size={17}
+              className="mt-1 flex-shrink-0"
+              style={{
+                color: colors.primary,
+              }}
+            />
 
-              <p
-                className="text-sm leading-6"
-                style={{
-                  color:
-                    colors.aboutBody,
-                }}
-              >
-                {item}
-              </p>
-            </div>
-          ),
-        )}
+            <p
+              className="text-sm leading-6"
+              style={{
+                color: colors.aboutBody,
+              }}
+            >
+              {item}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

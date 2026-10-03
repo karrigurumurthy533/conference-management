@@ -1,4 +1,3 @@
-import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
@@ -14,6 +13,9 @@ import {
   Bell,
   UserCircle,
   LogOut,
+  FilePlus,
+  Upload,
+  Star,
 } from "lucide-react";
 
 import { logout } from "../../redux/authSlice";
@@ -23,7 +25,7 @@ const AdminSidebar = () => {
   const dispatch = useDispatch();
 
   const navClass = ({ isActive }) =>
-    `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-200 ${
+    `group flex items-center gap-3 rounded-lg px-2 py-1.5 text-[14px] font-medium whitespace-nowrap transition-all duration-200 ${
       isActive
         ? "bg-purple-50 text-[#7C3AED]"
         : "text-gray-600 hover:bg-gray-50 hover:text-[#7C3AED]"
@@ -31,7 +33,9 @@ const AdminSidebar = () => {
 
   const iconClass = ({ isActive }) =>
     `shrink-0 transition-all duration-200 ${
-      isActive ? "text-[#7C3AED]" : "text-gray-500 group-hover:text-[#7C3AED]"
+      isActive
+        ? "text-[#7C3AED]"
+        : "text-gray-500 group-hover:text-[#7C3AED]"
     }`;
 
   const handleLogout = async () => {
@@ -54,12 +58,12 @@ const AdminSidebar = () => {
         />
       </div>
 
-      <nav className="flex-1 overflow-hidden px-3 py-3">
+      <nav className="flex-1 overflow-hidden px-3 py-2">
         <NavLink to="/admin/dashboard" className={navClass}>
           {({ isActive }) => (
             <>
               <LayoutDashboard
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -72,7 +76,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <CalendarPlus
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -85,7 +89,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <CalendarDays
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -94,11 +98,37 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        <NavLink to="/admin/brochures" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <FilePlus
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Brochures</span>
+            </>
+          )}
+        </NavLink>
+
+        <NavLink to="/admin/brochures/upload" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <Upload
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Upload Brochure</span>
+            </>
+          )}
+        </NavLink>
+
         <NavLink to="/admin/employees/create" className={navClass}>
           {({ isActive }) => (
             <>
               <UserPlus
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -111,7 +141,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <UserCircle
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -124,7 +154,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <ClipboardList
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -137,7 +167,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <CreditCard
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -150,7 +180,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <BarChart3
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -163,7 +193,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <Mic2
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -172,11 +202,24 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        <NavLink to="/admin/reviews" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <Star
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Reviews</span>
+            </>
+          )}
+        </NavLink>
+
         <NavLink to="/admin/notifications" className={navClass}>
           {({ isActive }) => (
             <>
               <Bell
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -189,7 +232,7 @@ const AdminSidebar = () => {
           {({ isActive }) => (
             <>
               <UserCircle
-                size={18}
+                size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
@@ -199,14 +242,14 @@ const AdminSidebar = () => {
         </NavLink>
       </nav>
 
-      <div className="shrink-0 border-t border-gray-100 px-3 py-2.5">
+      <div className="shrink-0 border-t border-gray-100 px-3 py-2">
         <button
           type="button"
           onClick={handleLogout}
-          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-gray-600 transition-all duration-200 hover:bg-red-50 hover:text-red-500"
+          className="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-gray-600 transition-all duration-200 hover:bg-red-50 hover:text-red-500"
         >
           <LogOut
-            size={18}
+            size={17}
             className="text-gray-500 transition group-hover:text-red-500"
           />
 

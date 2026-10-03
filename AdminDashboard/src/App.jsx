@@ -24,7 +24,10 @@ import Profile from "./pages/admin/Profile";
 import Employees from "./pages/admin/employees/Employees";
 import ConferenceDetails from "./pages/admin/conferences/ConferenceDetails";
 import SpeakersDetailsPage from "./pages/admin/SpeakersDetailsPage";
-
+import BrochureManagement from "./pages/admin/brochuers";
+import UploadBrochure from "./pages/admin/UploadBrochure";
+import AdminReviews from "./pages/admin/AdminReviews";
+import AddReview from "./pages/admin/AddReview";
 
 function App() {
   return (
@@ -75,8 +78,12 @@ function App() {
         <Route path="reports" element={<Reports />} />
 
         <Route path="speakers" element={<Speakers />} />
-      
+        <Route path="brochures" element={<BrochureManagement />} />
+        <Route path="brochures/upload" element={<UploadBrochure />} />
+
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
+        <Route path="/admin/reviews" element={<AdminReviews />} />
+        <Route path="/admin/reviews/add" element={<AddReview />} />
 
         <Route path="notifications" element={<Notifications />} />
 

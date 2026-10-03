@@ -5,53 +5,10 @@ const mongoose = require("mongoose");
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync")
 const Speaker = require("../models/Speaker");
-const cloudinary = require("../config/cloudinary");
 const Employee = require("../models/Employee");
+const ConferenceBrochure = require("../models/ConferenceBrochure");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
 
-
-
-const uploadToCloudinary = (file, folder = "globalscion/conferences") => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: "image",
-      },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(result);
-      }
-    );
-
-    uploadStream.end(file.buffer);
-  });
-};
-
-
-const deleteFromCloudinary = async (imageUrl) => {
-  try {
-    if (!imageUrl) return;
-
-    const uploadIndex = imageUrl.indexOf("/upload/");
-
-    if (uploadIndex === -1) return;
-
-    let publicId = imageUrl.substring(uploadIndex + 8);
-
-    publicId = publicId.substring(publicId.indexOf("/") + 1);
-
-    publicId = publicId.replace(/\.[^/.]+$/, "");
-
-    await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
-    });
-  } catch (error) {
-    console.error("Cloudinary delete error:", error.message);
-  }
-};
 
 const parseConferenceData = (req) => {
   let data = req.body?.conferenceData;
@@ -248,7 +205,6 @@ exports.createConference = async (req, res) => {
   }
 };
 
-
 exports.getAllConferences = async (
   req,
   res
@@ -279,7 +235,6 @@ exports.getAllConferences = async (
     });
   }
 };
-
 
 exports.getConferenceById = async (req, res) => {
   try {
@@ -323,7 +278,6 @@ exports.getConferenceById = async (req, res) => {
     });
   }
 };
-
 
 exports.updateConference = async (
   req,
@@ -370,7 +324,7 @@ exports.updateConference = async (
       (file) =>
         file.fieldname === "heroImage" ||
         file.fieldname ===
-          "conferenceImage"
+        "conferenceImage"
     );
 
     if (heroImage) {
@@ -614,7 +568,6 @@ exports.updateConference = async (
   }
 };
 
-
 exports.deleteConference = async (
   req,
   res
@@ -821,7 +774,7 @@ exports.createEmployee = async (req, res) => {
       assignedConferences = [],
     } = req.body;
 
-    
+
 
     if (!fullName || !email || !role) {
       return res.status(400).json({
@@ -830,11 +783,11 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-   
+
 
     const normalizedEmail = email.trim().toLowerCase();
 
- 
+
 
     const existingEmployee = await Employee.findOne({
       email: normalizedEmail,
@@ -847,7 +800,7 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    
+
     if (!Array.isArray(assignedConferences)) {
       return res.status(400).json({
         success: false,
@@ -855,7 +808,7 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-   
+
 
     for (const conferenceId of assignedConferences) {
       if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
@@ -866,7 +819,7 @@ exports.createEmployee = async (req, res) => {
       }
     }
 
-   
+
 
     if (assignedConferences.length > 0) {
       const conferences = await Conference.find({
@@ -883,7 +836,7 @@ exports.createEmployee = async (req, res) => {
       }
     }
 
-    
+
     const employee = await Employee.create({
       fullName: fullName.trim(),
       email: normalizedEmail,
@@ -892,7 +845,7 @@ exports.createEmployee = async (req, res) => {
       assignedConferences,
     });
 
-   
+
 
     const populatedEmployee = await Employee.findById(
       employee._id
@@ -901,7 +854,7 @@ exports.createEmployee = async (req, res) => {
       "basicInformation conferenceDates venueInformation"
     );
 
-   
+
 
     return res.status(201).json({
       success: true,
@@ -1022,7 +975,7 @@ exports.updateEmployee = async (req, res) => {
       status,
     } = req.body;
 
-  
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -1030,7 +983,7 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-   
+
     const employee = await Employee.findById(id);
 
     if (!employee) {
@@ -1040,7 +993,7 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-   
+
 
     if (email !== undefined) {
       const normalizedEmail = email.trim().toLowerCase();
@@ -1062,30 +1015,30 @@ exports.updateEmployee = async (req, res) => {
       employee.email = normalizedEmail;
     }
 
-  
+
     if (fullName !== undefined) {
       employee.fullName = fullName.trim();
     }
 
-    
+
 
     if (role !== undefined) {
       employee.role = role;
     }
 
-    
+
 
     if (phoneNumber !== undefined) {
       employee.phoneNumber = phoneNumber.trim();
     }
 
-    
+
 
     if (status !== undefined) {
       employee.status = status;
     }
 
-   
+
 
     if (assignedConferences !== undefined) {
       // Check array
@@ -1096,7 +1049,7 @@ exports.updateEmployee = async (req, res) => {
         });
       }
 
-      
+
       for (const conferenceId of assignedConferences) {
         if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
           return res.status(400).json({
@@ -1106,7 +1059,7 @@ exports.updateEmployee = async (req, res) => {
         }
       }
 
-      
+
       if (assignedConferences.length > 0) {
         const conferences = await Conference.find({
           _id: {
@@ -1125,11 +1078,11 @@ exports.updateEmployee = async (req, res) => {
       employee.assignedConferences = assignedConferences;
     }
 
-   
+
 
     await employee.save();
 
-   
+
 
     const updatedEmployee = await Employee.findById(
       employee._id
@@ -1290,8 +1243,6 @@ exports.createSpeaker = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 exports.getAllSpeakers = catchAsync(
   async (req, res, next) => {
     const speakers = await Speaker.find()
@@ -1312,7 +1263,6 @@ exports.getAllSpeakers = catchAsync(
     });
   }
 );
-
 
 exports.getSpeakerById = catchAsync(
   async (req, res, next) => {
@@ -1349,8 +1299,7 @@ exports.getSpeakerById = catchAsync(
 
 
 
-exports.getSpeakersByConference =
-  catchAsync(async (req, res, next) => {
+exports.getSpeakersByConference =catchAsync(async (req, res, next) => {
     const { conferenceId } = req.params;
 
     // --------------------------------------------------------
@@ -1629,26 +1578,93 @@ exports.deleteSpeaker = catchAsync(
 
 
 
-exports.deleteAllSpeakers =catchAsync(async (req, res, next) => {
-    const result =
-      await Speaker.deleteMany({});
+exports.deleteAllSpeakers = catchAsync(async (req, res, next) => {
+  const result =
+    await Speaker.deleteMany({});
 
-    return res.status(200).json({
-      success: true,
-      message:
-        "All speakers deleted successfully",
-      deletedCount:
-        result.deletedCount,
-    });
+  return res.status(200).json({
+    success: true,
+    message:
+      "All speakers deleted successfully",
+    deletedCount:
+      result.deletedCount,
   });
+});
 
 
-exports.deleteConferenceSpeakers =catchAsync(async (req, res, next) => {
-    const { conferenceId } = req.params;
+exports.deleteConferenceSpeakers = catchAsync(async (req, res, next) => {
+  const { conferenceId } = req.params;
 
-    // --------------------------------------------------------
-    // VALIDATE CONFERENCE ID
-    // --------------------------------------------------------
+  // --------------------------------------------------------
+  // VALIDATE CONFERENCE ID
+  // --------------------------------------------------------
+
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      conferenceId
+    )
+  ) {
+    return next(
+      new AppError(
+        "Invalid conference ID",
+        400
+      )
+    );
+  }
+
+  // --------------------------------------------------------
+  // CHECK CONFERENCE
+  // --------------------------------------------------------
+
+  const conference =
+    await Conference.findById(
+      conferenceId
+    );
+
+  if (!conference) {
+    return next(
+      new AppError(
+        "Conference not found",
+        404
+      )
+    );
+  }
+
+  // --------------------------------------------------------
+  // DELETE CONFERENCE SPEAKERS
+  // --------------------------------------------------------
+
+  const result =
+    await Speaker.deleteMany({
+      conferenceId,
+    });
+
+  return res.status(200).json({
+    success: true,
+    message:
+      "All speakers of the conference deleted successfully",
+    deletedCount:
+      result.deletedCount,
+  });
+});
+
+
+exports.createConferenceBrochure = catchAsync(
+  async (req, res, next) => {
+    const {
+      title,
+      conferenceId,
+      status,
+    } = req.body;
+
+    if (!title || !conferenceId) {
+      return next(
+        new AppError(
+          "Title and conference ID are required",
+          400
+        )
+      );
+    }
 
     if (
       !mongoose.Types.ObjectId.isValid(
@@ -1662,10 +1678,6 @@ exports.deleteConferenceSpeakers =catchAsync(async (req, res, next) => {
         )
       );
     }
-
-    // --------------------------------------------------------
-    // CHECK CONFERENCE
-    // --------------------------------------------------------
 
     const conference =
       await Conference.findById(
@@ -1681,20 +1693,453 @@ exports.deleteConferenceSpeakers =catchAsync(async (req, res, next) => {
       );
     }
 
-    // --------------------------------------------------------
-    // DELETE CONFERENCE SPEAKERS
-    // --------------------------------------------------------
+    if (!req.file) {
+      return next(
+        new AppError(
+          "Brochure PDF file is required",
+          400
+        )
+      );
+    }
 
-    const result =
-      await Speaker.deleteMany({
+    if (
+      req.file.mimetype !==
+      "application/pdf"
+    ) {
+      return next(
+        new AppError(
+          "Only PDF files are allowed",
+          400
+        )
+      );
+    }
+
+    const uploadResult =
+      await uploadToCloudinary(
+        req.file,
+        "globalscion/conferences/brochures",
+        "raw"
+      );
+
+    const brochure =
+      await ConferenceBrochure.create({
+        title: title.trim(),
         conferenceId,
+        file: uploadResult.secure_url,
+        status: status || "uploaded",
       });
+
+    const populatedBrochure =
+      await ConferenceBrochure.findById(
+        brochure._id
+      ).populate(
+        "conferenceId",
+        "basicInformation conferenceDates"
+      );
+
+    return res.status(201).json({
+      success: true,
+      message:
+        "Conference brochure uploaded successfully",
+      data: populatedBrochure,
+    });
+  }
+);
+
+exports.getAllConferenceBrochures = catchAsync(
+  async (req, res, next) => {
+    const brochures =
+      await ConferenceBrochure.find()
+        .populate(
+          "conferenceId",
+          "title"
+        )
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
+    const formattedBrochures =
+      brochures.map((brochure) => ({
+        _id: brochure._id,
+
+        title: brochure.title,
+
+        conferenceId:
+          brochure?.conferenceId?._id || null,
+
+        conferenceTitle:
+          brochure?.conferenceId?.title || "",
+
+        file: brochure.file,
+
+        status: brochure.status,
+
+        createdAt: brochure.createdAt,
+
+        updatedAt: brochure.updatedAt,
+      }));
+
+    return res.status(200).json({
+      success: true,
+      count: formattedBrochures.length,
+      data: formattedBrochures,
+    });
+  }
+);
+
+exports.getConferenceBrochureById = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return next(
+        new AppError(
+          "Invalid brochure ID",
+          400
+        )
+      );
+    }
+
+    const brochure =
+      await ConferenceBrochure.findById(
+        id
+      ).populate(
+        "conferenceId",
+        "basicInformation conferenceDates"
+      );
+
+    if (!brochure) {
+      return next(
+        new AppError(
+          "Conference brochure not found",
+          404
+        )
+      );
+    }
 
     return res.status(200).json({
       success: true,
       message:
-        "All speakers of the conference deleted successfully",
-      deletedCount:
-        result.deletedCount,
+        "Conference brochure fetched successfully",
+      data: brochure,
     });
-  });
+  }
+);
+
+exports.updateConferenceBrochure = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    const {
+      title,
+      conferenceId,
+      status,
+    } = req.body;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return next(
+        new AppError(
+          "Invalid brochure ID",
+          400
+        )
+      );
+    }
+
+    const brochure =
+      await ConferenceBrochure.findById(id);
+
+    if (!brochure) {
+      return next(
+        new AppError(
+          "Conference brochure not found",
+          404
+        )
+      );
+    }
+
+    if (title !== undefined) {
+      if (!title.trim()) {
+        return next(
+          new AppError(
+            "Brochure title cannot be empty",
+            400
+          )
+        );
+      }
+
+      brochure.title =
+        title.trim();
+    }
+
+    if (conferenceId !== undefined) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          conferenceId
+        )
+      ) {
+        return next(
+          new AppError(
+            "Invalid conference ID",
+            400
+          )
+        );
+      }
+
+      const conference =
+        await Conference.findById(
+          conferenceId
+        );
+
+      if (!conference) {
+        return next(
+          new AppError(
+            "Conference not found",
+            404
+          )
+        );
+      }
+
+      brochure.conferenceId =
+        conferenceId;
+    }
+
+    if (status !== undefined) {
+      if (
+        ![
+          "uploaded",
+          "pending",
+        ].includes(status)
+      ) {
+        return next(
+          new AppError(
+            "Status must be uploaded or pending",
+            400
+          )
+        );
+      }
+
+      brochure.status = status;
+    }
+
+    if (req.file) {
+      if (
+        req.file.mimetype !==
+        "application/pdf"
+      ) {
+        return next(
+          new AppError(
+            "Only PDF files are allowed",
+            400
+          )
+        );
+      }
+
+      if (brochure.file) {
+        await deleteFromCloudinary(
+          brochure.file,
+          "raw"
+        );
+      }
+
+      const uploadResult =
+        await uploadToCloudinary(
+          req.file,
+          "globalscion/conferences/brochures",
+          "raw"
+        );
+
+      brochure.file =
+        uploadResult.secure_url;
+
+      brochure.status =
+        "uploaded";
+    }
+
+    await brochure.save();
+
+    const updatedBrochure =
+      await ConferenceBrochure.findById(
+        brochure._id
+      ).populate(
+        "conferenceId",
+        "basicInformation conferenceDates"
+      );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Conference brochure updated successfully",
+      data: updatedBrochure,
+    });
+  }
+);
+
+exports.deleteConferenceBrochure = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(id)
+    ) {
+      return next(
+        new AppError(
+          "Invalid brochure ID",
+          400
+        )
+      );
+    }
+
+    const brochure =
+      await ConferenceBrochure.findById(id);
+
+    if (!brochure) {
+      return next(
+        new AppError(
+          "Conference brochure not found",
+          404
+        )
+      );
+    }
+
+    if (brochure.file) {
+      await deleteFromCloudinary(
+        brochure.file,
+        "raw"
+      );
+    }
+
+    await ConferenceBrochure.findByIdAndDelete(
+      id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Conference brochure deleted successfully",
+    });
+  }
+);
+
+exports.getBrochureDownloadRequests = catchAsync(
+  async (req, res, next) => {
+    return res.status(200).json({
+      success: true,
+      count: 0,
+      data: [],
+      message:
+        "No brochure download requests found",
+    });
+  }
+);
+
+exports.getBrochureDownloadStats = catchAsync(
+  async (req, res, next) => {
+    const totalBrochures =
+      await ConferenceBrochure.countDocuments();
+
+    const uploadedBrochures =
+      await ConferenceBrochure.countDocuments({
+        status: "uploaded",
+      });
+
+    const pendingBrochures =
+      await ConferenceBrochure.countDocuments({
+        status: "pending",
+      });
+
+    return res.status(200).json({
+      success: true,
+      stats: {
+        totalBrochures,
+        uploadedBrochures,
+        pendingBrochures,
+        totalDownloads: 0,
+      },
+    });
+  }
+);
+exports.downloadConferenceBrochure = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(
+        new AppError(
+          "Invalid conference ID",
+          400
+        )
+      );
+    }
+
+    const brochure =
+      await ConferenceBrochure.findOne({
+        conferenceId: id,
+      });
+
+    if (!brochure) {
+      return next(
+        new AppError(
+          "Conference brochure not found",
+          404
+        )
+      );
+    }
+
+    if (!brochure.file) {
+      return next(
+        new AppError(
+          "Brochure file not found",
+          404
+        )
+      );
+    }
+
+    const response = await fetch(
+      brochure.file
+    );
+
+    if (!response.ok) {
+      return next(
+        new AppError(
+          "Failed to fetch brochure file",
+          500
+        )
+      );
+    }
+
+    const arrayBuffer =
+      await response.arrayBuffer();
+
+    const buffer =
+      Buffer.from(arrayBuffer);
+
+    const fileName =
+      brochure.originalFilename ||
+      `${brochure.title || "brochure"}.pdf`;
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName.replace(
+        /"/g,
+        ""
+      )}"`
+    );
+
+    res.setHeader(
+      "Content-Length",
+      buffer.length
+    );
+
+    return res.status(200).send(buffer);
+  }
+);

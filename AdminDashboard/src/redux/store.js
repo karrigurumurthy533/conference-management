@@ -3,6 +3,9 @@ import authReducer from "./authSlice";
 import conferenceReducer from "./conferenceSlice";
 import employeeReducer from "./employeeSlice";
 import speakerReducer from "./speakersSlice";
+import brochureReducer from "./brochuerSlice";
+import dashboardReducer from "./dashboardSlice";
+
 
 
 export const store = configureStore({
@@ -11,5 +14,8 @@ export const store = configureStore({
     conference: conferenceReducer,
     employee: employeeReducer,
     speaker: speakerReducer, 
+    brochure: brochureReducer,
+    dashboard: dashboardReducer,
+
   },
 });

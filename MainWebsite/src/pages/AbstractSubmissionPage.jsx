@@ -1,7 +1,19 @@
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useParams } from "react-router-dom";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import toast from "react-hot-toast";
+
 import {
   Upload,
   FileText,
@@ -12,6 +24,7 @@ import {
   MapPin,
   Globe2,
   X,
+  Loader2,
 } from "lucide-react";
 
 import {
@@ -19,10 +32,36 @@ import {
   getConferenceByIdApi,
 } from "../api/api";
 
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    y: 25,
+  },
+
+  animate: {
+    opacity: 1,
+    y: 0,
+  },
+
+  exit: {
+    opacity: 0,
+    y: -30,
+  },
+};
+
+const pageTransition = {
+  duration: 0.45,
+  ease: [0.22, 1, 0.36, 1],
+};
+
 const AbstractSubmissionPage = () => {
-  const { conferenceId } = useParams();
+  const { id: conferenceId } = useParams();
+
+  const navigate = useNavigate();
 
   const fileInputRef = useRef(null);
+
+  const navigationTimeoutRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -36,12 +75,39 @@ const AbstractSubmissionPage = () => {
   });
 
   const [conferenceName, setConferenceName] = useState("");
-  const [conferenceLoading, setConferenceLoading] = useState(true);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [conferenceLoading, setConferenceLoading] =
+    useState(true);
+
+  const [selectedFile, setSelectedFile] =
+    useState(null);
+
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
+
+  const [isExiting, setIsExiting] = useState(false);
+
+  /*
+   * Prevent browser from restoring the old scroll position.
+   */
+  useLayoutEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+
+    return () => {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+    };
+  }, []);
 
   const countries = [
     "Afghanistan",
@@ -172,41 +238,74 @@ const AbstractSubmissionPage = () => {
     const fetchConference = async () => {
       if (!conferenceId) {
         setConferenceLoading(false);
+
         setError("Conference ID is missing.");
+
+        toast.error("Conference ID is missing.");
+
         return;
       }
 
       try {
         setConferenceLoading(true);
+
         setError("");
 
-        const response = await getConferenceByIdApi(conferenceId);
+        const response =
+          await getConferenceByIdApi(
+            conferenceId
+          );
 
-        const conference = response?.data?.data;
+        const conference =
+          response?.data?.data;
 
         if (!conference) {
           setError("Conference not found.");
+
+          toast.error(
+            "Conference not found."
+          );
+
           return;
         }
 
-        setConferenceName(conference.title || "");
-      } catch (error) {
-        console.error("Fetch Conference Error:", error);
-
-        setError(
-          error?.response?.data?.message ||
-            "Failed to load conference details."
+        setConferenceName(
+          conference.title || ""
         );
+      } catch (error) {
+        console.error(
+          "Fetch Conference Error:",
+          error
+        );
+
+        const message =
+          error?.response?.data?.message ||
+          "Failed to load conference details.";
+
+        setError(message);
+
+        toast.error(message);
       } finally {
         setConferenceLoading(false);
       }
     };
 
     fetchConference();
+
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(
+          navigationTimeoutRef.current
+        );
+      }
+    };
   }, [conferenceId]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
@@ -214,16 +313,29 @@ const AbstractSubmissionPage = () => {
     }));
 
     setError("");
-    setSubmitted(false);
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
+    const file =
+      e.target.files?.[0];
 
     if (file) {
       setSelectedFile(file);
+
       setError("");
-      setSubmitted(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+
+    const file =
+      e.dataTransfer.files?.[0];
+
+    if (file) {
+      setSelectedFile(file);
+
+      setError("");
     }
   };
 
@@ -235,24 +347,58 @@ const AbstractSubmissionPage = () => {
     }
   };
 
+  const navigateBackSmoothly = () => {
+    if (loading || isExiting) {
+      return;
+    }
+
+    setIsExiting(true);
+
+    navigationTimeoutRef.current =
+      setTimeout(() => {
+        navigate(-1);
+      }, 450);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setSubmitted(false);
+    if (loading || isExiting) {
+      return;
+    }
+
     setError("");
 
     if (!conferenceId) {
-      setError("Conference ID is missing.");
+      const message =
+        "Conference ID is missing.";
+
+      setError(message);
+
+      toast.error(message);
+
       return;
     }
 
     if (!conferenceName) {
-      setError("Conference details could not be loaded.");
+      const message =
+        "Conference details could not be loaded.";
+
+      setError(message);
+
+      toast.error(message);
+
       return;
     }
 
     if (!selectedFile) {
-      setError("Please select an abstract file.");
+      const message =
+        "Please select an abstract file.";
+
+      setError(message);
+
+      toast.error(message);
+
       return;
     }
 
@@ -261,36 +407,63 @@ const AbstractSubmissionPage = () => {
 
       const data = new FormData();
 
-      data.append("title", formData.title);
-      data.append("firstName", formData.firstName);
-      data.append("lastName", formData.lastName);
-      data.append("email", formData.email);
-      data.append("phone", formData.phone);
-      data.append("category", formData.category);
-      data.append("conferenceId", conferenceId);
-      data.append("country", formData.country);
-      data.append("fullPostalAddress", formData.address);
-      data.append("file", selectedFile);
+      data.append(
+        "title",
+        formData.title
+      );
 
-      console.log("Abstract Submission Data:", {
-        title: formData.title,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        category: formData.category,
-        conferenceId,
-        conferenceName,
-        country: formData.country,
-        fullPostalAddress: formData.address,
-        file: selectedFile.name,
-      });
+      data.append(
+        "firstName",
+        formData.firstName
+      );
 
-      const response = await createAbstractApi(data);
+      data.append(
+        "lastName",
+        formData.lastName
+      );
 
-      console.log("Abstract Submission Response:", response);
+      data.append(
+        "email",
+        formData.email
+      );
 
-      setSubmitted(true);
+      data.append(
+        "phone",
+        formData.phone
+      );
+
+      data.append(
+        "category",
+        formData.category
+      );
+
+      data.append(
+        "conferenceId",
+        conferenceId
+      );
+
+      data.append(
+        "country",
+        formData.country
+      );
+
+      data.append(
+        "fullPostalAddress",
+        formData.address
+      );
+
+      data.append(
+        "file",
+        selectedFile
+      );
+
+      const response =
+        await createAbstractApi(data);
+
+      toast.success(
+        response?.data?.message ||
+          "Abstract submitted successfully."
+      );
 
       setFormData({
         title: "",
@@ -309,17 +482,31 @@ const AbstractSubmissionPage = () => {
         fileInputRef.current.value = "";
       }
 
-      setTimeout(() => {
-        setSubmitted(false);
-      }, 4000);
-    } catch (error) {
-      console.error("Abstract Submission Error:", error);
+      setLoading(false);
 
-      setError(
-        error?.response?.data?.message ||
-          "Failed to submit abstract. Please try again."
+      navigationTimeoutRef.current =
+        setTimeout(() => {
+          setIsExiting(true);
+
+          navigationTimeoutRef.current =
+            setTimeout(() => {
+              navigate(-1);
+            }, 450);
+        }, 350);
+    } catch (error) {
+      console.error(
+        "Abstract Submission Error:",
+        error
       );
-    } finally {
+
+      const message =
+        error?.response?.data?.message ||
+        "Failed to submit abstract. Please try again.";
+
+      setError(message);
+
+      toast.error(message);
+
       setLoading(false);
     }
   };
@@ -334,10 +521,17 @@ const AbstractSubmissionPage = () => {
     "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-600";
 
   return (
-    <div className="min-h-screen bg-[#f7f7fa] text-gray-900">
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate={
+        isExiting
+          ? "exit"
+          : "animate"
+      }
+      transition={pageTransition}
+      className="min-h-screen bg-[#f7f7fa] text-gray-900"
+    >
       <section className="relative overflow-hidden bg-[#442f74]">
         <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-400/10" />
 
@@ -345,9 +539,27 @@ const AbstractSubmissionPage = () => {
 
         <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: isExiting
+                ? 0
+                : 1,
+              y: isExiting
+                ? -15
+                : 0,
+            }}
+            transition={{
+              duration: 0.4,
+              ease: [
+                0.22,
+                1,
+                0.36,
+                1,
+              ],
+            }}
           >
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-200">
               GlobalScion Conferences
@@ -358,25 +570,41 @@ const AbstractSubmissionPage = () => {
             </h1>
 
             <p className="mt-2 max-w-2xl text-xs leading-5 text-violet-100/85 sm:text-sm">
-              Submit your research abstract for presentation at our upcoming
-              international conference.
+              Submit your research abstract
+              for presentation at our
+              upcoming international
+              conference.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* =====================================================
-          FORM
-      ===================================================== */}
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <motion.form
           onSubmit={handleSubmit}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
+          initial={{
+            opacity: 0,
+            y: 15,
+          }}
+          animate={{
+            opacity: isExiting
+              ? 0
+              : 1,
+            y: isExiting
+              ? -15
+              : 0,
+          }}
+          transition={{
+            duration: 0.4,
+            ease: [
+              0.22,
+              1,
+              0.36,
+              1,
+            ],
+          }}
           className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
         >
-          {/* FORM HEADER */}
           <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50">
               <FileText className="h-4 w-4 text-violet-600" />
@@ -394,9 +622,6 @@ const AbstractSubmissionPage = () => {
           </div>
 
           <div className="space-y-5 p-5 sm:p-6">
-            {/* =================================================
-                PERSONAL INFORMATION
-            ================================================= */}
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <User className="h-4 w-4 text-violet-600" />
@@ -407,41 +632,59 @@ const AbstractSubmissionPage = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
-                {/* TITLE */}
                 <div className="sm:col-span-3">
-                  <label className={labelClass}>Title</label>
+                  <label className={labelClass}>
+                    Title
+                  </label>
 
-                  <div className="relative">
-                    <select
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      className={selectClass}
-                      required
-                    >
-                      <option value="">Select Title</option>
-                      <option value="Mr">Mr</option>
-                      <option value="Ms">Ms</option>
-                      <option value="Mrs">Mrs</option>
-                      <option value="Prof Dr">Prof Dr</option>
-                      <option value="Assist Prof Dr">
-                        Assist Prof Dr
-                      </option>
-                      <option value="Assoc Prof Dr">
-                        Assoc Prof Dr
-                      </option>
-                    </select>
-                  </div>
+                  <select
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className={selectClass}
+                    required
+                  >
+                    <option value="">
+                      Select Title
+                    </option>
+
+                    <option value="Mr">
+                      Mr
+                    </option>
+
+                    <option value="Ms">
+                      Ms
+                    </option>
+
+                    <option value="Mrs">
+                      Mrs
+                    </option>
+
+                    <option value="Prof Dr">
+                      Prof Dr
+                    </option>
+
+                    <option value="Assist Prof Dr">
+                      Assist Prof Dr
+                    </option>
+
+                    <option value="Assoc Prof Dr">
+                      Assoc Prof Dr
+                    </option>
+                  </select>
                 </div>
 
-                {/* FIRST NAME */}
                 <div className="sm:col-span-4">
-                  <label className={labelClass}>First Name</label>
+                  <label className={labelClass}>
+                    First Name
+                  </label>
 
                   <input
                     type="text"
                     name="firstName"
-                    value={formData.firstName}
+                    value={
+                      formData.firstName
+                    }
                     onChange={handleChange}
                     placeholder="First"
                     className={inputClass}
@@ -449,14 +692,17 @@ const AbstractSubmissionPage = () => {
                   />
                 </div>
 
-                {/* LAST NAME */}
                 <div className="sm:col-span-5">
-                  <label className={labelClass}>Last Name</label>
+                  <label className={labelClass}>
+                    Last Name
+                  </label>
 
                   <input
                     type="text"
                     name="lastName"
-                    value={formData.lastName}
+                    value={
+                      formData.lastName
+                    }
                     onChange={handleChange}
                     placeholder="Last"
                     className={inputClass}
@@ -464,9 +710,10 @@ const AbstractSubmissionPage = () => {
                   />
                 </div>
 
-                {/* EMAIL */}
                 <div className="sm:col-span-6">
-                  <label className={labelClass}>Author's Email</label>
+                  <label className={labelClass}>
+                    Author's Email
+                  </label>
 
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -483,9 +730,10 @@ const AbstractSubmissionPage = () => {
                   </div>
                 </div>
 
-                {/* PHONE */}
                 <div className="sm:col-span-6">
-                  <label className={labelClass}>Phone Number</label>
+                  <label className={labelClass}>
+                    Phone Number
+                  </label>
 
                   <div className="relative">
                     <Phone className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -504,9 +752,6 @@ const AbstractSubmissionPage = () => {
               </div>
             </div>
 
-            {/* =================================================
-                ABSTRACT DETAILS
-            ================================================= */}
             <div className="border-t border-gray-100 pt-5">
               <div className="mb-3 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-violet-600" />
@@ -517,22 +762,36 @@ const AbstractSubmissionPage = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* CATEGORY */}
                 <div>
-                  <label className={labelClass}>Abstract Category</label>
+                  <label className={labelClass}>
+                    Abstract Category
+                  </label>
 
                   <div className="relative">
                     <select
                       name="category"
-                      value={formData.category}
+                      value={
+                        formData.category
+                      }
                       onChange={handleChange}
                       className={selectClass}
                       required
                     >
-                      <option value="">Select Category</option>
-                      <option value="Poster">Poster</option>
-                      <option value="Oral">Oral</option>
-                      <option value="Workshop">Workshop</option>
+                      <option value="">
+                        Select Category
+                      </option>
+
+                      <option value="Poster">
+                        Poster
+                      </option>
+
+                      <option value="Oral">
+                        Oral
+                      </option>
+
+                      <option value="Workshop">
+                        Workshop
+                      </option>
                     </select>
 
                     <svg
@@ -547,9 +806,10 @@ const AbstractSubmissionPage = () => {
                   </div>
                 </div>
 
-                {/* CONFERENCE */}
                 <div>
-                  <label className={labelClass}>Conference</label>
+                  <label className={labelClass}>
+                    Conference
+                  </label>
 
                   <div className="flex min-h-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
                     {conferenceLoading ? (
@@ -557,16 +817,14 @@ const AbstractSubmissionPage = () => {
                         Loading conference...
                       </span>
                     ) : (
-                      conferenceName || "Conference not found"
+                      conferenceName ||
+                      "Conference not found"
                     )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* =================================================
-                LOCATION
-            ================================================= */}
             <div className="border-t border-gray-100 pt-5">
               <div className="mb-3 flex items-center gap-2">
                 <Globe2 className="h-4 w-4 text-violet-600" />
@@ -577,25 +835,35 @@ const AbstractSubmissionPage = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* COUNTRY */}
                 <div>
-                  <label className={labelClass}>Country</label>
+                  <label className={labelClass}>
+                    Country
+                  </label>
 
                   <div className="relative">
                     <select
                       name="country"
-                      value={formData.country}
+                      value={
+                        formData.country
+                      }
                       onChange={handleChange}
                       className={selectClass}
                       required
                     >
-                      <option value="">Select Country</option>
+                      <option value="">
+                        Select Country
+                      </option>
 
-                      {countries.map((country) => (
-                        <option key={country} value={country}>
-                          {country}
-                        </option>
-                      ))}
+                      {countries.map(
+                        (country) => (
+                          <option
+                            key={country}
+                            value={country}
+                          >
+                            {country}
+                          </option>
+                        )
+                      )}
                     </select>
 
                     <svg
@@ -610,7 +878,6 @@ const AbstractSubmissionPage = () => {
                   </div>
                 </div>
 
-                {/* ADDRESS */}
                 <div>
                   <label className={labelClass}>
                     Full Postal Address
@@ -622,7 +889,9 @@ const AbstractSubmissionPage = () => {
                     <input
                       type="text"
                       name="address"
-                      value={formData.address}
+                      value={
+                        formData.address
+                      }
                       onChange={handleChange}
                       placeholder="Street, City, State, Postal Code"
                       className={`${inputClass} pl-9`}
@@ -633,9 +902,6 @@ const AbstractSubmissionPage = () => {
               </div>
             </div>
 
-            {/* =================================================
-                FILE UPLOAD
-            ================================================= */}
             <div className="border-t border-gray-100 pt-5">
               <div className="mb-3 flex items-center gap-2">
                 <Upload className="h-4 w-4 text-violet-600" />
@@ -646,25 +912,21 @@ const AbstractSubmissionPage = () => {
               </div>
 
               <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-
-                  const file = e.dataTransfer.files?.[0];
-
-                  if (file) {
-                    setSelectedFile(file);
-                    setError("");
-                    setSubmitted(false);
-                  }
-                }}
+                onClick={() =>
+                  fileInputRef.current?.click()
+                }
+                onDragOver={(e) =>
+                  e.preventDefault()
+                }
+                onDrop={handleDrop}
                 className="group cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center transition hover:border-violet-400 hover:bg-violet-50/40"
               >
                 <input
                   ref={fileInputRef}
                   type="file"
-                  onChange={handleFileChange}
+                  onChange={
+                    handleFileChange
+                  }
                   accept=".pdf,.doc,.docx"
                   className="hidden"
                 />
@@ -681,15 +943,21 @@ const AbstractSubmissionPage = () => {
                 </p>
 
                 <p className="mt-1 text-[10px] text-gray-400">
-                  PDF, DOC or DOCX • Max. file size 3 GB
+                  PDF, DOC or DOCX • Max. file
+                  size 3 GB
                 </p>
               </div>
 
-              {/* SELECTED FILE */}
               {selectedFile && (
                 <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
                   className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50 px-3 py-2"
                 >
                   <div className="flex min-w-0 items-center gap-2">
@@ -697,7 +965,9 @@ const AbstractSubmissionPage = () => {
 
                     <div className="min-w-0">
                       <p className="truncate text-xs font-medium text-gray-800">
-                        {selectedFile.name}
+                        {
+                          selectedFile.name
+                        }
                       </p>
 
                       <p className="text-[10px] text-gray-400">
@@ -712,7 +982,9 @@ const AbstractSubmissionPage = () => {
 
                   <button
                     type="button"
-                    onClick={removeFile}
+                    onClick={
+                      removeFile
+                    }
                     className="ml-3 rounded-md p-1 text-gray-400 transition hover:bg-white hover:text-red-500"
                   >
                     <X className="h-4 w-4" />
@@ -721,55 +993,60 @@ const AbstractSubmissionPage = () => {
               )}
             </div>
 
-            {/* =================================================
-                SUBMIT
-            ================================================= */}
-            <div className="flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[10px] leading-4 text-gray-400">
-                By submitting this form, you confirm that the information
-                provided is accurate.
+            <div className="border-t border-gray-100 pt-5">
+              <p className="mb-4 text-center text-[10px] leading-4 text-gray-400">
+                By submitting this form,
+                you confirm that the
+                information provided is
+                accurate.
               </p>
 
-              <button
-                type="submit"
-                disabled={loading || conferenceLoading}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Submitting..." : "Submit Abstract"}
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    conferenceLoading ||
+                    isExiting
+                  }
+                  className="inline-flex h-10 min-w-[170px] items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-6 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
 
-                <CheckCircle2 className="h-4 w-4" />
-              </button>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Abstract
+
+                      <CheckCircle2 className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* ERROR MESSAGE */}
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{
+                  opacity: 0,
+                  y: 5,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
                 className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700"
               >
                 {error}
               </motion.div>
             )}
-
-            {/* SUCCESS MESSAGE */}
-            {submitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-700"
-              >
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-
-                <span>
-                  Your abstract submission has been received successfully.
-                </span>
-              </motion.div>
-            )}
           </div>
         </motion.form>
       </section>
-    </div>
+    </motion.div>
   );
 };
 

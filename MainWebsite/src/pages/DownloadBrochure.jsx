@@ -1,6 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+
+import React, {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useParams,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
+import {
+  useDispatch,
+  useSelector,
+} from "react-redux";
+
+import { motion } from "framer-motion";
+
+import toast from "react-hot-toast";
+
 import {
   ArrowLeft,
   CalendarDays,
@@ -9,177 +28,146 @@ import {
   Download,
   Mail,
   Phone,
-  User,
   Globe2,
+  FileText,
   CheckCircle2,
 } from "lucide-react";
 
-import { getConferenceByIdApi } from "../api/api";
 import {
   createDownloadBrochure,
   clearBrochure,
 } from "../redux/userSlice";
 
+import {
+  getConferenceByIdApi,
+  downloadBrochureApi,
+} from "../api/api";
+
 const DownloadBrochure = () => {
   const { id } = useParams();
+
+  const navigate = useNavigate();
+
+  const location = useLocation();
+
   const dispatch = useDispatch();
-
-  const [conference, setConference] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    country: "",
-    requirements: "",
-  });
 
   const {
     brochureLoading,
-    brochureError,
     brochureSuccess,
-  } = useSelector((state) => state.user);
+    brochureError,
+  } = useSelector(
+    (state) => state.user
+  );
+
+  const initialConference =
+    location.state?.conference || null;
+
+  const [conference, setConference] =
+    useState(initialConference);
+
+  const [formData, setFormData] =
+    useState({
+      fullName: "",
+      email: "",
+      phone: "",
+      country: "",
+      requirements: "",
+    });
+
+  const [isDownloading, setIsDownloading] =
+    useState(false);
 
   useEffect(() => {
     const fetchConference = async () => {
       try {
-        setLoading(true);
-        setError("");
-
-        const response = await getConferenceByIdApi(id);
+        const response =
+          await getConferenceByIdApi(id);
 
         const apiData =
           response?.data?.data ||
           response?.data ||
-          null;
+          response;
 
-        if (!apiData) {
-          setConference(null);
-          setError("Conference not found");
-          return;
-        }
+        const basicInformation =
+          apiData?.basicInformation || {};
 
-        const startDate =
-          apiData?.conferenceDates?.startDate ||
-          apiData?.startDate ||
-          "";
+        const conferenceDates =
+          apiData?.conferenceDates || {};
 
-        const endDate =
-          apiData?.conferenceDates?.endDate ||
-          apiData?.endDate ||
-          "";
+        const venueInformation =
+          apiData?.venueInformation || {};
 
-        const formattedDate =
-          startDate && endDate
-            ? `${new Date(startDate).toLocaleDateString(
-                "en-US",
-                {
-                  month: "long",
-                  day: "2-digit",
-                  year: "numeric",
-                }
-              )} - ${new Date(endDate).toLocaleDateString(
-                "en-US",
-                {
-                  month: "long",
-                  day: "2-digit",
-                  year: "numeric",
-                }
-              )}`
-            : apiData?.date || "";
+        const media =
+          apiData?.media || {};
 
         const normalizedConference = {
-          ...apiData,
-
           id:
             apiData?._id ||
             apiData?.id ||
             id,
 
           title:
-            apiData?.basicInformation?.title ||
+            basicInformation?.title ||
             apiData?.title ||
+            apiData?.conferenceTitle ||
+            "Conference",
+
+          date:
+            conferenceDates?.startDate ||
+            apiData?.startDate ||
+            apiData?.date ||
             "",
 
-          category:
-            apiData?.basicInformation?.category ||
-            apiData?.category ||
-            "",
-
-          subtitle:
-            apiData?.basicInformation?.subtitle ||
-            apiData?.subtitle ||
-            "",
-
-          description:
-            apiData?.basicInformation?.description ||
-            apiData?.description ||
-            "",
-
-          date: formattedDate,
-
-          startDate,
-
-          endDate,
-
-          time:
-            apiData?.conferenceDates?.time ||
-            apiData?.time ||
+          endDate:
+            conferenceDates?.endDate ||
+            apiData?.endDate ||
             "",
 
           location:
-            apiData?.venueInformation?.city ||
-            apiData?.venueInformation?.location ||
-            apiData?.venueInformation?.venueName ||
+            venueInformation?.city ||
+            venueInformation?.location ||
+            venueInformation?.venueName ||
             apiData?.location ||
             "",
 
-          mode:
-            apiData?.venueInformation?.mode ||
-            apiData?.mode ||
-            apiData?.conferenceMode ||
-            "",
-
-          participants:
-            apiData?.registrationInformation
-              ?.expectedParticipants ||
-            apiData?.participants ||
-            "",
-
           image:
-            apiData?.media?.bannerImage ||
-            apiData?.media?.conferenceBanner ||
+            media?.bannerImage ||
+            media?.heroImage ||
+            media?.coverImage ||
             apiData?.bannerImage ||
-            apiData?.imageUrl ||
             apiData?.image ||
             "",
         };
 
-        setConference(normalizedConference);
-      } catch (error) {
+        setConference(
+          normalizedConference
+        );
+      } catch (err) {
         console.error(
-          "Fetch Conference Details Error:",
-          error
+          "Failed to fetch conference:",
+          err
         );
 
-        setConference(null);
-
-        setError(
-          error?.response?.data?.message ||
-            "Failed to load conference details"
-        );
-      } finally {
-        setLoading(false);
+        if (!initialConference) {
+          toast.error(
+            err?.response?.data?.message ||
+              "Failed to load conference details."
+          );
+        }
       }
     };
 
-    if (id) {
+    if (
+      id &&
+      !initialConference
+    ) {
       fetchConference();
     }
-  }, [id]);
+  }, [
+    id,
+    initialConference,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -189,15 +177,38 @@ const DownloadBrochure = () => {
 
   useEffect(() => {
     if (brochureSuccess) {
-      setSubmitted(true);
+      const timer = setTimeout(() => {
+        dispatch(clearBrochure());
+      }, 3000);
+
+      return () => {
+        clearTimeout(timer);
+      };
     }
-  }, [brochureSuccess]);
+  }, [
+    brochureSuccess,
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    if (brochureError) {
+      toast.error(brochureError);
+
+      dispatch(clearBrochure());
+    }
+  }, [
+    brochureError,
+    dispatch,
+  ]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
-    setFormData((previous) => ({
-      ...previous,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -205,398 +216,668 @@ const DownloadBrochure = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!conference) {
+    if (isDownloading) {
+      return;
+    }
+
+    if (!conference?.id) {
+      toast.error(
+        "Conference details are not available."
+      );
+
+      return;
+    }
+
+    if (!formData.fullName.trim()) {
+      toast.error(
+        "Please enter your full name."
+      );
+
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast.error(
+        "Please enter your email."
+      );
+
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      toast.error(
+        "Please enter your phone number."
+      );
+
+      return;
+    }
+
+    if (!formData.country.trim()) {
+      toast.error(
+        "Please enter your country."
+      );
+
       return;
     }
 
     const payload = {
-      conferenceId: conference.id,
-      conferenceTitle: conference.title,
-      fullName: formData.fullName.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      country: formData.country.trim(),
-      requirements: formData.requirements.trim(),
+      conferenceId:
+        conference.id,
+
+      conferenceTitle:
+        conference.title,
+
+      fullName:
+        formData.fullName.trim(),
+
+      email:
+        formData.email.trim(),
+
+      phone:
+        formData.phone.trim(),
+
+      country:
+        formData.country.trim(),
+
+      requirements:
+        formData.requirements.trim(),
     };
 
-    console.log(
-      "Brochure Request Payload:",
-      payload
-    );
-
     try {
-      const result = await dispatch(
-        createDownloadBrochure(payload)
+      setIsDownloading(true);
+
+      await dispatch(
+        createDownloadBrochure(
+          payload
+        )
       ).unwrap();
 
-      console.log(
-        "Brochure Request Success:",
-        result
+      const response =
+        await downloadBrochureApi(
+          conference.id
+        );
+
+      const blob = new Blob(
+        [response.data],
+        {
+          type: "application/pdf",
+        }
       );
 
-      setSubmitted(true);
-    } catch (error) {
-      console.error(
-        "Brochure Request Failed:",
-        error
+      const url =
+        window.URL.createObjectURL(
+          blob
+        );
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      const safeTitle =
+        conference.title
+          .replace(
+            /[^a-z0-9]/gi,
+            "_"
+          )
+          .replace(
+            /_+/g,
+            "_"
+          );
+
+      link.download =
+        `${safeTitle}.pdf`;
+
+      document.body.appendChild(
+        link
       );
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(
+        url
+      );
+
+      toast.success(
+        "Brochure downloaded successfully."
+      );
+
+      setTimeout(() => {
+        navigate(-1);
+      }, 800);
+    } catch (err) {
+      console.error(
+        "Brochure download error:",
+        err
+      );
+
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to download brochure."
+      );
+    } finally {
+      setIsDownloading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center bg-white px-6">
-        <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-            <Download size={30} />
-          </div>
-
-          <h1 className="mt-5 text-2xl font-bold text-gray-900">
-            Download Brochure
-          </h1>
-
-          <p className="mt-2 text-gray-500">
-            Loading conference details...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const downloadLoading =
+    brochureLoading ||
+    isDownloading;
 
   if (!conference) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center bg-white px-6">
+      <motion.div
+        initial={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        transition={{
+          duration: 0.25,
+        }}
+        className="min-h-screen flex items-center justify-center bg-white"
+      >
         <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-            <Download size={30} />
-          </div>
-
-          <h1 className="mt-5 text-2xl font-bold text-gray-900">
-            Conference Not Found
-          </h1>
-
-          <p className="mt-3 text-gray-500">
-            {error || "Unable to load conference details."}
-          </p>
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Conference not found
+          </h2>
 
           <Link
             to="/conferences"
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
+            className="inline-flex items-center gap-2 mt-5 text-violet-600 hover:text-violet-700"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={18} />
+
             Back to Conferences
           </Link>
         </div>
-      </div>
-    );
-  }
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-white px-6 py-16">
-        <div className="mx-auto max-w-3xl">
-          <div className="rounded-2xl border border-violet-100 bg-violet-50 p-10 text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-violet-600 text-white">
-              <CheckCircle2 size={42} />
-            </div>
-
-            <h1 className="mt-6 text-3xl font-bold text-gray-900">
-              Brochure Request Submitted
-            </h1>
-
-            <p className="mx-auto mt-4 max-w-xl text-gray-600">
-              Thank you for your interest in{" "}
-              <span className="font-semibold text-violet-700">
-                {conference.title}
-              </span>
-              .
-            </p>
-
-            <p className="mt-2 text-sm text-gray-500">
-              The conference brochure will be sent to
-              your registered email address.
-            </p>
-
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
-                to={`/conferences/${conference.id}`}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-5 py-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
-              >
-                <ArrowLeft size={16} />
-                Conference Details
-              </Link>
-
-              <Link
-                to="/conferences"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
-              >
-                All Conferences
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="bg-[#12091F] px-6 py-10 lg:px-10">
-        <div className="mx-auto max-w-7xl">
+    <motion.div
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      transition={{
+        duration: 0.35,
+        ease: "easeOut",
+      }}
+      className="min-h-screen bg-white"
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: -10,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            ease: "easeOut",
+          }}
+        >
           <Link
-            to={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-violet-300 transition hover:text-white"
+            to={`/conference/${conference.id}`}
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors mb-8"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={18} />
+
             Back to Conference
           </Link>
+        </motion.div>
 
-          <div className="mt-8 max-w-4xl">
-            <span className="inline-flex rounded-full border border-violet-400/30 bg-violet-500/20 px-3 py-1 text-xs font-bold text-violet-200">
-              {conference.category}
-            </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
 
-            <h1 className="mt-4 text-3xl font-extrabold leading-tight text-white md:text-4xl lg:text-5xl">
-              Download Conference Brochure
-            </h1>
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: -25,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 0.45,
+              ease: "easeOut",
+            }}
+          >
+            <div className="relative overflow-hidden rounded-2xl bg-gray-100">
 
-            <p className="mt-4 max-w-3xl text-base leading-7 text-violet-100">
-              Get the complete conference information,
-              scientific program, speakers, topics and
-              participation details.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-12 lg:px-10 lg:py-16">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            {conference.image && (
-              <div className="overflow-hidden rounded-2xl">
-                <img
+              {conference.image ? (
+                <motion.img
+                  initial={{
+                    scale: 1.03,
+                  }}
+                  animate={{
+                    scale: 1,
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    ease: "easeOut",
+                  }}
                   src={conference.image}
                   alt={conference.title}
-                  className="h-[300px] w-full object-cover md:h-[380px]"
+                  className="w-full h-[420px] object-cover"
                 />
-              </div>
-            )}
-
-            <div className="mt-7">
-              <span className="text-xs font-bold uppercase tracking-[0.16em] text-violet-600">
-                Conference
-              </span>
-
-              <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">
-                {conference.title}
-              </h2>
-
-              {conference.subtitle && (
-                <p className="mt-3 text-base font-medium leading-7 text-gray-600">
-                  {conference.subtitle}
-                </p>
+              ) : (
+                <div className="w-full h-[420px] flex items-center justify-center bg-violet-50">
+                  <FileText
+                    size={70}
+                    className="text-violet-300"
+                  />
+                </div>
               )}
 
-              {conference.description && (
-                <p className="mt-4 text-sm leading-7 text-gray-500">
-                  {conference.description}
-                </p>
-              )}
             </div>
 
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <ConferenceInfo
-                icon={<CalendarDays size={18} />}
-                title={conference.date}
-                subtitle={conference.time}
-              />
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.4,
+                delay: 0.1,
+                ease: "easeOut",
+              }}
+              className="mt-6"
+            >
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Download Brochure
+              </h1>
 
-              <ConferenceInfo
-                icon={<MapPin size={18} />}
-                title={conference.location}
-                subtitle={conference.mode}
-              />
+              <p className="mt-3 text-gray-600 leading-7">
+                Get the complete conference
+                brochure with all important
+                event information, speakers,
+                sessions, registration details,
+                and more.
+              </p>
+            </motion.div>
 
-              <ConferenceInfo
-                icon={<Users size={18} />}
-                title={conference.participants}
-                subtitle="Expected Participants"
-              />
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 10,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.4,
+                delay: 0.15,
+                ease: "easeOut",
+              }}
+              className="mt-7 space-y-4"
+            >
+              <div className="flex items-start gap-3">
 
-              <ConferenceInfo
-                icon={<Globe2 size={18} />}
-                title={conference.category}
-                subtitle="Conference Category"
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="rounded-2xl border border-violet-100 bg-white p-6 shadow-sm md:p-8">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                  <Download size={22} />
+                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+                  <CalendarDays
+                    size={19}
+                    className="text-violet-600"
+                  />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Get the Brochure
-                  </h2>
-
                   <p className="text-sm text-gray-500">
-                    Enter your details below
+                    Conference Date
+                  </p>
+
+                  <p className="font-medium text-gray-900">
+                    {conference.date
+                      ? new Date(
+                          conference.date
+                        ).toLocaleDateString(
+                          "en-US",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )
+                      : "Date will be announced"}
+
+                    {conference.endDate &&
+                      ` - ${new Date(
+                        conference.endDate
+                      ).toLocaleDateString(
+                        "en-US",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
+                      )}`}
                   </p>
                 </div>
               </div>
 
-              <form
-                onSubmit={handleSubmit}
-                className="mt-8 space-y-5"
-              >
-                <FormInput
-                  label="Full Name"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Enter your full name"
-                  icon={<User size={17} />}
-                  required
-                />
+              {conference.location && (
+                <div className="flex items-start gap-3">
 
-                <FormInput
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email address"
-                  icon={<Mail size={17} />}
-                  required
-                />
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+                    <MapPin
+                      size={19}
+                      className="text-violet-600"
+                    />
+                  </div>
 
-                <FormInput
-                  label="Phone Number"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Enter your phone number"
-                  icon={<Phone size={17} />}
-                  required
-                />
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Location
+                    </p>
 
-                <FormInput
-                  label="Country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  placeholder="Enter your country"
-                  icon={<Globe2 size={17} />}
-                  required
-                />
+                    <p className="font-medium text-gray-900">
+                      {conference.location}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Requirements
-                  </label>
+              <div className="flex items-start gap-3">
 
-                  <textarea
-                    name="requirements"
-                    value={formData.requirements}
-                    onChange={handleChange}
-                    rows={4}
-                    placeholder="Any specific requirements..."
-                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+                  <Download
+                    size={19}
+                    className="text-violet-600"
                   />
                 </div>
 
-                {brochureError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    {brochureError}
-                  </div>
-                )}
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Brochure
+                  </p>
 
-                <button
-                  type="submit"
-                  disabled={brochureLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {brochureLoading ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Download size={18} />
+                  <p className="font-medium text-gray-900">
+                    Conference Information PDF
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: 25,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 0.45,
+              delay: 0.08,
+              ease: "easeOut",
+            }}
+            className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm"
+          >
+
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.35,
+                delay: 0.15,
+              }}
+              className="mb-7"
+            >
+              <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center mb-4">
+                <Download
+                  size={23}
+                  className="text-violet-600"
+                />
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-900">
+                Download Conference Brochure
+              </h2>
+
+              <p className="mt-2 text-gray-500 text-sm leading-6">
+                Please fill in your details
+                below. Our team will process
+                your brochure request.
+              </p>
+            </motion.div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+
+                <div className="relative">
+                  <Users
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={
+                      formData.fullName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter your full name"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+
+                <div className="relative">
+                  <Mail
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="email"
+                    name="email"
+                    value={
+                      formData.email
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter your email address"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+
+                <div className="relative">
+                  <Phone
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={
+                      formData.phone
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter your phone number"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Country
+                </label>
+
+                <div className="relative">
+                  <Globe2
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="text"
+                    name="country"
+                    value={
+                      formData.country
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter your country"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Requirements
+
+                  <span className="text-gray-400 font-normal">
+                    {" "}
+                    (Optional)
+                  </span>
+                </label>
+
+                <textarea
+                  name="requirements"
+                  value={
+                    formData.requirements
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  rows={4}
+                  placeholder="Any specific requirements..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <motion.button
+                type="submit"
+                disabled={downloadLoading}
+                whileHover={
+                  !downloadLoading
+                    ? {
+                        scale: 1.01,
+                      }
+                    : {}
+                }
+                whileTap={
+                  !downloadLoading
+                    ? {
+                        scale: 0.99,
+                      }
+                    : {}
+                }
+                transition={{
+                  duration: 0.2,
+                }}
+                className="w-full min-h-[54px] flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-colors duration-200 disabled:bg-violet-600 disabled:text-white disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+              >
+                {downloadLoading ? (
+                  <>
+                    <span className="w-5 h-5 rounded-full border-2 border-violet-200 border-t-white animate-spin" />
+
+                    <span>
+                      Downloading...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Download
+                      size={19}
+                      className="text-white"
+                    />
+
+                    <span>
                       Download Brochure
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
+                    </span>
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.35,
+                delay: 0.2,
+              }}
+              className="mt-6 flex items-start gap-3 p-4 bg-violet-50 rounded-xl"
+            >
+              <CheckCircle2
+                size={19}
+                className="text-violet-600 mt-0.5 flex-shrink-0"
+              />
+
+              <p className="text-sm text-gray-600 leading-6">
+                After submitting your
+                details, the conference
+                brochure will be downloaded
+                automatically.
+              </p>
+            </motion.div>
+
+          </motion.div>
+
         </div>
-      </section>
-    </div>
-  );
-};
 
-const FormInput = ({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  icon,
-  required = false,
-}) => {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">
-        {label}
-      </label>
-
-      <div className="relative">
-        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-          {icon}
-        </div>
-
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
-        />
       </div>
-    </div>
-  );
-};
-
-const ConferenceInfo = ({
-  icon,
-  title,
-  subtitle,
-}) => {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <p className="truncate text-sm font-bold text-gray-900">
-          {title || "-"}
-        </p>
-
-        <p className="mt-1 text-xs text-gray-500">
-          {subtitle || "-"}
-        </p>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -22,11 +22,13 @@ import ContactPage from "./pages/Contact";
 import RegisterPage from "./pages/RegisterPage";
 import TawkChat from "./components/common/TawkChat";
 import ScientificProgram from "./pages/ScientificProgram";
+import Toaster from "./components/common/Toaster";
 
 const App = () => {
   return (
     <div className="min-h-screen bg-white">
       <ScrollToTop />
+      <Toaster />
       <Navbar />
 
       <Routes>
@@ -39,7 +41,7 @@ const App = () => {
         {/* =====================================================
             CONFERENCE DETAILS
         ====================================================== */}
-        <Route path="/conference/:id" element={<ConferenceDetails />} />
+        <Route path="/conferences/:id" element={<ConferenceDetails />} />
 
         {/* =====================================================
             REGISTER

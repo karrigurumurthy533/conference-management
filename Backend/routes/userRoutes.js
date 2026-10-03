@@ -1,6 +1,8 @@
 const express = require("express");
 
 const UserController = require("../controllers/UserController");
+const { upload } = require("../middlewares/uploadMiddleware");
+
 
 const router = express.Router();
 
@@ -20,7 +22,11 @@ router.get("/registrations/:id", UserController.getRegistrationById);
 
 router.delete("/registrations/:id", UserController.deleteRegistration);
 
-router.post("/abstract", UserController.createAbstract);
+router.post(
+  "/abstract",
+  upload.single("file"),
+  UserController.createAbstract
+);
 
 router.get("/abstracts", UserController.getAllAbstracts);
 router.get("/abstracts/:id", UserController.getAbstractById);

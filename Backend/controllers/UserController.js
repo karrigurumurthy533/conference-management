@@ -5,6 +5,9 @@ const Conference = require("../models/conference");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const Registration = require("../models/Registration");
+const mongoose = require("mongoose");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
+
 
 exports.createRegistration = catchAsync(async (req, res, next) => {
   const {
@@ -276,7 +279,10 @@ exports.deleteDownloadBrochure = catchAsync(async (req, res, next) => {
   });
 });
 
+
 exports.createAbstract = catchAsync(async (req, res, next) => {
+
+
   const {
     title,
     firstName,
@@ -284,9 +290,9 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     email,
     phone,
     category,
-    conference,
+    conferenceId,
     country,
-    address,
+    fullPostalAddress,
   } = req.body;
 
   if (
@@ -296,18 +302,22 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     !email ||
     !phone ||
     !category ||
-    !conference ||
+    !conferenceId ||
     !country ||
-    !address
+    !fullPostalAddress
   ) {
     return next(
       new AppError("All required fields are required", 400)
     );
   }
 
-  const conferenceData = await Conference.findOne({
-    title: conference,
-  });
+  if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
+    return next(
+      new AppError("Invalid conference ID", 400)
+    );
+  }
+
+  const conferenceData = await Conference.findById(conferenceId);
 
   if (!conferenceData) {
     return next(
@@ -315,70 +325,99 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     );
   }
 
-  const registration = await Registration.findOne({
-    email: email.toLowerCase(),
-    "conference.conferenceId": conferenceData._id,
-  });
-
-  if (!registration) {
-    return next(
-      new AppError(
-        "Registration not found for this conference",
-        404
-      )
-    );
-  }
-
-  if (registration.status === "Cancelled") {
-    return next(
-      new AppError(
-        "Cancelled registration cannot submit an abstract",
-        400
-      )
-    );
-  }
-
   const existingAbstract = await Abstract.findOne({
-    registrationId: registration._id,
-    conferenceId: conferenceData._id,
+    "presenter.email": email.toLowerCase(),
+    "abstractDetails.conferenceId": conferenceData._id,
   });
 
   if (existingAbstract) {
     return next(
       new AppError(
-        "Abstract already submitted for this registration",
+        "Abstract already submitted for this conference",
         409
       )
     );
   }
 
-  let abstractFile = null;
-
-  if (req.file) {
-    abstractFile = {
-      fileUrl: req.file.path || req.file.location || "",
-      originalFileName: req.file.originalname,
-      fileType: req.file.mimetype
-        ? req.file.mimetype.split("/")[1]
-        : "",
-      fileSize: req.file.size,
-    };
-  }
-
-  if (!abstractFile) {
+  if (!req.file) {
     return next(
       new AppError("Abstract file is required", 400)
     );
   }
 
+  const fileTypeMap = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
+  };
+
+  const fileType = fileTypeMap[req.file.mimetype];
+
+  if (!fileType) {
+    return next(
+      new AppError(
+        "Only JPG, JPEG, PNG, WEBP, PDF, DOC and DOCX files are allowed",
+        400
+      )
+    );
+  }
+
+  let cloudinaryResult;
+
+  try {
+    cloudinaryResult = await uploadToCloudinary(
+      req.file,
+      "globalscion/abstracts"
+    );
+  } catch (error) {
+    console.error("========== CLOUDINARY ERROR ==========");
+    console.error("Message:", error.message);
+    console.error("Error:", error);
+    console.error("======================================");
+
+    return next(
+      new AppError(
+        error.message || "Failed to upload abstract file",
+        500
+      )
+    );
+  }
+
+  const abstractFile = {
+    fileUrl: cloudinaryResult.secure_url,
+    originalFileName: req.file.originalname,
+    fileType,
+    fileSize: req.file.size,
+  };
+
   const abstract = await Abstract.create({
-    registrationId: registration._id,
-    category,
-    conferenceId: conferenceData._id,
-    country,
-    fullPostalAddress: address,
+    presenter: {
+      title,
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      phone,
+    },
+
+    abstractDetails: {
+      category,
+      conferenceId: conferenceData._id,
+    },
+
+    location: {
+      country,
+      fullPostalAddress,
+    },
+
     abstractFile,
+
     status: "Submitted",
+    reviewStatus: "Pending",
   });
 
   res.status(201).json({
