@@ -6,7 +6,8 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const Registration = require("../models/Registration");
 const mongoose = require("mongoose");
-const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload")
+
 
 
 exports.createRegistration = catchAsync(async (req, res, next) => {
@@ -31,11 +32,25 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
     !location ||
     !registration
   ) {
-    return next(new AppError("All required fields are required", 400));
+    return next(
+      new AppError("All required fields are required", 400)
+    );
   }
 
   if (!conference.conferenceId) {
-    return next(new AppError("Conference ID is required", 400));
+    return next(
+      new AppError("Conference ID is required", 400)
+    );
+  }
+
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      conference.conferenceId
+    )
+  ) {
+    return next(
+      new AppError("Invalid conference ID", 400)
+    );
   }
 
   const existingConference = await Conference.findById(
@@ -43,13 +58,17 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
   );
 
   if (!existingConference) {
-    return next(new AppError("Conference not found", 404));
+    return next(
+      new AppError("Conference not found", 404)
+    );
   }
 
-  const existingRegistration = await Registration.findOne({
-    email: email.toLowerCase(),
-    "conference.conferenceId": conference.conferenceId,
-  });
+  const existingRegistration =
+    await Registration.findOne({
+      email: email.toLowerCase(),
+      "conference.conferenceId":
+        conference.conferenceId,
+    });
 
   if (existingRegistration) {
     return next(
@@ -100,74 +119,163 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllRegistrations = catchAsync(async (req, res, next) => {
-  const page = Math.max(parseInt(req.query.page) || 1, 1);
-  const limit = Math.max(parseInt(req.query.limit) || 10, 1);
-  const skip = (page - 1) * limit;
 
-  const [registrations, totalRegistrations] = await Promise.all([
-    Registration.find()
-      .populate(
+exports.getAllRegistrations = catchAsync(
+  async (req, res, next) => {
+    const page = Math.max(
+      parseInt(req.query.page) || 1,
+      1
+    );
+
+    const limit = Math.max(
+      parseInt(req.query.limit) || 10,
+      1
+    );
+
+    const skip = (page - 1) * limit;
+
+    const [
+      registrations,
+      totalRegistrations,
+    ] = await Promise.all([
+      Registration.find()
+        .populate(
+          "conference.conferenceId",
+          "title dates location registration"
+        )
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      Registration.countDocuments(),
+    ]);
+
+    const totalPages = Math.ceil(
+      totalRegistrations / limit
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Registrations fetched successfully",
+      data: registrations,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalRegistrations,
+        limit,
+      },
+    });
+  }
+);
+
+exports.getRegistrationsByConferenceId = catchAsync(
+  async (req, res, next) => {
+    const { conferenceId } = req.params;
+
+    // Validate conference ID
+    if (
+      !mongoose.Types.ObjectId.isValid(conferenceId)
+    ) {
+      return next(
+        new AppError("Invalid conference ID", 400)
+      );
+    }
+
+    // Check conference exists
+    const conference = await Conference.findById(
+      conferenceId
+    );
+
+    if (!conference) {
+      return next(
+        new AppError("Conference not found", 404)
+      );
+    }
+
+    // Fetch registrations
+    const registrations =
+      await Registration.find({
+        "conference.conferenceId": conferenceId,
+      })
+        .populate(
+          "conference.conferenceId",
+          "title dates location registration"
+        )
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Conference registrations fetched successfully",
+      count: registrations.length,
+      data: registrations,
+    });
+  }
+);
+
+
+
+exports.getRegistrationById = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(
+        new AppError("Invalid registration ID", 400)
+      );
+    }
+
+    const registration =
+      await Registration.findById(id).populate(
         "conference.conferenceId",
         "title dates location registration"
-      )
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
+      );
 
-    Registration.countDocuments(),
-  ]);
+    if (!registration) {
+      return next(
+        new AppError("Registration not found", 404)
+      );
+    }
 
-  const totalPages = Math.ceil(totalRegistrations / limit);
-
-  res.status(200).json({
-    success: true,
-    message: "Registrations fetched successfully",
-    data: registrations,
-    pagination: {
-      currentPage: page,
-      totalPages,
-      totalRegistrations,
-      limit,
-    },
-  });
-});
-
-exports.getRegistrationById = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  const registration = await Registration.findById(id).populate(
-    "conference.conferenceId",
-    "title dates location registration"
-  );
-
-  if (!registration) {
-    return next(new AppError("Registration not found", 404));
+    res.status(200).json({
+      success: true,
+      message: "Registration fetched successfully",
+      data: registration,
+    });
   }
+);
 
-  res.status(200).json({
-    success: true,
-    message: "Registration fetched successfully",
-    data: registration,
-  });
-});
+// ======================================================
+// DELETE REGISTRATION
+// ======================================================
 
-exports.deleteRegistration = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
+exports.deleteRegistration = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
 
-  const registration = await Registration.findById(id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(
+        new AppError("Invalid registration ID", 400)
+      );
+    }
 
-  if (!registration) {
-    return next(new AppError("Registration not found", 404));
+    const registration =
+      await Registration.findById(id);
+
+    if (!registration) {
+      return next(
+        new AppError("Registration not found", 404)
+      );
+    }
+
+    await Registration.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Registration deleted successfully",
+    });
   }
-
-  await Registration.findByIdAndDelete(id);
-
-  res.status(200).json({
-    success: true,
-    message: "Registration deleted successfully",
-  });
-});
+);
 
 exports.createDownloadBrochure = catchAsync(async (req, res, next) => {
   const {

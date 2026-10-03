@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import {
   CheckCircle2,
   Clock3,
@@ -13,108 +15,12 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-// =========================================================
-// ABSTRACT DATA
-// =========================================================
-
-const abstracts = [
-  {
-    id: 1,
-    title: "Advances in Cardiovascular Medicine",
-    author: "Dr. James Wilson",
-    email: "james.wilson@example.com",
-    status: "Approved",
-    category: "Cardiology",
-  },
-  {
-    id: 2,
-    title: "Modern Approaches to Heart Disease",
-    author: "Dr. Emily Carter",
-    email: "emily.carter@example.com",
-    status: "Pending",
-    category: "Cardiology",
-  },
-  {
-    id: 3,
-    title: "Digital Transformation in Cardiology",
-    author: "Dr. David Miller",
-    email: "david.miller@example.com",
-    status: "Rejected",
-    category: "Digital Health",
-  },
-  {
-    id: 4,
-    title: "AI Applications in Medical Diagnosis",
-    author: "Dr. Sarah Anderson",
-    email: "sarah.anderson@example.com",
-    status: "Approved",
-    category: "Artificial Intelligence",
-  },
-  {
-    id: 5,
-    title: "Personalized Medicine and Genomics",
-    author: "Dr. Michael Brown",
-    email: "michael.brown@example.com",
-    status: "Pending",
-    category: "Genomics",
-  },
-  {
-    id: 6,
-    title: "Telemedicine in Modern Healthcare",
-    author: "Dr. Olivia Taylor",
-    email: "olivia.taylor@example.com",
-    status: "Approved",
-    category: "Healthcare Technology",
-  },
-  {
-    id: 7,
-    title: "Early Detection of Cardiovascular Risk",
-    author: "Dr. Daniel Wilson",
-    email: "daniel.wilson@example.com",
-    status: "Pending",
-    category: "Cardiology",
-  },
-  {
-    id: 8,
-    title: "Machine Learning for Clinical Research",
-    author: "Dr. Sophia Davis",
-    email: "sophia.davis@example.com",
-    status: "Rejected",
-    category: "Artificial Intelligence",
-  },
-  {
-    id: 9,
-    title: "Innovations in Preventive Cardiology",
-    author: "Dr. Robert Thomas",
-    email: "robert.thomas@example.com",
-    status: "Approved",
-    category: "Cardiology",
-  },
-  {
-    id: 10,
-    title: "Remote Patient Monitoring Systems",
-    author: "Dr. Emma Johnson",
-    email: "emma.johnson@example.com",
-    status: "Pending",
-    category: "Digital Health",
-  },
-  {
-    id: 11,
-    title: "Advances in Cardiovascular Imaging",
-    author: "Dr. William Harris",
-    email: "william.harris@example.com",
-    status: "Approved",
-    category: "Medical Imaging",
-  },
-  {
-    id: 12,
-    title: "Next Generation Healthcare Platforms",
-    author: "Dr. Isabella Martin",
-    email: "isabella.martin@example.com",
-    status: "Pending",
-    category: "Healthcare Technology",
-  },
-];
+import {
+  getEmployeeAbstracts,
+  selectEmployeeAbstracts,
+  selectEmployeeAbstractsLoading,
+  selectEmployeeAbstractsError,
+} from "../redux/employeeSlice";
 
 // =========================================================
 // PAGINATION
@@ -127,6 +33,16 @@ const ITEMS_PER_PAGE = 5;
 // =========================================================
 
 function Abstracts() {
+  const dispatch = useDispatch();
+
+  // =========================================================
+  // REDUX
+  // =========================================================
+
+  const abstractsData = useSelector(selectEmployeeAbstracts);
+  const loading = useSelector(selectEmployeeAbstractsLoading);
+  const error = useSelector(selectEmployeeAbstractsError);
+
   // =========================================================
   // STATES
   // =========================================================
@@ -136,21 +52,100 @@ function Abstracts() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // =========================================================
+  // FETCH EMPLOYEE ABSTRACTS
+  // =========================================================
+
+  useEffect(() => {
+    dispatch(getEmployeeAbstracts());
+  }, [dispatch]);
+
+  // =========================================================
+  // NORMALIZE API DATA
+  // =========================================================
+
+  const abstracts = useMemo(() => {
+    if (!Array.isArray(abstractsData)) {
+      return [];
+    }
+
+    return abstractsData.map((item, index) => {
+      const presenter = item?.presenter || {};
+      const abstractDetails = item?.abstractDetails || {};
+
+      const authorName = [
+        presenter?.title,
+        presenter?.firstName,
+        presenter?.lastName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      return {
+        id: item?._id || item?.id || index,
+
+        title:
+          item?.title ||
+          abstractDetails?.title ||
+          item?.abstractTitle ||
+          "Untitled Abstract",
+
+        author:
+          authorName ||
+          item?.author ||
+          "Unknown Author",
+
+        email:
+          presenter?.email ||
+          item?.email ||
+          "",
+
+        status:
+          item?.status ||
+          item?.reviewStatus ||
+          "Pending",
+
+        category:
+          abstractDetails?.category ||
+          item?.category ||
+          "General",
+
+        conferenceId:
+          abstractDetails?.conferenceId?._id ||
+          abstractDetails?.conferenceId ||
+          item?.conferenceId?._id ||
+          item?.conferenceId ||
+          null,
+
+        conferenceTitle:
+          abstractDetails?.conferenceId?.basicInformation?.title ||
+          abstractDetails?.conferenceId?.basicInformation?.conferenceTitle ||
+          item?.conference?.basicInformation?.title ||
+          item?.conference?.title ||
+          "",
+      };
+    });
+  }, [abstractsData]);
+
+  // =========================================================
   // STATISTICS
   // =========================================================
 
   const totalAbstracts = abstracts.length;
 
   const approvedAbstracts = abstracts.filter(
-    (item) => item.status === "Approved"
+    (item) =>
+      String(item.status).toLowerCase() === "approved"
   ).length;
 
   const pendingAbstracts = abstracts.filter(
-    (item) => item.status === "Pending"
+    (item) =>
+      String(item.status).toLowerCase() === "pending"
   ).length;
 
   const rejectedAbstracts = abstracts.filter(
-    (item) => item.status === "Rejected"
+    (item) =>
+      String(item.status).toLowerCase() === "rejected"
   ).length;
 
   // =========================================================
@@ -163,18 +158,30 @@ function Abstracts() {
     return abstracts.filter((abstract) => {
       const matchesSearch =
         !query ||
-        abstract.title.toLowerCase().includes(query) ||
-        abstract.author.toLowerCase().includes(query) ||
-        abstract.email.toLowerCase().includes(query) ||
-        abstract.category.toLowerCase().includes(query);
+        String(abstract.title)
+          .toLowerCase()
+          .includes(query) ||
+        String(abstract.author)
+          .toLowerCase()
+          .includes(query) ||
+        String(abstract.email)
+          .toLowerCase()
+          .includes(query) ||
+        String(abstract.category)
+          .toLowerCase()
+          .includes(query) ||
+        String(abstract.conferenceTitle)
+          .toLowerCase()
+          .includes(query);
 
       const matchesStatus =
         statusFilter === "All" ||
-        abstract.status === statusFilter;
+        String(abstract.status).toLowerCase() ===
+          statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [abstracts, search, statusFilter]);
 
   // =========================================================
   // RESET PAGE WHEN FILTER CHANGES
@@ -272,30 +279,42 @@ function Abstracts() {
   // =========================================================
 
   const StatusBadge = ({ status }) => {
+    const normalizedStatus = String(
+      status || "Pending"
+    )
+      .toLowerCase()
+      .replace(/\s+/g, "");
+
     const statusConfig = {
-      Approved: {
+      approved: {
         icon: CheckCircle2,
         wrapper:
           "bg-emerald-50 text-emerald-600",
         dot: "bg-emerald-500",
+        label: "Approved",
       },
 
-      Pending: {
+      pending: {
         icon: Clock3,
         wrapper:
           "bg-amber-50 text-amber-600",
         dot: "bg-amber-500",
+        label: "Pending",
       },
 
-      Rejected: {
+      rejected: {
         icon: XCircle,
         wrapper:
           "bg-red-50 text-red-500",
         dot: "bg-red-500",
+        label: "Rejected",
       },
     };
 
-    const config = statusConfig[status];
+    const config =
+      statusConfig[normalizedStatus] ||
+      statusConfig.pending;
+
     const Icon = config.icon;
 
     return (
@@ -308,10 +327,86 @@ function Abstracts() {
 
         <Icon size={11} />
 
-        {status}
+        {config.label}
       </span>
     );
   };
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-66px)] bg-[#f7f7fb] px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-[76px] animate-pulse rounded-xl border border-slate-200 bg-white"
+              />
+            ))}
+          </div>
+
+          <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div
+                key={item}
+                className="flex h-[70px] animate-pulse items-center gap-3 border-b border-slate-100 px-4"
+              >
+                <div className="h-8 w-8 rounded-lg bg-slate-100" />
+
+                <div className="flex-1">
+                  <div className="h-3 w-1/3 rounded bg-slate-100" />
+                  <div className="mt-2 h-2 w-1/4 rounded bg-slate-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================
+  // ERROR
+  // =========================================================
+
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-66px)] bg-[#f7f7fb] px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="mt-4 rounded-xl border border-red-100 bg-white px-6 py-10 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
+              <XCircle
+                size={18}
+                className="text-red-500"
+              />
+            </div>
+
+            <h3 className="mt-3 text-[13px] font-bold text-slate-800">
+              Failed to load abstracts
+            </h3>
+
+            <p className="mt-1 text-[10px] text-slate-500">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                dispatch(getEmployeeAbstracts())
+              }
+              className="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-[10px] font-semibold text-white transition hover:bg-violet-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // =========================================================
   // JSX
@@ -504,14 +599,24 @@ function Abstracts() {
                         {abstract.author}
                       </p>
 
-                      <span className="hidden text-slate-300 sm:inline">
-                        •
-                      </span>
+                      {abstract.email && (
+                        <>
+                          <span className="hidden text-slate-300 sm:inline">
+                            •
+                          </span>
 
-                      <p className="hidden truncate text-[9px] text-slate-400 sm:block">
-                        {abstract.email}
-                      </p>
+                          <p className="hidden truncate text-[9px] text-slate-400 sm:block">
+                            {abstract.email}
+                          </p>
+                        </>
+                      )}
                     </div>
+
+                    {abstract.conferenceTitle && (
+                      <p className="mt-0.5 truncate text-[8px] text-slate-400">
+                        {abstract.conferenceTitle}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -548,7 +653,9 @@ function Abstracts() {
               </h3>
 
               <p className="mt-1 text-[10px] text-slate-500">
-                Try changing your search or filter criteria.
+                {hasFilters
+                  ? "Try changing your search or filter criteria."
+                  : "No abstracts are available for your assigned conferences."}
               </p>
 
               {hasFilters && (

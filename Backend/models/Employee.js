@@ -1,7 +1,12 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const employeeSchema = new mongoose.Schema(
     {
+        // =====================================================
+        // BASIC INFORMATION
+        // =====================================================
+
         fullName: {
             type: String,
             required: true,
@@ -16,7 +21,31 @@ const employeeSchema = new mongoose.Schema(
             trim: true,
         },
 
+        // =====================================================
+        // AUTHENTICATION
+        // =====================================================
+
+        password: {
+            type: String,
+            required: true,
+            minlength: 6,
+            select: false,
+        },
+
+        // Main authentication role
+        // Frontend/controller does not need to send this.
+        // MongoDB will automatically store "Employee".
         role: {
+            type: String,
+            default: "Employee",
+            trim: true,
+        },
+
+        // =====================================================
+        // EMPLOYEE TYPE
+        // =====================================================
+
+        employeeType: {
             type: String,
             required: true,
             enum: [
@@ -29,10 +58,18 @@ const employeeSchema = new mongoose.Schema(
             trim: true,
         },
 
+        // =====================================================
+        // CONTACT
+        // =====================================================
+
         phoneNumber: {
             type: String,
             trim: true,
         },
+
+        // =====================================================
+        // ASSIGNED CONFERENCES
+        // =====================================================
 
         assignedConferences: [
             {
@@ -41,6 +78,10 @@ const employeeSchema = new mongoose.Schema(
             },
         ],
 
+        // =====================================================
+        // STATUS
+        // =====================================================
+
         status: {
             type: String,
             enum: ["active", "inactive"],
@@ -48,6 +89,10 @@ const employeeSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
         },
+
+        // =====================================================
+        // EMPLOYEE DETAILS
+        // =====================================================
 
         department: {
             type: String,
@@ -80,12 +125,25 @@ const employeeSchema = new mongoose.Schema(
             trim: true,
         },
 
+        // =====================================================
+        // PERMISSIONS
+        // =====================================================
+
         permissions: {
             type: [String],
             default: [],
         },
 
+        // =====================================================
+        // LOGIN / LOGOUT TRACKING
+        // =====================================================
+
         lastLogin: {
+            type: Date,
+            default: null,
+        },
+
+        lastLogout: {
             type: Date,
             default: null,
         },
@@ -94,5 +152,32 @@ const employeeSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// =========================================================
+// PASSWORD HASHING
+// =========================================================
+
+employeeSchema.pre("save", async function () {
+    // If password was not changed, don't hash again
+    if (!this.isModified("password")) {
+        return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+
+    this.password = await bcrypt.hash(this.password, salt);
+});
+
+// =========================================================
+// PASSWORD COMPARE METHOD
+// =========================================================
+
+employeeSchema.methods.comparePassword = async function (enteredPassword) {
+    return bcrypt.compare(enteredPassword, this.password);
+};
+
+// =========================================================
+// EXPORT MODEL
+// =========================================================
 
 module.exports = mongoose.model("Employee", employeeSchema);

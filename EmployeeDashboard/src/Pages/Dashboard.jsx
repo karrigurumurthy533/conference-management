@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -5,78 +6,308 @@ import {
   UserPlus,
   Users,
   UserRound,
+  RefreshCw,
 } from "lucide-react";
 
+import { getEmployeeDashboardApi } from "../api/employeeApis";
+
 function Dashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ======================================================
+  // FETCH EMPLOYEE DASHBOARD
+  // ======================================================
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getEmployeeDashboardApi();
+
+      if (response?.success) {
+        setDashboardData(response?.data || {});
+      } else {
+        setDashboardData({});
+        setError(response?.message || "Failed to load dashboard");
+      }
+    } catch (err) {
+      console.error("Dashboard API Error:", err);
+
+      setDashboardData({});
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load dashboard"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  // ======================================================
+  // NORMALIZE DASHBOARD DATA
+  // ======================================================
+
+  const data = dashboardData || {};
+
+  const totalRegistrations =
+    data?.totalRegistrations ??
+    data?.registrationsCount ??
+    data?.registrations ??
+    0;
+
+  const totalSpeakers =
+    data?.totalSpeakers ??
+    data?.speakersCount ??
+    data?.speakers ??
+    0;
+
+  const totalAbstracts =
+    data?.totalAbstracts ??
+    data?.abstractsCount ??
+    data?.abstracts ??
+    0;
+
+  const totalAttendances =
+    data?.totalAttendances ??
+    data?.totalAttendance ??
+    data?.attendancesCount ??
+    data?.attendance ??
+    0;
+
+  const recentActivities =
+    data?.recentActivities ||
+    data?.activities ||
+    data?.recentActivity ||
+    [];
+
+  // ======================================================
+  // STATS
+  // ======================================================
+
   const stats = [
     {
       title: "Total Registrations",
-      value: "1,248",
+      value: totalRegistrations,
       icon: UserPlus,
     },
     {
       title: "Total Speakers",
-      value: "86",
+      value: totalSpeakers,
       icon: UserRound,
     },
     {
       title: "Total Abstracts",
-      value: "324",
+      value: totalAbstracts,
       icon: FileText,
     },
     {
       title: "Total Attendences",
-      value: "120",
+      value: totalAttendances,
       icon: Users,
     },
   ];
 
-  const recentActivities = [
-    {
-      id: 1,
-      title: "New registration received",
-      description: "Sarah Johnson registered for Global Health Summit 2026.",
-      type: "Registration",
-      date: "Today, 10:42 AM",
-    },
-    {
-      id: 2,
-      title: "Speaker profile updated",
-      description: "Dr. Michael Brown updated his speaker profile.",
-      type: "Speaker",
-      date: "Today, 09:30 AM",
-    },
-    {
-      id: 3,
-      title: "Abstract submitted",
-      description: "A new abstract was submitted for review.",
-      type: "Abstract",
-      date: "Yesterday, 04:15 PM",
-    },
-    {
-      id: 4,
-      title: "Registration completed",
-      description: "James Wilson completed the conference registration.",
-      type: "Registration",
-      date: "Yesterday, 02:20 PM",
-    },
-    {
-      id: 5,
-      title: "Abstract approved",
-      description: "The abstract has been approved by the review team.",
-      type: "Abstract",
-      date: "Sep 25, 2026",
-    },
-  ];
+  // ======================================================
+  // ACTIVITY HELPERS
+  // ======================================================
+
+  const getActivityType = (activity) => {
+    return (
+      activity?.type ||
+      activity?.category ||
+      activity?.activityType ||
+      "Activity"
+    );
+  };
+
+  const getActivityTitle = (activity) => {
+    return (
+      activity?.title ||
+      activity?.name ||
+      activity?.message ||
+      "New activity"
+    );
+  };
+
+  const getActivityDescription = (activity) => {
+    return (
+      activity?.description ||
+      activity?.details ||
+      activity?.message ||
+      "A new activity was recorded."
+    );
+  };
+
+  const getActivityDate = (activity) => {
+    const date =
+      activity?.date ||
+      activity?.createdAt ||
+      activity?.updatedAt;
+
+    if (!date) {
+      return "";
+    }
+
+    try {
+      return new Date(date).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return date;
+    }
+  };
+
+  const getActivityIcon = (type) => {
+    const normalizedType = String(type).toLowerCase();
+
+    if (
+      normalizedType.includes("registration") ||
+      normalizedType.includes("register")
+    ) {
+      return (
+        <UserPlus
+          size={16}
+          strokeWidth={2}
+          className="text-[#7C3AED]"
+        />
+      );
+    }
+
+    if (normalizedType.includes("speaker")) {
+      return (
+        <UserRound
+          size={16}
+          strokeWidth={2}
+          className="text-[#7C3AED]"
+        />
+      );
+    }
+
+    if (normalizedType.includes("abstract")) {
+      return (
+        <FileText
+          size={16}
+          strokeWidth={2}
+          className="text-[#7C3AED]"
+        />
+      );
+    }
+
+    return (
+      <CalendarDays
+        size={16}
+        strokeWidth={2}
+        className="text-[#7C3AED]"
+      />
+    );
+  };
+
+  // ======================================================
+  // LOADING
+  // ======================================================
+
+  if (loading) {
+    return (
+      <section className="min-h-[calc(100vh-60px)] bg-[#f7f7fb] px-5 py-5">
+        <div className="mx-auto w-full max-w-[1400px]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="animate-pulse rounded-xl border border-gray-100 bg-white px-4 py-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="h-3 w-28 rounded bg-gray-200" />
+                    <div className="mt-3 h-7 w-16 rounded bg-gray-200" />
+                  </div>
+
+                  <div className="h-9 w-9 rounded-lg bg-gray-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 animate-pulse rounded-xl border border-gray-100 bg-white">
+            <div className="border-b border-gray-100 px-4 py-4">
+              <div className="h-4 w-32 rounded bg-gray-200" />
+              <div className="mt-2 h-3 w-64 rounded bg-gray-200" />
+            </div>
+
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div
+                key={item}
+                className="flex gap-3 border-b border-gray-100 px-4 py-4"
+              >
+                <div className="h-8 w-8 rounded-lg bg-gray-200" />
+
+                <div className="flex-1">
+                  <div className="h-3 w-48 rounded bg-gray-200" />
+                  <div className="mt-2 h-3 w-72 rounded bg-gray-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ======================================================
+  // ERROR
+  // ======================================================
+
+  if (error) {
+    return (
+      <section className="min-h-[calc(100vh-60px)] bg-[#f7f7fb] px-5 py-5">
+        <div className="mx-auto flex min-h-[400px] w-full max-w-[1400px] items-center justify-center">
+          <div className="rounded-xl border border-red-100 bg-white px-8 py-8 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+            <p className="text-sm font-semibold text-gray-900">
+              Unable to load dashboard
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={fetchDashboard}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#7C3AED] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#6D28D9]"
+            >
+              <RefreshCw size={14} />
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ======================================================
+  // DASHBOARD
+  // ======================================================
 
   return (
     <section className="min-h-[calc(100vh-60px)] bg-[#f7f7fb] px-5 py-5">
       <div className="mx-auto w-full max-w-[1400px]">
 
-
         {/* =====================================================
             STAT CARDS
         ====================================================== */}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -102,9 +333,8 @@ function Dashboard() {
                       {stat.title}
                     </p>
 
-                    {/* BLACK NUMBER */}
                     <p className="mt-1.5 text-[24px] font-bold leading-none text-gray-900">
-                      {stat.value}
+                      {Number(stat.value || 0).toLocaleString()}
                     </p>
                   </div>
 
@@ -134,6 +364,7 @@ function Dashboard() {
         {/* =====================================================
             RECENT ACTIVITIES
         ====================================================== */}
+
         <div
           className="
             mt-5
@@ -146,6 +377,7 @@ function Dashboard() {
           "
         >
           {/* Header */}
+
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <div>
               <h2 className="text-[14px] font-semibold text-gray-900">
@@ -159,7 +391,12 @@ function Dashboard() {
 
             <button
               type="button"
+              onClick={fetchDashboard}
+              disabled={loading}
               className="
+                inline-flex
+                items-center
+                gap-1.5
                 rounded-lg
                 px-3
                 py-1.5
@@ -168,116 +405,129 @@ function Dashboard() {
                 text-gray-900
                 transition
                 hover:bg-gray-50
+                disabled:cursor-not-allowed
+                disabled:opacity-50
               "
             >
-              View All
+              <RefreshCw size={13} />
+              Refresh
             </button>
           </div>
 
           {/* Activity List */}
-          <div className="divide-y divide-gray-100">
-            {recentActivities.map((activity) => (
-              <div
-                key={activity.id}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  px-4
-                  py-3
-                  transition
-                  hover:bg-gray-50/70
-                "
-              >
-                {/* Icon */}
-                <div
-                  className="
-                    flex
-                    h-8
-                    w-8
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-lg
-                    bg-purple-50
-                  "
-                >
-                  {activity.type === "Registration" && (
-                    <UserPlus
-                      size={16}
-                      strokeWidth={2}
-                      className="text-[#7C3AED]"
-                    />
-                  )}
 
-                  {activity.type === "Speaker" && (
-                    <UserRound
-                      size={16}
-                      strokeWidth={2}
-                      className="text-[#7C3AED]"
-                    />
-                  )}
+          {recentActivities.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+                <CalendarDays
+                  size={18}
+                  className="text-[#7C3AED]"
+                />
+              </div>
 
-                  {activity.type === "Abstract" && (
-                    <FileText
-                      size={16}
-                      strokeWidth={2}
-                      className="text-[#7C3AED]"
-                    />
-                  )}
-                </div>
+              <p className="mt-3 text-sm font-medium text-gray-800">
+                No recent activities
+              </p>
 
-                {/* Content */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-[12px] font-semibold text-gray-800">
-                      {activity.title}
-                    </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                Recent conference activities will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {recentActivities.map((activity, index) => {
+                const type = getActivityType(activity);
 
-                    <span
+                return (
+                  <div
+                    key={
+                      activity?._id ||
+                      activity?.id ||
+                      index
+                    }
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      px-4
+                      py-3
+                      transition
+                      hover:bg-gray-50/70
+                    "
+                  >
+                    {/* Icon */}
+
+                    <div
                       className="
-                        rounded-full
+                        flex
+                        h-8
+                        w-8
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-lg
                         bg-purple-50
-                        px-2
-                        py-0.5
-                        text-[9px]
-                        font-medium
-                        text-[#7C3AED]
                       "
                     >
-                      {activity.type}
-                    </span>
+                      {getActivityIcon(type)}
+                    </div>
+
+                    {/* Content */}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-[12px] font-semibold text-gray-800">
+                          {getActivityTitle(activity)}
+                        </h3>
+
+                        <span
+                          className="
+                            rounded-full
+                            bg-purple-50
+                            px-2
+                            py-0.5
+                            text-[9px]
+                            font-medium
+                            text-[#7C3AED]
+                          "
+                        >
+                          {type}
+                        </span>
+                      </div>
+
+                      <p className="mt-0.5 truncate text-[11px] text-gray-500">
+                        {getActivityDescription(activity)}
+                      </p>
+                    </div>
+
+                    {/* Date */}
+
+                    <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+                      <CalendarDays
+                        size={13}
+                        strokeWidth={1.8}
+                        className="text-gray-400"
+                      />
+
+                      <span className="text-[10px] text-gray-400">
+                        {getActivityDate(activity)}
+                      </span>
+                    </div>
+
+                    {/* Status */}
+
+                    <div className="hidden shrink-0 md:block">
+                      <CheckCircle2
+                        size={16}
+                        strokeWidth={1.8}
+                        className="text-green-500"
+                      />
+                    </div>
                   </div>
-
-                  <p className="mt-0.5 truncate text-[11px] text-gray-500">
-                    {activity.description}
-                  </p>
-                </div>
-
-                {/* Date */}
-                <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
-                  <CalendarDays
-                    size={13}
-                    strokeWidth={1.8}
-                    className="text-gray-400"
-                  />
-
-                  <span className="text-[10px] text-gray-400">
-                    {activity.date}
-                  </span>
-                </div>
-
-                {/* Status */}
-                <div className="hidden shrink-0 md:block">
-                  <CheckCircle2
-                    size={16}
-                    strokeWidth={1.8}
-                    className="text-green-500"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </section>

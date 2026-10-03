@@ -2,25 +2,73 @@ const express = require("express");
 
 const UserController = require("../controllers/UserController");
 const { upload } = require("../middlewares/uploadMiddleware");
-
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
-router.post("/brochures", UserController.createDownloadBrochure);
+// ======================================================
+// BROCHURE ROUTES
+// ======================================================
 
-router.get("/brochures", UserController.getAllDownloadBrochures);
+router.post(
+  "/brochures",
+  UserController.createDownloadBrochure
+);
 
-router.get("/brochures/:id", UserController.getDownloadBrochureById);
+router.get(
+  "/brochures",
+  UserController.getAllDownloadBrochures
+);
 
-router.delete("/brochures/:id", UserController.deleteDownloadBrochure);
+router.get(
+  "/brochures/:id",
+  UserController.getDownloadBrochureById
+);
 
-router.post("/registrations", UserController.createRegistration);
+router.delete(
+  "/brochures/:id",
+  UserController.deleteDownloadBrochure
+);
 
-router.get("/registrations", UserController.getAllRegistrations);
+// ======================================================
+// REGISTRATION ROUTES
+// ======================================================
 
-router.get("/registrations/:id", UserController.getRegistrationById);
+// Create registration
+router.post(
+  "/registrations",
+  UserController.createRegistration
+);
 
-router.delete("/registrations/:id", UserController.deleteRegistration);
+// Get all registrations
+router.get(
+  "/registrations",
+  UserController.getAllRegistrations
+);
+
+// Get registrations by conference
+// IMPORTANT: This must come BEFORE /registrations/:id
+router.get(
+  "/registrations/conference/:conferenceId",
+  authMiddleware("admin"),
+  UserController.getRegistrationsByConferenceId
+);
+
+// Get registration by registration ID
+router.get(
+  "/registrations/:id",
+  UserController.getRegistrationById
+);
+
+// Delete registration
+router.delete(
+  "/registrations/:id",
+  UserController.deleteRegistration
+);
+
+// ======================================================
+// ABSTRACT ROUTES
+// ======================================================
 
 router.post(
   "/abstract",
@@ -28,8 +76,19 @@ router.post(
   UserController.createAbstract
 );
 
-router.get("/abstracts", UserController.getAllAbstracts);
-router.get("/abstracts/:id", UserController.getAbstractById);
-router.delete("/abstracts/:id", UserController.deleteAbstract);
+router.get(
+  "/abstracts",
+  UserController.getAllAbstracts
+);
+
+router.get(
+  "/abstracts/:id",
+  UserController.getAbstractById
+);
+
+router.delete(
+  "/abstracts/:id",
+  UserController.deleteAbstract
+);
 
 module.exports = router;

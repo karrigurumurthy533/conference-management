@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Check, ChevronDown, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  X,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 import {
   createEmployee,
@@ -37,11 +44,14 @@ const CreateEmployee = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    role: "",
+    password: "Employee@123",
+    employeeType: "",
     phoneNumber: "",
   });
 
   const [assignedConferences, setAssignedConferences] = useState([]);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   // =========================================================
   // GET ALL CONFERENCES
@@ -59,6 +69,28 @@ const CreateEmployee = () => {
     dispatch(clearEmployeeError());
     dispatch(clearEmployeeSuccess());
   }, [dispatch]);
+
+  // =========================================================
+  // SUCCESS TOASTER
+  // =========================================================
+
+  useEffect(() => {
+    if (success) {
+      toast.success(
+        message || "Employee created successfully"
+      );
+    }
+  }, [success, message]);
+
+  // =========================================================
+  // ERROR TOASTER
+  // =========================================================
+
+  useEffect(() => {
+    if (employeeError) {
+      toast.error(employeeError);
+    }
+  }, [employeeError]);
 
   // =========================================================
   // INPUT CHANGE
@@ -94,15 +126,21 @@ const CreateEmployee = () => {
     if (!conferenceId) return;
 
     if (!assignedConferences.includes(conferenceId)) {
-      setAssignedConferences((prev) => [...prev, conferenceId]);
+      setAssignedConferences((prev) => [
+        ...prev,
+        conferenceId,
+      ]);
     }
   };
+
   // =========================================================
   // REMOVE CONFERENCE
   // =========================================================
 
   const removeConference = (conferenceId) => {
-    setAssignedConferences((prev) => prev.filter((id) => id !== conferenceId));
+    setAssignedConferences((prev) =>
+      prev.filter((id) => id !== conferenceId)
+    );
   };
 
   // =========================================================
@@ -110,36 +148,62 @@ const CreateEmployee = () => {
   // =========================================================
 
   const handleSubmit = async () => {
+    // -------------------------------------------------------
     // BASIC VALIDATION
+    // -------------------------------------------------------
+
     if (!formData.fullName.trim()) {
-      alert("Please enter employee name");
+      toast.error("Please enter employee name");
       return;
     }
 
     if (!formData.email.trim()) {
-      alert("Please enter employee email");
+      toast.error("Please enter employee email");
       return;
     }
 
-    if (!formData.role) {
-      alert("Please select employee role");
+    if (!formData.password.trim()) {
+      toast.error("Please enter employee password");
+      return;
+    }
+
+    if (formData.password.trim().length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (!formData.employeeType) {
+      toast.error("Please select employee type");
       return;
     }
 
     if (assignedConferences.length === 0) {
-      alert("Please assign at least one conference");
+      toast.error("Please assign at least one conference");
       return;
     }
 
     // =======================================================
     // PAYLOAD
     // =======================================================
+    // role is always Employee
+    // employeeType contains the actual employee job type
+    // =======================================================
 
     const payload = {
       fullName: formData.fullName.trim(),
+
       email: formData.email.trim(),
-      role: formData.role,
+
+      password: formData.password.trim(),
+
+      // Authentication role
+      role: "Employee",
+
+      // Employee job type
+      employeeType: formData.employeeType,
+
       phoneNumber: formData.phoneNumber.trim(),
+
       assignedConferences,
     };
 
@@ -147,7 +211,9 @@ const CreateEmployee = () => {
     // API CALL THROUGH REDUX
     // =======================================================
 
-    const result = await dispatch(createEmployee(payload));
+    const result = await dispatch(
+      createEmployee(payload)
+    );
 
     // =======================================================
     // SUCCESS
@@ -157,11 +223,14 @@ const CreateEmployee = () => {
       setFormData({
         fullName: "",
         email: "",
-        role: "",
+        password: "Employee@123",
+        employeeType: "",
         phoneNumber: "",
       });
 
       setAssignedConferences([]);
+
+      setShowPassword(false);
     }
   };
 
@@ -173,11 +242,14 @@ const CreateEmployee = () => {
     setFormData({
       fullName: "",
       email: "",
-      role: "",
+      password: "Employee@123",
+      employeeType: "",
       phoneNumber: "",
     });
 
     setAssignedConferences([]);
+
+    setShowPassword(false);
 
     dispatch(clearEmployeeError());
     dispatch(clearEmployeeSuccess());
@@ -187,8 +259,9 @@ const CreateEmployee = () => {
   // GET SELECTED CONFERENCE OBJECTS
   // =========================================================
 
-  const selectedConferenceObjects = conferences.filter((conference) =>
-    assignedConferences.includes(conference?._id),
+  const selectedConferenceObjects = conferences.filter(
+    (conference) =>
+      assignedConferences.includes(conference?._id)
   );
 
   // =========================================================
@@ -286,32 +359,81 @@ const CreateEmployee = () => {
           </div>
 
           {/* =================================================
-              ROLE
+              PASSWORD
           ================================================= */}
 
           <div>
             <label className="mb-1 block text-[11px] font-semibold text-gray-700">
-              Role *
+              Password *
+            </label>
+
+            <div className="relative">
+              <input
+                type={
+                  showPassword ? "text" : "password"
+                }
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter employee password"
+                className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 pr-10 text-[12px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword((prev) => !prev)
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <EyeOff size={15} />
+                ) : (
+                  <Eye size={15} />
+                )}
+              </button>
+            </div>
+
+            <p className="mt-1 text-[10px] text-gray-400">
+              Default password: Employee@123
+            </p>
+          </div>
+
+          {/* =================================================
+              EMPLOYEE TYPE
+          ================================================= */}
+
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold text-gray-700">
+              Employee Type *
             </label>
 
             <div className="relative">
               <select
-                name="role"
-                value={formData.role}
+                name="employeeType"
+                value={formData.employeeType}
                 onChange={handleChange}
                 className="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 pr-9 text-[12px] text-gray-800 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10"
               >
                 <option value="" disabled>
-                  Select role
+                  Select employee type
                 </option>
 
-                <option value="Webiner">Webiner</option>
+                <option value="webiner">
+                  Webiner
+                </option>
 
-                <option value="Event Manager">Event Manager</option>
+                <option value="event manager">
+                  Event Manager
+                </option>
 
-                <option value="Coordinator">Coordinator</option>
+                <option value="coordinator">
+                  Coordinator
+                </option>
 
-                <option value="Marketing">Marketing</option>
+                <option value="marketing">
+                  Marketing
+                </option>
               </select>
 
               <ChevronDown
@@ -353,7 +475,9 @@ const CreateEmployee = () => {
               <select
                 value=""
                 disabled={conferenceLoading}
-                onChange={(e) => addConference(e.target.value)}
+                onChange={(e) =>
+                  addConference(e.target.value)
+                }
                 className="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 pr-9 text-[12px] text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 disabled:cursor-not-allowed disabled:bg-gray-50"
               >
                 <option value="">
@@ -366,7 +490,9 @@ const CreateEmployee = () => {
                   <option
                     key={conference._id}
                     value={conference._id}
-                    disabled={assignedConferences.includes(conference._id)}
+                    disabled={assignedConferences.includes(
+                      conference._id
+                    )}
                   >
                     {getConferenceTitle(conference)}
                   </option>
@@ -385,29 +511,38 @@ const CreateEmployee = () => {
 
             {selectedConferenceObjects.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {selectedConferenceObjects.map((conference) => (
-                  <div
-                    key={conference._id}
-                    className="flex items-center gap-1.5 rounded-md bg-purple-50 px-2 py-1 text-[10px] font-medium text-purple-700"
-                  >
-                    <Check size={11} />
-
-                    <span>{getConferenceTitle(conference)}</span>
-
-                    <button
-                      type="button"
-                      onClick={() => removeConference(conference._id)}
-                      className="ml-0.5 rounded text-purple-400 transition hover:text-red-500"
+                {selectedConferenceObjects.map(
+                  (conference) => (
+                    <div
+                      key={conference._id}
+                      className="flex items-center gap-1.5 rounded-md bg-purple-50 px-2 py-1 text-[10px] font-medium text-purple-700"
                     >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
+                      <Check size={11} />
+
+                      <span>
+                        {getConferenceTitle(conference)}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeConference(
+                            conference._id
+                          )
+                        }
+                        className="ml-0.5 rounded text-purple-400 transition hover:text-red-500"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             )}
 
             <p className="mt-1 text-[10px] text-gray-400">
-              You can assign multiple conferences to this employee.
+              You can assign multiple conferences to
+              this employee.
             </p>
           </div>
         </div>
@@ -436,7 +571,9 @@ const CreateEmployee = () => {
             disabled={createLoading}
             className="h-9 rounded-lg bg-purple-600 px-4 text-[11px] font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {createLoading ? "Creating..." : "Create Employee"}
+            {createLoading
+              ? "Creating..."
+              : "Create Employee"}
           </button>
         </div>
       </div>

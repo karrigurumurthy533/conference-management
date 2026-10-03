@@ -7,6 +7,8 @@ const catchAsync = require("../utils/catchAsync")
 const Speaker = require("../models/Speaker");
 const Employee = require("../models/Employee");
 const ConferenceBrochure = require("../models/ConferenceBrochure");
+const bcrypt = require("bcryptjs");
+
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
 
 
@@ -764,30 +766,81 @@ exports.publishConference = async (
   }
 };
 
+
 exports.createEmployee = async (req, res) => {
   try {
     const {
       fullName,
       email,
+      password,
       role,
+      employeeType,
       phoneNumber,
       assignedConferences = [],
+      status,
+      department,
+      designation,
+      country,
+      location,
+      timezone,
+      about,
+      permissions = [],
     } = req.body;
 
+    // --------------------------------------------------
+    // REQUIRED FIELDS
+    // --------------------------------------------------
 
-
-    if (!fullName || !email || !role) {
+    if (!fullName || !email || !password || !employeeType) {
       return res.status(400).json({
         success: false,
-        message: "Full name, email and role are required.",
+        message:
+          "Full name, email, password and employee type are required.",
       });
     }
 
+    // --------------------------------------------------
+    // PASSWORD VALIDATION
+    // --------------------------------------------------
 
+    if (password.trim().length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters.",
+      });
+    }
+
+    // --------------------------------------------------
+    // NORMALIZE EMAIL
+    // --------------------------------------------------
 
     const normalizedEmail = email.trim().toLowerCase();
 
+    // --------------------------------------------------
+    // EMPLOYEE TYPE
+    // --------------------------------------------------
 
+    const allowedEmployeeTypes = [
+      "event manager",
+      "coordinator",
+      "marketing",
+      "webiner",
+    ];
+
+    const normalizedEmployeeType = employeeType
+      .trim()
+      .toLowerCase();
+
+    if (!allowedEmployeeTypes.includes(normalizedEmployeeType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee type.",
+      });
+    }
+
+    // --------------------------------------------------
+    // CHECK EXISTING EMPLOYEE
+    // --------------------------------------------------
 
     const existingEmployee = await Employee.findOne({
       email: normalizedEmail,
@@ -800,6 +853,9 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+    // ASSIGNED CONFERENCES VALIDATION
+    // --------------------------------------------------
 
     if (!Array.isArray(assignedConferences)) {
       return res.status(400).json({
@@ -807,8 +863,6 @@ exports.createEmployee = async (req, res) => {
         message: "assignedConferences must be an array.",
       });
     }
-
-
 
     for (const conferenceId of assignedConferences) {
       if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
@@ -818,8 +872,6 @@ exports.createEmployee = async (req, res) => {
         });
       }
     }
-
-
 
     if (assignedConferences.length > 0) {
       const conferences = await Conference.find({
@@ -836,25 +888,85 @@ exports.createEmployee = async (req, res) => {
       }
     }
 
+    // --------------------------------------------------
+    // STATUS VALIDATION
+    // --------------------------------------------------
+
+    const employeeStatus = status
+      ? status.trim().toLowerCase()
+      : "active";
+
+    if (!["active", "inactive"].includes(employeeStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee status.",
+      });
+    }
+
+    // --------------------------------------------------
+    // CREATE EMPLOYEE
+    // --------------------------------------------------
+    // IMPORTANT:
+    // Password is NOT hashed here.
+    // Employee schema pre("save") middleware hashes it.
+    // --------------------------------------------------
 
     const employee = await Employee.create({
       fullName: fullName.trim(),
+
       email: normalizedEmail,
-      role,
+
+      // Main authentication role
+      role: "Employee",
+
+      // Employee job type
+      employeeType: normalizedEmployeeType,
+
+      password: password.trim(),
+
       phoneNumber: phoneNumber?.trim() || "",
+
       assignedConferences,
+
+      status: employeeStatus,
+
+      department: department?.trim() || "",
+
+      designation: designation?.trim() || "",
+
+      country: country?.trim() || "",
+
+      location: location?.trim() || "",
+
+      timezone: timezone?.trim() || "Asia/Kolkata",
+
+      about: about?.trim() || "",
+
+      permissions: Array.isArray(permissions)
+        ? permissions
+        : [],
+
+      lastLogin: null,
+
+      lastLogout: null,
     });
 
-
+    // --------------------------------------------------
+    // GET CREATED EMPLOYEE
+    // --------------------------------------------------
 
     const populatedEmployee = await Employee.findById(
       employee._id
-    ).populate(
-      "assignedConferences",
-      "basicInformation conferenceDates venueInformation"
-    );
+    )
+      .select("-password")
+      .populate(
+        "assignedConferences",
+        "basicInformation conferenceDates venueInformation"
+      );
 
-
+    // --------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------
 
     return res.status(201).json({
       success: true,
@@ -872,9 +984,12 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
+
+
 exports.getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find()
+      .select("-password")
       .populate(
         "assignedConferences",
         "basicInformation conferenceDates venueInformation"
@@ -897,9 +1012,14 @@ exports.getAllEmployees = async (req, res) => {
   }
 };
 
+
 exports.getEmployeeById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // --------------------------------------------------
+    // VALIDATE ID
+    // --------------------------------------------------
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -908,7 +1028,16 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-    const employee = await Employee.findById(id);
+    // --------------------------------------------------
+    // FIND EMPLOYEE
+    // --------------------------------------------------
+
+    const employee = await Employee.findById(id)
+      .select("-password")
+      .populate(
+        "assignedConferences",
+        "basicInformation conferenceDates venueInformation"
+      );
 
     if (!employee) {
       return res.status(404).json({
@@ -917,38 +1046,13 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-    const employeeData = employee.toObject();
-
-    const conferenceIds = (employeeData.assignedConferences || [])
-      .filter((conferenceId) =>
-        mongoose.Types.ObjectId.isValid(conferenceId)
-      )
-      .map((conferenceId) =>
-        new mongoose.Types.ObjectId(conferenceId)
-      );
-
-    const conferences = await Conference.find({
-      _id: {
-        $in: conferenceIds,
-      },
-    }).lean();
-
-    employeeData.conferenceDetails = conferences.map(
-      (conference) => ({
-        conferenceId: conference._id,
-        title: conference.title || "",
-        date: conference.date || null,
-        startDate: conference.startDate || null,
-        endDate: conference.endDate || null,
-        mode: conference.mode || "",
-        location: conference.location || "",
-        status: conference.status || "",
-      })
-    );
+    // --------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------
 
     return res.status(200).json({
       success: true,
-      data: employeeData,
+      data: employee,
     });
   } catch (error) {
     console.error("Get Employee Error:", error);
@@ -970,11 +1074,23 @@ exports.updateEmployee = async (req, res) => {
       fullName,
       email,
       role,
+      employeeType,
+      password,
       phoneNumber,
       assignedConferences,
       status,
+      department,
+      designation,
+      country,
+      location,
+      timezone,
+      about,
+      permissions,
     } = req.body;
 
+    // --------------------------------------------------
+    // VALIDATE EMPLOYEE ID
+    // --------------------------------------------------
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -983,6 +1099,9 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+    // FIND EMPLOYEE
+    // --------------------------------------------------
 
     const employee = await Employee.findById(id);
 
@@ -993,7 +1112,9 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-
+    // --------------------------------------------------
+    // EMAIL
+    // --------------------------------------------------
 
     if (email !== undefined) {
       const normalizedEmail = email.trim().toLowerCase();
@@ -1015,40 +1136,187 @@ exports.updateEmployee = async (req, res) => {
       employee.email = normalizedEmail;
     }
 
+    // --------------------------------------------------
+    // FULL NAME
+    // --------------------------------------------------
 
     if (fullName !== undefined) {
+      if (!fullName.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Full name cannot be empty.",
+        });
+      }
+
       employee.fullName = fullName.trim();
     }
 
+    // --------------------------------------------------
+    // AUTHENTICATION ROLE
+    // --------------------------------------------------
+    // Employee role is always Employee
+    // --------------------------------------------------
 
+    employee.role = "Employee";
 
-    if (role !== undefined) {
-      employee.role = role;
+    // --------------------------------------------------
+    // EMPLOYEE TYPE
+    // --------------------------------------------------
+
+    if (employeeType !== undefined) {
+      const allowedEmployeeTypes = [
+        "event manager",
+        "coordinator",
+        "marketing",
+        "webiner",
+      ];
+
+      const normalizedEmployeeType = employeeType
+        .trim()
+        .toLowerCase();
+
+      if (
+        !allowedEmployeeTypes.includes(
+          normalizedEmployeeType
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid employee type.",
+        });
+      }
+
+      employee.employeeType = normalizedEmployeeType;
     }
 
-
+    // --------------------------------------------------
+    // PHONE
+    // --------------------------------------------------
 
     if (phoneNumber !== undefined) {
       employee.phoneNumber = phoneNumber.trim();
     }
 
-
+    // --------------------------------------------------
+    // STATUS
+    // --------------------------------------------------
 
     if (status !== undefined) {
-      employee.status = status;
+      const normalizedStatus = status
+        .trim()
+        .toLowerCase();
+
+      if (
+        !["active", "inactive"].includes(
+          normalizedStatus
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid employee status.",
+        });
+      }
+
+      employee.status = normalizedStatus;
     }
 
+    // --------------------------------------------------
+    // DEPARTMENT
+    // --------------------------------------------------
 
+    if (department !== undefined) {
+      employee.department = department.trim();
+    }
+
+    // --------------------------------------------------
+    // DESIGNATION
+    // --------------------------------------------------
+
+    if (designation !== undefined) {
+      employee.designation = designation.trim();
+    }
+
+    // --------------------------------------------------
+    // COUNTRY
+    // --------------------------------------------------
+
+    if (country !== undefined) {
+      employee.country = country.trim();
+    }
+
+    // --------------------------------------------------
+    // LOCATION
+    // --------------------------------------------------
+
+    if (location !== undefined) {
+      employee.location = location.trim();
+    }
+
+    // --------------------------------------------------
+    // TIMEZONE
+    // --------------------------------------------------
+
+    if (timezone !== undefined) {
+      employee.timezone = timezone.trim();
+    }
+
+    // --------------------------------------------------
+    // ABOUT
+    // --------------------------------------------------
+
+    if (about !== undefined) {
+      employee.about = about.trim();
+    }
+
+    // --------------------------------------------------
+    // PASSWORD
+    // --------------------------------------------------
+    // IMPORTANT:
+    // Do NOT bcrypt.hash() here.
+    // employee.save() will trigger pre("save")
+    // and hash the password automatically.
+    // --------------------------------------------------
+
+    if (
+      password !== undefined &&
+      password.trim() !== ""
+    ) {
+      if (password.trim().length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters.",
+        });
+      }
+
+      employee.password = password.trim();
+    }
+
+    // --------------------------------------------------
+    // PERMISSIONS
+    // --------------------------------------------------
+
+    if (permissions !== undefined) {
+      if (!Array.isArray(permissions)) {
+        return res.status(400).json({
+          success: false,
+          message: "permissions must be an array.",
+        });
+      }
+
+      employee.permissions = permissions;
+    }
+
+    // --------------------------------------------------
+    // ASSIGNED CONFERENCES
+    // --------------------------------------------------
 
     if (assignedConferences !== undefined) {
-      // Check array
       if (!Array.isArray(assignedConferences)) {
         return res.status(400).json({
           success: false,
           message: "assignedConferences must be an array.",
         });
       }
-
 
       for (const conferenceId of assignedConferences) {
         if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
@@ -1059,7 +1327,6 @@ exports.updateEmployee = async (req, res) => {
         }
       }
 
-
       if (assignedConferences.length > 0) {
         const conferences = await Conference.find({
           _id: {
@@ -1067,33 +1334,43 @@ exports.updateEmployee = async (req, res) => {
           },
         }).select("_id");
 
-        if (conferences.length !== assignedConferences.length) {
+        if (
+          conferences.length !==
+          assignedConferences.length
+        ) {
           return res.status(404).json({
             success: false,
-            message: "One or more assigned conferences were not found.",
+            message:
+              "One or more assigned conferences were not found.",
           });
         }
       }
 
-      employee.assignedConferences = assignedConferences;
+      employee.assignedConferences =
+        assignedConferences;
     }
 
-
+    // --------------------------------------------------
+    // SAVE
+    // --------------------------------------------------
 
     await employee.save();
 
+    // --------------------------------------------------
+    // GET UPDATED EMPLOYEE
+    // --------------------------------------------------
 
+    const updatedEmployee =
+      await Employee.findById(employee._id)
+        .select("-password")
+        .populate(
+          "assignedConferences",
+          "basicInformation conferenceDates venueInformation"
+        );
 
-    const updatedEmployee = await Employee.findById(
-      employee._id
-    ).populate(
-      "assignedConferences",
-      "basicInformation conferenceDates venueInformation"
-    );
-
-    // -------------------------------------------------
+    // --------------------------------------------------
     // RESPONSE
-    // -------------------------------------------------
+    // --------------------------------------------------
 
     return res.status(200).json({
       success: true,
@@ -1111,13 +1388,14 @@ exports.updateEmployee = async (req, res) => {
   }
 };
 
+
 exports.deleteEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // -------------------------------------------------
-    // CHECK EMPLOYEE ID
-    // -------------------------------------------------
+    // --------------------------------------------------
+    // VALIDATE ID
+    // --------------------------------------------------
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1126,9 +1404,9 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
-    // -------------------------------------------------
+    // --------------------------------------------------
     // FIND EMPLOYEE
-    // -------------------------------------------------
+    // --------------------------------------------------
 
     const employee = await Employee.findById(id);
 
@@ -1139,15 +1417,15 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
-    // -------------------------------------------------
-    // DELETE EMPLOYEE
-    // -------------------------------------------------
+    // --------------------------------------------------
+    // DELETE
+    // --------------------------------------------------
 
     await Employee.findByIdAndDelete(id);
 
-    // -------------------------------------------------
+    // --------------------------------------------------
     // RESPONSE
-    // -------------------------------------------------
+    // --------------------------------------------------
 
     return res.status(200).json({
       success: true,
@@ -1163,7 +1441,6 @@ exports.deleteEmployee = async (req, res) => {
     });
   }
 };
-
 
 exports.createSpeaker = catchAsync(async (req, res, next) => {
   const {
@@ -1299,71 +1576,71 @@ exports.getSpeakerById = catchAsync(
 
 
 
-exports.getSpeakersByConference =catchAsync(async (req, res, next) => {
-    const { conferenceId } = req.params;
+exports.getSpeakersByConference = catchAsync(async (req, res, next) => {
+  const { conferenceId } = req.params;
 
-    // --------------------------------------------------------
-    // VALIDATE CONFERENCE ID
-    // --------------------------------------------------------
+  // --------------------------------------------------------
+  // VALIDATE CONFERENCE ID
+  // --------------------------------------------------------
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        conferenceId
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      conferenceId
+    )
+  ) {
+    return next(
+      new AppError(
+        "Invalid conference ID",
+        400
       )
-    ) {
-      return next(
-        new AppError(
-          "Invalid conference ID",
-          400
-        )
-      );
-    }
+    );
+  }
 
-    // --------------------------------------------------------
-    // CHECK CONFERENCE
-    // --------------------------------------------------------
+  // --------------------------------------------------------
+  // CHECK CONFERENCE
+  // --------------------------------------------------------
 
-    const conference =
-      await Conference.findById(
-        conferenceId
-      );
+  const conference =
+    await Conference.findById(
+      conferenceId
+    );
 
-    if (!conference) {
-      return next(
-        new AppError(
-          "Conference not found",
-          404
-        )
-      );
-    }
+  if (!conference) {
+    return next(
+      new AppError(
+        "Conference not found",
+        404
+      )
+    );
+  }
 
-    // --------------------------------------------------------
-    // GET SPEAKERS
-    // --------------------------------------------------------
+  // --------------------------------------------------------
+  // GET SPEAKERS
+  // --------------------------------------------------------
 
-    const speakers = await Speaker.find({
-      conferenceId,
-    }).sort({
-      displayOrder: 1,
-      createdAt: -1,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Conference speakers fetched successfully",
-      conference: {
-        _id: conference._id,
-        conferenceName:
-          conference.basicInformation
-            ?.conferenceName,
-        shortName:
-          conference.basicInformation?.shortName,
-      },
-      count: speakers.length,
-      data: speakers,
-    });
+  const speakers = await Speaker.find({
+    conferenceId,
+  }).sort({
+    displayOrder: 1,
+    createdAt: -1,
   });
+
+  return res.status(200).json({
+    success: true,
+    message:
+      "Conference speakers fetched successfully",
+    conference: {
+      _id: conference._id,
+      conferenceName:
+        conference.basicInformation
+          ?.conferenceName,
+      shortName:
+        conference.basicInformation?.shortName,
+    },
+    count: speakers.length,
+    data: speakers,
+  });
+});
 
 
 

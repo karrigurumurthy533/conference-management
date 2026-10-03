@@ -469,7 +469,7 @@ const Dashboard = () => {
                 type="button"
                 className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-medium text-gray-600 transition hover:border-violet-200 hover:text-violet-600"
               >
-                Last 9 Months
+                Last 12 Months
               </button>
 
             </div>

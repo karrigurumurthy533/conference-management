@@ -1,6 +1,5 @@
+
 import { Navigate, Route, Routes } from "react-router-dom";
-
-
 
 import Login from "../Pages/Login";
 import Dashboard from "../Pages/Dashboard";
@@ -14,11 +13,14 @@ import MainLayout from "../layouts/MainLayout";
 import Attendance from "../Pages/Attendance";
 import Brochures from "../Pages/Brochures";
 
-function ProtectedRoute({ children }) {
-  const isLoggedIn =
-    localStorage.getItem("isLoggedIn") === "true";
+// ======================================================
+// PROTECTED ROUTE
+// ======================================================
 
-  if (!isLoggedIn) {
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("employeeToken");
+
+  if (!token) {
     return (
       <Navigate
         to="/login"
@@ -30,9 +32,18 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// ======================================================
+// APP ROUTES
+// ======================================================
+
 function AppRoutes() {
   return (
     <Routes>
+
+      {/* ==================================================
+          ROOT
+      ================================================== */}
+
       <Route
         path="/"
         element={
@@ -43,10 +54,18 @@ function AppRoutes() {
         }
       />
 
+      {/* ==================================================
+          LOGIN
+      ================================================== */}
+
       <Route
         path="/login"
         element={<Login />}
       />
+
+      {/* ==================================================
+          PROTECTED EMPLOYEE ROUTES
+      ================================================== */}
 
       <Route
         element={
@@ -55,50 +74,66 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
+
+        {/* Dashboard */}
         <Route
           path="/dashboard"
           element={<Dashboard />}
         />
 
+        {/* My Conference */}
         <Route
           path="/conference"
           element={<MyConference />}
         />
 
+        {/* Speakers */}
         <Route
           path="/speakers"
           element={<Speakers />}
         />
 
+        {/* Abstracts */}
         <Route
           path="/abstracts"
           element={<Abstracts />}
         />
 
+        {/* Registrations */}
         <Route
           path="/registrations"
           element={<Registrations />}
         />
-           <Route
+
+        {/* Brochures */}
+        <Route
           path="/brochures"
           element={<Brochures />}
         />
 
-         <Route
+        {/* Attendance */}
+        <Route
           path="/attendance"
-          element={<Attendance/>}
+          element={<Attendance />}
         />
 
+        {/* Notifications */}
         <Route
           path="/notifications"
           element={<Notifications />}
         />
 
+        {/* Profile */}
         <Route
           path="/profile"
           element={<Profile />}
         />
+
       </Route>
+
+      {/* ==================================================
+          404
+      ================================================== */}
 
       <Route
         path="*"
@@ -109,6 +144,7 @@ function AppRoutes() {
           />
         }
       />
+
     </Routes>
   );
 }

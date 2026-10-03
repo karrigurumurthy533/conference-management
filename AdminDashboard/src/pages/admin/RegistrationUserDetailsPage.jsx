@@ -1,68 +1,418 @@
-
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarDays,
-  CheckCircle2,
   CreditCard,
   Mail,
   MapPin,
   Phone,
   User,
-  WalletCards,
 } from "lucide-react";
+
+import { getRegistrationByIdApi } from "../../api/registrationsApis";
 
 const RegistrationUserDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { registrationId, userId } = useParams();
 
-  const conference = location.state?.conference || {
-    id: registrationId,
-    conference: "Mental Health & Psychiatry",
-    date: "Sep 17–18, 2026",
-    registrations: 342,
-    status: "Upcoming",
+  const [apiUser, setApiUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // ======================================================
+  // GET USER FROM NAVIGATION STATE
+  // ======================================================
+
+  const stateUser = useMemo(() => {
+    let value = location.state?.user;
+
+    // If array is passed
+    if (Array.isArray(value)) {
+      value = value[0];
+    }
+
+    // If API response object is passed
+    if (value?.data) {
+      if (Array.isArray(value.data)) {
+        value = value.data[0];
+      } else {
+        value = value.data;
+      }
+    }
+
+    // If nested user object is passed
+    if (value?.user) {
+      value = value.user;
+    }
+
+    return value || null;
+  }, [location.state]);
+
+  // ======================================================
+  // FETCH REGISTRATION BY ID
+  // ======================================================
+
+  useEffect(() => {
+    const fetchRegistration = async () => {
+      // userId should be registration _id
+      const id = userId || location.state?.user?._id;
+
+      if (!id) {
+        return;
+      }
+
+      // If already received complete user object,
+      // no need for another API request.
+      if (
+        stateUser?._id === id &&
+        stateUser?.firstName
+      ) {
+        setApiUser(stateUser);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response = await getRegistrationByIdApi(id);
+
+        const registration =
+          response?.data || response;
+
+        if (registration) {
+          setApiUser(registration);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to fetch registration:",
+          error
+        );
+
+        if (stateUser) {
+          setApiUser(stateUser);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRegistration();
+  }, [
+    userId,
+    stateUser,
+    location.state,
+  ]);
+
+  // ======================================================
+  // FINAL USER DATA
+  // ======================================================
+
+  const user = apiUser || stateUser;
+
+  // ======================================================
+  // DATE FORMAT
+  // ======================================================
+
+  const formatConferenceDate = (value) => {
+    if (!value) {
+      return "N/A";
+    }
+
+    const dateString = String(value);
+
+    const dates = dateString
+      .split(" - ")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (dates.length === 2) {
+      const startDate = new Date(dates[0]);
+      const endDate = new Date(dates[1]);
+
+      if (
+        !Number.isNaN(startDate.getTime()) &&
+        !Number.isNaN(endDate.getTime())
+      ) {
+        const start = startDate.toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        );
+
+        const end = endDate.toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        );
+
+        return `${start} – ${end}`;
+      }
+    }
+
+    return dateString;
   };
 
-  const user = location.state?.user || {
-    id: userId,
-    fullName: "Rahul Sharma",
-    email: "rahul.sharma@gmail.com",
-    phone: "+91 9876543210",
-    paymentStatus: "Paid",
-    registrationId: "REG-10001",
+  // ======================================================
+  // REGISTRATION DATE
+  // ======================================================
 
-    // Complete registration information
-    gender: "Male",
-    age: 29,
-    organization: "Apollo Hospitals",
-    designation: "Research Associate",
-    country: "India",
-    state: "Telangana",
-    city: "Hyderabad",
-    address: "Madhapur, Hyderabad, Telangana",
-    registrationType: "Delegate",
-    participationMode: "Online",
-    registrationDate: "25 Sep 2026, 10:35 AM",
-    paymentDate: "25 Sep 2026, 10:42 AM",
-    paymentMethod: "Online Payment",
-    transactionId: "TXN-98273462",
-    amount: "₹4,999",
-  };
+  const formatRegistrationDate = (value) => {
+    if (!value) {
+      return "N/A";
+    }
 
-  const handleBack = () => {
-    navigate(`/admin/registrations/${conference.id}`, {
-      state: {
-        conference,
-      },
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
+  // ======================================================
+  // NORMALIZED DATA
+  // ======================================================
+
+  const data = useMemo(() => {
+    if (!user) {
+      return null;
+    }
+
+    const firstName =
+      user.firstName ||
+      user.presenter?.firstName ||
+      "";
+
+    const lastName =
+      user.lastName ||
+      user.presenter?.lastName ||
+      "";
+
+    const title =
+      user.title ||
+      user.presenter?.title ||
+      "";
+
+    const fullName = [
+      title,
+      firstName,
+      lastName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    const conference =
+      user.conference || {};
+
+    const conferenceId =
+      conference.conferenceId;
+
+    const locationData =
+      user.location || {};
+
+    const registration =
+      user.registration || {};
+
+    return {
+      id:
+        user._id ||
+        user.id ||
+        "",
+
+      fullName:
+        fullName || "N/A",
+
+      email:
+        user.email || "N/A",
+
+      phone:
+        user.phone || "N/A",
+
+      paymentStatus:
+        user.paymentStatus || "Pending",
+
+      paymentOrderId:
+        user.paymentOrderId || "N/A",
+
+      paymentId:
+        user.paymentId || null,
+
+      paymentSignature:
+        user.paymentSignature || null,
+
+      status:
+        user.status || "N/A",
+
+      createdAt:
+        user.createdAt || null,
+
+      updatedAt:
+        user.updatedAt || null,
+
+      // Conference
+      conferenceId:
+        conferenceId?._id ||
+        conferenceId ||
+        "",
+
+      conferenceName:
+        conference.title ||
+        conferenceId?.title ||
+        "N/A",
+
+      conferenceDate:
+        formatConferenceDate(
+          conference.date
+        ),
+
+      conferenceLocation:
+        conference.location ||
+        conferenceId?.location ||
+        "N/A",
+
+      // Address
+      country:
+        locationData.country || "N/A",
+
+      state:
+        locationData.state || "N/A",
+
+      city:
+        locationData.city || "N/A",
+
+      postalCode:
+        locationData.postalCode || "N/A",
+
+      address:
+        locationData.address || "N/A",
+
+      // Registration
+      category:
+        registration.category || "N/A",
+
+      option:
+        registration.option || "N/A",
+
+      price:
+        registration.price ?? null,
+
+      currency:
+        registration.currency || "",
+
+      registrationDate:
+        formatRegistrationDate(
+          user.createdAt
+        ),
+    };
+  }, [user]);
+
+  // ======================================================
+  // BACK
+  // ======================================================
+
+  const handleBack = () => {
+    const conferenceId =
+      data?.conferenceId ||
+      location.state?.conference?.id ||
+      registrationId;
+
+    navigate(
+      `/admin/registrations/${conferenceId}`,
+      {
+        state: {
+          conference:
+            location.state?.conference || {
+              id: conferenceId,
+              conference:
+                data?.conferenceName ||
+                "Conference",
+              date:
+                data?.conferenceDate ||
+                "",
+            },
+        },
+      }
+    );
+  };
+
+  // ======================================================
+  // LOADING
+  // ======================================================
+
+  if (loading && !user) {
+    return (
+      <div className="w-full">
+        <div className="rounded-xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+          <p className="text-xs text-gray-500">
+            Loading registration details...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ======================================================
+  // NO DATA
+  // ======================================================
+
+  if (!data) {
+    return (
+      <div className="w-full">
+        <div className="rounded-xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-800">
+            Registration details not found
+          </h2>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
+          >
+            <ArrowLeft size={15} />
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ======================================================
+  // INITIALS
+  // ======================================================
+
+  const initials =
+    data.fullName !== "N/A"
+      ? data.fullName
+          .replace(/^Mr\.\s|^Ms\.\s|^Mrs\.\s|^Dr\.\s/gi, "")
+          .split(" ")
+          .filter(Boolean)
+          .map((name) => name[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()
+      : "N";
+
   return (
     <div className="w-full">
-      {/* HEADER */}
+      {/* ==================================================
+          HEADER
+      ================================================== */}
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -86,39 +436,36 @@ const RegistrationUserDetailsPage = () => {
         </div>
       </div>
 
-      {/* USER HEADER */}
+      {/* ==================================================
+          USER HEADER
+      ================================================== */}
 
       <div className="mb-5 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-100 text-lg font-bold text-violet-600">
-              {user.fullName
-                .split(" ")
-                .map((name) => name[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
+              {initials}
             </div>
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-bold text-gray-900">
-                  {user.fullName}
+                  {data.fullName}
                 </h2>
 
                 <span
                   className={`rounded-full px-2.5 py-1 text-[9px] font-semibold ${
-                    user.paymentStatus === "Paid"
+                    data.paymentStatus === "Paid"
                       ? "bg-green-50 text-green-600"
                       : "bg-red-50 text-red-500"
                   }`}
                 >
-                  {user.paymentStatus}
+                  {data.paymentStatus}
                 </span>
               </div>
 
               <p className="mt-1 text-[11px] text-gray-400">
-                Registration ID: #{user.registrationId}
+                Registration ID: #{data.id}
               </p>
             </div>
           </div>
@@ -136,7 +483,7 @@ const RegistrationUserDetailsPage = () => {
                 </p>
 
                 <p className="mt-0.5 text-xs font-semibold text-gray-700">
-                  {conference.conference}
+                  {data.conferenceName}
                 </p>
               </div>
             </div>
@@ -144,15 +491,22 @@ const RegistrationUserDetailsPage = () => {
         </div>
       </div>
 
-      {/* INFORMATION GRID */}
+      {/* ==================================================
+          INFORMATION GRID
+      ================================================== */}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* PERSONAL INFORMATION */}
+        {/* ==================================================
+            PERSONAL INFORMATION
+        ================================================== */}
 
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
             <div className="flex items-center gap-2">
-              <User size={16} className="text-violet-600" />
+              <User
+                size={16}
+                className="text-violet-600"
+              />
 
               <div>
                 <h3 className="text-[13px] font-bold text-gray-800">
@@ -169,7 +523,10 @@ const RegistrationUserDetailsPage = () => {
           <div className="divide-y divide-gray-50">
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <User size={14} className="text-gray-400" />
+                <User
+                  size={14}
+                  className="text-gray-400"
+                />
 
                 <span className="text-[11px] text-gray-500">
                   Full Name
@@ -177,13 +534,16 @@ const RegistrationUserDetailsPage = () => {
               </div>
 
               <span className="text-right text-xs font-semibold text-gray-700">
-                {user.fullName}
+                {data.fullName}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <Mail size={14} className="text-gray-400" />
+                <Mail
+                  size={14}
+                  className="text-gray-400"
+                />
 
                 <span className="text-[11px] text-gray-500">
                   Email
@@ -191,13 +551,16 @@ const RegistrationUserDetailsPage = () => {
               </div>
 
               <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
-                {user.email}
+                {data.email}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <Phone size={14} className="text-gray-400" />
+                <Phone
+                  size={14}
+                  className="text-gray-400"
+                />
 
                 <span className="text-[11px] text-gray-500">
                   Phone
@@ -205,58 +568,23 @@ const RegistrationUserDetailsPage = () => {
               </div>
 
               <span className="text-right text-xs font-semibold text-gray-700">
-                {user.phone}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-              <span className="text-[11px] text-gray-500">
-                Gender
-              </span>
-
-              <span className="text-xs font-semibold text-gray-700">
-                {user.gender}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-              <span className="text-[11px] text-gray-500">
-                Age
-              </span>
-
-              <span className="text-xs font-semibold text-gray-700">
-                {user.age}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-              <span className="text-[11px] text-gray-500">
-                Organization
-              </span>
-
-              <span className="max-w-[60%] text-right text-xs font-semibold text-gray-700">
-                {user.organization}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-              <span className="text-[11px] text-gray-500">
-                Designation
-              </span>
-
-              <span className="max-w-[60%] text-right text-xs font-semibold text-gray-700">
-                {user.designation}
+                {data.phone}
               </span>
             </div>
           </div>
         </div>
 
-        {/* ADDRESS INFORMATION */}
+        {/* ==================================================
+            ADDRESS INFORMATION
+        ================================================== */}
 
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
             <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-violet-600" />
+              <MapPin
+                size={16}
+                className="text-violet-600"
+              />
 
               <div>
                 <h3 className="text-[13px] font-bold text-gray-800">
@@ -277,7 +605,7 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {user.country}
+                {data.country}
               </span>
             </div>
 
@@ -287,7 +615,7 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {user.state}
+                {data.state}
               </span>
             </div>
 
@@ -297,7 +625,17 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {user.city}
+                {data.city}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <span className="text-[11px] text-gray-500">
+                Postal Code
+              </span>
+
+              <span className="text-xs font-semibold text-gray-700">
+                {data.postalCode}
               </span>
             </div>
 
@@ -307,13 +645,15 @@ const RegistrationUserDetailsPage = () => {
               </p>
 
               <p className="mt-1 text-xs font-semibold leading-5 text-gray-700">
-                {user.address}
+                {data.address}
               </p>
             </div>
           </div>
         </div>
 
-        {/* REGISTRATION INFORMATION */}
+        {/* ==================================================
+            REGISTRATION INFORMATION
+        ================================================== */}
 
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
@@ -342,7 +682,7 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="max-w-[60%] text-right text-xs font-semibold text-gray-700">
-                {conference.conference}
+                {data.conferenceName}
               </span>
             </div>
 
@@ -352,27 +692,37 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {conference.date}
+                {data.conferenceDate}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <span className="text-[11px] text-gray-500">
-                Registration Type
+                Location
               </span>
 
-              <span className="text-xs font-semibold text-gray-700">
-                {user.registrationType}
+              <span className="text-xs font-semibold capitalize text-gray-700">
+                {data.conferenceLocation}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <span className="text-[11px] text-gray-500">
-                Participation Mode
+                Category
               </span>
 
-              <span className="text-xs font-semibold text-gray-700">
-                {user.participationMode}
+              <span className="text-xs font-semibold capitalize text-gray-700">
+                {data.category}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <span className="text-[11px] text-gray-500">
+                Registration Option
+              </span>
+
+              <span className="max-w-[60%] text-right text-xs font-semibold text-gray-700">
+                {data.option}
               </span>
             </div>
 
@@ -382,13 +732,15 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {user.registrationDate}
+                {data.registrationDate}
               </span>
             </div>
           </div>
         </div>
 
-        {/* PAYMENT INFORMATION */}
+        {/* ==================================================
+            PAYMENT INFORMATION
+        ================================================== */}
 
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
@@ -418,32 +770,32 @@ const RegistrationUserDetailsPage = () => {
 
               <span
                 className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-semibold ${
-                  user.paymentStatus === "Paid"
+                  data.paymentStatus === "Paid"
                     ? "bg-green-50 text-green-600"
                     : "bg-red-50 text-red-500"
                 }`}
               >
-                {user.paymentStatus}
+                {data.paymentStatus}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <span className="text-[11px] text-gray-500">
-                Payment Method
+                Payment Order ID
               </span>
 
-              <span className="text-xs font-semibold text-gray-700">
-                {user.paymentMethod}
+              <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
+                {data.paymentOrderId}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <span className="text-[11px] text-gray-500">
-                Transaction ID
+                Payment ID
               </span>
 
-              <span className="text-xs font-semibold text-gray-700">
-                {user.transactionId}
+              <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
+                {data.paymentId || "Not available"}
               </span>
             </div>
 
@@ -453,24 +805,29 @@ const RegistrationUserDetailsPage = () => {
               </span>
 
               <span className="text-sm font-bold text-gray-800">
-                {user.amount}
+                {data.currency}{" "}
+                {data.price !== null
+                  ? data.price
+                  : "N/A"}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <span className="text-[11px] text-gray-500">
-                Payment Date
+                Registration Status
               </span>
 
               <span className="text-xs font-semibold text-gray-700">
-                {user.paymentDate}
+                {data.status}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* BOTTOM BACK */}
+      {/* ==================================================
+          BACK BUTTON
+      ================================================== */}
 
       <div className="mt-5">
         <button
@@ -487,4 +844,3 @@ const RegistrationUserDetailsPage = () => {
 };
 
 export default RegistrationUserDetailsPage;
-

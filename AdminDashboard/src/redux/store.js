@@ -5,6 +5,7 @@ import employeeReducer from "./employeeSlice";
 import speakerReducer from "./speakersSlice";
 import brochureReducer from "./brochuerSlice";
 import dashboardReducer from "./dashboardSlice";
+import registrationsReducer from "./registrationsSlice";
 
 
 
@@ -16,6 +17,7 @@ export const store = configureStore({
     speaker: speakerReducer, 
     brochure: brochureReducer,
     dashboard: dashboardReducer,
+    registrations: registrationsReducer,
 
   },
 });

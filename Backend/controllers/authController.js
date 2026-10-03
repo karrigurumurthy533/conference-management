@@ -12,6 +12,7 @@ const generateToken = (user) => {
         {
             id: user._id,
             role: user.role,
+            employeeType: user.employeeType || undefined,
         },
         process.env.JWT_SECRET,
         {
@@ -19,7 +20,6 @@ const generateToken = (user) => {
         }
     );
 };
-
 exports.register = catchAsync(async (req, res, next) => {
     const {
         firstName,
@@ -395,3 +395,159 @@ exports.logout = catchAsync(async (req, res, next) => {
         message: "Logout successful",
     });
 });
+
+exports.employeeLogin = catchAsync(async (req, res, next) => {
+    const { email, password } = req.body;
+
+  
+
+    if (!email || !password) {
+        return next(
+            new AppError(
+                "Email and password are required",
+                400
+            )
+        );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+
+    const employee = await Employee.findOne({
+        email: normalizedEmail,
+    })
+        .select("+password")
+        .populate(
+            "assignedConferences",
+            "title slug dates location"
+        );
+
+   
+    if (!employee) {
+        return next(
+            new AppError(
+                "Invalid email or password",
+                401
+            )
+        );
+    }
+
+   
+
+    if (employee.role !== "Employee") {
+        return next(
+            new AppError(
+                "Employee access is not allowed",
+                403
+            )
+        );
+    }
+
+
+    if (employee.status !== "active") {
+        return next(
+            new AppError(
+                "Your employee account is inactive",
+                403
+            )
+        );
+    }
+
+  
+
+    const isPasswordCorrect =
+        await employee.comparePassword(password);
+
+    if (!isPasswordCorrect) {
+        return next(
+            new AppError(
+                "Invalid email or password",
+                401
+            )
+        );
+    }
+
+
+    if (
+        !employee.assignedConferences ||
+        employee.assignedConferences.length === 0
+    ) {
+        return next(
+            new AppError(
+                "No conference has been assigned to this employee",
+                403
+            )
+        );
+    }
+
+  
+
+    employee.lastLogin = new Date();
+
+    await employee.save();
+
+ 
+
+    const token = generateToken(employee);
+
+  
+
+    return res.status(200).json({
+        success: true,
+        message: "Employee login successful",
+        token,
+        user: {
+            id: employee._id,
+            fullName: employee.fullName,
+            email: employee.email,
+            role: employee.role,
+            employeeType: employee.employeeType,
+            phoneNumber: employee.phoneNumber,
+            assignedConferences:
+                employee.assignedConferences,
+            status: employee.status,
+            department: employee.department,
+            designation: employee.designation,
+            country: employee.country,
+            location: employee.location,
+            timezone: employee.timezone,
+            about: employee.about,
+            permissions: employee.permissions,
+            lastLogin: employee.lastLogin,
+        },
+    });
+});
+
+
+exports.employeeLogout = catchAsync(async (req, res, next) => {
+    // Employee ID can come from authenticated user
+    const employeeId =
+        req.user?._id ||
+        req.user?.id ||
+        req.role?._id ||
+        req.role?.id;
+
+    // -------------------------------------------------
+    // If employee ID is available, update lastLogout
+    // -------------------------------------------------
+
+    if (employeeId) {
+        const employee = await Employee.findById(employeeId);
+
+        if (employee) {
+            employee.lastLogout = new Date();
+
+            await employee.save();
+        }
+    }
+
+    // -------------------------------------------------
+    // Response
+    // -------------------------------------------------
+
+    return res.status(200).json({
+        success: true,
+        message: "Employee logout successful",
+    });
+});
+

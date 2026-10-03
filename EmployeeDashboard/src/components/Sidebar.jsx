@@ -13,6 +13,10 @@ import {
 
 import { NavLink, useNavigate } from "react-router-dom";
 
+import {
+  employeeLogoutApi,
+} from "../api/employeeApis";
+
 const menuItems = [
   {
     name: "Dashboard",
@@ -64,15 +68,44 @@ const menuItems = [
 function Sidebar() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
+  // ======================================================
+  // LOGOUT
+  // ======================================================
 
-    navigate("/login", {
-      replace: true,
-    });
+  const handleLogout = async () => {
+    try {
+      // --------------------------------------------------
+      // CALL LOGOUT API
+      // --------------------------------------------------
+
+      await employeeLogoutApi();
+    } catch (error) {
+      console.error(
+        "Employee logout API failed:",
+        error
+      );
+    } finally {
+    
+
+      localStorage.removeItem("employeeToken");
+      localStorage.removeItem("employeeUser");
+
+      // Backward compatibility
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userEmail");
+
+      // --------------------------------------------------
+      // REDIRECT TO LOGIN
+      // --------------------------------------------------
+
+      navigate("/login", {
+        replace: true,
+      });
+    }
   };
+
+
 
   const navClass = ({ isActive }) =>
     `group flex h-[40px] items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 ${
@@ -97,6 +130,10 @@ function Sidebar() {
         bg-white
       "
     >
+      {/* ==================================================
+          LOGO
+      ================================================== */}
+
       <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
         <img
           src="/web_logo.png"
@@ -104,6 +141,10 @@ function Sidebar() {
           className="h-9 w-auto object-contain"
         />
       </div>
+
+      {/* ==================================================
+          NAVIGATION
+      ================================================== */}
 
       <nav className="flex-1 overflow-hidden px-3 py-2">
         <div className="space-y-0.5">
@@ -120,7 +161,9 @@ function Sidebar() {
                   <>
                     <Icon
                       size={18}
-                      strokeWidth={isActive ? 2.4 : 2}
+                      strokeWidth={
+                        isActive ? 2.4 : 2
+                      }
                       className={`shrink-0 transition-colors ${
                         isActive
                           ? "text-[#7C3AED]"
@@ -128,7 +171,9 @@ function Sidebar() {
                       }`}
                     />
 
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate">
+                      {item.name}
+                    </span>
                   </>
                 )}
               </NavLink>
@@ -136,6 +181,8 @@ function Sidebar() {
           })}
         </div>
       </nav>
+
+     
 
       <div className="shrink-0 border-t border-gray-100 px-3 py-2">
         <button
