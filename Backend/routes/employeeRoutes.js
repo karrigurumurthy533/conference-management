@@ -1,6 +1,6 @@
 const express = require("express");
 
-const employeeController = require("../controllers/employeeController");
+const employeeController = require("../controllers/EmployeeController");
 const employeeAuthMiddleware = require("../middlewares/employeeAuthMiddleware");
 
 
