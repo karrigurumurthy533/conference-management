@@ -159,4 +159,40 @@ router.delete(
     adminController.deleteConferenceBrochure
 );
 
+
+router.post(
+  "/reviews",
+  authMiddleware,
+  upload.single("reviewerImage"),
+  adminController.createReview
+);
+
+// Get All Reviews
+router.get(
+  "/reviews",
+  adminController.getAllReviews
+);
+
+// Get Review By ID
+router.get(
+  "/reviews/:id",
+  authMiddleware,
+  adminController.getReviewById
+);
+
+// Update Review By ID
+router.put(
+  "/reviews/:id",
+  authMiddleware,
+  upload.single("reviewerImage"),
+  adminController.updateReview
+);
+
+// Delete Review By ID
+router.delete(
+  "/reviews/:id",
+  authMiddleware,
+  adminController.deleteReview
+);
+
 module.exports = router;

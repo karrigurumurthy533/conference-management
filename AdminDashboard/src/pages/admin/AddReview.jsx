@@ -1,12 +1,19 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Send, Upload, X } from "lucide-react";
-import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+
+import { createReview } from "../../redux/reviewsSlice";
 
 const AddReview = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const fileInputRef = useRef(null);
+
+  const { creating } = useSelector((state) => state.reviews);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -18,14 +25,17 @@ const AddReview = () => {
 
   const [imagePreview, setImagePreview] = useState("");
   const [hoverRating, setHoverRating] = useState(0);
-  const [loading, setLoading] = useState(false);
 
   const categories = [
-   "Student",
-   "Webinar",
-   "Speaker",
-   "Other"
+    "Student",
+    "Webinar",
+    "Speaker",
+    "Other",
   ];
+
+  // ======================================================
+  // HANDLE INPUT CHANGE
+  // ======================================================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,12 +46,20 @@ const AddReview = () => {
     }));
   };
 
+  // ======================================================
+  // HANDLE RATING
+  // ======================================================
+
   const handleRating = (rating) => {
     setFormData((prev) => ({
       ...prev,
       rating,
     }));
   };
+
+  // ======================================================
+  // HANDLE IMAGE
+  // ======================================================
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -66,6 +84,10 @@ const AddReview = () => {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  // ======================================================
+  // REMOVE IMAGE
+  // ======================================================
+
   const removeImage = () => {
     setFormData((prev) => ({
       ...prev,
@@ -78,6 +100,10 @@ const AddReview = () => {
       fileInputRef.current.value = "";
     }
   };
+
+  // ======================================================
+  // SUBMIT REVIEW
+  // ======================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,30 +134,33 @@ const AddReview = () => {
     }
 
     try {
-      setLoading(true);
-
-      /*
       const data = new FormData();
 
-      data.append("fullName", formData.fullName);
+      data.append("reviewerImage", formData.image);
+      data.append("fullName", formData.fullName.trim());
       data.append("category", formData.category);
-      data.append("rating", formData.rating);
-      data.append("description", formData.description);
-      data.append("image", formData.image);
+      data.append("rating", String(formData.rating));
+      data.append("description", formData.description.trim());
+      data.append("status", "Published");
 
-      await createReviewApi(data);
-      */
+      const result = await dispatch(
+        createReview(data)
+      ).unwrap();
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      toast.success("Review added successfully");
+      toast.success(
+        result?.message ||
+          "Review added successfully"
+      );
 
       navigate("/admin/reviews");
     } catch (error) {
       console.error("Add review error:", error);
-      toast.error("Failed to add review");
-    } finally {
-      setLoading(false);
+
+      toast.error(
+        typeof error === "string"
+          ? error
+          : "Failed to add review"
+      );
     }
   };
 
@@ -143,23 +172,47 @@ const AddReview = () => {
         transition={{ duration: 0.3 }}
         className="w-full"
       >
-        {/* Form Card */}
+        {/* =====================================================
+            BACK
+        ===================================================== */}
+
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={creating}
+            className="inline-flex items-center gap-2 text-xs font-medium text-gray-500 transition hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </button>
+        </div>
+
+        {/* =====================================================
+            FORM CARD
+        ===================================================== */}
+
         <div className="w-full rounded-xl border border-gray-100 bg-white shadow-sm">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6 p-5 sm:p-6 lg:p-7">
               {/* =====================================================
                   IMAGE
               ===================================================== */}
+
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Reviewer Image <span className="text-red-500">*</span>
+                  Reviewer Image{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 {!imagePreview ? (
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="group flex min-h-[220px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 transition hover:border-violet-400 hover:bg-violet-50"
+                    onClick={() =>
+                      fileInputRef.current?.click()
+                    }
+                    disabled={creating}
+                    className="group flex min-h-[220px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 transition hover:border-violet-400 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition group-hover:bg-violet-200">
                       <Upload size={21} />
@@ -188,7 +241,8 @@ const AddReview = () => {
                     <button
                       type="button"
                       onClick={removeImage}
-                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-red-500"
+                      disabled={creating}
+                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <X size={17} />
                     </button>
@@ -213,9 +267,11 @@ const AddReview = () => {
               {/* =====================================================
                   FULL NAME
               ===================================================== */}
+
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Full Name <span className="text-red-500">*</span>
+                  Full Name{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -223,53 +279,75 @@ const AddReview = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
+                  disabled={creating}
                   placeholder="Enter full name"
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
                 />
               </div>
 
               {/* =====================================================
                   CATEGORY
               ===================================================== */}
+
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Category <span className="text-red-500">*</span>
+                  Category{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  disabled={creating}
+                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
                 >
-                  <option value="">Select category</option>
+                  <option value="">
+                    Select category
+                  </option>
 
                   {categories.map((category) => (
-                    <option key={category} value={category}>
+                    <option
+                      key={category}
+                      value={category}
+                    >
                       {category}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* RATING */}
+              {/* =====================================================
+                  RATING
+              ===================================================== */}
+
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Rating <span className="text-red-500">*</span>
+                  Rating{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => {
-                    const active = star <= (hoverRating || formData.rating);
+                    const active =
+                      star <=
+                      (hoverRating || formData.rating);
 
                     return (
                       <button
                         key={star}
                         type="button"
-                        onClick={() => handleRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="rounded-md p-1 transition hover:scale-110"
+                        onClick={() =>
+                          handleRating(star)
+                        }
+                        onMouseEnter={() =>
+                          setHoverRating(star)
+                        }
+                        onMouseLeave={() =>
+                          setHoverRating(0)
+                        }
+                        disabled={creating}
+                        className="rounded-md p-1 transition hover:scale-110 disabled:cursor-not-allowed"
                       >
                         <Star
                           size={27}
@@ -294,22 +372,26 @@ const AddReview = () => {
               {/* =====================================================
                   DESCRIPTION
               ===================================================== */}
+
               <div>
                 <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Review Description <span className="text-red-500">*</span>
+                  Review Description{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
+                  disabled={creating}
                   rows={8}
                   placeholder="Write review description..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
                 />
 
                 <div className="mt-1.5 text-right text-[10px] text-gray-400">
-                  {formData.description.length} characters
+                  {formData.description.length}{" "}
+                  characters
                 </div>
               </div>
             </div>
@@ -317,11 +399,12 @@ const AddReview = () => {
             {/* =====================================================
                 FOOTER
             ===================================================== */}
+
             <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-5 py-4 sm:px-6 lg:px-7">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                disabled={loading}
+                disabled={creating}
                 className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
@@ -329,12 +412,20 @@ const AddReview = () => {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-violet-600 px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={creating}
+                className="flex min-w-[135px] items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Send size={14} />
-
-                {loading ? "Submitting..." : "Submit Review"}
+                {creating ? (
+                  <>
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} />
+                    Submit Review
+                  </>
+                )}
               </button>
             </div>
           </form>

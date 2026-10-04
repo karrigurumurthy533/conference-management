@@ -1,20 +1,28 @@
-import { configureStore } from "@reduxjs/toolkit";
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-import employeeReducer from "./employeeSlice";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import { HelmetProvider } from "react-helmet-async";
 
-// ======================================================
-// STORE
-// ======================================================
+import App from "./App";
+import store from "./redux/store";
 
-const store = configureStore({
-    reducer: {
-        employee: employeeReducer,
-    },
+import "./index.css";
 
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-            serializableCheck: false,
-        }),
-});
+const queryClient = new QueryClient();
 
-export default store;
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <Provider store={store}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </Provider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </React.StrictMode>
+);

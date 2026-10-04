@@ -984,8 +984,6 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-
-
 exports.getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find()
@@ -2420,3 +2418,347 @@ exports.downloadConferenceBrochure = catchAsync(
     return res.status(200).send(buffer);
   }
 );
+
+
+exports.createReview = async (req, res) => {
+  try {
+    const {
+      fullName,
+      category,
+      rating,
+      description,
+      status,
+    } = req.body;
+
+    if (!fullName?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Full name is required",
+      });
+    }
+
+    if (!category?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Category is required",
+      });
+    }
+
+    if (!rating) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating is required",
+      });
+    }
+
+    if (!description?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Review description is required",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Reviewer image is required",
+      });
+    }
+
+    const numericRating = Number(rating);
+
+    if (
+      Number.isNaN(numericRating) ||
+      numericRating < 1 ||
+      numericRating > 5
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be between 1 and 5",
+      });
+    }
+
+    const uploadResult = await uploadToCloudinary(
+      req.file.buffer,
+      "globalscion/reviews"
+    );
+
+    const review = await Review.create({
+      reviewerImage: uploadResult.secure_url,
+      fullName: fullName.trim(),
+      category: category.trim(),
+      rating: numericRating,
+      description: description.trim(),
+      status: status || "Published",
+      createdBy: req.role?._id || null,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Review created successfully",
+      data: review,
+    });
+  } catch (error) {
+    console.error("Create review error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create review",
+    });
+  }
+};
+
+exports.getAllReviews = async (req, res) => {
+  try {
+    const {
+      search = "",
+      rating,
+      category,
+      status,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.max(Number(limit) || 10, 1);
+
+    const filter = {};
+
+    if (search.trim()) {
+      filter.$or = [
+        {
+          fullName: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          category: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    if (rating) {
+      const numericRating = Number(rating);
+
+      if (!Number.isNaN(numericRating)) {
+        filter.rating = numericRating;
+      }
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const [reviews, total] = await Promise.all([
+      Review.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .lean(),
+
+      Review.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully",
+      data: reviews,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
+    });
+  } catch (error) {
+    console.error("Get all reviews error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch reviews",
+    });
+  }
+};
+
+exports.getReviewById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const review = await Review.findById(id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Review fetched successfully",
+      data: review,
+    });
+  } catch (error) {
+    console.error("Get review by ID error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch review",
+    });
+  }
+};
+
+exports.updateReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const review = await Review.findById(id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    const {
+      fullName,
+      category,
+      rating,
+      description,
+      status,
+    } = req.body;
+
+    if (fullName !== undefined) {
+      if (!fullName.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Full name cannot be empty",
+        });
+      }
+
+      review.fullName = fullName.trim();
+    }
+
+    if (category !== undefined) {
+      if (!category.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Category cannot be empty",
+        });
+      }
+
+      review.category = category.trim();
+    }
+
+    if (rating !== undefined) {
+      const numericRating = Number(rating);
+
+      if (
+        Number.isNaN(numericRating) ||
+        numericRating < 1 ||
+        numericRating > 5
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Rating must be between 1 and 5",
+        });
+      }
+
+      review.rating = numericRating;
+    }
+
+    if (description !== undefined) {
+      if (!description.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Review description cannot be empty",
+        });
+      }
+
+      review.description = description.trim();
+    }
+
+    if (status !== undefined) {
+      if (!["Published", "Draft"].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid review status",
+        });
+      }
+
+      review.status = status;
+    }
+
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer,
+        "globalscion/reviews"
+      );
+
+      review.reviewerImage = uploadResult.secure_url;
+    }
+
+    review.updatedBy = req.role?._id || null;
+
+    await review.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Review updated successfully",
+      data: review,
+    });
+  } catch (error) {
+    console.error("Update review error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update review",
+    });
+  }
+};
+
+exports.deleteReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const review = await Review.findById(id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    await Review.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete review error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete review",
+    });
+  }
+};
