@@ -230,10 +230,10 @@ exports.getEmployeeDashboard = async (req, res) => {
             speakers,
             abstracts,
             brochures,
-            latestRegistrations,
-            latestSpeakers,
-            latestAbstracts,
-            latestBrochures,
+            latestRegistration,
+            latestSpeaker,
+            latestAbstract,
+            latestBrochure,
         ] = await Promise.all([
             // =====================================================
             // COUNTS
@@ -264,115 +264,141 @@ exports.getEmployeeDashboard = async (req, res) => {
             }),
 
             // =====================================================
-            // LATEST REGISTRATIONS
+            // LATEST REGISTRATION - ONLY 1
             // =====================================================
 
-            Registration.find({
+            Registration.findOne({
                 "conference.conferenceId": {
                     $in: conferenceIds,
                 },
             })
                 .sort({ createdAt: -1 })
-                .limit(10)
                 .lean(),
 
             // =====================================================
-            // LATEST SPEAKERS
+            // LATEST SPEAKER - ONLY 1
             // =====================================================
 
-            Speaker.find({
+            Speaker.findOne({
                 conferenceId: {
                     $in: conferenceIds,
                 },
             })
                 .sort({ createdAt: -1 })
-                .limit(10)
                 .lean(),
 
             // =====================================================
-            // LATEST ABSTRACTS
+            // LATEST ABSTRACT - ONLY 1
             // =====================================================
 
-            Abstract.find({
+            Abstract.findOne({
                 "abstractDetails.conferenceId": {
                     $in: conferenceIds,
                 },
             })
                 .sort({ createdAt: -1 })
-                .limit(10)
                 .lean(),
 
             // =====================================================
-            // LATEST BROCHURE DOWNLOADS
+            // LATEST BROCHURE - ONLY 1
             // =====================================================
 
-            DownloadBrochure.find({
+            DownloadBrochure.findOne({
                 conferenceId: {
                     $in: conferenceIds,
                 },
             })
                 .sort({ createdAt: -1 })
-                .limit(10)
                 .lean(),
         ]);
 
         // =========================================================
-        // CREATE LATEST ACTIVITY ARRAY
+        // LATEST ACTIVITY
         // =========================================================
 
-        const latestActivity = [
-            ...latestRegistrations.map((item) => ({
+        const latestActivity = [];
+
+        // ---------------------------------------------------------
+        // REGISTRATION
+        // ---------------------------------------------------------
+
+        if (latestRegistration) {
+            latestActivity.push({
                 type: "registration",
                 title: "New Registration",
-                description: `${item.firstName || ""} ${
-                    item.lastName || ""
+                description: `${latestRegistration.firstName || ""} ${
+                    latestRegistration.lastName || ""
                 } registered for ${
-                    item.conference?.conferenceTitle || "conference"
+                    latestRegistration.conference?.title ||
+                    latestRegistration.conference?.conferenceTitle ||
+                    "conference"
                 }`.trim(),
-                data: item,
-                createdAt: item.createdAt,
-            })),
+                data: latestRegistration,
+                createdAt: latestRegistration.createdAt,
+            });
+        }
 
-            ...latestSpeakers.map((item) => ({
+        // ---------------------------------------------------------
+        // SPEAKER
+        // ---------------------------------------------------------
+
+        if (latestSpeaker) {
+            latestActivity.push({
                 type: "speaker",
                 title: "New Speaker",
                 description: `${
-                    item.name ||
-                    `${item.firstName || ""} ${item.lastName || ""}`.trim() ||
+                    latestSpeaker.fullName ||
+                    latestSpeaker.name ||
                     "A new speaker"
                 } added to conference`,
-                data: item,
-                createdAt: item.createdAt,
-            })),
+                data: latestSpeaker,
+                createdAt: latestSpeaker.createdAt,
+            });
+        }
 
-            ...latestAbstracts.map((item) => ({
+        // ---------------------------------------------------------
+        // ABSTRACT
+        // ---------------------------------------------------------
+
+        if (latestAbstract) {
+            latestActivity.push({
                 type: "abstract",
                 title: "New Abstract Submission",
                 description: `${
-                    item.presenter?.firstName || ""
+                    latestAbstract.presenter?.firstName || ""
                 } ${
-                    item.presenter?.lastName || ""
+                    latestAbstract.presenter?.lastName || ""
                 } submitted an abstract`.trim(),
-                data: item,
-                createdAt: item.createdAt,
-            })),
+                data: latestAbstract,
+                createdAt: latestAbstract.createdAt,
+            });
+        }
 
-            ...latestBrochures.map((item) => ({
+        // ---------------------------------------------------------
+        // BROCHURE
+        // ---------------------------------------------------------
+
+        if (latestBrochure) {
+            latestActivity.push({
                 type: "brochure",
                 title: "Brochure Downloaded",
                 description: `${
-                    item.fullName || "A user"
+                    latestBrochure.fullName || "A user"
                 } downloaded the conference brochure`,
-                data: item,
-                createdAt: item.createdAt,
-            })),
-        ]
-            .sort(
-                (a, b) =>
-                    new Date(b.createdAt) -
-                    new Date(a.createdAt)
-            )
-            .slice(0, 10);
+                data: latestBrochure,
+                createdAt: latestBrochure.createdAt,
+            });
+        }
+
+        // =========================================================
+        // SORT BY LATEST CREATED DATE
+        // =========================================================
+
+        latestActivity.sort(
+            (a, b) =>
+                new Date(b.createdAt) -
+                new Date(a.createdAt)
+        );
 
         // =========================================================
         // RESPONSE
@@ -386,7 +412,6 @@ exports.getEmployeeDashboard = async (req, res) => {
                 totalAbstracts: abstracts,
                 totalBrochures: brochures,
                 totalConferences: conferenceIds.length,
-
                 latestActivity,
             },
         });

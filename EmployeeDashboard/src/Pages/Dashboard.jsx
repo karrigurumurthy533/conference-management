@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
@@ -31,7 +32,9 @@ function Dashboard() {
         setDashboardData(response?.data || {});
       } else {
         setDashboardData({});
-        setError(response?.message || "Failed to load dashboard");
+        setError(
+          response?.message || "Failed to load dashboard"
+        );
       }
     } catch (err) {
       console.error("Dashboard API Error:", err);
@@ -82,11 +85,22 @@ function Dashboard() {
     data?.attendance ??
     0;
 
+  // ======================================================
+  // LATEST ACTIVITY
+  // Backend:
+  // data.latestActivity
+  // ======================================================
+
   const recentActivities =
-    data?.recentActivities ||
-    data?.activities ||
-    data?.recentActivity ||
-    [];
+    Array.isArray(data?.latestActivity)
+      ? data.latestActivity
+      : Array.isArray(data?.recentActivities)
+      ? data.recentActivities
+      : Array.isArray(data?.activities)
+      ? data.activities
+      : Array.isArray(data?.recentActivity)
+      ? data.recentActivity
+      : [];
 
   // ======================================================
   // STATS
@@ -148,9 +162,9 @@ function Dashboard() {
 
   const getActivityDate = (activity) => {
     const date =
-      activity?.date ||
       activity?.createdAt ||
-      activity?.updatedAt;
+      activity?.updatedAt ||
+      activity?.date;
 
     if (!date) {
       return "";
@@ -196,6 +210,16 @@ function Dashboard() {
     }
 
     if (normalizedType.includes("abstract")) {
+      return (
+        <FileText
+          size={16}
+          strokeWidth={2}
+          className="text-[#7C3AED]"
+        />
+      );
+    }
+
+    if (normalizedType.includes("brochure")) {
       return (
         <FileText
           size={16}
@@ -441,6 +465,7 @@ function Dashboard() {
                 return (
                   <div
                     key={
+                      activity?.data?._id ||
                       activity?._id ||
                       activity?.id ||
                       index
