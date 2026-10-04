@@ -8,8 +8,10 @@ const Speaker = require("../models/Speaker");
 const Employee = require("../models/Employee");
 const ConferenceBrochure = require("../models/ConferenceBrochure");
 const bcrypt = require("bcryptjs");
+const Review = require("../models/review");
 
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
+
 
 
 const parseConferenceData = (req) => {
@@ -2420,6 +2422,10 @@ exports.downloadConferenceBrochure = catchAsync(
 );
 
 
+// ======================================================
+// CREATE REVIEW
+// ======================================================
+
 exports.createReview = async (req, res) => {
   try {
     const {
@@ -2444,7 +2450,11 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    if (!rating) {
+    if (
+      rating === undefined ||
+      rating === null ||
+      rating === ""
+    ) {
       return res.status(400).json({
         success: false,
         message: "Rating is required",
@@ -2483,20 +2493,27 @@ exports.createReview = async (req, res) => {
       "globalscion/reviews"
     );
 
-    const review = await Review.create({
+    if (!uploadResult?.secure_url) {
+      return res.status(500).json({
+        success: false,
+        message: "Reviewer image upload failed",
+      });
+    }
+
+    const newReview = await Review.create({
       reviewerImage: uploadResult.secure_url,
       fullName: fullName.trim(),
       category: category.trim(),
       rating: numericRating,
       description: description.trim(),
       status: status || "Published",
-      createdBy: req.role?._id || null,
+      createdBy: req.role?._id || req.user?._id || null,
     });
 
     return res.status(201).json({
       success: true,
       message: "Review created successfully",
-      data: review,
+      data: newReview,
     });
   } catch (error) {
     console.error("Create review error:", error);
@@ -2507,6 +2524,11 @@ exports.createReview = async (req, res) => {
     });
   }
 };
+
+
+// ======================================================
+// GET ALL REVIEWS
+// ======================================================
 
 exports.getAllReviews = async (req, res) => {
   try {
@@ -2596,13 +2618,18 @@ exports.getAllReviews = async (req, res) => {
   }
 };
 
+
+// ======================================================
+// GET REVIEW BY ID
+// ======================================================
+
 exports.getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const review = await Review.findById(id);
+    const foundReview = await Review.findById(id);
 
-    if (!review) {
+    if (!foundReview) {
       return res.status(404).json({
         success: false,
         message: "Review not found",
@@ -2612,7 +2639,7 @@ exports.getReviewById = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Review fetched successfully",
-      data: review,
+      data: foundReview,
     });
   } catch (error) {
     console.error("Get review by ID error:", error);
@@ -2624,13 +2651,20 @@ exports.getReviewById = async (req, res) => {
   }
 };
 
+
+// ======================================================
+// UPDATE REVIEW
+// ======================================================
+
 exports.updateReview = async (req, res) => {
   try {
+
+
     const { id } = req.params;
 
-    const review = await Review.findById(id);
+    const foundReview = await Review.findById(id);
 
-    if (!review) {
+    if (!foundReview) {
       return res.status(404).json({
         success: false,
         message: "Review not found",
@@ -2645,6 +2679,7 @@ exports.updateReview = async (req, res) => {
       status,
     } = req.body;
 
+    // Full Name
     if (fullName !== undefined) {
       if (!fullName.trim()) {
         return res.status(400).json({
@@ -2653,9 +2688,10 @@ exports.updateReview = async (req, res) => {
         });
       }
 
-      review.fullName = fullName.trim();
+      foundReview.fullName = fullName.trim();
     }
 
+    // Category
     if (category !== undefined) {
       if (!category.trim()) {
         return res.status(400).json({
@@ -2664,9 +2700,10 @@ exports.updateReview = async (req, res) => {
         });
       }
 
-      review.category = category.trim();
+      foundReview.category = category.trim();
     }
 
+    // Rating
     if (rating !== undefined) {
       const numericRating = Number(rating);
 
@@ -2681,9 +2718,10 @@ exports.updateReview = async (req, res) => {
         });
       }
 
-      review.rating = numericRating;
+      foundReview.rating = numericRating;
     }
 
+    // Description
     if (description !== undefined) {
       if (!description.trim()) {
         return res.status(400).json({
@@ -2692,9 +2730,10 @@ exports.updateReview = async (req, res) => {
         });
       }
 
-      review.description = description.trim();
+      foundReview.description = description.trim();
     }
 
+    // Status
     if (status !== undefined) {
       if (!["Published", "Draft"].includes(status)) {
         return res.status(400).json({
@@ -2703,26 +2742,35 @@ exports.updateReview = async (req, res) => {
         });
       }
 
-      review.status = status;
+      foundReview.status = status;
     }
 
+    // New Image
     if (req.file) {
       const uploadResult = await uploadToCloudinary(
         req.file.buffer,
         "globalscion/reviews"
       );
 
-      review.reviewerImage = uploadResult.secure_url;
+      if (!uploadResult?.secure_url) {
+        return res.status(500).json({
+          success: false,
+          message: "Reviewer image upload failed",
+        });
+      }
+
+      foundReview.reviewerImage = uploadResult.secure_url;
     }
 
-    review.updatedBy = req.role?._id || null;
+    foundReview.updatedBy =
+      req.role?._id || req.user?._id || null;
 
-    await review.save();
+    await foundReview.save();
 
     return res.status(200).json({
       success: true,
       message: "Review updated successfully",
-      data: review,
+      data: foundReview,
     });
   } catch (error) {
     console.error("Update review error:", error);
@@ -2734,24 +2782,49 @@ exports.updateReview = async (req, res) => {
   }
 };
 
+
+// ======================================================
+// DELETE REVIEW
+// ======================================================
+
 exports.deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const review = await Review.findById(id);
+    console.log("=================================");
+    console.log("DELETE REVIEW REQUEST");
+    console.log("Review ID:", id);
+    console.log("=================================");
 
-    if (!review) {
+    const foundReview = await Review.findById(id);
+
+    console.log("Review found:", !!foundReview);
+
+    if (!foundReview) {
       return res.status(404).json({
         success: false,
         message: "Review not found",
       });
     }
 
-    await Review.findByIdAndDelete(id);
+    const deletedReview = await Review.findByIdAndDelete(id);
+
+    console.log(
+      "MongoDB delete result:",
+      !!deletedReview
+    );
+
+    if (!deletedReview) {
+      return res.status(404).json({
+        success: false,
+        message: "Review could not be deleted",
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Review deleted successfully",
+      data: deletedReview,
     });
   } catch (error) {
     console.error("Delete review error:", error);

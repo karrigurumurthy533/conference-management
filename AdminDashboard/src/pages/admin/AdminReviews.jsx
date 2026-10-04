@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -13,12 +13,19 @@ import {
   ChevronRight,
   Plus,
   Pencil,
+  X,
+  AlertTriangle,
 } from "lucide-react";
+
+import toast from "react-hot-toast";
+
+import axiosInstance from "../../redux/axiosInstance";
 
 const AdminReviews = () => {
   const navigate = useNavigate();
 
   const [openMenu, setOpenMenu] = useState(null);
+
   const [menuPosition, setMenuPosition] = useState({
     top: 0,
     left: 0,
@@ -26,90 +33,182 @@ const AdminReviews = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [reviews, setReviews] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [deleting, setDeleting] = useState(false);
+
+  // =========================================================
+  // DELETE CONFIRMATION MODAL
+  // =========================================================
+
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    review: null,
+  });
+
   const reviewsPerPage = 5;
 
-  const reviews = [
-    {
-      id: "1",
-      review:
-        "Excellent conference experience. The sessions were informative and very well organized.",
-      category: "Autism Research",
-      rating: 5,
-      date: "02 Oct 2026",
-    },
-    {
-      id: "2",
-      review:
-        "Great event with excellent speakers and valuable insights. Looking forward to the next conference.",
-      category: "Mental Health",
-      rating: 4,
-      date: "30 Sep 2026",
-    },
-    {
-      id: "3",
-      review:
-        "Very professional organization and the conference topics were highly relevant.",
-      category: "Healthcare Innovation",
-      rating: 5,
-      date: "28 Sep 2026",
-    },
-    {
-      id: "4",
-      review:
-        "The sessions were engaging and the overall conference was a great learning experience.",
-      category: "Food & Nutrition",
-      rating: 4,
-      date: "25 Sep 2026",
-    },
-    {
-      id: "5",
-      review:
-        "Well organized conference with knowledgeable speakers and useful discussions.",
-      category: "Oncology & AI",
-      rating: 5,
-      date: "22 Sep 2026",
-    },
-    {
-      id: "6",
-      review:
-        "A valuable experience with excellent presentations and professional coordination.",
-      category: "Heart & CVD",
-      rating: 3,
-      date: "20 Sep 2026",
-    },
-    {
-      id: "7",
-      review:
-        "The conference provided great opportunities to learn and connect with professionals.",
-      category: "AI & Digital Psychiatry",
-      rating: 4,
-      date: "18 Sep 2026",
-    },
-  ];
+  // =========================================================
+  // GET ALL REVIEWS
+  // =========================================================
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axiosInstance.get(
+        "/admin/reviews"
+      );
+
+      console.log(
+        "Get reviews response:",
+        response.data
+      );
+
+      if (response.data?.success) {
+        const apiData = response.data?.data;
+
+        const apiReviews = Array.isArray(apiData)
+          ? apiData
+          : Array.isArray(apiData?.reviews)
+          ? apiData.reviews
+          : [];
+
+        const normalizedReviews = apiReviews.map(
+          (review) => ({
+            ...review,
+
+            id:
+              review?._id ||
+              review?.id,
+
+            review:
+              review?.description ||
+              review?.review ||
+              "-",
+
+            category:
+              review?.category ||
+              "-",
+
+            rating:
+              Number(review?.rating) || 0,
+
+            date: review?.createdAt
+              ? new Date(
+                  review.createdAt
+                ).toLocaleDateString(
+                  "en-GB",
+                  {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }
+                )
+              : "-",
+          })
+        );
+
+        setReviews(normalizedReviews);
+      } else {
+        setReviews([]);
+
+        toast.error(
+          response.data?.message ||
+            "Failed to fetch reviews"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Get reviews error:",
+        error
+      );
+
+      console.error(
+        "Get reviews error response:",
+        error?.response?.data
+      );
+
+      setReviews([]);
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to fetch reviews"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================================================
+  // FETCH ON PAGE LOAD
+  // =========================================================
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
 
   const totalPages = Math.max(
     1,
-    Math.ceil(reviews.length / reviewsPerPage),
+    Math.ceil(
+      reviews.length / reviewsPerPage
+    )
   );
 
-  const startIndex = (currentPage - 1) * reviewsPerPage;
+  const startIndex =
+    (currentPage - 1) *
+    reviewsPerPage;
 
   const paginatedReviews = useMemo(() => {
     return reviews.slice(
       startIndex,
-      startIndex + reviewsPerPage,
+      startIndex + reviewsPerPage
     );
-  }, [currentPage]);
+  }, [
+    reviews,
+    currentPage,
+    startIndex,
+  ]);
 
-  const totalReviews = reviews.length;
+  // =========================================================
+  // RESET PAGE IF DATA CHANGES
+  // =========================================================
 
-  const fiveStarReviews = reviews.filter(
-    (review) => review.rating === 5,
-  ).length;
+  useEffect(() => {
+    if (
+      currentPage > totalPages
+    ) {
+      setCurrentPage(totalPages);
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
 
-  const fourStarReviews = reviews.filter(
-    (review) => review.rating === 4,
-  ).length;
+  // =========================================================
+  // SUMMARY
+  // =========================================================
+
+  const totalReviews =
+    reviews.length;
+
+  const fiveStarReviews =
+    reviews.filter(
+      (review) =>
+        Number(review.rating) === 5
+    ).length;
+
+  const fourStarReviews =
+    reviews.filter(
+      (review) =>
+        Number(review.rating) === 4
+    ).length;
 
   // =========================================================
   // ADD REVIEW
@@ -117,14 +216,20 @@ const AdminReviews = () => {
 
   const handleAddReview = () => {
     setOpenMenu(null);
-    navigate("/admin/reviews/add");
+
+    navigate(
+      "/admin/reviews/add"
+    );
   };
 
   // =========================================================
   // OPEN ACTION MENU
   // =========================================================
 
-  const handleOpenMenu = (event, reviewId) => {
+  const handleOpenMenu = (
+    event,
+    reviewId
+  ) => {
     event.stopPropagation();
 
     const buttonRect =
@@ -134,24 +239,33 @@ const AdminReviews = () => {
     const menuHeight = 132;
     const gap = 8;
 
-    let left = buttonRect.right - menuWidth;
+    let left =
+      buttonRect.right -
+      menuWidth;
 
-    // Prevent popup from going outside right side
     if (left < 8) {
       left = 8;
     }
 
-    if (left + menuWidth > window.innerWidth - 8) {
-      left = window.innerWidth - menuWidth - 8;
+    if (
+      left + menuWidth >
+      window.innerWidth - 8
+    ) {
+      left =
+        window.innerWidth -
+        menuWidth -
+        8;
     }
 
-    // Default: popup ABOVE the button
-    let top = buttonRect.top - gap;
+    let top =
+      buttonRect.top - gap;
 
-    // If there isn't enough space above,
-    // show it below the button.
-    if (buttonRect.top < menuHeight + gap) {
-      top = buttonRect.bottom + gap;
+    if (
+      buttonRect.top <
+      menuHeight + gap
+    ) {
+      top =
+        buttonRect.bottom + gap;
     }
 
     setMenuPosition({
@@ -160,7 +274,9 @@ const AdminReviews = () => {
     });
 
     setOpenMenu((prev) =>
-      prev === reviewId ? null : reviewId,
+      prev === reviewId
+        ? null
+        : reviewId
     );
   };
 
@@ -171,7 +287,16 @@ const AdminReviews = () => {
   const handleView = (review) => {
     setOpenMenu(null);
 
-    console.log("View review:", review);
+    if (!review?.id) {
+      toast.error(
+        "Review ID is missing"
+      );
+      return;
+    }
+
+    navigate(
+      `/admin/reviews/${review.id}`
+    );
   };
 
   // =========================================================
@@ -181,27 +306,167 @@ const AdminReviews = () => {
   const handleUpdate = (review) => {
     setOpenMenu(null);
 
-    console.log("Update review:", review);
-  };
+    const reviewId =
+      review?._id ||
+      review?.id;
 
-  // =========================================================
-  // DELETE
-  // =========================================================
+    if (!reviewId) {
+      toast.error(
+        "Review ID is missing"
+      );
+      return;
+    }
 
-  const handleDelete = (review) => {
-    setOpenMenu(null);
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this review?",
+    console.log(
+      "Navigating to update review:",
+      reviewId
     );
 
-    if (!confirmed) return;
-
-    console.log("Delete review:", review.id);
+    // IMPORTANT:
+    // Pass review ID to AddReview page.
+    navigate(
+      `/admin/reviews/add/${reviewId}`
+    );
   };
 
   // =========================================================
-  // CLOSE MENU
+  // OPEN DELETE MODAL
+  // =========================================================
+
+  const handleDeleteClick = (
+    review
+  ) => {
+    setOpenMenu(null);
+
+    if (!review?.id) {
+      toast.error(
+        "Review ID is missing"
+      );
+      return;
+    }
+
+    setDeleteModal({
+      open: true,
+      review: review,
+    });
+  };
+
+  // =========================================================
+  // CLOSE DELETE MODAL
+  // =========================================================
+
+  const handleCancelDelete = () => {
+    if (deleting) {
+      return;
+    }
+
+    setDeleteModal({
+      open: false,
+      review: null,
+    });
+  };
+
+  // =========================================================
+  // DELETE API
+  // =========================================================
+
+  const handleConfirmDelete = async () => {
+    const review =
+      deleteModal.review;
+
+    if (!review?.id) {
+      toast.error(
+        "Review ID is missing"
+      );
+      return;
+    }
+
+    try {
+      setDeleting(true);
+
+      console.log(
+        "Deleting review ID:",
+        review.id
+      );
+
+      const response =
+        await axiosInstance.delete(
+          `/admin/reviews/${review.id}`
+        );
+
+      console.log(
+        "Delete review response:",
+        response.data
+      );
+
+      if (
+        response.data?.success
+      ) {
+        toast.success(
+          response.data?.message ||
+            "Review deleted successfully"
+        );
+
+        setReviews((prev) =>
+          prev.filter(
+            (item) =>
+              item.id !== review.id
+          )
+        );
+
+        const remainingReviews =
+          reviews.length - 1;
+
+        const newTotalPages =
+          Math.max(
+            1,
+            Math.ceil(
+              remainingReviews /
+                reviewsPerPage
+            )
+          );
+
+        setCurrentPage(
+          (prevPage) =>
+            Math.min(
+              prevPage,
+              newTotalPages
+            )
+        );
+
+        setDeleteModal({
+          open: false,
+          review: null,
+        });
+      } else {
+        toast.error(
+          response.data?.message ||
+            "Failed to delete review"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Delete review error:",
+        error
+      );
+
+      console.error(
+        "Delete error response:",
+        error?.response?.data
+      );
+
+      toast.error(
+        error?.response?.data
+          ?.message ||
+          "Failed to delete review"
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // =========================================================
+  // CLOSE ACTION MENU
   // =========================================================
 
   const closeMenu = () => {
@@ -210,24 +475,23 @@ const AdminReviews = () => {
 
   // =========================================================
   // ACTION POPUP
-  // PORTAL = NOT CLIPPED BY TABLE OVERFLOW
   // =========================================================
 
   const actionPopup =
     openMenu &&
-    typeof document !== "undefined"
+    typeof document !==
+      "undefined"
       ? createPortal(
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
             className="fixed z-[9999] w-[140px] overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.15)]"
             style={{
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,
               transform:
-                menuPosition.top >
-                window.innerHeight - 160
-                  ? "translateY(-100%)"
-                  : "translateY(-100%)",
+                "translateY(-100%)",
             }}
           >
             {/* VIEW */}
@@ -235,12 +499,17 @@ const AdminReviews = () => {
             <button
               type="button"
               onClick={() => {
-                const review = reviews.find(
-                  (item) => item.id === openMenu,
-                );
+                const review =
+                  reviews.find(
+                    (item) =>
+                      item.id ===
+                      openMenu
+                  );
 
                 if (review) {
-                  handleView(review);
+                  handleView(
+                    review
+                  );
                 }
               }}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-left text-[11px] font-medium text-gray-600 transition hover:bg-purple-50 hover:text-[#7C3AED]"
@@ -250,7 +519,9 @@ const AdminReviews = () => {
                 className="shrink-0"
               />
 
-              <span>View</span>
+              <span>
+                View
+              </span>
             </button>
 
             {/* UPDATE */}
@@ -258,12 +529,17 @@ const AdminReviews = () => {
             <button
               type="button"
               onClick={() => {
-                const review = reviews.find(
-                  (item) => item.id === openMenu,
-                );
+                const review =
+                  reviews.find(
+                    (item) =>
+                      item.id ===
+                      openMenu
+                  );
 
                 if (review) {
-                  handleUpdate(review);
+                  handleUpdate(
+                    review
+                  );
                 }
               }}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-left text-[11px] font-medium text-gray-600 transition hover:bg-purple-50 hover:text-[#7C3AED]"
@@ -273,33 +549,182 @@ const AdminReviews = () => {
                 className="shrink-0"
               />
 
-              <span>Update</span>
+              <span>
+                Update
+              </span>
             </button>
 
             {/* DELETE */}
 
             <button
               type="button"
+              disabled={deleting}
               onClick={() => {
-                const review = reviews.find(
-                  (item) => item.id === openMenu,
-                );
+                const review =
+                  reviews.find(
+                    (item) =>
+                      item.id ===
+                      openMenu
+                  );
 
                 if (review) {
-                  handleDelete(review);
+                  handleDeleteClick(
+                    review
+                  );
                 }
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-left text-[11px] font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-500"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-left text-[11px] font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Trash2
                 size={14}
                 className="shrink-0"
               />
 
-              <span>Delete</span>
+              <span>
+                Delete
+              </span>
             </button>
           </div>,
-          document.body,
+          document.body
+        )
+      : null;
+
+  // =========================================================
+  // DELETE CONFIRMATION MODAL
+  // =========================================================
+
+  const deleteConfirmationModal =
+    deleteModal.open &&
+    typeof document !==
+      "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]"
+            onClick={(e) => {
+              if (
+                e.target ===
+                e.currentTarget
+              ) {
+                handleCancelDelete();
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+              {/* MODAL HEADER */}
+
+              <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
+                    <AlertTriangle
+                      size={20}
+                      className="text-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">
+                      Delete Review
+                    </h3>
+
+                    <p className="mt-0.5 text-[10px] text-gray-400">
+                      This action cannot be undone
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={
+                    handleCancelDelete
+                  }
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+
+              {/* MODAL BODY */}
+
+              <div className="px-5 py-5">
+                <p className="text-sm leading-6 text-gray-600">
+                  Are you sure you want
+                  to delete this review?
+                </p>
+
+                {deleteModal.review && (
+                  <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="line-clamp-2 text-xs font-medium text-gray-700">
+                      "
+                      {deleteModal.review
+                        .review || "-"}
+                      "
+                    </p>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-gray-400">
+                        Category:
+                      </span>
+
+                      <span className="text-[10px] font-semibold text-gray-600">
+                        {
+                          deleteModal
+                            .review
+                            .category
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* MODAL FOOTER */}
+
+              <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-5 py-4">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={
+                    handleCancelDelete
+                  }
+                  className="h-9 rounded-lg border border-gray-200 px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={
+                    handleConfirmDelete
+                  }
+                  className="flex h-9 items-center gap-2 rounded-lg bg-red-500 px-4 text-xs font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deleting ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2
+                        size={14}
+                      />
+
+                      Delete
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )
       : null;
 
@@ -412,7 +837,9 @@ const AdminReviews = () => {
           >
             <Plus size={15} />
 
-            <span>Add Review</span>
+            <span>
+              Add Review
+            </span>
           </button>
         </div>
 
@@ -447,89 +874,117 @@ const AdminReviews = () => {
             </thead>
 
             <tbody>
-              {paginatedReviews.length > 0 ? (
-                paginatedReviews.map((review) => {
-                  const reviewId = review?.id;
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-4 py-12 text-center"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="mb-3 h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-[#7C3AED]" />
 
-                  return (
-                    <tr
-                      key={reviewId}
-                      className="border-b border-gray-50 transition hover:bg-purple-50/30"
-                    >
-                      {/* REVIEW */}
+                      <p className="text-sm font-semibold text-gray-600">
+                        Loading reviews...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedReviews.length >
+                0 ? (
+                paginatedReviews.map(
+                  (review) => {
+                    const reviewId =
+                      review?._id ||
+                      review?.id;
 
-                      <td className="px-4 py-3.5">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-[#7C3AED]">
-                            <MessageSquare size={16} />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="line-clamp-2 text-xs font-medium text-gray-700">
-                              {review?.review || "-"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* CATEGORY */}
-
-                      <td className="px-4 py-3.5">
-                        <span className="block truncate text-xs font-semibold text-gray-800">
-                          {review?.category || "-"}
-                        </span>
-                      </td>
-
-                      {/* RATING */}
-
-                      <td className="px-4 py-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Star
-                            size={14}
-                            className="text-[#7C3AED]"
-                            fill="currentColor"
-                          />
-
-                          <span className="text-xs font-semibold text-gray-700">
-                            {review?.rating || 0}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* DATE */}
-
-                      <td className="px-4 py-3.5">
-                        <span className="block truncate text-[11px] text-gray-600">
-                          {review?.date || "-"}
-                        </span>
-                      </td>
-
-                      {/* ACTIONS */}
-
-                      <td
-                        className="relative px-2 py-3.5"
-                        onClick={(e) =>
-                          e.stopPropagation()
-                        }
+                    return (
+                      <tr
+                        key={reviewId}
+                        className="border-b border-gray-50 transition hover:bg-purple-50/30"
                       >
-                        <div className="flex justify-center">
-                          <button
-                            type="button"
-                            onClick={(e) =>
-                              handleOpenMenu(
-                                e,
-                                reviewId,
-                              )
-                            }
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-purple-50 hover:text-[#7C3AED]"
-                          >
-                            <MoreVertical size={17} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                        {/* REVIEW */}
+
+                        <td className="px-4 py-3.5">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-[#7C3AED]">
+                              <MessageSquare
+                                size={16}
+                              />
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="line-clamp-2 text-xs font-medium text-gray-700">
+                                {review?.review ||
+                                  "-"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* CATEGORY */}
+
+                        <td className="px-4 py-3.5">
+                          <span className="block truncate text-xs font-semibold text-gray-800">
+                            {review?.category ||
+                              "-"}
+                          </span>
+                        </td>
+
+                        {/* RATING */}
+
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Star
+                              size={14}
+                              className="text-[#7C3AED]"
+                              fill="currentColor"
+                            />
+
+                            <span className="text-xs font-semibold text-gray-700">
+                              {review?.rating ||
+                                0}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* DATE */}
+
+                        <td className="px-4 py-3.5">
+                          <span className="block truncate text-[11px] text-gray-600">
+                            {review?.date ||
+                              "-"}
+                          </span>
+                        </td>
+
+                        {/* ACTIONS */}
+
+                        <td
+                          className="relative px-2 py-3.5"
+                          onClick={(e) =>
+                            e.stopPropagation()
+                          }
+                        >
+                          <div className="flex justify-center">
+                            <button
+                              type="button"
+                              onClick={(e) =>
+                                handleOpenMenu(
+                                  e,
+                                  reviewId
+                                )
+                              }
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-purple-50 hover:text-[#7C3AED]"
+                            >
+                              <MoreVertical
+                                size={17}
+                              />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                )
               ) : (
                 <tr>
                   <td
@@ -565,22 +1020,24 @@ const AdminReviews = () => {
           <p className="text-[10px] text-gray-400">
             Showing{" "}
             <span className="font-semibold text-gray-600">
-              {paginatedReviews.length === 0
+              {paginatedReviews.length ===
+              0
                 ? 0
                 : startIndex + 1}
-            </span>{" "}
-            to{" "}
+            </span>
+            {" "}to{" "}
             <span className="font-semibold text-gray-600">
               {Math.min(
-                startIndex + reviewsPerPage,
-                reviews.length,
+                startIndex +
+                  reviewsPerPage,
+                reviews.length
               )}
-            </span>{" "}
-            of{" "}
+            </span>
+            {" "}of{" "}
             <span className="font-semibold text-gray-600">
               {reviews.length}
-            </span>{" "}
-            reviews
+            </span>
+            {" "}reviews
           </p>
 
           <div className="flex items-center gap-1">
@@ -588,12 +1045,18 @@ const AdminReviews = () => {
 
             <button
               type="button"
-              disabled={currentPage === 1}
+              disabled={
+                currentPage === 1
+              }
               onClick={() => {
                 setOpenMenu(null);
 
-                setCurrentPage((prev) =>
-                  Math.max(prev - 1, 1),
+                setCurrentPage(
+                  (prev) =>
+                    Math.max(
+                      prev - 1,
+                      1
+                    )
                 );
               }}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
@@ -608,8 +1071,11 @@ const AdminReviews = () => {
             {/* PAGE NUMBERS */}
 
             {Array.from(
-              { length: totalPages },
-              (_, index) => index + 1,
+              {
+                length: totalPages,
+              },
+              (_, index) =>
+                index + 1
             ).map((page) => (
               <button
                 key={page}
@@ -632,19 +1098,24 @@ const AdminReviews = () => {
 
             <button
               type="button"
-              disabled={currentPage === totalPages}
+              disabled={
+                currentPage ===
+                totalPages
+              }
               onClick={() => {
                 setOpenMenu(null);
 
-                setCurrentPage((prev) =>
-                  Math.min(
-                    prev + 1,
-                    totalPages,
-                  ),
+                setCurrentPage(
+                  (prev) =>
+                    Math.min(
+                      prev + 1,
+                      totalPages
+                    )
                 );
               }}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
-                currentPage === totalPages
+                currentPage ===
+                totalPages
                   ? "cursor-not-allowed border-gray-100 text-gray-300"
                   : "border-gray-200 text-gray-500 hover:border-purple-200 hover:bg-purple-50 hover:text-[#7C3AED]"
               }`}
@@ -660,6 +1131,12 @@ const AdminReviews = () => {
       ===================================================== */}
 
       {actionPopup}
+
+      {/* =====================================================
+          DELETE CONFIRMATION MODAL
+      ===================================================== */}
+
+      {deleteConfirmationModal}
     </div>
   );
 };

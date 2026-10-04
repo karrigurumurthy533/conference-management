@@ -162,7 +162,7 @@ router.delete(
 
 router.post(
   "/reviews",
-  authMiddleware,
+  authMiddleware("admin"),
   upload.single("reviewerImage"),
   adminController.createReview
 );
@@ -176,14 +176,14 @@ router.get(
 // Get Review By ID
 router.get(
   "/reviews/:id",
-  authMiddleware,
+  authMiddleware("admin"),
   adminController.getReviewById
 );
 
 // Update Review By ID
 router.put(
   "/reviews/:id",
-  authMiddleware,
+  authMiddleware("admin"),
   upload.single("reviewerImage"),
   adminController.updateReview
 );
@@ -191,7 +191,7 @@ router.put(
 // Delete Review By ID
 router.delete(
   "/reviews/:id",
-  authMiddleware,
+  authMiddleware("admin"),
   adminController.deleteReview
 );
 

@@ -6,24 +6,96 @@ const uploadToCloudinary = (
   resourceType = "auto"
 ) => {
   return new Promise((resolve, reject) => {
-    const uploadStream =
-      cloudinary.uploader.upload_stream(
-        {
-          folder,
-          resource_type: resourceType,
-        },
-        (error, result) => {
-          if (error) {
-            return reject(error);
-          }
+    try {
+      if (!file) {
+        return reject(new Error("File is required"));
+      }
 
-          resolve(result);
-        }
+      // ============================================
+      // GET BUFFER SAFELY
+      // ============================================
+
+      let buffer;
+
+      // Multer file object
+      if (file.buffer && Buffer.isBuffer(file.buffer)) {
+        buffer = file.buffer;
+      }
+
+      // Direct Buffer
+      else if (Buffer.isBuffer(file)) {
+        buffer = file;
+      }
+
+      // ArrayBuffer
+      else if (file instanceof ArrayBuffer) {
+        buffer = Buffer.from(file);
+      }
+
+      // Uint8Array / TypedArray
+      else if (ArrayBuffer.isView(file)) {
+        buffer = Buffer.from(
+          file.buffer,
+          file.byteOffset,
+          file.byteLength
+        );
+      }
+
+      else {
+        return reject(
+          new Error("Invalid file format for Cloudinary upload")
+        );
+      }
+
+      if (!buffer || buffer.length === 0) {
+        return reject(
+          new Error("Uploaded file is empty")
+        );
+      }
+
+      // ============================================
+      // CLOUDINARY UPLOAD STREAM
+      // ============================================
+
+      const uploadStream =
+        cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: resourceType,
+          },
+          (error, result) => {
+            if (error) {
+              console.error(
+                "Cloudinary upload error:",
+                error
+              );
+
+              return reject(error);
+            }
+
+            resolve(result);
+          }
+        );
+
+      // IMPORTANT:
+      // Always send Node.js Buffer
+      uploadStream.end(buffer);
+
+    } catch (error) {
+      console.error(
+        "Cloudinary upload exception:",
+        error
       );
 
-    uploadStream.end(file.buffer);
+      reject(error);
+    }
   });
 };
+
+
+// ============================================
+// DELETE FROM CLOUDINARY
+// ============================================
 
 const deleteFromCloudinary = async (
   fileUrl,
@@ -44,14 +116,15 @@ const deleteFromCloudinary = async (
     let publicId =
       fileUrl.substring(uploadIndex + 8);
 
-    const versionIndex =
-      publicId.indexOf("/");
+    // Remove version
+    const versionMatch =
+      publicId.match(/^v\d+\/(.+)$/);
 
-    if (versionIndex !== -1) {
-      publicId =
-        publicId.substring(versionIndex + 1);
+    if (versionMatch) {
+      publicId = versionMatch[1];
     }
 
+    // Remove extension
     publicId = publicId.replace(
       /\.[^/.]+$/,
       ""
@@ -63,6 +136,7 @@ const deleteFromCloudinary = async (
         resource_type: resourceType,
       }
     );
+
   } catch (error) {
     console.error(
       "Cloudinary delete error:",
@@ -70,6 +144,7 @@ const deleteFromCloudinary = async (
     );
   }
 };
+
 
 module.exports = {
   uploadToCloudinary,

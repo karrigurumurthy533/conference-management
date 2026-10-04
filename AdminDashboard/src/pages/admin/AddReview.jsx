@@ -1,19 +1,60 @@
-import React, { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Send, Upload, X } from "lucide-react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import {
+  ArrowLeft,
+  Star,
+  Send,
+  Upload,
+  X,
+} from "lucide-react";
+
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 
-import { createReview } from "../../redux/reviewsSlice";
+import {
+  createReview,
+  getReviewById,
+  updateReview,
+} from "../../redux/reviewsSlice";
 
 const AddReview = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const { id } = useParams();
+
+  // =====================================================
+  // ADD MODE
+  // /admin/reviews/add
+  //
+  // EDIT MODE
+  // /admin/reviews/add/:id
+  // =====================================================
+
+  const isEditMode = Boolean(id);
+
   const fileInputRef = useRef(null);
 
-  const { creating } = useSelector((state) => state.reviews);
+  const {
+    creating,
+    loading,
+    updating,
+  } = useSelector(
+    (state) => state.reviews
+  );
+
+  const isSubmitting =
+    creating || updating;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -23,8 +64,14 @@ const AddReview = () => {
     image: null,
   });
 
-  const [imagePreview, setImagePreview] = useState("");
-  const [hoverRating, setHoverRating] = useState(0);
+  const [imagePreview, setImagePreview] =
+    useState("");
+
+  const [hoverRating, setHoverRating] =
+    useState(0);
+
+  const [loadingReview, setLoadingReview] =
+    useState(false);
 
   const categories = [
     "Student",
@@ -33,12 +80,124 @@ const AddReview = () => {
     "Other",
   ];
 
-  // ======================================================
+  // =====================================================
+  // LOAD REVIEW FOR EDIT
+  // =====================================================
+
+  useEffect(() => {
+    if (!isEditMode || !id) {
+      return;
+    }
+
+    const loadReview = async () => {
+      try {
+        setLoadingReview(true);
+
+        console.log(
+          "Loading review for edit:",
+          id
+        );
+
+        const result = await dispatch(
+          getReviewById(id)
+        ).unwrap();
+
+        console.log(
+          "Get review by ID result:",
+          result
+        );
+
+        const review =
+          result?.data?.review ||
+          result?.data ||
+          result?.review ||
+          result;
+
+        if (!review) {
+          toast.error(
+            "Review details not found"
+          );
+
+          navigate("/admin/reviews");
+          return;
+        }
+
+        console.log(
+          "Review loaded for edit:",
+          review
+        );
+
+        setFormData({
+          fullName:
+            review?.fullName || "",
+
+          category:
+            review?.category || "",
+
+          rating:
+            Number(review?.rating) || 0,
+
+          description:
+            review?.description ||
+            review?.review ||
+            "",
+
+          image: null,
+        });
+
+        const existingImage =
+          review?.reviewerImage ||
+          review?.image ||
+          "";
+
+        if (existingImage) {
+          setImagePreview(
+            existingImage
+          );
+        } else {
+          setImagePreview("");
+        }
+      } catch (error) {
+        console.error(
+          "Get review error:",
+          error
+        );
+
+        console.error(
+          "Get review error response:",
+          error?.response?.data
+        );
+
+        toast.error(
+          typeof error === "string"
+            ? error
+            : error?.message ||
+                "Failed to load review"
+        );
+
+        navigate("/admin/reviews");
+      } finally {
+        setLoadingReview(false);
+      }
+    };
+
+    loadReview();
+  }, [
+    dispatch,
+    id,
+    isEditMode,
+    navigate,
+  ]);
+
+  // =====================================================
   // HANDLE INPUT CHANGE
-  // ======================================================
+  // =====================================================
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
@@ -46,9 +205,9 @@ const AddReview = () => {
     }));
   };
 
-  // ======================================================
+  // =====================================================
   // HANDLE RATING
-  // ======================================================
+  // =====================================================
 
   const handleRating = (rating) => {
     setFormData((prev) => ({
@@ -57,22 +216,38 @@ const AddReview = () => {
     }));
   };
 
-  // ======================================================
+  // =====================================================
   // HANDLE IMAGE
-  // ======================================================
+  // =====================================================
 
   const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
+    const file =
+      e.target.files?.[0];
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image");
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      toast.error(
+        "Please select a valid image"
+      );
+
+      e.target.value = "";
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5 MB");
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      toast.error(
+        "Image size must be less than 5 MB"
+      );
+
+      e.target.value = "";
       return;
     }
 
@@ -81,12 +256,14 @@ const AddReview = () => {
       image: file,
     }));
 
-    setImagePreview(URL.createObjectURL(file));
+    setImagePreview(
+      URL.createObjectURL(file)
+    );
   };
 
-  // ======================================================
+  // =====================================================
   // REMOVE IMAGE
-  // ======================================================
+  // =====================================================
 
   const removeImage = () => {
     setFormData((prev) => ({
@@ -97,340 +274,624 @@ const AddReview = () => {
     setImagePreview("");
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value =
+        "";
     }
   };
 
-  // ======================================================
-  // SUBMIT REVIEW
-  // ======================================================
+  // =====================================================
+  // SUBMIT CREATE / UPDATE
+  // =====================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.image) {
-      toast.error("Please upload an image");
+    // ===================================================
+    // VALIDATION
+    // ===================================================
+
+    if (
+      !isEditMode &&
+      !formData.image
+    ) {
+      toast.error(
+        "Please upload an image"
+      );
       return;
     }
 
-    if (!formData.fullName.trim()) {
-      toast.error("Please enter full name");
+    if (
+      !formData.fullName.trim()
+    ) {
+      toast.error(
+        "Please enter full name"
+      );
       return;
     }
 
     if (!formData.category) {
-      toast.error("Please select a category");
+      toast.error(
+        "Please select a category"
+      );
       return;
     }
 
     if (!formData.rating) {
-      toast.error("Please select a rating");
+      toast.error(
+        "Please select a rating"
+      );
       return;
     }
 
-    if (!formData.description.trim()) {
-      toast.error("Please enter review description");
+    if (
+      !formData.description.trim()
+    ) {
+      toast.error(
+        "Please enter review description"
+      );
+      return;
+    }
+
+    if (
+      isEditMode &&
+      !id
+    ) {
+      toast.error(
+        "Review ID is missing"
+      );
       return;
     }
 
     try {
+      // =================================================
+      // CREATE FORMDATA
+      // =================================================
+
       const data = new FormData();
 
-      data.append("reviewerImage", formData.image);
-      data.append("fullName", formData.fullName.trim());
-      data.append("category", formData.category);
-      data.append("rating", String(formData.rating));
-      data.append("description", formData.description.trim());
-      data.append("status", "Published");
+      // =================================================
+      // IMAGE
+      // =================================================
 
-      const result = await dispatch(
-        createReview(data)
-      ).unwrap();
+      if (formData.image) {
+        data.append(
+          "reviewerImage",
+          formData.image
+        );
+      }
+
+      // =================================================
+      // OTHER FIELDS
+      // =================================================
+
+      data.append(
+        "fullName",
+        formData.fullName.trim()
+      );
+
+      data.append(
+        "category",
+        formData.category
+      );
+
+      data.append(
+        "rating",
+        String(formData.rating)
+      );
+
+      data.append(
+        "description",
+        formData.description.trim()
+      );
+
+      data.append(
+        "status",
+        "Published"
+      );
+
+      // =================================================
+      // DEBUG
+      // =================================================
+
+      console.log(
+        "===================================="
+      );
+
+      console.log(
+        "Review submit mode:",
+        isEditMode
+          ? "UPDATE"
+          : "CREATE"
+      );
+
+      console.log(
+        "Review ID:",
+        id || "NEW"
+      );
+
+      console.log(
+        "Is FormData:",
+        data instanceof FormData
+      );
+
+      for (const [
+        key,
+        value,
+      ] of data.entries()) {
+        console.log(
+          "FormData:",
+          key,
+          value
+        );
+      }
+
+      console.log(
+        "===================================="
+      );
+
+      // =================================================
+      // UPDATE REVIEW
+      // =================================================
+
+      if (isEditMode) {
+        const result =
+          await dispatch(
+            updateReview({
+              id,
+              reviewData: data,
+            })
+          ).unwrap();
+
+        console.log(
+          "Update review result:",
+          result
+        );
+
+        toast.success(
+          result?.message ||
+            "Review updated successfully"
+        );
+
+        navigate(
+          "/admin/reviews"
+        );
+
+        return;
+      }
+
+      // =================================================
+      // CREATE REVIEW
+      // =================================================
+
+      const result =
+        await dispatch(
+          createReview(data)
+        ).unwrap();
+
+      console.log(
+        "Create review result:",
+        result
+      );
 
       toast.success(
         result?.message ||
           "Review added successfully"
       );
 
-      navigate("/admin/reviews");
+      navigate(
+        "/admin/reviews"
+      );
     } catch (error) {
-      console.error("Add review error:", error);
+      console.error(
+        isEditMode
+          ? "Update review error:"
+          : "Add review error:",
+        error
+      );
+
+      console.error(
+        "Review API error response:",
+        error?.response?.data
+      );
 
       toast.error(
         typeof error === "string"
           ? error
-          : "Failed to add review"
+          : error?.message ||
+              (isEditMode
+                ? "Failed to update review"
+                : "Failed to add review")
       );
     }
   };
 
-  return (
-    <div className="min-h-screen w-full bg-gray-50 p-4 sm:p-5 lg:p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-full"
-      >
-        {/* =====================================================
-            BACK
-        ===================================================== */}
+  // =====================================================
+  // LOADING REVIEW
+  // =====================================================
 
-        <div className="mb-5">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            disabled={creating}
-            className="inline-flex items-center gap-2 text-xs font-medium text-gray-500 transition hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
+  if (
+    isEditMode &&
+    loadingReview
+  ) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] bg-[#f7f7fb] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="flex min-h-[500px] items-center justify-center rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex flex-col items-center justify-center">
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+
+              <p className="mt-3 text-sm text-gray-500">
+                Loading review...
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* =====================================================
-            FORM CARD
-        ===================================================== */}
+  return (
+    <div className="min-h-[calc(100vh-80px)] bg-[#f7f7fb] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1100px]">
 
-        <div className="w-full rounded-xl border border-gray-100 bg-white shadow-sm">
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-6 p-5 sm:p-6 lg:p-7">
-              {/* =====================================================
-                  IMAGE
-              ===================================================== */}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 15,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+          }}
+          className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+        >
+          <form
+            onSubmit={handleSubmit}
+          >
 
-              <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Reviewer Image{" "}
-                  <span className="text-red-500">*</span>
-                </label>
+            <div className="p-5 sm:p-6 lg:p-7">
 
-                {!imagePreview ? (
+              <div className="mb-8 flex items-start justify-between">
+                <div>
                   <button
                     type="button"
                     onClick={() =>
-                      fileInputRef.current?.click()
+                      navigate(-1)
                     }
-                    disabled={creating}
-                    className="group flex min-h-[220px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 transition hover:border-violet-400 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-violet-600"
                   >
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition group-hover:bg-violet-200">
-                      <Upload size={21} />
-                    </div>
-
-                    <p className="text-sm font-medium text-gray-700">
-                      Click to upload image
-                    </p>
-
-                    <p className="mt-1.5 text-xs text-gray-400">
-                      PNG, JPG, JPEG or WEBP
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-gray-400">
-                      Maximum file size: 5 MB
-                    </p>
-                  </button>
-                ) : (
-                  <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-                    <img
-                      src={imagePreview}
-                      alt="Review preview"
-                      className="max-h-[400px] w-full object-cover"
+                    <ArrowLeft
+                      size={17}
                     />
+                    Back
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      disabled={creating}
-                      className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <X size={17} />
-                    </button>
+                  <h1 className="text-2xl font-semibold text-gray-900">
+                    {isEditMode
+                      ? "Update Review"
+                      : "Add Review"}
+                  </h1>
 
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
-                      <p className="truncate text-xs text-white">
-                        {formData.image?.name}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </div>
-
-              {/* =====================================================
-                  FULL NAME
-              ===================================================== */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Full Name{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  disabled={creating}
-                  placeholder="Enter full name"
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-                />
-              </div>
-
-              {/* =====================================================
-                  CATEGORY
-              ===================================================== */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Category{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  disabled={creating}
-                  className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-                >
-                  <option value="">
-                    Select category
-                  </option>
-
-                  {categories.map((category) => (
-                    <option
-                      key={category}
-                      value={category}
-                    >
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* =====================================================
-                  RATING
-              ===================================================== */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium text-gray-700">
-                  Rating{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const active =
-                      star <=
-                      (hoverRating || formData.rating);
-
-                    return (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() =>
-                          handleRating(star)
-                        }
-                        onMouseEnter={() =>
-                          setHoverRating(star)
-                        }
-                        onMouseLeave={() =>
-                          setHoverRating(0)
-                        }
-                        disabled={creating}
-                        className="rounded-md p-1 transition hover:scale-110 disabled:cursor-not-allowed"
-                      >
-                        <Star
-                          size={27}
-                          className={
-                            active
-                              ? "fill-[#7C3AED] text-[#7C3AED]"
-                              : "text-gray-300"
-                          }
-                        />
-                      </button>
-                    );
-                  })}
-
-                  <span className="ml-2 text-xs text-gray-500">
-                    {formData.rating
-                      ? `${formData.rating} / 5`
-                      : "Select rating"}
-                  </span>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {isEditMode
+                      ? "Update conference review details"
+                      : "Create a new conference review"}
+                  </p>
                 </div>
               </div>
 
-              {/* =====================================================
-                  DESCRIPTION
-              ===================================================== */}
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_250px]">
 
-              <div>
+                <div className="space-y-6">
+
+                  <div>
+                    <label className="mb-2 block text-xs font-medium text-gray-700">
+                      Full Name{" "}
+                      <span className="text-red-500">
+                        *
+                      </span>
+                    </label>
+
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={
+                        formData.fullName
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      disabled={
+                        isSubmitting
+                      }
+                      placeholder="Enter full name"
+                      className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-medium text-gray-700">
+                      Category{" "}
+                      <span className="text-red-500">
+                        *
+                      </span>
+                    </label>
+
+                    <select
+                      name="category"
+                      value={
+                        formData.category
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      disabled={
+                        isSubmitting
+                      }
+                      className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3.5 text-sm text-gray-700 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    >
+                      <option value="">
+                        Select category
+                      </option>
+
+                      {categories.map(
+                        (category) => (
+                          <option
+                            key={
+                              category
+                            }
+                            value={
+                              category
+                            }
+                          >
+                            {category}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-medium text-gray-700">
+                      Rating{" "}
+                      <span className="text-red-500">
+                        *
+                      </span>
+                    </label>
+
+                    <div className="flex min-h-[44px] items-center gap-1">
+                      {[
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                      ].map(
+                        (star) => {
+                          const active =
+                            star <=
+                            (hoverRating ||
+                              formData.rating);
+
+                          return (
+                            <button
+                              key={
+                                star
+                              }
+                              type="button"
+                              disabled={
+                                isSubmitting
+                              }
+                              onClick={() =>
+                                handleRating(
+                                  star
+                                )
+                              }
+                              onMouseEnter={() =>
+                                setHoverRating(
+                                  star
+                                )
+                              }
+                              onMouseLeave={() =>
+                                setHoverRating(
+                                  0
+                                )
+                              }
+                              className="rounded-md p-1 transition hover:scale-110 disabled:cursor-not-allowed"
+                            >
+                              <Star
+                                size={28}
+                                className={
+                                  active
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }
+                              />
+                            </button>
+                          );
+                        }
+                      )}
+
+                      <span className="ml-2 text-sm text-gray-500">
+                        {formData.rating
+                          ? `${formData.rating}/5`
+                          : "Select rating"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-gray-700">
+                    Reviewer Image{" "}
+                    {!isEditMode && (
+                      <span className="text-red-500">
+                        *
+                      </span>
+                    )}
+                  </label>
+
+                  {!imagePreview ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fileInputRef.current?.click()
+                      }
+                      disabled={
+                        isSubmitting
+                      }
+                      className="group flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 transition hover:border-violet-400 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition group-hover:bg-violet-200">
+                        <Upload
+                          size={21}
+                        />
+                      </div>
+
+                      <p className="text-center text-sm font-medium text-gray-700">
+                        Click to upload
+                      </p>
+
+                      <p className="mt-1.5 text-center text-xs text-gray-400">
+                        PNG, JPG, JPEG or WEBP
+                      </p>
+
+                      <p className="mt-1 text-center text-[10px] text-gray-400">
+                        Maximum 5 MB
+                      </p>
+                    </button>
+                  ) : (
+                    <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                      <img
+                        src={
+                          imagePreview
+                        }
+                        alt="Review preview"
+                        className="h-full w-full object-cover"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={
+                          removeImage
+                        }
+                        disabled={
+                          isSubmitting
+                        }
+                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <X
+                          size={16}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={
+                      handleImageChange
+                    }
+                    className="hidden"
+                  />
+
+                  {isEditMode &&
+                    imagePreview && (
+                      <p className="mt-2 text-[10px] text-gray-400">
+                        Select a new image to replace the existing image.
+                      </p>
+                    )}
+                </div>
+              </div>
+
+              <div className="mt-8">
                 <label className="mb-2 block text-xs font-medium text-gray-700">
                   Review Description{" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-500">
+                    *
+                  </span>
                 </label>
 
                 <textarea
                   name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  disabled={creating}
-                  rows={8}
-                  placeholder="Write review description..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                  value={
+                    formData.description
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  disabled={
+                    isSubmitting
+                  }
+                  rows={10}
+                  placeholder="Enter detailed review description..."
+                  className="min-h-[240px] w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm leading-6 text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-gray-50"
                 />
 
-                <div className="mt-1.5 text-right text-[10px] text-gray-400">
-                  {formData.description.length}{" "}
-                  characters
+                <div className="mt-2 flex justify-end">
+                  <span className="text-xs text-gray-400">
+                    {
+                      formData
+                        .description
+                        .length
+                    }{" "}
+                    characters
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* =====================================================
-                FOOTER
-            ===================================================== */}
-
-            <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-5 py-4 sm:px-6 lg:px-7">
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 lg:px-7">
               <button
                 type="button"
-                onClick={() => navigate(-1)}
-                disabled={creating}
-                className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() =>
+                  navigate(-1)
+                }
+                disabled={
+                  isSubmitting
+                }
+                className="h-11 rounded-lg border border-gray-200 bg-white px-5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
 
               <button
                 type="submit"
-                disabled={creating}
-                className="flex min-w-[135px] items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={
+                  isSubmitting ||
+                  loadingReview
+                }
+                className="flex h-11 items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {creating ? (
+                {isSubmitting ? (
                   <>
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Submitting...
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+
+                    {isEditMode
+                      ? "Updating..."
+                      : "Adding..."}
                   </>
                 ) : (
                   <>
-                    <Send size={14} />
-                    Submit Review
+                    <Send
+                      size={17}
+                    />
+
+                    {isEditMode
+                      ? "Update Review"
+                      : "Add Review"}
                   </>
                 )}
               </button>
             </div>
           </form>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };

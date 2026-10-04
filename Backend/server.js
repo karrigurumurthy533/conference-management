@@ -8,6 +8,14 @@ const {
     connectDatabase,
     closeDatabase,
 } = require("./config/db");
+const {
+    initializeSocket,
+} = require("./sockets/socket");
+
+const {
+    startNotificationChangeStream,
+    closeNotificationChangeStream,
+} = require("./sockets/notificationSocket");
 
 const PORT = process.env.PORT || 5000;
 
@@ -19,30 +27,56 @@ const startServer = async () => {
 
         server = http.createServer(app);
 
+        initializeSocket(server);
+
+        startNotificationChangeStream();
+
         server.listen(PORT, () => {
-            console.log(`Production server running on port ${PORT}`);
+            console.log(
+                `Production server running on port ${PORT}`
+            );
         });
+
     } catch (error) {
-        console.error("Server startup failed:", error);
+        console.error(
+            "Server startup failed:",
+            error
+        );
+
         process.exit(1);
     }
 };
 
 const shutdown = async (signal) => {
-    console.log(`${signal} received. Shutting down server...`);
+    console.log(
+        `${signal} received. Shutting down server...`
+    );
 
-    if (server) {
-        server.close(async () => {
+    try {
+        await closeNotificationChangeStream();
+
+        if (server) {
+            server.close(async () => {
+                await closeDatabase();
+
+                console.log(
+                    "Server closed successfully"
+                );
+
+                process.exit(0);
+            });
+        } else {
             await closeDatabase();
 
-            console.log("Server closed successfully");
-
             process.exit(0);
-        });
-    } else {
-        await closeDatabase();
+        }
+    } catch (error) {
+        console.error(
+            "Shutdown error:",
+            error
+        );
 
-        process.exit(0);
+        process.exit(1);
     }
 };
 

@@ -7,6 +7,7 @@ import brochureReducer from "./brochuerSlice";
 import dashboardReducer from "./dashboardSlice";
 import reviewsReducer from "./reviewsSlice";
 import registrationsReducer from "./registrationsSlice";
+import notificationReducer from "./notificationSlice";
 
 
 
@@ -21,6 +22,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     reviews: reviewsReducer,
     registrations: registrationsReducer,
+    notifications: notificationReducer,
 
   },
 });

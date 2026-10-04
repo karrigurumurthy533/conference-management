@@ -84,6 +84,7 @@ function App() {
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
         <Route path="/admin/reviews/add" element={<AddReview />} />
+         <Route path="/admin/reviews/add/:id" element={<AddReview />} />
 
         <Route path="notifications" element={<Notifications />} />
 
