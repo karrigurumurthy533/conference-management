@@ -3,19 +3,18 @@ import { useDispatch } from "react-redux";
 
 import {
   LayoutDashboard,
-  CalendarPlus,
   CalendarDays,
-  UserPlus,
+  UserCircle,
   ClipboardList,
   CreditCard,
   BarChart3,
   Mic2,
-  Bell,
-  UserCircle,
+  Star,
   LogOut,
   FilePlus,
-  Upload,
-  Star,
+  Receipt,
+  Download,
+  FileText,
 } from "lucide-react";
 
 import { logout } from "../../redux/authSlice";
@@ -50,6 +49,7 @@ const AdminSidebar = () => {
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-[220px] flex-col border-r border-gray-200 bg-white">
+      {/* Logo */}
       <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
         <img
           src="/web_logo.png"
@@ -58,7 +58,9 @@ const AdminSidebar = () => {
         />
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 overflow-hidden px-3 py-2">
+        {/* Dashboard */}
         <NavLink to="/admin/dashboard" className={navClass}>
           {({ isActive }) => (
             <>
@@ -72,19 +74,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/admin/conferences/create" className={navClass}>
-          {({ isActive }) => (
-            <>
-              <CalendarPlus
-                size={17}
-                strokeWidth={isActive ? 2.5 : 2}
-                className={iconClass({ isActive })}
-              />
-              <span>Create New Conference</span>
-            </>
-          )}
-        </NavLink>
-
+        {/* Conferences */}
         <NavLink to="/admin/conferences" className={navClass}>
           {({ isActive }) => (
             <>
@@ -93,11 +83,12 @@ const AdminSidebar = () => {
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-              <span>All Conferences</span>
+              <span>Conferences</span>
             </>
           )}
         </NavLink>
 
+        {/* Brochures */}
         <NavLink to="/admin/brochures" className={navClass}>
           {({ isActive }) => (
             <>
@@ -111,32 +102,35 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/admin/brochures/upload" className={navClass}>
+        {/* Download Brochures */}
+        <NavLink to="/admin/download-brochures" className={navClass}>
           {({ isActive }) => (
             <>
-              <Upload
+              <Download
                 size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-              <span>Upload Brochure</span>
+              <span>Download Brochures</span>
             </>
           )}
         </NavLink>
 
-        <NavLink to="/admin/employees/create" className={navClass}>
+        {/* Abstracts */}
+        <NavLink to="/admin/abstracts" className={navClass}>
           {({ isActive }) => (
             <>
-              <UserPlus
+              <FileText
                 size={17}
                 strokeWidth={isActive ? 2.5 : 2}
                 className={iconClass({ isActive })}
               />
-              <span>Create New Employee</span>
+              <span>Abstracts</span>
             </>
           )}
         </NavLink>
 
+        {/* Employees */}
         <NavLink to="/admin/employees" className={navClass}>
           {({ isActive }) => (
             <>
@@ -150,6 +144,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        {/* Registrations */}
         <NavLink to="/admin/registrations" className={navClass}>
           {({ isActive }) => (
             <>
@@ -163,6 +158,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        {/* Payments */}
         <NavLink to="/admin/payments" className={navClass}>
           {({ isActive }) => (
             <>
@@ -176,6 +172,21 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        {/* Invoices */}
+        <NavLink to="/admin/invoices" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <Receipt
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Invoices</span>
+            </>
+          )}
+        </NavLink>
+
+        {/* Reports */}
         <NavLink to="/admin/reports" className={navClass}>
           {({ isActive }) => (
             <>
@@ -189,6 +200,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        {/* Speakers */}
         <NavLink to="/admin/speakers" className={navClass}>
           {({ isActive }) => (
             <>
@@ -202,6 +214,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
+        {/* Reviews */}
         <NavLink to="/admin/reviews" className={navClass}>
           {({ isActive }) => (
             <>
@@ -215,19 +228,7 @@ const AdminSidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/admin/notifications" className={navClass}>
-          {({ isActive }) => (
-            <>
-              <Bell
-                size={17}
-                strokeWidth={isActive ? 2.5 : 2}
-                className={iconClass({ isActive })}
-              />
-              <span>Notifications</span>
-            </>
-          )}
-        </NavLink>
-
+        {/* Profile */}
         <NavLink to="/admin/profile" className={navClass}>
           {({ isActive }) => (
             <>
@@ -242,6 +243,7 @@ const AdminSidebar = () => {
         </NavLink>
       </nav>
 
+      {/* Logout */}
       <div className="shrink-0 border-t border-gray-100 px-3 py-2">
         <button
           type="button"

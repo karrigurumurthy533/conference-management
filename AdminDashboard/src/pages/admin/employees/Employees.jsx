@@ -1,5 +1,4 @@
-
-import  { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +12,7 @@ import {
   X,
   UserCheck,
   UserX,
+  UserPlus,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -71,6 +71,15 @@ const Employees = () => {
       return () => clearTimeout(timer);
     }
   }, [error, dispatch]);
+
+  // =========================================================
+  // CREATE NEW EMPLOYEE
+  // =========================================================
+
+  const handleCreateEmployee = () => {
+    setOpenMenu(null);
+    navigate("/admin/employees/create");
+  };
 
   // =========================================================
   // HELPER - CONFERENCE TITLE
@@ -143,8 +152,6 @@ const Employees = () => {
       return "Inactive";
     }
 
-    // If backend doesn't have status/isActive,
-    // show Active as default.
     return "Active";
   };
 
@@ -275,7 +282,6 @@ const Employees = () => {
     if (!employeeId) return;
 
     try {
-      // Fetch latest employee data from API
       await dispatch(
         getEmployeeById(employeeId)
       ).unwrap();
@@ -337,9 +343,6 @@ const Employees = () => {
       await dispatch(
         deleteEmployee(employeeId)
       ).unwrap();
-
-      // Redux employeeSlice automatically removes
-      // deleted employee from employees array.
     } catch (error) {
       console.error(
         "Failed to delete employee:",
@@ -385,6 +388,38 @@ const Employees = () => {
       className="min-h-screen bg-gray-50 p-4 sm:p-5 lg:p-6"
       onClick={closeMenu}
     >
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* LEFT SIDE */}
+
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">
+            Employees
+          </h1>
+
+          <p className="mt-1 text-xs text-gray-500">
+            Manage and view all employees
+          </p>
+        </div>
+
+        {/* RIGHT SIDE - NEW EMPLOYEE BUTTON */}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCreateEmployee();
+          }}
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#7C3AED] px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-[#6D28D9] focus:outline-none focus:ring-2 focus:ring-purple-200 active:scale-[0.98]"
+        >
+          <UserPlus size={16} strokeWidth={2.3} />
+
+          <span>New Employee</span>
+        </button>
+      </div>
 
       {/* =====================================================
           ERROR MESSAGE
@@ -414,12 +449,10 @@ const Employees = () => {
       ===================================================== */}
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-
         {/* TOTAL */}
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Total Employees
@@ -436,7 +469,6 @@ const Employees = () => {
                 className="text-[#7C3AED]"
               />
             </div>
-
           </div>
         </div>
 
@@ -444,7 +476,6 @@ const Employees = () => {
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Active Employees
@@ -461,7 +492,6 @@ const Employees = () => {
                 className="text-green-600"
               />
             </div>
-
           </div>
         </div>
 
@@ -469,7 +499,6 @@ const Employees = () => {
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Inactive Employees
@@ -486,7 +515,6 @@ const Employees = () => {
                 className="text-red-500"
               />
             </div>
-
           </div>
         </div>
       </div>
@@ -496,19 +524,15 @@ const Employees = () => {
       ===================================================== */}
 
       <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-
         {/* ===================================================
             FILTERS
         =================================================== */}
 
         <div className="border-b border-gray-100 p-4">
-
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-
             {/* SEARCH */}
 
             <div className="relative w-full lg:max-w-md">
-
               <Search
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -535,13 +559,11 @@ const Employees = () => {
                   <X size={14} />
                 </button>
               )}
-
             </div>
 
             {/* STATUS */}
 
             <div className="flex items-center gap-2">
-
               <span className="text-[11px] font-medium text-gray-500">
                 Status:
               </span>
@@ -549,9 +571,7 @@ const Employees = () => {
               <select
                 value={statusFilter}
                 onChange={handleStatusChange}
-                onClick={(e) =>
-                  e.stopPropagation()
-                }
+                onClick={(e) => e.stopPropagation()}
                 className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-600 outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-purple-100"
               >
                 <option value="All">
@@ -566,7 +586,6 @@ const Employees = () => {
                   Inactive
                 </option>
               </select>
-
             </div>
           </div>
         </div>
@@ -576,12 +595,9 @@ const Employees = () => {
         =================================================== */}
 
         <div className="w-full overflow-x-auto">
-
           <table className="w-full min-w-[900px] table-fixed">
-
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/70">
-
                 <th className="w-[20%] px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-gray-500">
                   Employee Name
                 </th>
@@ -609,18 +625,13 @@ const Employees = () => {
                 <th className="w-[6%] px-2 py-3 text-center text-[10px] font-bold uppercase tracking-wide text-gray-500">
                   Actions
                 </th>
-
               </tr>
             </thead>
 
             <tbody>
-
               {paginatedEmployees.length > 0 ? (
-
                 paginatedEmployees.map((employee) => {
-
-                  const employeeId =
-                    employee?._id;
+                  const employeeId = employee?._id;
 
                   const employeeStatus =
                     getEmployeeStatus(employee);
@@ -632,25 +643,19 @@ const Employees = () => {
                     <tr
                       key={employeeId}
                       onClick={() =>
-                        handleEmployeeClick(
-                          employee
-                        )
+                        handleEmployeeClick(employee)
                       }
                       className="cursor-pointer border-b border-gray-50 transition hover:bg-purple-50/30"
                     >
-
                       {/* EMPLOYEE */}
 
                       <td className="px-4 py-3.5">
-
                         <div className="flex min-w-0 items-center gap-3">
-
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-bold text-[#7C3AED]">
                             {employee?.fullName
                               ?.split(" ")
                               .map(
-                                (name) =>
-                                  name[0]
+                                (name) => name[0]
                               )
                               .join("")
                               .slice(0, 2)
@@ -658,82 +663,66 @@ const Employees = () => {
                           </div>
 
                           <div className="min-w-0">
-
                             <p className="truncate text-xs font-semibold text-gray-800">
                               {employee?.fullName ||
                                 "Unnamed Employee"}
                             </p>
 
                             <p className="mt-0.5 truncate text-[10px] text-gray-400">
-                              {employee?.email ||
-                                "-"}
+                              {employee?.email || "-"}
                             </p>
-
                           </div>
                         </div>
-
                       </td>
 
                       {/* PHONE */}
 
                       <td className="px-4 py-3.5">
-
                         <span className="block truncate text-xs text-gray-600">
-                          {employee?.phoneNumber ||
-                            "-"}
+                          {employee?.phoneNumber || "-"}
                         </span>
-
                       </td>
 
                       {/* CONFERENCE */}
 
                       <td className="px-4 py-3.5">
-
                         <p className="truncate text-xs font-medium text-gray-700">
                           {conferenceName}
                         </p>
-
                       </td>
 
                       {/* LAST LOGIN */}
 
                       <td className="px-4 py-3.5">
-
                         <span className="block truncate text-[11px] text-gray-600">
                           {employee?.lastLogin ||
                             employee?.lastLoginAt ||
                             "-"}
                         </span>
-
                       </td>
 
                       {/* LAST LOGOUT */}
 
                       <td className="px-4 py-3.5">
-
                         <span className="block truncate text-[11px] text-gray-600">
                           {employee?.lastLogout ||
                             employee?.lastLogoutAt ||
                             "-"}
                         </span>
-
                       </td>
 
                       {/* STATUS */}
 
                       <td className="px-2 py-3.5 text-center">
-
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-[9px] font-semibold ${
-                            employeeStatus ===
-                            "Active"
+                            employeeStatus === "Active"
                               ? "bg-green-50 text-green-600"
                               : "bg-red-50 text-red-500"
                           }`}
                         >
                           {employeeStatus}
                         </span>
-
                       </td>
 
                       {/* ACTIONS */}
@@ -744,55 +733,45 @@ const Employees = () => {
                           e.stopPropagation()
                         }
                       >
-
                         <div className="flex justify-center">
-
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
 
                               setOpenMenu(
-                                openMenu ===
-                                  employeeId
+                                openMenu === employeeId
                                   ? null
                                   : employeeId
                               );
                             }}
                             className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-purple-50 hover:text-[#7C3AED]"
                           >
-                            <MoreVertical
-                              size={17}
-                            />
+                            <MoreVertical size={17} />
                           </button>
-
                         </div>
 
                         {/* POPUP */}
 
-                        {openMenu ===
-                          employeeId && (
-
+                        {openMenu === employeeId && (
                           <div
                             onClick={(e) =>
                               e.stopPropagation()
                             }
                             className="absolute right-2 bottom-[calc(100%-4px)] z-50 w-32 overflow-hidden rounded-lg border border-gray-100 bg-white p-1.5 shadow-xl"
                           >
-
                             {/* VIEW */}
 
                             <button
                               type="button"
                               onClick={() =>
-                                handleView(
-                                  employee
-                                )
+                                handleView(employee)
                               }
                               disabled={loading}
                               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11px] font-medium text-gray-600 transition hover:bg-purple-50 hover:text-[#7C3AED] disabled:opacity-50"
                             >
                               <Eye size={14} />
+
                               <span>
                                 View
                               </span>
@@ -803,13 +782,12 @@ const Employees = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                handleUpdate(
-                                  employee
-                                )
+                                handleUpdate(employee)
                               }
                               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11px] font-medium text-gray-600 transition hover:bg-purple-50 hover:text-[#7C3AED]"
                             >
                               <Edit size={14} />
+
                               <span>
                                 Update
                               </span>
@@ -820,18 +798,12 @@ const Employees = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                handleDelete(
-                                  employee
-                                )
+                                handleDelete(employee)
                               }
-                              disabled={
-                                deleteLoading
-                              }
+                              disabled={deleteLoading}
                               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11px] font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              <Trash2
-                                size={14}
-                              />
+                              <Trash2 size={14} />
 
                               <span>
                                 {deleteLoading
@@ -839,27 +811,19 @@ const Employees = () => {
                                   : "Delete"}
                               </span>
                             </button>
-
                           </div>
                         )}
-
                       </td>
-
                     </tr>
                   );
                 })
-
               ) : (
-
                 <tr>
-
                   <td
                     colSpan="7"
                     className="px-4 py-12 text-center"
                   >
-
                     <div className="flex flex-col items-center">
-
                       <Users
                         size={28}
                         className="mb-2 text-gray-300"
@@ -867,27 +831,21 @@ const Employees = () => {
 
                       <p className="text-sm font-semibold text-gray-600">
                         {search ||
-                        statusFilter !==
-                          "All"
+                        statusFilter !== "All"
                           ? "No employees found"
                           : "No employees available"}
                       </p>
 
                       <p className="mt-1 text-[11px] text-gray-400">
                         {search ||
-                        statusFilter !==
-                          "All"
+                        statusFilter !== "All"
                           ? "Try changing your search or filter."
                           : "Create an employee to see them here."}
                       </p>
-
                     </div>
-
                   </td>
-
                 </tr>
               )}
-
             </tbody>
           </table>
         </div>
@@ -897,56 +855,38 @@ const Employees = () => {
         =================================================== */}
 
         <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-
           <p className="text-[10px] text-gray-400">
-
             Showing{" "}
-
             <span className="font-semibold text-gray-600">
-              {filteredEmployees.length ===
-              0
+              {filteredEmployees.length === 0
                 ? 0
                 : startIndex + 1}
-            </span>
-
-            {" "}to{" "}
-
+            </span>{" "}
+            to{" "}
             <span className="font-semibold text-gray-600">
               {Math.min(
-                startIndex +
-                  employeesPerPage,
+                startIndex + employeesPerPage,
                 filteredEmployees.length
               )}
-            </span>
-
-            {" "}of{" "}
-
+            </span>{" "}
+            of{" "}
             <span className="font-semibold text-gray-600">
               {filteredEmployees.length}
-            </span>
-
-            {" "}employees
-
+            </span>{" "}
+            employees
           </p>
 
           <div className="flex items-center gap-1">
-
             {/* PREVIOUS */}
 
             <button
               type="button"
-              disabled={
-                currentPage === 1
-              }
+              disabled={currentPage === 1}
               onClick={() => {
                 setOpenMenu(null);
 
-                setCurrentPage(
-                  (prev) =>
-                    Math.max(
-                      prev - 1,
-                      1
-                    )
+                setCurrentPage((prev) =>
+                  Math.max(prev - 1, 1)
                 );
               }}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
@@ -964,10 +904,8 @@ const Employees = () => {
               {
                 length: totalPages,
               },
-              (_, index) =>
-                index + 1
+              (_, index) => index + 1
             ).map((page) => (
-
               <button
                 key={page}
                 type="button"
@@ -983,7 +921,6 @@ const Employees = () => {
               >
                 {page}
               </button>
-
             ))}
 
             {/* NEXT */}
@@ -991,35 +928,28 @@ const Employees = () => {
             <button
               type="button"
               disabled={
-                currentPage ===
-                totalPages
+                currentPage === totalPages
               }
               onClick={() => {
                 setOpenMenu(null);
 
-                setCurrentPage(
-                  (prev) =>
-                    Math.min(
-                      prev + 1,
-                      totalPages
-                    )
+                setCurrentPage((prev) =>
+                  Math.min(
+                    prev + 1,
+                    totalPages
+                  )
                 );
               }}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
-                currentPage ===
-                totalPages
+                currentPage === totalPages
                   ? "cursor-not-allowed border-gray-100 text-gray-300"
                   : "border-gray-200 text-gray-500 hover:border-purple-200 hover:bg-purple-50 hover:text-[#7C3AED]"
               }`}
             >
-              <ChevronRight
-                size={15}
-              />
+              <ChevronRight size={15} />
             </button>
-
           </div>
         </div>
-
       </div>
     </div>
   );

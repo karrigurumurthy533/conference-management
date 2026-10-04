@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
   AlertTriangle,
+  Upload,
 } from "lucide-react";
 
 import { createPortal } from "react-dom";
@@ -66,6 +67,7 @@ const BrochureManagement = () => {
       top: 0,
       left: 0,
     });
+
 
   const [downloadingId, setDownloadingId] =
     useState(null);
@@ -767,6 +769,44 @@ const BrochureManagement = () => {
       <div className="animate-[fadeIn_0.35s_ease-out]">
 
         {/* ======================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="mb-5 flex items-center justify-between">
+
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              Brochures
+            </h1>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Manage and view all conference brochures
+            </p>
+          </div>
+
+          {/* UPLOAD BROCHURE */}
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/admin/brochures/upload"
+              )
+            }
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-200 active:scale-[0.98]"
+          >
+            <Upload
+              size={16}
+              strokeWidth={2.3}
+            />
+
+            Upload Brochure
+          </button>
+
+        </div>
+
+
+        {/* ======================================================
             STAT CARDS
         ====================================================== */}
 
@@ -844,43 +884,25 @@ const BrochureManagement = () => {
 
             <table className="w-full min-w-[1000px] table-fixed">
 
-              {/* =================================================
-                  TABLE HEADER
-              ================================================= */}
-
               <thead>
 
                 <tr className="border-b border-gray-100 bg-gray-50/80">
-
-                  {/* BROCHURE TITLE - 20% */}
 
                   <th className="w-[20%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Brochure Title
                   </th>
 
-
-                  {/* CONFERENCE NAME - 38% */}
-
                   <th className="w-[38%] pl-1 pr-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Conference Name
                   </th>
-
-
-                  {/* STATUS - 15% */}
 
                   <th className="w-[15%] px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Status
                   </th>
 
-
-                  {/* UPLOADED DATE - 17% */}
-
                   <th className="w-[17%] px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Uploaded Date
                   </th>
-
-
-                  {/* ACTIONS - 10% */}
 
                   <th className="w-[10%] px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Actions
@@ -890,10 +912,6 @@ const BrochureManagement = () => {
 
               </thead>
 
-
-              {/* =================================================
-                  TABLE BODY
-              ================================================= */}
 
               <tbody>
 
@@ -985,10 +1003,6 @@ const BrochureManagement = () => {
                         className="animate-[fadeUp_0.35s_ease-out_both] border-b border-gray-100 last:border-0 transition duration-200 hover:bg-violet-50/30"
                       >
 
-                        {/* ========================================
-                            BROCHURE TITLE
-                        ======================================== */}
-
                         <td className="px-4 py-3 align-top">
 
                           <p
@@ -1006,10 +1020,6 @@ const BrochureManagement = () => {
                         </td>
 
 
-                        {/* ========================================
-                            CONFERENCE NAME
-                        ======================================== */}
-
                         <td className="pl-1 pr-2 py-3 align-top">
 
                           <p
@@ -1025,10 +1035,6 @@ const BrochureManagement = () => {
 
                         </td>
 
-
-                        {/* ========================================
-                            STATUS
-                        ======================================== */}
 
                         <td className="px-2 py-3 align-top">
 
@@ -1046,10 +1052,6 @@ const BrochureManagement = () => {
                         </td>
 
 
-                        {/* ========================================
-                            UPLOADED DATE
-                        ======================================== */}
-
                         <td className="px-2 py-3 align-top">
 
                           <p className="whitespace-nowrap text-[12px] text-gray-500">
@@ -1060,10 +1062,6 @@ const BrochureManagement = () => {
 
                         </td>
 
-
-                        {/* ========================================
-                            ACTIONS
-                        ======================================== */}
 
                         <td className="px-2 py-3 align-top">
 
