@@ -230,7 +230,15 @@ exports.getEmployeeDashboard = async (req, res) => {
             speakers,
             abstracts,
             brochures,
+            latestRegistrations,
+            latestSpeakers,
+            latestAbstracts,
+            latestBrochures,
         ] = await Promise.all([
+            // =====================================================
+            // COUNTS
+            // =====================================================
+
             Registration.countDocuments({
                 "conference.conferenceId": {
                     $in: conferenceIds,
@@ -254,7 +262,121 @@ exports.getEmployeeDashboard = async (req, res) => {
                     $in: conferenceIds,
                 },
             }),
+
+            // =====================================================
+            // LATEST REGISTRATIONS
+            // =====================================================
+
+            Registration.find({
+                "conference.conferenceId": {
+                    $in: conferenceIds,
+                },
+            })
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean(),
+
+            // =====================================================
+            // LATEST SPEAKERS
+            // =====================================================
+
+            Speaker.find({
+                conferenceId: {
+                    $in: conferenceIds,
+                },
+            })
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean(),
+
+            // =====================================================
+            // LATEST ABSTRACTS
+            // =====================================================
+
+            Abstract.find({
+                "abstractDetails.conferenceId": {
+                    $in: conferenceIds,
+                },
+            })
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean(),
+
+            // =====================================================
+            // LATEST BROCHURE DOWNLOADS
+            // =====================================================
+
+            DownloadBrochure.find({
+                conferenceId: {
+                    $in: conferenceIds,
+                },
+            })
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean(),
         ]);
+
+        // =========================================================
+        // CREATE LATEST ACTIVITY ARRAY
+        // =========================================================
+
+        const latestActivity = [
+            ...latestRegistrations.map((item) => ({
+                type: "registration",
+                title: "New Registration",
+                description: `${item.firstName || ""} ${
+                    item.lastName || ""
+                } registered for ${
+                    item.conference?.conferenceTitle || "conference"
+                }`.trim(),
+                data: item,
+                createdAt: item.createdAt,
+            })),
+
+            ...latestSpeakers.map((item) => ({
+                type: "speaker",
+                title: "New Speaker",
+                description: `${
+                    item.name ||
+                    `${item.firstName || ""} ${item.lastName || ""}`.trim() ||
+                    "A new speaker"
+                } added to conference`,
+                data: item,
+                createdAt: item.createdAt,
+            })),
+
+            ...latestAbstracts.map((item) => ({
+                type: "abstract",
+                title: "New Abstract Submission",
+                description: `${
+                    item.presenter?.firstName || ""
+                } ${
+                    item.presenter?.lastName || ""
+                } submitted an abstract`.trim(),
+                data: item,
+                createdAt: item.createdAt,
+            })),
+
+            ...latestBrochures.map((item) => ({
+                type: "brochure",
+                title: "Brochure Downloaded",
+                description: `${
+                    item.fullName || "A user"
+                } downloaded the conference brochure`,
+                data: item,
+                createdAt: item.createdAt,
+            })),
+        ]
+            .sort(
+                (a, b) =>
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+            )
+            .slice(0, 10);
+
+        // =========================================================
+        // RESPONSE
+        // =========================================================
 
         return res.status(200).json({
             success: true,
@@ -264,15 +386,21 @@ exports.getEmployeeDashboard = async (req, res) => {
                 totalAbstracts: abstracts,
                 totalBrochures: brochures,
                 totalConferences: conferenceIds.length,
+
+                latestActivity,
             },
         });
     } catch (error) {
-        console.error("getEmployeeDashboard error:", error);
+        console.error(
+            "getEmployeeDashboard error:",
+            error
+        );
 
         return res.status(500).json({
             success: false,
             message:
-                error.message || "Failed to fetch employee dashboard",
+                error.message ||
+                "Failed to fetch employee dashboard",
         });
     }
 };
