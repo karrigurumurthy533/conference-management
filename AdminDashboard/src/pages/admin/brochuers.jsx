@@ -9,7 +9,6 @@ import {
   Layers3,
   FileText,
   Eye,
-  Download,
   ChevronLeft,
   ChevronRight,
   MoreVertical,
@@ -34,10 +33,6 @@ import {
   deleteBrochure,
 } from "../../redux/brochuerSlice";
 
-import {
-  downloadBrochureApi,
-} from "../../api/brochureApi";
-
 
 const BrochureManagement = () => {
   const dispatch = useDispatch();
@@ -52,12 +47,8 @@ const BrochureManagement = () => {
     (state) => state.brochure
   );
 
-
   const [currentPage, setCurrentPage] =
     useState(1);
-
-  const [selectedBrochure, setSelectedBrochure] =
-    useState(null);
 
   const [openActionId, setOpenActionId] =
     useState(null);
@@ -68,21 +59,11 @@ const BrochureManagement = () => {
       left: 0,
     });
 
-
-  const [downloadingId, setDownloadingId] =
-    useState(null);
-
-  const [viewingId, setViewingId] =
-    useState(null);
-
   const [deleteModal, setDeleteModal] =
     useState(null);
 
-
   const actionMenuRef = useRef(null);
-
   const actionButtonRef = useRef(null);
-
 
   const itemsPerPage = 10;
 
@@ -128,19 +109,20 @@ const BrochureManagement = () => {
   // ============================================================
 
   const brochureStats = useMemo(() => {
-    const total =
-      brochureData.length;
+    const total = brochureData.length;
 
     const uploaded =
       brochureData.filter(
         (item) =>
-          item.status === "uploaded"
+          String(item.status || "").toLowerCase() ===
+          "uploaded"
       ).length;
 
     const pending =
       brochureData.filter(
         (item) =>
-          item.status === "pending"
+          String(item.status || "").toLowerCase() ===
+          "pending"
       ).length;
 
     return {
@@ -262,13 +244,35 @@ const BrochureManagement = () => {
 
 
   // ============================================================
+  // GET BROCHURE ID
+  // ============================================================
+
+  const getBrochureId = (
+    brochure
+  ) => {
+    return (
+      brochure?._id ||
+      brochure?.id ||
+      ""
+    );
+  };
+
+
+  // ============================================================
   // STATUS STYLE
   // ============================================================
 
   const getStatusStyle = (
     status
   ) => {
-    switch (status) {
+    const normalizedStatus =
+      String(
+        status || ""
+      ).toLowerCase();
+
+    switch (
+      normalizedStatus
+    ) {
       case "uploaded":
         return "bg-emerald-50 text-emerald-600";
 
@@ -285,7 +289,9 @@ const BrochureManagement = () => {
   // FORMAT DATE
   // ============================================================
 
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
     if (!date) {
       return "-";
     }
@@ -313,6 +319,35 @@ const BrochureManagement = () => {
 
 
   // ============================================================
+  // NAVIGATE TO DETAILS
+  // ============================================================
+
+  const handleOpenDetails = (
+    brochure
+  ) => {
+    const brochureId =
+      getBrochureId(
+        brochure
+      );
+
+    if (!brochureId) {
+      return;
+    }
+
+    closeActionMenu();
+
+    navigate(
+      `/admin/brochures/${brochureId}`,
+      {
+        state: {
+          brochure,
+        },
+      }
+    );
+  };
+
+
+  // ============================================================
   // CLOSE ACTION MENU
   // ============================================================
 
@@ -323,6 +358,9 @@ const BrochureManagement = () => {
       top: 0,
       left: 0,
     });
+
+    actionButtonRef.current =
+      null;
   };
 
 
@@ -336,9 +374,14 @@ const BrochureManagement = () => {
   ) => {
     event.stopPropagation();
 
+    const brochureId =
+      getBrochureId(
+        brochure
+      );
+
     if (
       openActionId ===
-      brochure._id
+      brochureId
     ) {
       closeActionMenu();
       return;
@@ -414,7 +457,7 @@ const BrochureManagement = () => {
     });
 
     setOpenActionId(
-      brochure._id
+      brochureId
     );
   };
 
@@ -493,149 +536,6 @@ const BrochureManagement = () => {
 
 
   // ============================================================
-  // VIEW BROCHURE
-  // ============================================================
-
-  const handleViewBrochure = async (
-    brochure
-  ) => {
-    try {
-      closeActionMenu();
-
-      setViewingId(
-        brochure._id
-      );
-
-      const response =
-        await downloadBrochureApi(
-          brochure._id
-        );
-
-      const blob =
-        new Blob(
-          [response.data],
-          {
-            type: "application/pdf",
-          }
-        );
-
-      const url =
-        window.URL.createObjectURL(
-          blob
-        );
-
-      const newWindow =
-        window.open(
-          url,
-          "_blank"
-        );
-
-      if (!newWindow) {
-        window.alert(
-          "Please allow popups in your browser to preview the PDF."
-        );
-      }
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(
-          url
-        );
-      }, 60000);
-
-    } catch (error) {
-      console.error(
-        "Brochure preview error:",
-        error
-      );
-
-      window.alert(
-        error?.response?.data
-          ?.message ||
-          "Failed to preview brochure"
-      );
-
-    } finally {
-      setViewingId(null);
-    }
-  };
-
-
-  // ============================================================
-  // DOWNLOAD BROCHURE
-  // ============================================================
-
-  const handleDownloadBrochure =
-    async (brochure) => {
-      try {
-        closeActionMenu();
-
-        setDownloadingId(
-          brochure._id
-        );
-
-        const response =
-          await downloadBrochureApi(
-            brochure._id
-          );
-
-        const blob =
-          new Blob(
-            [response.data],
-            {
-              type: "application/pdf",
-            }
-          );
-
-        const url =
-          window.URL.createObjectURL(
-            blob
-          );
-
-        const link =
-          document.createElement(
-            "a"
-          );
-
-        link.href = url;
-
-        link.download =
-          brochure.originalFilename ||
-          `${
-            brochure.title ||
-            "brochure"
-          }.pdf`;
-
-        document.body.appendChild(
-          link
-        );
-
-        link.click();
-
-        link.remove();
-
-        window.URL.revokeObjectURL(
-          url
-        );
-
-      } catch (error) {
-        console.error(
-          "Brochure download error:",
-          error
-        );
-
-        window.alert(
-          error?.response?.data
-            ?.message ||
-            "Failed to download brochure"
-        );
-
-      } finally {
-        setDownloadingId(null);
-      }
-    };
-
-
-  // ============================================================
   // EDIT
   // ============================================================
 
@@ -651,7 +551,9 @@ const BrochureManagement = () => {
           editMode: true,
 
           brochureId:
-            brochure._id,
+            getBrochureId(
+              brochure
+            ),
 
           brochure: {
             ...brochure,
@@ -702,16 +604,13 @@ const BrochureManagement = () => {
           )
         ).unwrap();
 
-        setDeleteModal(null);
-
-        setSelectedBrochure(
+        setDeleteModal(
           null
         );
 
         dispatch(
           getAllBrochures()
         );
-
       } catch (error) {
         console.error(
           "Delete brochure error:",
@@ -734,7 +633,6 @@ const BrochureManagement = () => {
       description:
         "All conference brochures",
     },
-
     {
       title: "Uploaded",
       value:
@@ -743,7 +641,6 @@ const BrochureManagement = () => {
       description:
         "Successfully uploaded",
     },
-
     {
       title: "Pending",
       value:
@@ -758,7 +655,9 @@ const BrochureManagement = () => {
   const activeActionBrochure =
     brochureData.find(
       (brochure) =>
-        brochure._id ===
+        getBrochureId(
+          brochure
+        ) ===
         openActionId
     );
 
@@ -768,9 +667,7 @@ const BrochureManagement = () => {
 
       <div className="animate-[fadeIn_0.35s_ease-out]">
 
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
+        {/* HEADER */}
 
         <div className="mb-5 flex items-center justify-between">
 
@@ -783,8 +680,6 @@ const BrochureManagement = () => {
               Manage and view all conference brochures
             </p>
           </div>
-
-          {/* UPLOAD BROCHURE */}
 
           <button
             type="button"
@@ -806,14 +701,15 @@ const BrochureManagement = () => {
         </div>
 
 
-        {/* ======================================================
-            STAT CARDS
-        ====================================================== */}
+        {/* STAT CARDS */}
 
         <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
           {statCards.map(
-            (card, index) => {
+            (
+              card,
+              index
+            ) => {
               const Icon =
                 card.icon;
 
@@ -856,9 +752,7 @@ const BrochureManagement = () => {
 
                       <Icon
                         size={17}
-                        strokeWidth={
-                          2
-                        }
+                        strokeWidth={2}
                         className="text-violet-600"
                       />
 
@@ -874,9 +768,7 @@ const BrochureManagement = () => {
         </div>
 
 
-        {/* ======================================================
-            TABLE
-        ====================================================== */}
+        {/* TABLE */}
 
         <div className="relative w-full rounded-xl border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
 
@@ -990,123 +882,158 @@ const BrochureManagement = () => {
                     (
                       brochure,
                       index
-                    ) => (
+                    ) => {
 
-                      <tr
-                        key={
-                          brochure._id ||
-                          index
-                        }
-                        style={{
-                          animationDelay: `${index * 45}ms`,
-                        }}
-                        className="animate-[fadeUp_0.35s_ease-out_both] border-b border-gray-100 last:border-0 transition duration-200 hover:bg-violet-50/30"
-                      >
+                      const brochureId =
+                        getBrochureId(
+                          brochure
+                        );
 
-                        <td className="px-4 py-3 align-top">
-
-                          <p
-                            title={
-                              brochure.title
-                            }
-                            className="break-words text-[13px] font-semibold leading-5 text-gray-800"
-                          >
-                            {
-                              brochure.title ||
-                              "-"
-                            }
-                          </p>
-
-                        </td>
-
-
-                        <td className="pl-1 pr-2 py-3 align-top">
-
-                          <p
-                            title={getConferenceName(
+                      return (
+                        <tr
+                          key={
+                            brochureId ||
+                            index
+                          }
+                          onClick={() =>
+                            handleOpenDetails(
                               brochure
-                            )}
-                            className="whitespace-normal break-words text-[12px] font-medium leading-5 text-gray-700"
-                          >
-                            {getConferenceName(
-                              brochure
-                            )}
-                          </p>
+                            )
+                          }
+                          style={{
+                            animationDelay: `${index * 45}ms`,
+                          }}
+                          className="animate-[fadeUp_0.35s_ease-out_both] cursor-pointer border-b border-gray-100 last:border-0 transition duration-200 hover:bg-violet-50/40"
+                        >
 
-                        </td>
+                          <td className="px-4 py-3 align-top">
+
+                            <div className="flex items-start gap-3">
+
+                              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50">
+
+                                <FileText
+                                  size={17}
+                                  className="text-violet-600"
+                                />
+
+                              </div>
+
+                              <div className="min-w-0">
+
+                                <p
+                                  title={
+                                    brochure.title
+                                  }
+                                  className="break-words text-[13px] font-semibold leading-5 text-gray-800"
+                                >
+                                  {
+                                    brochure.title ||
+                                    "-"
+                                  }
+                                </p>
+
+                                <p className="mt-0.5 text-[10px] text-gray-400">
+                                  Click to view details
+                                </p>
+
+                              </div>
+
+                            </div>
+
+                          </td>
 
 
-                        <td className="px-2 py-3 align-top">
+                          <td className="pl-1 pr-2 py-3 align-top">
 
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
-                              brochure.status
-                            )}`}
-                          >
-                            {
-                              brochure.status ||
-                              "pending"
-                            }
-                          </span>
-
-                        </td>
-
-
-                        <td className="px-2 py-3 align-top">
-
-                          <p className="whitespace-nowrap text-[12px] text-gray-500">
-                            {formatDate(
-                              brochure.createdAt
-                            )}
-                          </p>
-
-                        </td>
-
-
-                        <td className="px-2 py-3 align-top">
-
-                          <div className="flex items-center justify-center">
-
-                            <button
-                              ref={(element) => {
-                                if (
-                                  openActionId ===
-                                  brochure._id
-                                ) {
-                                  actionButtonRef.current =
-                                    element;
-                                }
-                              }}
-                              type="button"
-                              onClick={(
-                                event
-                              ) =>
-                                handleActionMenu(
-                                  event,
+                            <p
+                              title={getConferenceName(
+                                brochure
+                              )}
+                              className="whitespace-normal break-words text-[12px] font-medium leading-5 text-gray-700"
+                            >
+                              {
+                                getConferenceName(
                                   brochure
                                 )
                               }
-                              className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-semibold text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
+                            </p>
+
+                          </td>
+
+
+                          <td className="px-2 py-3 align-top">
+
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
+                                brochure.status
+                              )}`}
                             >
+                              {
+                                brochure.status ||
+                                "pending"
+                              }
+                            </span>
 
-                              <MoreVertical
-                                size={
-                                  15
+                          </td>
+
+
+                          <td className="px-2 py-3 align-top">
+
+                            <p className="whitespace-nowrap text-[12px] text-gray-500">
+                              {
+                                formatDate(
+                                  brochure.createdAt
+                                )
+                              }
+                            </p>
+
+                          </td>
+
+
+                          <td
+                            className="px-2 py-3 align-top"
+                            onClick={(event) =>
+                              event.stopPropagation()
+                            }
+                          >
+
+                            <div className="flex items-center justify-center">
+
+                              <button
+                                ref={(element) => {
+                                  if (
+                                    openActionId ===
+                                    brochureId
+                                  ) {
+                                    actionButtonRef.current =
+                                      element;
+                                  }
+                                }}
+                                type="button"
+                                onClick={(event) =>
+                                  handleActionMenu(
+                                    event,
+                                    brochure
+                                  )
                                 }
-                                strokeWidth={
-                                  2
-                                }
-                              />
+                                className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-semibold text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
+                              >
 
-                            </button>
+                                <MoreVertical
+                                  size={15}
+                                  strokeWidth={2}
+                                />
 
-                          </div>
+                              </button>
 
-                        </td>
+                            </div>
 
-                      </tr>
+                          </td>
 
-                    )
+                        </tr>
+                      );
+                    }
                   )
 
                 )}
@@ -1118,9 +1045,7 @@ const BrochureManagement = () => {
           </div>
 
 
-          {/* ======================================================
-              PAGINATION
-          ====================================================== */}
+          {/* PAGINATION */}
 
           <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
 
@@ -1168,11 +1093,8 @@ const BrochureManagement = () => {
                 }
                 onClick={() =>
                   setCurrentPage(
-                    (
-                      previousPage
-                    ) =>
-                      previousPage -
-                      1
+                    (previousPage) =>
+                      previousPage - 1
                   )
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1228,11 +1150,8 @@ const BrochureManagement = () => {
                 }
                 onClick={() =>
                   setCurrentPage(
-                    (
-                      previousPage
-                    ) =>
-                      previousPage +
-                      1
+                    (previousPage) =>
+                      previousPage + 1
                   )
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1251,9 +1170,7 @@ const BrochureManagement = () => {
       </div>
 
 
-      {/* ==========================================================
-          ACTION MENU
-      ========================================================== */}
+      {/* ACTION MENU */}
 
       {openActionId &&
         activeActionBrochure &&
@@ -1276,55 +1193,18 @@ const BrochureManagement = () => {
             <button
               type="button"
               onClick={() =>
-                handleViewBrochure(
+                handleOpenDetails(
                   activeActionBrochure
                 )
               }
-              disabled={
-                viewingId ===
-                activeActionBrochure._id
-              }
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
             >
 
               <Eye
                 size={15}
               />
 
-              {
-                viewingId ===
-                activeActionBrochure._id
-                  ? "Opening..."
-                  : "View"
-              }
-
-            </button>
-
-
-            <button
-              type="button"
-              onClick={() =>
-                handleDownloadBrochure(
-                  activeActionBrochure
-                )
-              }
-              disabled={
-                downloadingId ===
-                activeActionBrochure._id
-              }
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-
-              <Download
-                size={15}
-              />
-
-              {
-                downloadingId ===
-                activeActionBrochure._id
-                  ? "Downloading..."
-                  : "Download"
-              }
+              View
 
             </button>
 
@@ -1375,226 +1255,7 @@ const BrochureManagement = () => {
         )}
 
 
-      {/* ==========================================================
-          BROCHURE DETAILS MODAL
-      ========================================================== */}
-
-      {selectedBrochure && (
-
-        <div
-          className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/30 px-4 backdrop-blur-[2px]"
-          onClick={() =>
-            setSelectedBrochure(
-              null
-            )
-          }
-        >
-
-          <div
-            className="w-full max-w-[420px] rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.25)]"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            <div className="flex items-center justify-between">
-
-              <div>
-
-                <h2 className="text-[16px] font-bold text-gray-900">
-                  Brochure Details
-                </h2>
-
-                <p className="mt-1 text-[11px] text-gray-400">
-                  Conference brochure information
-                </p>
-
-              </div>
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedBrochure(
-                    null
-                  )
-                }
-                className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-              >
-
-                <X
-                  size={15}
-                />
-
-              </button>
-
-            </div>
-
-
-            <div className="mt-5 space-y-3">
-
-              <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-
-                <p className="text-[10px] font-medium text-gray-400">
-                  Brochure Title
-                </p>
-
-                <p className="mt-1 text-[12px] font-semibold text-gray-800">
-                  {
-                    selectedBrochure.title ||
-                    "-"
-                  }
-                </p>
-
-              </div>
-
-
-              <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-
-                <p className="text-[10px] font-medium text-gray-400">
-                  Conference
-                </p>
-
-                <p className="mt-1 text-[12px] font-semibold text-gray-800">
-                  {
-                    getConferenceName(
-                      selectedBrochure
-                    )
-                  }
-                </p>
-
-              </div>
-
-
-              <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-
-                <p className="text-[10px] font-medium text-gray-400">
-                  Status
-                </p>
-
-                <span
-                  className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
-                    selectedBrochure.status
-                  )}`}
-                >
-                  {
-                    selectedBrochure.status ||
-                    "pending"
-                  }
-                </span>
-
-              </div>
-
-
-              <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-
-                <p className="text-[10px] font-medium text-gray-400">
-                  Uploaded Date
-                </p>
-
-                <p className="mt-1 text-[12px] font-semibold text-gray-800">
-                  {
-                    formatDate(
-                      selectedBrochure.createdAt
-                    )
-                  }
-                </p>
-
-              </div>
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  handleViewBrochure(
-                    selectedBrochure
-                  )
-                }
-                disabled={
-                  viewingId ===
-                  selectedBrochure._id
-                }
-                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-
-                {
-                  viewingId ===
-                  selectedBrochure._id ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-white" />
-                      Opening PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Eye
-                        size={15}
-                      />
-                      Preview PDF
-                    </>
-                  )
-                }
-
-              </button>
-
-
-              <button
-                type="button"
-                onClick={() =>
-                  handleDownloadBrochure(
-                    selectedBrochure
-                  )
-                }
-                disabled={
-                  downloadingId ===
-                  selectedBrochure._id
-                }
-                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-violet-50 text-[12px] font-semibold text-violet-600 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-
-                {
-                  downloadingId ===
-                  selectedBrochure._id ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download
-                        size={15}
-                      />
-                      Download PDF
-                    </>
-                  )
-                }
-
-              </button>
-
-            </div>
-
-
-            <button
-              type="button"
-              onClick={() =>
-                setSelectedBrochure(
-                  null
-                )
-              }
-              className="mt-3 h-9 w-full rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 transition hover:bg-gray-50"
-            >
-              Close
-            </button>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-      {/* ==========================================================
-          DELETE MODAL
-      ========================================================== */}
+      {/* DELETE MODAL */}
 
       {deleteModal && (
 
@@ -1708,10 +1369,6 @@ const BrochureManagement = () => {
       )}
 
 
-      {/* ==========================================================
-          ANIMATIONS
-      ========================================================== */}
-
       <style>{`
 
         @keyframes fadeIn {
@@ -1723,7 +1380,6 @@ const BrochureManagement = () => {
             opacity: 1;
           }
         }
-
 
         @keyframes fadeUp {
           from {

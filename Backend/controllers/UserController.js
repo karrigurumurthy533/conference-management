@@ -543,11 +543,7 @@ exports.getAllAbstracts = catchAsync(async (req, res, next) => {
   const [abstracts, totalAbstracts] = await Promise.all([
     Abstract.find()
       .populate(
-        "registrationId",
-        "title firstName lastName email phone registration"
-      )
-      .populate(
-        "conferenceId",
+        "abstractDetails.conferenceId",
         "title dates location"
       )
       .sort({ createdAt: -1 })
@@ -573,18 +569,22 @@ exports.getAllAbstracts = catchAsync(async (req, res, next) => {
 exports.getAbstractById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(
+      new AppError("Invalid abstract ID", 400)
+    );
+  }
+
   const abstract = await Abstract.findById(id)
     .populate(
-      "registrationId",
-      "title firstName lastName email phone registration"
-    )
-    .populate(
-      "conferenceId",
+      "abstractDetails.conferenceId",
       "title dates location"
     );
 
   if (!abstract) {
-    return next(new AppError("Abstract not found", 404));
+    return next(
+      new AppError("Abstract not found", 404)
+    );
   }
 
   res.status(200).json({

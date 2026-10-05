@@ -1,5 +1,8 @@
 
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSlice,
+} from "@reduxjs/toolkit";
 
 import {
   uploadBrochureApi,
@@ -8,8 +11,13 @@ import {
   updateBrochureApi,
   deleteBrochureApi,
   getBrochureDownloadRequestsApi,
+  getBrochureDownloadRequestByIdApi,
   getBrochureDownloadStatsApi,
 } from "../api/brochureApi";
+
+/* =========================================================
+   UPLOAD BROCHURE
+========================================================= */
 
 export const uploadBrochure = createAsyncThunk(
   "brochure/uploadBrochure",
@@ -25,6 +33,11 @@ export const uploadBrochure = createAsyncThunk(
   }
 );
 
+
+/* =========================================================
+   GET ALL BROCHURES
+========================================================= */
+
 export const getAllBrochures = createAsyncThunk(
   "brochure/getAllBrochures",
   async (_, { rejectWithValue }) => {
@@ -38,6 +51,11 @@ export const getAllBrochures = createAsyncThunk(
     }
   }
 );
+
+
+/* =========================================================
+   GET BROCHURE BY ID
+========================================================= */
 
 export const getBrochureById = createAsyncThunk(
   "brochure/getBrochureById",
@@ -53,11 +71,23 @@ export const getBrochureById = createAsyncThunk(
   }
 );
 
+
+/* =========================================================
+   UPDATE BROCHURE
+========================================================= */
+
 export const updateBrochure = createAsyncThunk(
   "brochure/updateBrochure",
-  async ({ id, formData }, { rejectWithValue }) => {
+
+  async (
+    { id, formData },
+    { rejectWithValue }
+  ) => {
     try {
-      return await updateBrochureApi(id, formData);
+      return await updateBrochureApi(
+        id,
+        formData
+      );
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
@@ -67,11 +97,18 @@ export const updateBrochure = createAsyncThunk(
   }
 );
 
+
+/* =========================================================
+   DELETE BROCHURE
+========================================================= */
+
 export const deleteBrochure = createAsyncThunk(
   "brochure/deleteBrochure",
+
   async (id, { rejectWithValue }) => {
     try {
-      const response = await deleteBrochureApi(id);
+      const response =
+        await deleteBrochureApi(id);
 
       return {
         id,
@@ -86,23 +123,65 @@ export const deleteBrochure = createAsyncThunk(
   }
 );
 
-export const getBrochureDownloads = createAsyncThunk(
-  "brochure/getBrochureDownloads",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await getBrochureDownloadRequestsApi();
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-          "Failed to fetch brochure downloads"
-      );
+
+/* =========================================================
+   GET ALL BROCHURE DOWNLOAD REQUESTS
+========================================================= */
+
+export const getBrochureDownloads =
+  createAsyncThunk(
+    "brochure/download-requests",
+
+    async (_, { rejectWithValue }) => {
+      try {
+        return await getBrochureDownloadRequestsApi();
+      } catch (error) {
+        return rejectWithValue(
+          error.response?.data?.message ||
+            "Failed to fetch brochure downloads"
+        );
+      }
     }
-  }
-);
+  );
+
+
+/* =========================================================
+   GET BROCHURE DOWNLOAD REQUEST BY ID
+========================================================= */
+
+export const getBrochureDownloadRequestById =
+  createAsyncThunk(
+    "brochure/download-request-by-id",
+
+    async (id, { rejectWithValue }) => {
+      try {
+        if (!id) {
+          return rejectWithValue(
+            "Brochure download request ID is required"
+          );
+        }
+
+        return await getBrochureDownloadRequestByIdApi(
+          id
+        );
+      } catch (error) {
+        return rejectWithValue(
+          error.response?.data?.message ||
+            "Failed to fetch brochure download request"
+        );
+      }
+    }
+  );
+
+
+/* =========================================================
+   GET BROCHURE DOWNLOAD STATISTICS
+========================================================= */
 
 export const getBrochureDownloadStats =
   createAsyncThunk(
     "brochure/getBrochureDownloadStats",
+
     async (_, { rejectWithValue }) => {
       try {
         return await getBrochureDownloadStatsApi();
@@ -115,10 +194,20 @@ export const getBrochureDownloadStats =
     }
   );
 
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
 const initialState = {
   brochures: [],
   brochure: null,
+
   downloads: [],
+
+  // ✅ ADDED
+  selectedDownload: null,
+
   downloadStats: null,
 
   loading: false,
@@ -127,10 +216,18 @@ const initialState = {
   deleteLoading: false,
   statsLoading: false,
 
+  // ✅ ADDED
+  downloadDetailsLoading: false,
+
   error: null,
   success: false,
   message: "",
 };
+
+
+/* =========================================================
+   SLICE
+========================================================= */
 
 const brochureSlice = createSlice({
   name: "brochure",
@@ -138,21 +235,49 @@ const brochureSlice = createSlice({
   initialState,
 
   reducers: {
+
+    /* -----------------------------------------------------
+       CLEAR BROCHURE MESSAGE
+    ----------------------------------------------------- */
+
     clearBrochureMessage: (state) => {
       state.error = null;
       state.success = false;
       state.message = "";
     },
 
+
+    /* -----------------------------------------------------
+       CLEAR BROCHURE
+    ----------------------------------------------------- */
+
     clearBrochure: (state) => {
       state.brochure = null;
     },
+
+
+    /* -----------------------------------------------------
+       CLEAR SELECTED DOWNLOAD
+    ----------------------------------------------------- */
+
+    clearSelectedDownload: (state) => {
+      state.selectedDownload = null;
+      state.downloadDetailsLoading = false;
+      state.error = null;
+    },
   },
+
+
+  /* =======================================================
+     EXTRA REDUCERS
+  ======================================================= */
 
   extraReducers: (builder) => {
     builder
 
-      // Upload brochure
+      /* =====================================================
+         UPLOAD BROCHURE
+      ===================================================== */
 
       .addCase(
         uploadBrochure.pending,
@@ -194,7 +319,10 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Get all brochures
+
+      /* =====================================================
+         GET ALL BROCHURES
+      ===================================================== */
 
       .addCase(
         getAllBrochures.pending,
@@ -222,7 +350,10 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Get brochure by ID
+
+      /* =====================================================
+         GET BROCHURE BY ID
+      ===================================================== */
 
       .addCase(
         getBrochureById.pending,
@@ -250,7 +381,10 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Update brochure
+
+      /* =====================================================
+         UPDATE BROCHURE
+      ===================================================== */
 
       .addCase(
         updateBrochure.pending,
@@ -307,7 +441,10 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Delete brochure
+
+      /* =====================================================
+         DELETE BROCHURE
+      ===================================================== */
 
       .addCase(
         deleteBrochure.pending,
@@ -353,7 +490,10 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Brochure downloads
+
+      /* =====================================================
+         GET BROCHURE DOWNLOADS
+      ===================================================== */
 
       .addCase(
         getBrochureDownloads.pending,
@@ -384,7 +524,83 @@ const brochureSlice = createSlice({
         }
       )
 
-      // Download statistics
+
+      /* =====================================================
+         GET BROCHURE DOWNLOAD REQUEST BY ID
+      ===================================================== */
+
+      .addCase(
+        getBrochureDownloadRequestById.pending,
+        (state) => {
+          state.downloadDetailsLoading = true;
+
+          state.selectedDownload = null;
+
+          state.error = null;
+        }
+      )
+
+      .addCase(
+        getBrochureDownloadRequestById.fulfilled,
+        (state, action) => {
+          state.downloadDetailsLoading = false;
+
+          /*
+            Supports responses such as:
+
+            {
+              data: {...}
+            }
+
+            {
+              data: {
+                downloadRequest: {...}
+              }
+            }
+
+            {
+              downloadRequest: {...}
+            }
+          */
+
+          state.selectedDownload =
+            action.payload?.data
+              ?.downloadRequest ||
+
+            action.payload?.data
+              ?.download ||
+
+            action.payload
+              ?.downloadRequest ||
+
+            action.payload
+              ?.download ||
+
+            action.payload?.data ||
+
+            action.payload ||
+
+            null;
+        }
+      )
+
+      .addCase(
+        getBrochureDownloadRequestById.rejected,
+        (state, action) => {
+          state.downloadDetailsLoading = false;
+
+          state.selectedDownload = null;
+
+          state.error =
+            action.payload ||
+            "Failed to fetch brochure download request";
+        }
+      )
+
+
+      /* =====================================================
+         DOWNLOAD STATISTICS
+      ===================================================== */
 
       .addCase(
         getBrochureDownloadStats.pending,
@@ -416,9 +632,60 @@ const brochureSlice = createSlice({
   },
 });
 
+
+/* =========================================================
+   ACTION EXPORTS
+========================================================= */
+
 export const {
   clearBrochureMessage,
   clearBrochure,
+
+  // ✅ THIS FIXES YOUR CURRENT ERROR
+  clearSelectedDownload,
+
 } = brochureSlice.actions;
+
+
+/* =========================================================
+   SELECTORS
+========================================================= */
+
+export const selectBrochures = (state) =>
+  state.brochure?.brochures || [];
+
+
+export const selectBrochure = (state) =>
+  state.brochure?.brochure || null;
+
+
+export const selectBrochureDownloads = (state) =>
+  state.brochure?.downloads || [];
+
+
+export const selectSelectedDownload = (state) =>
+  state.brochure?.selectedDownload || null;
+
+
+export const selectBrochureDownloadStats = (
+  state
+) =>
+  state.brochure?.downloadStats || null;
+
+
+export const selectBrochureLoading = (state) =>
+  state.brochure?.loading || false;
+
+
+export const selectDownloadDetailsLoading = (
+  state
+) =>
+  state.brochure?.downloadDetailsLoading ||
+  false;
+
+
+/* =========================================================
+   DEFAULT EXPORT
+========================================================= */
 
 export default brochureSlice.reducer;

@@ -1,4 +1,10 @@
+
 import axiosInstance from "../redux/axiosInstance";
+
+
+/* =========================================================
+   UPLOAD BROCHURE
+========================================================= */
 
 export const uploadBrochureApi = async (formData) => {
   const response = await axiosInstance.post(
@@ -14,6 +20,11 @@ export const uploadBrochureApi = async (formData) => {
   return response.data;
 };
 
+
+/* =========================================================
+   GET ALL BROCHURES
+========================================================= */
+
 export const getAllBrochuresApi = async () => {
   const response = await axiosInstance.get(
     "/admin/brochures"
@@ -22,6 +33,11 @@ export const getAllBrochuresApi = async () => {
   return response.data;
 };
 
+
+/* =========================================================
+   GET BROCHURE BY ID
+========================================================= */
+
 export const getBrochureByIdApi = async (id) => {
   const response = await axiosInstance.get(
     `/admin/brochures/${id}`
@@ -29,6 +45,11 @@ export const getBrochureByIdApi = async (id) => {
 
   return response.data;
 };
+
+
+/* =========================================================
+   UPDATE BROCHURE
+========================================================= */
 
 export const updateBrochureApi = async (
   id,
@@ -47,6 +68,11 @@ export const updateBrochureApi = async (
   return response.data;
 };
 
+
+/* =========================================================
+   DELETE BROCHURE
+========================================================= */
+
 export const deleteBrochureApi = async (id) => {
   const response = await axiosInstance.delete(
     `/admin/brochures/${id}`
@@ -55,29 +81,70 @@ export const deleteBrochureApi = async (id) => {
   return response.data;
 };
 
-export const getBrochureDownloadRequestsApi = async () => {
-    const response = await axiosInstance.get(
-      "/admin/brochures/download-requests"
-    );
+
+/* =========================================================
+   GET ALL BROCHURE DOWNLOAD REQUESTS
+========================================================= */
+
+export const getBrochureDownloadRequestsApi =
+  async () => {
+    const response =
+      await axiosInstance.get(
+        "/admin/brochures/download-requests"
+      );
 
     return response.data;
   };
 
-export const getBrochureDownloadStatsApi = async () => {
-    const response = await axiosInstance.get(
-      "/admin/brochures/download-stats"
-    );
+
+/* =========================================================
+   GET BROCHURE DOWNLOAD REQUEST BY ID
+========================================================= */
+
+export const getBrochureDownloadRequestByIdApi =
+  async (id) => {
+    if (!id) {
+      throw new Error(
+        "Brochure download request ID is required"
+      );
+    }
+
+    const response =
+      await axiosInstance.get(
+        `/admin/brochures/download-requests/${id}`
+      );
 
     return response.data;
   };
+
+
+/* =========================================================
+   GET BROCHURE DOWNLOAD STATISTICS
+========================================================= */
+
+export const getBrochureDownloadStatsApi =
+  async () => {
+    const response =
+      await axiosInstance.get(
+        "/admin/brochures/download-stats"
+      );
+
+    return response.data;
+  };
+
+
+/* =========================================================
+   DOWNLOAD BROCHURE
+========================================================= */
 
 export const downloadBrochureApi = async (id) => {
-  const response = await axiosInstance.get(
-    `/admin/brochures/${id}/download`,
-    {
-      responseType: "blob",
-    }
-  );
+  const response =
+    await axiosInstance.get(
+      `/admin/brochures/${id}/download`,
+      {
+        responseType: "blob",
+      }
+    );
 
   return response;
 };

@@ -31,6 +31,9 @@ import AddReview from "./pages/admin/AddReview";
 import Invoices from "./pages/admin/Invoices";
 import Abstracts from "./pages/admin/Abstracts";
 import DownloadBrochures from "./pages/admin/DownloadBrochures";
+import BrochureDetails from "./pages/admin/BrochureDetails";
+import UserDownloadBrochureDetails from "./pages/admin/UserDownloadBrochureDetails";
+import AbstractDetails from "./pages/admin/AbstractDetails";
 
 function App() {
   return (
@@ -49,6 +52,10 @@ function App() {
 
         {/* Conferences */}
         <Route path="conferences/create" element={<CreateConference />} />
+        <Route
+          path="/admin/conferences/create/:id"
+          element={<CreateConference />}
+        />
 
         <Route path="conferences" element={<AllConferences />} />
         <Route path="conferences/:id" element={<ConferenceDetails />} />
@@ -82,12 +89,23 @@ function App() {
 
         <Route path="speakers" element={<Speakers />} />
         <Route path="brochures" element={<BrochureManagement />} />
+        <Route path="/admin/brochures/:id" element={<BrochureDetails />} />
         <Route path="brochures/upload" element={<UploadBrochure />} />
 
         <Route path="/admin/invoices" element={<Invoices />} />
 
         <Route path="/admin/abstracts" element={<Abstracts />} />
-        <Route path="/admin/download-brochures" element={<DownloadBrochures />}/>
+        <Route path="/admin/abstracts/:id" element={<AbstractDetails />} />
+
+        <Route path="/admin/abstracts/:id" element={<AbstractDetails />} />
+        <Route
+          path="/admin/download-brochures"
+          element={<DownloadBrochures />}
+        />
+        <Route
+          path="/admin/download-brochures/:id/details"
+          element={<UserDownloadBrochureDetails />}
+        />
 
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />

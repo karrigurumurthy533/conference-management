@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync")
 const Speaker = require("../models/Speaker");
+const DownloadBrochure = require("../models/DownloadBrochure");
 const Employee = require("../models/Employee");
 const ConferenceBrochure = require("../models/ConferenceBrochure");
 const bcrypt = require("bcryptjs");
@@ -2302,14 +2303,187 @@ exports.deleteConferenceBrochure = catchAsync(
   }
 );
 
+
+
+
 exports.getBrochureDownloadRequests = catchAsync(
   async (req, res, next) => {
+    const downloads = await DownloadBrochure.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedDownloads = await Promise.all(
+      downloads.map(async (download) => {
+        let conference = null;
+
+        if (download.conferenceId) {
+          try {
+            conference = await Conference.findById(
+              download.conferenceId
+            )
+              .select(
+                "_id basicInformation conferenceTitle title name"
+              )
+              .lean();
+          } catch (error) {
+            conference = null;
+          }
+        }
+
+        const conferenceTitle =
+          conference?.basicInformation?.conferenceTitle ||
+          conference?.basicInformation?.title ||
+          conference?.conferenceTitle ||
+          conference?.title ||
+          conference?.name ||
+          download?.conferenceTitle ||
+          download?.conferenceName ||
+          "Unknown Conference";
+
+        return {
+          ...download,
+
+          _id: download._id,
+
+          conferenceId:
+            download.conferenceId ||
+            conference?._id ||
+            null,
+
+          conference: conferenceTitle,
+
+          fullName:
+            download.fullName ||
+            [
+              download.firstName,
+              download.lastName,
+            ]
+              .filter(Boolean)
+              .join(" ") ||
+            "Unknown User",
+
+          email: download.email || "",
+
+          phone: download.phone || "",
+
+          country: download.country || "",
+
+          requirements:
+            download.requirements || "",
+
+          status:
+            download.status || "Downloaded",
+
+          downloadedAt:
+            download.downloadedAt ||
+            download.createdAt ||
+            download.updatedAt ||
+            null,
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      count: 0,
-      data: [],
+      count: formattedDownloads.length,
+      data: formattedDownloads,
       message:
-        "No brochure download requests found",
+        formattedDownloads.length > 0
+          ? "Brochure download requests fetched successfully"
+          : "No brochure download requests found",
+    });
+  }
+);
+
+
+exports.getBrochureDownloadRequestById = catchAsync(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    const download =
+      await DownloadBrochure.findById(id).lean();
+
+    if (!download) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        message:
+          "Brochure download request not found",
+      });
+    }
+
+    let conference = null;
+
+    if (download.conferenceId) {
+      try {
+        conference = await Conference.findById(
+          download.conferenceId
+        )
+          .select(
+            "_id basicInformation conferenceTitle title name"
+          )
+          .lean();
+      } catch (error) {
+        conference = null;
+      }
+    }
+
+    const conferenceTitle =
+      conference?.basicInformation?.conferenceTitle ||
+      conference?.basicInformation?.title ||
+      conference?.conferenceTitle ||
+      conference?.title ||
+      conference?.name ||
+      download?.conferenceTitle ||
+      download?.conferenceName ||
+      "Unknown Conference";
+
+    const formattedDownload = {
+      ...download,
+
+      _id: download._id,
+
+      conferenceId:
+        download.conferenceId ||
+        conference?._id ||
+        null,
+
+      conference: conferenceTitle,
+
+      fullName:
+        download.fullName ||
+        [
+          download.firstName,
+          download.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        "Unknown User",
+
+      email: download.email || "",
+
+      phone: download.phone || "",
+
+      country: download.country || "",
+
+      requirements:
+        download.requirements || "",
+
+      status:
+        download.status || "Downloaded",
+
+      downloadedAt:
+        download.downloadedAt ||
+        download.createdAt ||
+        download.updatedAt ||
+        null,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: formattedDownload,
+      message:
+        "Brochure download request fetched successfully",
     });
   }
 );
@@ -2340,6 +2514,8 @@ exports.getBrochureDownloadStats = catchAsync(
     });
   }
 );
+
+
 exports.downloadConferenceBrochure = catchAsync(
   async (req, res, next) => {
     const { id } = req.params;

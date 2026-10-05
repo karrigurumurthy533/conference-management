@@ -230,19 +230,19 @@ const AllConferences = () => {
     navigate(`/admin/conferences/${conferenceId}`);
   };
 
-  const goToEdit = (conference) => {
-    const conferenceId = getConferenceId(conference);
+ const goToEdit = (conference) => {
+  const conferenceId = getConferenceId(conference);
 
-    if (!conferenceId) {
-      console.error("MongoDB conference _id is missing:", conference);
-      return;
-    }
+  if (!conferenceId) {
+    console.error("MongoDB conference _id is missing:", conference);
+    return;
+  }
 
-    setOpenAction(null);
-    setActionPosition(null);
+  setOpenAction(null);
+  setActionPosition(null);
 
-    navigate(`/admin/conferences/create`);
-  };
+  navigate(`/admin/conferences/create/${conferenceId}`);
+};
 
   const openConfirmation = (conference, type) => {
     setOpenAction(null);

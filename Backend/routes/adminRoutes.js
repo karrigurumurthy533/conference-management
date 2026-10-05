@@ -15,6 +15,7 @@ const router = express.Router();
 
 
 router.post("/conferences",authMiddleware("admin"),conferenceUpload, adminController.createConference);
+
 router.get("/conferences", adminController.getAllConferences);
 router.get("/conferences/:id", adminController.getConferenceById);
 router.put("/conferences/:id", conferenceUpload, adminController.updateConference);
@@ -127,6 +128,12 @@ router.get(
     "/brochures/download-requests",
     authMiddleware("admin"),
     adminController.getBrochureDownloadRequests
+);
+
+router.get(
+    "/brochures/download-requests/:id",
+    authMiddleware("admin"),
+    adminController.getBrochureDownloadRequestById
 );
 
 router.get(

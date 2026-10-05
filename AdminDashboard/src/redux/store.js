@@ -8,6 +8,7 @@ import dashboardReducer from "./dashboardSlice";
 import reviewsReducer from "./reviewsSlice";
 import registrationsReducer from "./registrationsSlice";
 import notificationReducer from "./notificationSlice";
+import abstractsReducer from "./abstractsSlice";
 
 
 
@@ -19,10 +20,13 @@ export const store = configureStore({
     employee: employeeReducer,
     speaker: speakerReducer, 
     brochure: brochureReducer,
+    abstracts: abstractsReducer,
     dashboard: dashboardReducer,
     reviews: reviewsReducer,
     registrations: registrationsReducer,
     notifications: notificationReducer,
+  
+
 
   },
 });
