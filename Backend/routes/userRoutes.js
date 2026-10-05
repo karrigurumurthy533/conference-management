@@ -91,4 +91,8 @@ router.delete(
   UserController.deleteAbstract
 );
 
+router.post("/subscribe", UserController.subscribe);
+router.get("/subscribers", UserController.getAllSubscribers);
+router.get("/subscribers/:id", UserController.getSubscriberById);
+
 module.exports = router;

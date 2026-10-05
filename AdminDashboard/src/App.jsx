@@ -34,6 +34,8 @@ import DownloadBrochures from "./pages/admin/DownloadBrochures";
 import BrochureDetails from "./pages/admin/BrochureDetails";
 import UserDownloadBrochureDetails from "./pages/admin/UserDownloadBrochureDetails";
 import AbstractDetails from "./pages/admin/AbstractDetails";
+import Subscribers from "./pages/admin/Subscribers";
+import SubscribersDetails from "./pages/admin/SubscribersDetails";
 
 function App() {
   return (
@@ -113,6 +115,11 @@ function App() {
         <Route path="/admin/reviews/add/:id" element={<AddReview />} />
 
         <Route path="notifications" element={<Notifications />} />
+        <Route path="/admin/subscribers" element={<Subscribers />} />
+        <Route
+          path="/admin/subscribers/:id"
+          element={<SubscribersDetails />}
+        />
 
         <Route path="profile" element={<Profile />} />
       </Route>

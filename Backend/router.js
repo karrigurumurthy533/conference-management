@@ -7,6 +7,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const contactRoutes = require("./routes/contactRoutes.js");
 
 
 const router = express.Router();
@@ -24,6 +25,10 @@ router.use("/employee", employeeRoutes);
 router.use("/dashboard", dashboardRoutes);
 
 router.use("/notification", notificationRoutes);
+
+
+
+router.use("/contact", contactRoutes);
 
 
 

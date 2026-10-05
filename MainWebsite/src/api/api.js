@@ -111,3 +111,22 @@ export const verifyPaymentApi = (data) => {
     data
   );
 };
+
+
+export const sendContactApi = async (contactData) => {
+  const response = await axiosInstance.post(
+    "/contact",
+    contactData
+  );
+
+  return response.data;
+};
+
+export const subscribeApi = async (subscriberData) => {
+  const response = await axiosInstance.post(
+    "/user/subscribe",
+    subscriberData
+  );
+
+  return response.data;
+};

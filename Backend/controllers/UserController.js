@@ -7,6 +7,7 @@ const AppError = require("../utils/AppError");
 const Registration = require("../models/Registration");
 const mongoose = require("mongoose");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload")
+const Subscriber = require("../models/Subscriber");
 
 
 
@@ -245,9 +246,6 @@ exports.getRegistrationById = catchAsync(
   }
 );
 
-// ======================================================
-// DELETE REGISTRATION
-// ======================================================
 
 exports.deleteRegistration = catchAsync(
   async (req, res, next) => {
@@ -610,3 +608,131 @@ exports.deleteAbstract = catchAsync(async (req, res, next) => {
     message: "Abstract deleted successfully",
   });
 });
+
+
+
+exports.subscribe = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phoneNumber,
+      conferenceId,
+    } = req.body;
+
+    // Validation
+    if (!name || !email || !phoneNumber || !conferenceId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name, email, phone number and conference are required",
+      });
+    }
+
+    // Check duplicate subscription
+    const existingSubscriber = await Subscriber.findOne({
+      email: email.toLowerCase().trim(),
+      conferenceId,
+    });
+
+    if (existingSubscriber) {
+      return res.status(409).json({
+        success: false,
+        message: "You are already subscribed to this conference",
+        data: existingSubscriber,
+      });
+    }
+
+    const subscriber = await Subscriber.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phoneNumber: phoneNumber.trim(),
+      conferenceId,
+      status: "Active",
+    });
+
+    const populatedSubscriber = await Subscriber.findById(
+      subscriber._id
+    ).populate(
+      "conferenceId",
+      "basicInformation conferenceDates"
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Subscribed successfully",
+      data: populatedSubscriber,
+    });
+  } catch (error) {
+    console.error("Subscribe Error:", error);
+
+    // Duplicate key protection
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "You are already subscribed to this conference",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to subscribe",
+      error: error.message,
+    });
+  }
+};
+
+
+exports.getAllSubscribers = async (req, res) => {
+  try {
+    const subscribers = await Subscriber.find()
+      .populate("conferenceId")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscribers fetched successfully",
+      count: subscribers.length,
+      data: subscribers,
+    });
+  } catch (error) {
+    console.error("Get All Subscribers Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch subscribers",
+      error: error.message,
+    });
+  }
+};
+
+exports.getSubscriberById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const subscriber = await Subscriber.findById(id).populate(
+      "conferenceId",
+    );
+
+    if (!subscriber) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscriber not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscriber fetched successfully",
+      data: subscriber,
+    });
+  } catch (error) {
+    console.error("Get Subscriber By ID Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch subscriber",
+      error: error.message,
+    });
+  }
+};

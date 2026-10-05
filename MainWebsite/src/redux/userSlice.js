@@ -1,4 +1,3 @@
-
 import {
   createAsyncThunk,
   createSlice,
@@ -14,189 +13,254 @@ import {
   getRegistrationByIdApi,
   createDownloadBrochureApi,
   createAbstractApi,
+  sendContactApi,
+  subscribeApi,
 } from "../api/api";
 
-export const getConferences =
-  createAsyncThunk(
-    "user/getConferences",
-    async (_, { rejectWithValue }) => {
-      try {
-        const response =
-          await getConferencesApi();
+// =====================================================
+// GET ALL CONFERENCES
+// =====================================================
+export const getConferences = createAsyncThunk(
+  "user/getConferences",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getConferencesApi();
 
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch conferences"
-        );
-      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch conferences"
+      );
     }
-  );
+  }
+);
 
-export const getConferenceById =
-  createAsyncThunk(
-    "user/getConferenceById",
-    async (id, { rejectWithValue }) => {
-      try {
-        const response =
-          await getConferenceByIdApi(id);
+// =====================================================
+// GET CONFERENCE BY ID
+// =====================================================
+export const getConferenceById = createAsyncThunk(
+  "user/getConferenceById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await getConferenceByIdApi(id);
 
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch conference"
-        );
-      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch conference"
+      );
     }
-  );
+  }
+);
 
-export const getSpeakers =
-  createAsyncThunk(
-    "user/getSpeakers",
-    async (_, { rejectWithValue }) => {
-      try {
-        const response =
-          await getSpeakersApi();
+// =====================================================
+// GET ALL SPEAKERS
+// =====================================================
+export const getSpeakers = createAsyncThunk(
+  "user/getSpeakers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getSpeakersApi();
 
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch speakers"
-        );
-      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch speakers"
+      );
     }
-  );
+  }
+);
 
-export const getSpeakerById =
-  createAsyncThunk(
-    "user/getSpeakerById",
-    async (id, { rejectWithValue }) => {
-      try {
-        const response =
-          await getSpeakerByIdApi(id);
+// =====================================================
+// GET SPEAKER BY ID
+// =====================================================
+export const getSpeakerById = createAsyncThunk(
+  "user/getSpeakerById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await getSpeakerByIdApi(id);
 
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch speaker"
-        );
-      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch speaker"
+      );
     }
-  );
+  }
+);
 
-export const getSpeakersByConference =
-  createAsyncThunk(
-    "user/getSpeakersByConference",
-    async (
-      conferenceId,
-      { rejectWithValue }
-    ) => {
-      try {
-        const response =
-          await getSpeakersByConferenceApi(
-            conferenceId
-          );
+// =====================================================
+// GET SPEAKERS BY CONFERENCE
+// =====================================================
+export const getSpeakersByConference = createAsyncThunk(
+  "user/getSpeakersByConference",
+  async (conferenceId, { rejectWithValue }) => {
+    try {
+      const response =
+        await getSpeakersByConferenceApi(conferenceId);
 
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch conference speakers"
-        );
-      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch conference speakers"
+      );
     }
-  );
+  }
+);
 
-export const createRegistration =
-  createAsyncThunk(
-    "user/createRegistration",
-    async (data, { rejectWithValue }) => {
-      try {
-        const response =
-          await createRegistrationApi(data);
+// =====================================================
+// CREATE REGISTRATION
+// =====================================================
+export const createRegistration = createAsyncThunk(
+  "user/createRegistration",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response =
+        await createRegistrationApi(data);
 
-        return response;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Registration failed"
-        );
-      }
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Registration failed"
+      );
     }
-  );
+  }
+);
 
-export const getRegistrationById =
-  createAsyncThunk(
-    "user/getRegistrationById",
-    async (id, { rejectWithValue }) => {
-      try {
-        const response =
-          await getRegistrationByIdApi(id);
+// =====================================================
+// GET REGISTRATION BY ID
+// =====================================================
+export const getRegistrationById = createAsyncThunk(
+  "user/getRegistrationById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response =
+        await getRegistrationByIdApi(id);
 
-        return response;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Failed to fetch registration"
-        );
-      }
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch registration"
+      );
     }
-  );
+  }
+);
 
-export const createDownloadBrochure =
-  createAsyncThunk(
-    "user/createDownloadBrochure",
-    async (data, { rejectWithValue }) => {
-      try {
-        const response =
-          await createDownloadBrochureApi(data);
+// =====================================================
+// CREATE BROCHURE REQUEST
+// =====================================================
+export const createDownloadBrochure = createAsyncThunk(
+  "user/createDownloadBrochure",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response =
+        await createDownloadBrochureApi(data);
 
-        return response;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Brochure request failed"
-        );
-      }
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Brochure request failed"
+      );
     }
-  );
+  }
+);
 
-export const createAbstract =
-  createAsyncThunk(
-    "user/createAbstract",
-    async (data, { rejectWithValue }) => {
-      try {
-        const response =
-          await createAbstractApi(data);
+// =====================================================
+// CREATE ABSTRACT
+// =====================================================
+export const createAbstract = createAsyncThunk(
+  "user/createAbstract",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response =
+        await createAbstractApi(data);
 
-        return response;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            "Abstract submission failed"
-        );
-      }
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Abstract submission failed"
+      );
     }
-  );
+  }
+);
 
+// =====================================================
+// SEND CONTACT MESSAGE
+// =====================================================
+export const sendContact = createAsyncThunk(
+  "user/sendContact",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response =
+        await sendContactApi(data);
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to send contact message"
+      );
+    }
+  }
+);
+
+// =====================================================
+// SUBSCRIBE TO CONFERENCE
+// =====================================================
+export const subscribe = createAsyncThunk(
+  "user/subscribe",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response =
+        await subscribeApi(data);
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to subscribe"
+      );
+    }
+  }
+);
+
+// =====================================================
+// INITIAL STATE
+// =====================================================
 const initialState = {
+  // ===================================================
+  // Conferences
+  // ===================================================
   conferences: [],
   conference: null,
-  speakers: [],
-  speaker: null,
-  conferenceSpeakers: [],
 
   conferenceLoading: false,
   conferenceError: null,
 
+  // ===================================================
+  // Speakers
+  // ===================================================
+  speakers: [],
+  speaker: null,
+  conferenceSpeakers: [],
+
   speakerLoading: false,
   speakerError: null,
 
+  // ===================================================
+  // Registration
+  // ===================================================
   registration: null,
+
   registrationLoading: false,
   registrationError: null,
   registrationSuccess: false,
@@ -205,31 +269,69 @@ const initialState = {
   registrationDetailsLoading: false,
   registrationDetailsError: null,
 
+  // ===================================================
+  // Brochure
+  // ===================================================
   brochure: null,
+
   brochureLoading: false,
   brochureError: null,
   brochureSuccess: false,
 
+  // ===================================================
+  // Abstract
+  // ===================================================
   abstract: null,
+
   abstractLoading: false,
   abstractError: null,
   abstractSuccess: false,
+
+  // ===================================================
+  // Contact
+  // ===================================================
+  contact: null,
+
+  contactLoading: false,
+  contactError: null,
+  contactSuccess: false,
+
+  // ===================================================
+  // Subscribe
+  // ===================================================
+  subscribeData: null,
+
+  subscribeLoading: false,
+  subscribeError: null,
+  subscribeSuccess: false,
 };
 
+// =====================================================
+// USER SLICE
+// =====================================================
 const userSlice = createSlice({
   name: "user",
 
   initialState,
 
   reducers: {
+    // =================================================
+    // CLEAR CONFERENCE
+    // =================================================
     clearConference: (state) => {
       state.conference = null;
     },
 
+    // =================================================
+    // CLEAR SPEAKER
+    // =================================================
     clearSpeaker: (state) => {
       state.speaker = null;
     },
 
+    // =================================================
+    // CLEAR REGISTRATION
+    // =================================================
     clearRegistration: (state) => {
       state.registration = null;
       state.registrationLoading = false;
@@ -237,15 +339,18 @@ const userSlice = createSlice({
       state.registrationSuccess = false;
     },
 
-    clearRegistrationDetails: (
-      state
-    ) => {
+    // =================================================
+    // CLEAR REGISTRATION DETAILS
+    // =================================================
+    clearRegistrationDetails: (state) => {
       state.registrationDetails = null;
-      state.registrationDetailsLoading =
-        false;
+      state.registrationDetailsLoading = false;
       state.registrationDetailsError = null;
     },
 
+    // =================================================
+    // CLEAR BROCHURE
+    // =================================================
     clearBrochure: (state) => {
       state.brochure = null;
       state.brochureLoading = false;
@@ -253,6 +358,9 @@ const userSlice = createSlice({
       state.brochureSuccess = false;
     },
 
+    // =================================================
+    // CLEAR ABSTRACT
+    // =================================================
     clearAbstract: (state) => {
       state.abstract = null;
       state.abstractLoading = false;
@@ -260,42 +368,102 @@ const userSlice = createSlice({
       state.abstractSuccess = false;
     },
 
+    // =================================================
+    // CLEAR CONTACT
+    // =================================================
+    clearContact: (state) => {
+      state.contact = null;
+      state.contactLoading = false;
+      state.contactError = null;
+      state.contactSuccess = false;
+    },
+
+    // =================================================
+    // CLEAR SUBSCRIBE
+    // =================================================
+    clearSubscribe: (state) => {
+      state.subscribeData = null;
+      state.subscribeLoading = false;
+      state.subscribeError = null;
+      state.subscribeSuccess = false;
+    },
+
+    // =================================================
+    // CLEAR EVERYTHING
+    // =================================================
     clearUserState: (state) => {
+      // =================================================
+      // Conferences
+      // =================================================
       state.conferences = [];
       state.conference = null;
-      state.speakers = [];
-      state.speaker = null;
-      state.conferenceSpeakers = [];
 
       state.conferenceLoading = false;
       state.conferenceError = null;
 
+      // =================================================
+      // Speakers
+      // =================================================
+      state.speakers = [];
+      state.speaker = null;
+      state.conferenceSpeakers = [];
+
       state.speakerLoading = false;
       state.speakerError = null;
 
+      // =================================================
+      // Registration
+      // =================================================
       state.registration = null;
       state.registrationLoading = false;
       state.registrationError = null;
       state.registrationSuccess = false;
 
       state.registrationDetails = null;
-      state.registrationDetailsLoading =
-        false;
+      state.registrationDetailsLoading = false;
       state.registrationDetailsError = null;
 
+      // =================================================
+      // Brochure
+      // =================================================
       state.brochure = null;
       state.brochureLoading = false;
       state.brochureError = null;
       state.brochureSuccess = false;
 
+      // =================================================
+      // Abstract
+      // =================================================
       state.abstract = null;
       state.abstractLoading = false;
       state.abstractError = null;
       state.abstractSuccess = false;
+
+      // =================================================
+      // Contact
+      // =================================================
+      state.contact = null;
+      state.contactLoading = false;
+      state.contactError = null;
+      state.contactSuccess = false;
+
+      // =================================================
+      // Subscribe
+      // =================================================
+      state.subscribeData = null;
+      state.subscribeLoading = false;
+      state.subscribeError = null;
+      state.subscribeSuccess = false;
     },
   },
 
+  // =====================================================
+  // EXTRA REDUCERS
+  // =====================================================
   extraReducers: (builder) => {
+    // ===================================================
+    // CONFERENCES
+    // ===================================================
     builder
 
       .addCase(
@@ -315,6 +483,8 @@ const userSlice = createSlice({
             action.payload?.data ||
             action.payload ||
             [];
+
+          state.conferenceError = null;
         }
       )
 
@@ -322,11 +492,16 @@ const userSlice = createSlice({
         getConferences.rejected,
         (state, action) => {
           state.conferenceLoading = false;
+
           state.conferenceError =
-            action.payload;
+            action.payload ||
+            "Failed to fetch conferences";
         }
       )
 
+      // =================================================
+      // CONFERENCE BY ID
+      // =================================================
       .addCase(
         getConferenceById.pending,
         (state) => {
@@ -344,6 +519,8 @@ const userSlice = createSlice({
           state.conference =
             action.payload?.data ||
             action.payload;
+
+          state.conferenceError = null;
         }
       )
 
@@ -351,11 +528,16 @@ const userSlice = createSlice({
         getConferenceById.rejected,
         (state, action) => {
           state.conferenceLoading = false;
+
           state.conferenceError =
-            action.payload;
+            action.payload ||
+            "Failed to fetch conference";
         }
       )
 
+      // =================================================
+      // SPEAKERS
+      // =================================================
       .addCase(
         getSpeakers.pending,
         (state) => {
@@ -373,6 +555,8 @@ const userSlice = createSlice({
             action.payload?.data ||
             action.payload ||
             [];
+
+          state.speakerError = null;
         }
       )
 
@@ -380,11 +564,16 @@ const userSlice = createSlice({
         getSpeakers.rejected,
         (state, action) => {
           state.speakerLoading = false;
+
           state.speakerError =
-            action.payload;
+            action.payload ||
+            "Failed to fetch speakers";
         }
       )
 
+      // =================================================
+      // SPEAKER BY ID
+      // =================================================
       .addCase(
         getSpeakerById.pending,
         (state) => {
@@ -402,6 +591,8 @@ const userSlice = createSlice({
           state.speaker =
             action.payload?.data ||
             action.payload;
+
+          state.speakerError = null;
         }
       )
 
@@ -409,11 +600,16 @@ const userSlice = createSlice({
         getSpeakerById.rejected,
         (state, action) => {
           state.speakerLoading = false;
+
           state.speakerError =
-            action.payload;
+            action.payload ||
+            "Failed to fetch speaker";
         }
       )
 
+      // =================================================
+      // CONFERENCE SPEAKERS
+      // =================================================
       .addCase(
         getSpeakersByConference.pending,
         (state) => {
@@ -431,6 +627,8 @@ const userSlice = createSlice({
             action.payload?.data ||
             action.payload ||
             [];
+
+          state.speakerError = null;
         }
       )
 
@@ -438,11 +636,16 @@ const userSlice = createSlice({
         getSpeakersByConference.rejected,
         (state, action) => {
           state.speakerLoading = false;
+
           state.speakerError =
-            action.payload;
+            action.payload ||
+            "Failed to fetch conference speakers";
         }
       )
 
+      // =================================================
+      // REGISTRATION
+      // =================================================
       .addCase(
         createRegistration.pending,
         (state) => {
@@ -456,8 +659,10 @@ const userSlice = createSlice({
         createRegistration.fulfilled,
         (state, action) => {
           state.registrationLoading = false;
+
           state.registration =
             action.payload;
+
           state.registrationSuccess = true;
           state.registrationError = null;
         }
@@ -476,40 +681,35 @@ const userSlice = createSlice({
         }
       )
 
+      // =================================================
+      // REGISTRATION DETAILS
+      // =================================================
       .addCase(
         getRegistrationById.pending,
         (state) => {
-          state.registrationDetailsLoading =
-            true;
-
-          state.registrationDetailsError =
-            null;
-
-          state.registrationDetails =
-            null;
+          state.registrationDetailsLoading = true;
+          state.registrationDetailsError = null;
+          state.registrationDetails = null;
         }
       )
 
       .addCase(
         getRegistrationById.fulfilled,
         (state, action) => {
-          state.registrationDetailsLoading =
-            false;
+          state.registrationDetailsLoading = false;
 
           state.registrationDetails =
             action.payload?.data ||
             action.payload;
 
-          state.registrationDetailsError =
-            null;
+          state.registrationDetailsError = null;
         }
       )
 
       .addCase(
         getRegistrationById.rejected,
         (state, action) => {
-          state.registrationDetailsLoading =
-            false;
+          state.registrationDetailsLoading = false;
 
           state.registrationDetailsError =
             action.payload ||
@@ -519,6 +719,9 @@ const userSlice = createSlice({
         }
       )
 
+      // =================================================
+      // BROCHURE
+      // =================================================
       .addCase(
         createDownloadBrochure.pending,
         (state) => {
@@ -532,8 +735,10 @@ const userSlice = createSlice({
         createDownloadBrochure.fulfilled,
         (state, action) => {
           state.brochureLoading = false;
+
           state.brochure =
             action.payload;
+
           state.brochureSuccess = true;
           state.brochureError = null;
         }
@@ -552,6 +757,9 @@ const userSlice = createSlice({
         }
       )
 
+      // =================================================
+      // ABSTRACT
+      // =================================================
       .addCase(
         createAbstract.pending,
         (state) => {
@@ -565,8 +773,10 @@ const userSlice = createSlice({
         createAbstract.fulfilled,
         (state, action) => {
           state.abstractLoading = false;
+
           state.abstract =
             action.payload;
+
           state.abstractSuccess = true;
           state.abstractError = null;
         }
@@ -583,10 +793,94 @@ const userSlice = createSlice({
 
           state.abstractSuccess = false;
         }
+      )
+
+      // =================================================
+      // CONTACT
+      // =================================================
+      .addCase(
+        sendContact.pending,
+        (state) => {
+          state.contactLoading = true;
+          state.contactError = null;
+          state.contactSuccess = false;
+          state.contact = null;
+        }
+      )
+
+      .addCase(
+        sendContact.fulfilled,
+        (state, action) => {
+          state.contactLoading = false;
+
+          state.contact =
+            action.payload;
+
+          state.contactSuccess = true;
+          state.contactError = null;
+        }
+      )
+
+      .addCase(
+        sendContact.rejected,
+        (state, action) => {
+          state.contactLoading = false;
+
+          state.contactError =
+            action.payload ||
+            "Failed to send contact message";
+
+          state.contactSuccess = false;
+          state.contact = null;
+        }
+      )
+
+      // =================================================
+      // SUBSCRIBE
+      // =================================================
+      .addCase(
+        subscribe.pending,
+        (state) => {
+          state.subscribeLoading = true;
+          state.subscribeError = null;
+          state.subscribeSuccess = false;
+          state.subscribeData = null;
+        }
+      )
+
+      .addCase(
+        subscribe.fulfilled,
+        (state, action) => {
+          state.subscribeLoading = false;
+
+          state.subscribeData =
+            action.payload?.data ||
+            action.payload;
+
+          state.subscribeSuccess = true;
+          state.subscribeError = null;
+        }
+      )
+
+      .addCase(
+        subscribe.rejected,
+        (state, action) => {
+          state.subscribeLoading = false;
+
+          state.subscribeError =
+            action.payload ||
+            "Failed to subscribe";
+
+          state.subscribeSuccess = false;
+          state.subscribeData = null;
+        }
       );
   },
 });
 
+// =====================================================
+// EXPORT ACTIONS
+// =====================================================
 export const {
   clearConference,
   clearSpeaker,
@@ -594,7 +888,12 @@ export const {
   clearRegistrationDetails,
   clearBrochure,
   clearAbstract,
+  clearContact,
+  clearSubscribe,
   clearUserState,
 } = userSlice.actions;
 
+// =====================================================
+// EXPORT REDUCER
+// =====================================================
 export default userSlice.reducer;

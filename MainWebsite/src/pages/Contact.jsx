@@ -1,4 +1,3 @@
-
 import {
   Mail,
   Phone,
@@ -8,10 +7,62 @@ import {
   User,
   Building2,
   MessageSquare,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
+
 import { motion } from "framer-motion";
 
+import { useEffect, useState } from "react";
+
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  sendContact,
+  clearContact,
+} from "../redux/userSlice";
+
+
 const ContactPage = () => {
+  /* =====================================================
+     REDUX
+  ====================================================== */
+
+  const dispatch = useDispatch();
+
+  const {
+    contactLoading,
+    contactError,
+    contactSuccess,
+  } = useSelector((state) => state.user);
+
+
+  /* =====================================================
+     FORM STATE
+  ====================================================== */
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    organization: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
+
+
+  /* =====================================================
+     VALIDATION ERROR
+  ====================================================== */
+
+  const [validationError, setValidationError] =
+    useState("");
+
+
+  /* =====================================================
+     COLORS
+  ====================================================== */
+
   const colors = {
     pageBg: "#FFFFFF",
     sectionBg: "#FFFFFF",
@@ -27,19 +78,33 @@ const ContactPage = () => {
     inputText: "#111827",
     buttonBg: "#7C3AED",
     buttonHover: "#6D28D9",
-    formShadow: "0 10px 30px rgba(124,58,237,0.08)",
+    formShadow:
+      "0 10px 30px rgba(124,58,237,0.08)",
   };
 
-  const bannerImage = "/images/contact_banner.png";
+
+  /* =====================================================
+     BANNER IMAGE
+  ====================================================== */
+
+  const bannerImage =
+    "/images/contact_banner.png";
+
+
+  /* =====================================================
+     ANIMATIONS
+  ====================================================== */
 
   const fadeUp = {
     hidden: {
       opacity: 0,
       y: 25,
     },
+
     visible: {
       opacity: 1,
       y: 0,
+
       transition: {
         duration: 0.7,
         ease: "easeOut",
@@ -47,14 +112,17 @@ const ContactPage = () => {
     },
   };
 
+
   const cardAnimation = {
     hidden: {
       opacity: 0,
       y: 15,
     },
+
     visible: {
       opacity: 1,
       y: 0,
+
       transition: {
         duration: 0.5,
         ease: "easeOut",
@@ -62,15 +130,139 @@ const ContactPage = () => {
     },
   };
 
+
+  /* =====================================================
+     INPUT FOCUS
+  ====================================================== */
+
   const inputFocus = (e) => {
-    e.currentTarget.style.borderColor = colors.primary;
-    e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`;
+    e.currentTarget.style.borderColor =
+      colors.primary;
+
+    e.currentTarget.style.boxShadow =
+      `0 0 0 1px ${colors.primary}`;
   };
 
+
   const inputBlur = (e) => {
-    e.currentTarget.style.borderColor = colors.inputBorder;
+    e.currentTarget.style.borderColor =
+      colors.inputBorder;
+
     e.currentTarget.style.boxShadow = "none";
   };
+
+
+  /* =====================================================
+     HANDLE INPUT CHANGE
+  ====================================================== */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setValidationError("");
+
+    if (contactError) {
+      dispatch(clearContact());
+    }
+  };
+
+
+  /* =====================================================
+     HANDLE FORM SUBMIT
+  ====================================================== */
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    setValidationError("");
+
+    /* -----------------------------------------------
+       BASIC VALIDATION
+    ----------------------------------------------- */
+
+    if (!formData.name.trim()) {
+      setValidationError(
+        "Please enter your full name."
+      );
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setValidationError(
+        "Please enter your email address."
+      );
+      return;
+    }
+
+    if (!formData.subject.trim()) {
+      setValidationError(
+        "Please enter a subject."
+      );
+      return;
+    }
+
+    if (!formData.message.trim()) {
+      setValidationError(
+        "Please enter your message."
+      );
+      return;
+    }
+
+    /* -----------------------------------------------
+       EMAIL VALIDATION
+    ----------------------------------------------- */
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(formData.email)) {
+      setValidationError(
+        "Please enter a valid email address."
+      );
+      return;
+    }
+
+    /* -----------------------------------------------
+       SEND TO BACKEND
+    ----------------------------------------------- */
+
+    dispatch(sendContact(formData));
+  };
+
+
+  /* =====================================================
+     SUCCESS EFFECT
+  ====================================================== */
+
+  useEffect(() => {
+    if (contactSuccess) {
+      setFormData({
+        name: "",
+        email: "",
+        organization: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
+    }
+  }, [contactSuccess]);
+
+
+  /* =====================================================
+     CLEANUP
+  ====================================================== */
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearContact());
+    };
+  }, [dispatch]);
+
 
   return (
     <div
@@ -79,6 +271,7 @@ const ContactPage = () => {
         backgroundColor: colors.pageBg,
       }}
     >
+
       {/* =====================================================
           CONTACT HERO BANNER
       ====================================================== */}
@@ -88,10 +281,17 @@ const ContactPage = () => {
         style={{
           backgroundColor: colors.pageBg,
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        initial={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        transition={{
+          duration: 0.8,
+        }}
       >
+
         <motion.img
           src={bannerImage}
           alt="GlobalScion Contact"
@@ -116,6 +316,7 @@ const ContactPage = () => {
           "
         />
 
+
         {/* Light Gradient Overlay */}
 
         <div
@@ -132,10 +333,13 @@ const ContactPage = () => {
           }}
         />
 
+
         {/* Banner Content */}
 
         <div className="absolute inset-0 flex items-center">
+
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
+
             <motion.div
               className="max-w-lg"
               initial={{
@@ -152,6 +356,7 @@ const ContactPage = () => {
                 ease: "easeOut",
               }}
             >
+
               {/* Small Heading */}
 
               <motion.div
@@ -169,10 +374,12 @@ const ContactPage = () => {
                   delay: 0.3,
                 }}
               >
+
                 <span
                   className="w-7 h-[2px]"
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 />
 
@@ -189,7 +396,9 @@ const ContactPage = () => {
                 >
                   GET IN TOUCH
                 </span>
+
               </motion.div>
+
 
               {/* Main Heading */}
 
@@ -220,6 +429,7 @@ const ContactPage = () => {
                 Let's Connect
               </motion.h1>
 
+
               {/* Description */}
 
               <motion.p
@@ -247,13 +457,19 @@ const ContactPage = () => {
                   delay: 0.55,
                 }}
               >
-                Have questions about our conferences, registrations,
-                or partnerships? Our team is here to help you.
+                Have questions about our conferences,
+                registrations, or partnerships? Our team
+                is here to help you.
               </motion.p>
+
             </motion.div>
+
           </div>
+
         </div>
+
       </motion.section>
+
 
       {/* =====================================================
           MAIN CONTACT SECTION
@@ -262,9 +478,11 @@ const ContactPage = () => {
       <section
         className="py-10 px-6"
         style={{
-          backgroundColor: colors.sectionBg,
+          backgroundColor:
+            colors.sectionBg,
         }}
       >
+
         <div
           className="
             max-w-7xl
@@ -275,6 +493,7 @@ const ContactPage = () => {
             gap-6
           "
         >
+
           {/* =================================================
               LEFT SIDE - CONTACT INFORMATION
           ================================================= */}
@@ -289,7 +508,6 @@ const ContactPage = () => {
             }}
             variants={fadeUp}
           >
-            {/* Heading */}
 
             <h2
               className="text-xl font-bold mb-2"
@@ -300,7 +518,6 @@ const ContactPage = () => {
               Let's Connect
             </h2>
 
-            {/* Description */}
 
             <p
               className="text-xs leading-5 mb-5"
@@ -308,14 +525,16 @@ const ContactPage = () => {
                 color: colors.bodyText,
               }}
             >
-              We would love to hear from you. Reach out to us for
-              conference information, registration support, sponsorship
-              opportunities, and general enquiries.
+              We would love to hear from you.
+              Reach out to us for conference
+              information, registration support,
+              sponsorship opportunities, and
+              general enquiries.
             </p>
 
-            {/* Contact Cards */}
 
             <div className="space-y-3">
+
               {/* EMAIL */}
 
               <motion.div
@@ -339,10 +558,13 @@ const ContactPage = () => {
                   cursor-pointer
                 "
                 style={{
-                  backgroundColor: colors.cardBg,
-                  borderColor: colors.cardBorder,
+                  backgroundColor:
+                    colors.cardBg,
+                  borderColor:
+                    colors.cardBorder,
                 }}
               >
+
                 <motion.div
                   whileHover={{
                     rotate: 10,
@@ -358,7 +580,8 @@ const ContactPage = () => {
                     flex-shrink-0
                   "
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <Mail
@@ -367,11 +590,14 @@ const ContactPage = () => {
                   />
                 </motion.div>
 
+
                 <div>
+
                   <p
                     className="text-[10px]"
                     style={{
-                      color: colors.mutedText,
+                      color:
+                        colors.mutedText,
                     }}
                   >
                     Email Us
@@ -380,13 +606,17 @@ const ContactPage = () => {
                   <p
                     className="text-xs font-semibold"
                     style={{
-                      color: colors.primaryLight,
+                      color:
+                        colors.primaryLight,
                     }}
                   >
                     info@globalscion.com
                   </p>
+
                 </div>
+
               </motion.div>
+
 
               {/* PHONE */}
 
@@ -411,10 +641,13 @@ const ContactPage = () => {
                   cursor-pointer
                 "
                 style={{
-                  backgroundColor: colors.cardBg,
-                  borderColor: colors.cardBorder,
+                  backgroundColor:
+                    colors.cardBg,
+                  borderColor:
+                    colors.cardBorder,
                 }}
               >
+
                 <motion.div
                   whileHover={{
                     rotate: -10,
@@ -430,7 +663,8 @@ const ContactPage = () => {
                     flex-shrink-0
                   "
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <Phone
@@ -439,11 +673,14 @@ const ContactPage = () => {
                   />
                 </motion.div>
 
+
                 <div>
+
                   <p
                     className="text-[10px]"
                     style={{
-                      color: colors.mutedText,
+                      color:
+                        colors.mutedText,
                     }}
                   >
                     Call Us
@@ -452,13 +689,17 @@ const ContactPage = () => {
                   <p
                     className="text-xs font-semibold"
                     style={{
-                      color: colors.primaryLight,
+                      color:
+                        colors.primaryLight,
                     }}
                   >
                     +91 98765 43210
                   </p>
+
                 </div>
+
               </motion.div>
+
 
               {/* LOCATION */}
 
@@ -483,10 +724,13 @@ const ContactPage = () => {
                   cursor-pointer
                 "
                 style={{
-                  backgroundColor: colors.cardBg,
-                  borderColor: colors.cardBorder,
+                  backgroundColor:
+                    colors.cardBg,
+                  borderColor:
+                    colors.cardBorder,
                 }}
               >
+
                 <motion.div
                   whileHover={{
                     y: -4,
@@ -502,7 +746,8 @@ const ContactPage = () => {
                     flex-shrink-0
                   "
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <MapPin
@@ -511,11 +756,14 @@ const ContactPage = () => {
                   />
                 </motion.div>
 
+
                 <div>
+
                   <p
                     className="text-[10px]"
                     style={{
-                      color: colors.mutedText,
+                      color:
+                        colors.mutedText,
                     }}
                   >
                     Our Office
@@ -524,13 +772,17 @@ const ContactPage = () => {
                   <p
                     className="text-xs font-semibold"
                     style={{
-                      color: colors.primaryLight,
+                      color:
+                        colors.primaryLight,
                     }}
                   >
                     Hyderabad, Telangana, India
                   </p>
+
                 </div>
+
               </motion.div>
+
 
               {/* WORKING HOURS */}
 
@@ -555,10 +807,13 @@ const ContactPage = () => {
                   cursor-pointer
                 "
                 style={{
-                  backgroundColor: colors.cardBg,
-                  borderColor: colors.cardBorder,
+                  backgroundColor:
+                    colors.cardBg,
+                  borderColor:
+                    colors.cardBorder,
                 }}
               >
+
                 <motion.div
                   whileHover={{
                     rotate: 10,
@@ -574,7 +829,8 @@ const ContactPage = () => {
                     flex-shrink-0
                   "
                   style={{
-                    backgroundColor: colors.primary,
+                    backgroundColor:
+                      colors.primary,
                   }}
                 >
                   <Clock
@@ -583,11 +839,14 @@ const ContactPage = () => {
                   />
                 </motion.div>
 
+
                 <div>
+
                   <p
                     className="text-[10px]"
                     style={{
-                      color: colors.mutedText,
+                      color:
+                        colors.mutedText,
                     }}
                   >
                     Working Hours
@@ -596,15 +855,21 @@ const ContactPage = () => {
                   <p
                     className="text-xs font-semibold"
                     style={{
-                      color: colors.primaryLight,
+                      color:
+                        colors.primaryLight,
                     }}
                   >
                     Mon - Fri, 9:00 AM - 6:00 PM
                   </p>
+
                 </div>
+
               </motion.div>
+
             </div>
+
           </motion.div>
+
 
           {/* =================================================
               RIGHT SIDE - CONTACT FORM
@@ -629,6 +894,7 @@ const ContactPage = () => {
               ease: "easeOut",
             }}
           >
+
             <motion.div
               className="
                 border
@@ -637,9 +903,12 @@ const ContactPage = () => {
                 md:p-6
               "
               style={{
-                backgroundColor: colors.inputBg,
-                borderColor: colors.cardBorder,
-                boxShadow: colors.formShadow,
+                backgroundColor:
+                  colors.inputBg,
+                borderColor:
+                  colors.cardBorder,
+                boxShadow:
+                  colors.formShadow,
               }}
               whileHover={{
                 boxShadow:
@@ -649,6 +918,7 @@ const ContactPage = () => {
                 duration: 0.3,
               }}
             >
+
               {/* Form Heading */}
 
               <h2
@@ -660,20 +930,134 @@ const ContactPage = () => {
                 Send Us a Message
               </h2>
 
+
               <p
                 className="text-xs mb-5"
                 style={{
-                  color: colors.mutedText,
+                  color:
+                    colors.mutedText,
                 }}
               >
-                Fill out the form below and our team will get back to you.
+                Fill out the form below and our
+                team will get back to you.
               </p>
 
-              <form className="space-y-4">
+
+              {/* =================================================
+                  SUCCESS MESSAGE
+              ================================================== */}
+
+              {contactSuccess && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: -10,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  className="
+                    mb-5
+                    flex
+                    items-center
+                    gap-3
+                    rounded-lg
+                    border
+                    border-green-200
+                    bg-green-50
+                    px-4
+                    py-3
+                  "
+                >
+
+                  <CheckCircle2
+                    size={20}
+                    className="text-green-600 flex-shrink-0"
+                  />
+
+                  <div>
+                    <p className="text-sm font-semibold text-green-700">
+                      Message Sent Successfully
+                    </p>
+
+                    <p className="text-xs text-green-600 mt-0.5">
+                      Thank you for contacting GlobalScion.
+                      Our team will get back to you soon.
+                    </p>
+                  </div>
+
+                </motion.div>
+              )}
+
+
+              {/* =================================================
+                  ERROR MESSAGE
+              ================================================== */}
+
+              {(validationError ||
+                contactError) && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: -10,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  className="
+                    mb-5
+                    flex
+                    items-center
+                    gap-3
+                    rounded-lg
+                    border
+                    border-red-200
+                    bg-red-50
+                    px-4
+                    py-3
+                  "
+                >
+
+                  <AlertCircle
+                    size={20}
+                    className="
+                      text-red-600
+                      flex-shrink-0
+                    "
+                  />
+
+                  <p className="text-xs font-medium text-red-700">
+                    {validationError ||
+                      contactError}
+                  </p>
+
+                </motion.div>
+              )}
+
+
+              {/* =================================================
+                  CONTACT FORM
+              ================================================== */}
+
+              <form
+                className="space-y-4"
+                onSubmit={handleSubmit}
+              >
+
                 {/* NAME + EMAIL */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Name */}
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-4
+                  "
+                >
+
+                  {/* NAME */}
 
                   <motion.div
                     initial={{
@@ -691,6 +1075,7 @@ const ContactPage = () => {
                       delay: 0.1,
                     }}
                   >
+
                     <label
                       className="
                         block
@@ -705,7 +1090,9 @@ const ContactPage = () => {
                       Full Name
                     </label>
 
+
                     <div className="relative">
+
                       <User
                         size={15}
                         className="
@@ -715,13 +1102,19 @@ const ContactPage = () => {
                           -translate-y-1/2
                         "
                         style={{
-                          color: colors.primary,
+                          color:
+                            colors.primary,
                         }}
                       />
 
+
                       <input
                         type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
                         placeholder="Enter your name"
+                        disabled={contactLoading}
                         className="
                           w-full
                           h-10
@@ -732,19 +1125,27 @@ const ContactPage = () => {
                           text-xs
                           outline-none
                           transition-all
+                          disabled:bg-gray-50
+                          disabled:cursor-not-allowed
                         "
                         style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.inputText,
+                          backgroundColor:
+                            colors.inputBg,
+                          borderColor:
+                            colors.inputBorder,
+                          color:
+                            colors.inputText,
                         }}
                         onFocus={inputFocus}
                         onBlur={inputBlur}
                       />
+
                     </div>
+
                   </motion.div>
 
-                  {/* Email */}
+
+                  {/* EMAIL */}
 
                   <motion.div
                     initial={{
@@ -762,6 +1163,7 @@ const ContactPage = () => {
                       delay: 0.2,
                     }}
                   >
+
                     <label
                       className="
                         block
@@ -776,7 +1178,9 @@ const ContactPage = () => {
                       Email Address
                     </label>
 
+
                     <div className="relative">
+
                       <Mail
                         size={15}
                         className="
@@ -786,13 +1190,19 @@ const ContactPage = () => {
                           -translate-y-1/2
                         "
                         style={{
-                          color: colors.primary,
+                          color:
+                            colors.primary,
                         }}
                       />
 
+
                       <input
                         type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
                         placeholder="Enter your email"
+                        disabled={contactLoading}
                         className="
                           w-full
                           h-10
@@ -803,23 +1213,40 @@ const ContactPage = () => {
                           text-xs
                           outline-none
                           transition-all
+                          disabled:bg-gray-50
+                          disabled:cursor-not-allowed
                         "
                         style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.inputText,
+                          backgroundColor:
+                            colors.inputBg,
+                          borderColor:
+                            colors.inputBorder,
+                          color:
+                            colors.inputText,
                         }}
                         onFocus={inputFocus}
                         onBlur={inputBlur}
                       />
+
                     </div>
+
                   </motion.div>
+
                 </div>
+
 
                 {/* ORGANIZATION + PHONE */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Organization */}
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-4
+                  "
+                >
+
+                  {/* ORGANIZATION */}
 
                   <motion.div
                     initial={{
@@ -837,6 +1264,7 @@ const ContactPage = () => {
                       delay: 0.25,
                     }}
                   >
+
                     <label
                       className="
                         block
@@ -851,7 +1279,9 @@ const ContactPage = () => {
                       Organization
                     </label>
 
+
                     <div className="relative">
+
                       <Building2
                         size={15}
                         className="
@@ -861,13 +1291,21 @@ const ContactPage = () => {
                           -translate-y-1/2
                         "
                         style={{
-                          color: colors.primary,
+                          color:
+                            colors.primary,
                         }}
                       />
 
+
                       <input
                         type="text"
+                        name="organization"
+                        value={
+                          formData.organization
+                        }
+                        onChange={handleChange}
                         placeholder="Organization name"
+                        disabled={contactLoading}
                         className="
                           w-full
                           h-10
@@ -878,19 +1316,27 @@ const ContactPage = () => {
                           text-xs
                           outline-none
                           transition-all
+                          disabled:bg-gray-50
+                          disabled:cursor-not-allowed
                         "
                         style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.inputText,
+                          backgroundColor:
+                            colors.inputBg,
+                          borderColor:
+                            colors.inputBorder,
+                          color:
+                            colors.inputText,
                         }}
                         onFocus={inputFocus}
                         onBlur={inputBlur}
                       />
+
                     </div>
+
                   </motion.div>
 
-                  {/* Phone */}
+
+                  {/* PHONE */}
 
                   <motion.div
                     initial={{
@@ -908,6 +1354,7 @@ const ContactPage = () => {
                       delay: 0.3,
                     }}
                   >
+
                     <label
                       className="
                         block
@@ -922,7 +1369,9 @@ const ContactPage = () => {
                       Phone Number
                     </label>
 
+
                     <div className="relative">
+
                       <Phone
                         size={15}
                         className="
@@ -932,13 +1381,19 @@ const ContactPage = () => {
                           -translate-y-1/2
                         "
                         style={{
-                          color: colors.primary,
+                          color:
+                            colors.primary,
                         }}
                       />
 
+
                       <input
                         type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
                         placeholder="Enter phone number"
+                        disabled={contactLoading}
                         className="
                           w-full
                           h-10
@@ -949,18 +1404,27 @@ const ContactPage = () => {
                           text-xs
                           outline-none
                           transition-all
+                          disabled:bg-gray-50
+                          disabled:cursor-not-allowed
                         "
                         style={{
-                          backgroundColor: colors.inputBg,
-                          borderColor: colors.inputBorder,
-                          color: colors.inputText,
+                          backgroundColor:
+                            colors.inputBg,
+                          borderColor:
+                            colors.inputBorder,
+                          color:
+                            colors.inputText,
                         }}
                         onFocus={inputFocus}
                         onBlur={inputBlur}
                       />
+
                     </div>
+
                   </motion.div>
+
                 </div>
+
 
                 {/* SUBJECT */}
 
@@ -980,6 +1444,7 @@ const ContactPage = () => {
                     delay: 0.35,
                   }}
                 >
+
                   <label
                     className="
                       block
@@ -994,7 +1459,9 @@ const ContactPage = () => {
                     Subject
                   </label>
 
+
                   <div className="relative">
+
                     <MessageSquare
                       size={15}
                       className="
@@ -1004,13 +1471,19 @@ const ContactPage = () => {
                         -translate-y-1/2
                       "
                       style={{
-                        color: colors.primary,
+                        color:
+                          colors.primary,
                       }}
                     />
 
+
                     <input
                       type="text"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
                       placeholder="What would you like to know?"
+                      disabled={contactLoading}
                       className="
                         w-full
                         h-10
@@ -1021,17 +1494,25 @@ const ContactPage = () => {
                         text-xs
                         outline-none
                         transition-all
+                        disabled:bg-gray-50
+                        disabled:cursor-not-allowed
                       "
                       style={{
-                        backgroundColor: colors.inputBg,
-                        borderColor: colors.inputBorder,
-                        color: colors.inputText,
+                        backgroundColor:
+                          colors.inputBg,
+                        borderColor:
+                          colors.inputBorder,
+                        color:
+                          colors.inputText,
                       }}
                       onFocus={inputFocus}
                       onBlur={inputBlur}
                     />
+
                   </div>
+
                 </motion.div>
+
 
                 {/* MESSAGE */}
 
@@ -1051,6 +1532,7 @@ const ContactPage = () => {
                     delay: 0.4,
                   }}
                 >
+
                   <label
                     className="
                       block
@@ -1065,9 +1547,14 @@ const ContactPage = () => {
                     Message
                   </label>
 
+
                   <textarea
                     rows="4"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
                     placeholder="Write your message..."
+                    disabled={contactLoading}
                     className="
                       w-full
                       px-3
@@ -1078,21 +1565,29 @@ const ContactPage = () => {
                       outline-none
                       resize-none
                       transition-all
+                      disabled:bg-gray-50
+                      disabled:cursor-not-allowed
                     "
                     style={{
-                      backgroundColor: colors.inputBg,
-                      borderColor: colors.inputBorder,
-                      color: colors.inputText,
+                      backgroundColor:
+                        colors.inputBg,
+                      borderColor:
+                        colors.inputBorder,
+                      color:
+                        colors.inputText,
                     }}
                     onFocus={inputFocus}
                     onBlur={inputBlur}
                   />
+
                 </motion.div>
+
 
                 {/* SEND BUTTON */}
 
                 <motion.button
                   type="submit"
+                  disabled={contactLoading}
                   initial={{
                     opacity: 0,
                     y: 12,
@@ -1107,14 +1602,22 @@ const ContactPage = () => {
                   transition={{
                     delay: 0.45,
                   }}
-                  whileHover={{
-                    scale: 1.04,
-                    boxShadow:
-                      "0 8px 20px rgba(124,58,237,0.20)",
-                  }}
-                  whileTap={{
-                    scale: 0.96,
-                  }}
+                  whileHover={
+                    !contactLoading
+                      ? {
+                          scale: 1.04,
+                          boxShadow:
+                            "0 8px 20px rgba(124,58,237,0.20)",
+                        }
+                      : {}
+                  }
+                  whileTap={
+                    !contactLoading
+                      ? {
+                          scale: 0.96,
+                        }
+                      : {}
+                  }
                   className="
                     inline-flex
                     items-center
@@ -1128,34 +1631,70 @@ const ContactPage = () => {
                     font-semibold
                     transition-all
                     duration-200
+                    disabled:opacity-60
+                    disabled:cursor-not-allowed
                   "
                   style={{
-                    backgroundColor: colors.buttonBg,
+                    backgroundColor:
+                      colors.buttonBg,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      colors.buttonHover;
+                    if (!contactLoading) {
+                      e.currentTarget.style.backgroundColor =
+                        colors.buttonHover;
+                    }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor =
                       colors.buttonBg;
                   }}
                 >
-                  Send Message
 
-                  <motion.span
-                    whileHover={{
-                      x: 4,
-                    }}
-                  >
-                    <Send size={14} />
-                  </motion.span>
+                  {contactLoading ? (
+                    <>
+                      {/* Loading Spinner */}
+
+                      <span
+                        className="
+                          w-4
+                          h-4
+                          border-2
+                          border-white/40
+                          border-t-white
+                          rounded-full
+                          animate-spin
+                        "
+                      />
+
+                      Sending...
+
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+
+                      <motion.span
+                        whileHover={{
+                          x: 4,
+                        }}
+                      >
+                        <Send size={14} />
+                      </motion.span>
+                    </>
+                  )}
+
                 </motion.button>
+
               </form>
+
             </motion.div>
+
           </motion.div>
+
         </div>
+
       </section>
+
 
       {/* =====================================================
           BOTTOM CTA
@@ -1179,6 +1718,7 @@ const ContactPage = () => {
           duration: 0.7,
         }}
       >
+
         <div
           className="
             max-w-7xl
@@ -1190,10 +1730,13 @@ const ContactPage = () => {
             text-center
           "
           style={{
-            backgroundColor: colors.cardBg,
-            borderColor: colors.cardBorder,
+            backgroundColor:
+              colors.cardBg,
+            borderColor:
+              colors.cardBorder,
           }}
         >
+
           <motion.h3
             className="
               text-lg
@@ -1221,17 +1764,22 @@ const ContactPage = () => {
             We Are Here to Help
           </motion.h3>
 
+
           <p
             className="text-xs mt-1.5"
             style={{
-              color: colors.mutedText,
+              color:
+                colors.mutedText,
             }}
           >
-            Connect with our team and discover how we can support
-            your next conference.
+            Connect with our team and discover
+            how we can support your next conference.
           </p>
+
         </div>
+
       </motion.section>
+
     </div>
   );
 };

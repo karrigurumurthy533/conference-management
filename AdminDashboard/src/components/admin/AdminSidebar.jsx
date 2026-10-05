@@ -15,6 +15,7 @@ import {
   Receipt,
   Download,
   FileText,
+  Users
 } from "lucide-react";
 
 import { logout } from "../../redux/authSlice";
@@ -32,9 +33,7 @@ const AdminSidebar = () => {
 
   const iconClass = ({ isActive }) =>
     `shrink-0 transition-all duration-200 ${
-      isActive
-        ? "text-[#7C3AED]"
-        : "text-gray-500 group-hover:text-[#7C3AED]"
+      isActive ? "text-[#7C3AED]" : "text-gray-500 group-hover:text-[#7C3AED]"
     }`;
 
   const handleLogout = async () => {
@@ -224,6 +223,20 @@ const AdminSidebar = () => {
                 className={iconClass({ isActive })}
               />
               <span>Reviews</span>
+            </>
+          )}
+        </NavLink>
+
+        {/* Subscribers */}
+        <NavLink to="/admin/subscribers" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <Users
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+              <span>Subscribers</span>
             </>
           )}
         </NavLink>
