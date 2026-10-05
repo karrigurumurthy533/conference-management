@@ -28,6 +28,9 @@ import BrochureManagement from "./pages/admin/brochuers";
 import UploadBrochure from "./pages/admin/UploadBrochure";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AddReview from "./pages/admin/AddReview";
+import Invoices from "./pages/admin/Invoices";
+import Abstracts from "./pages/admin/Abstracts";
+import DownloadBrochures from "./pages/admin/DownloadBrochures";
 
 function App() {
   return (
@@ -81,10 +84,15 @@ function App() {
         <Route path="brochures" element={<BrochureManagement />} />
         <Route path="brochures/upload" element={<UploadBrochure />} />
 
+        <Route path="/admin/invoices" element={<Invoices />} />
+
+        <Route path="/admin/abstracts" element={<Abstracts />} />
+        <Route path="/admin/download-brochures" element={<DownloadBrochures />}/>
+
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
         <Route path="/admin/reviews/add" element={<AddReview />} />
-         <Route path="/admin/reviews/add/:id" element={<AddReview />} />
+        <Route path="/admin/reviews/add/:id" element={<AddReview />} />
 
         <Route path="notifications" element={<Notifications />} />
 

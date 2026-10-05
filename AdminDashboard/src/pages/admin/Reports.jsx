@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+
+import { motion, AnimatePresence } from "framer-motion";
+
 import {
   CalendarDays,
   Users,
@@ -21,21 +24,139 @@ import {
 import axiosInstance from "../../redux/axiosInstance";
 
 /* =========================================================
+   MOTION VARIANTS
+========================================================= */
+
+const pageVariants = {
+  hidden: {
+    opacity: 0,
+    y: 8,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: "easeOut",
+    },
+  },
+};
+
+const statsContainerVariants = {
+  hidden: {},
+
+  visible: {
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const statCardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 8,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut",
+    },
+  },
+};
+
+const sectionVariants = {
+  hidden: {
+    opacity: 0,
+    y: 8,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: "easeOut",
+    },
+  },
+};
+
+const listContainerVariants = {
+  hidden: {},
+
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const listItemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 6,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.25,
+      ease: "easeOut",
+    },
+  },
+};
+
+const emptyVariants = {
+  hidden: {
+    opacity: 0,
+    y: 8,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut",
+    },
+  },
+};
+
+/* =========================================================
    COMPONENT
 ========================================================= */
 
 const Reports = () => {
-  const [activeReport, setActiveReport] = useState("conferences");
+  const [activeReport, setActiveReport] =
+    useState("conferences");
+
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const [conferenceData, setConferenceData] = useState([]);
-  const [registrationData, setRegistrationData] = useState([]);
-  const [speakersData, setSpeakersData] = useState([]);
-  const [paymentsData, setPaymentsData] = useState([]);
+  const [statusFilter, setStatusFilter] =
+    useState("All");
 
-  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [conferenceData, setConferenceData] =
+    useState([]);
+
+  const [registrationData, setRegistrationData] =
+    useState([]);
+
+  const [speakersData, setSpeakersData] =
+    useState([]);
+
+  const [paymentsData, setPaymentsData] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(false);
 
   const itemsPerPage = 6;
 
@@ -105,11 +226,14 @@ const Reports = () => {
     if (!date) return "-";
 
     try {
-      return new Date(date).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+      return new Date(date).toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }
+      );
     } catch {
       return "-";
     }
@@ -133,7 +257,9 @@ const Reports = () => {
       item?.date?.endDate;
 
     if (startDate && endDate) {
-      return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+      return `${formatDate(startDate)} – ${formatDate(
+        endDate
+      )}`;
     }
 
     if (startDate) {
@@ -160,31 +286,19 @@ const Reports = () => {
       item?.conferenceTitle ||
       item?.title ||
       item?.name ||
-      item?.conference?.basicInformation?.conferenceTitle ||
+      item?.conference?.basicInformation
+        ?.conferenceTitle ||
       item?.conference?.basicInformation?.title ||
       item?.conference?.title ||
       item?.conference?.name ||
       item?.conference?.conferenceTitle ||
-      item?.conference?.conferenceId?.basicInformation
-        ?.conferenceTitle ||
-      item?.conference?.conferenceId?.basicInformation?.title ||
+      item?.conference?.conferenceId
+        ?.basicInformation?.conferenceTitle ||
+      item?.conference?.conferenceId
+        ?.basicInformation?.title ||
       item?.conference?.conferenceId?.title ||
       item?.conference?.conferenceId?.name ||
       "-"
-    );
-  };
-
-  /* =========================================================
-     STATUS
-  ========================================================= */
-
-  const getStatus = (item) => {
-    return (
-      item?.status ||
-      item?.registrationStatus ||
-      item?.paymentStatus ||
-      item?.speakerStatus ||
-      "Pending"
     );
   };
 
@@ -203,64 +317,70 @@ const Reports = () => {
         response?.data
       );
 
-      const data = getArrayFromResponse(response);
+      const data =
+        getArrayFromResponse(response);
 
-      const normalized = data.map((item, index) => {
-        const registrations =
-          Number(
-            item?.registrationsCount ??
-              item?.registrationCount ??
-              item?.totalRegistrations ??
-              item?.registrations ??
-              item?.stats?.registrations ??
-              0
-          ) || 0;
+      const normalized = data.map(
+        (item, index) => {
+          const registrations =
+            Number(
+              item?.registrationsCount ??
+                item?.registrationCount ??
+                item?.totalRegistrations ??
+                item?.registrations ??
+                item?.stats?.registrations ??
+                0
+            ) || 0;
 
-        const speakers =
-          Number(
-            item?.speakersCount ??
-              item?.speakerCount ??
-              item?.totalSpeakers ??
-              item?.speakers ??
-              item?.stats?.speakers ??
-              0
-          ) || 0;
+          const speakers =
+            Number(
+              item?.speakersCount ??
+                item?.speakerCount ??
+                item?.totalSpeakers ??
+                item?.speakers ??
+                item?.stats?.speakers ??
+                0
+            ) || 0;
 
-        const revenue =
-          Number(
-            item?.revenue ??
-              item?.totalRevenue ??
-              item?.stats?.revenue ??
-              0
-          ) || 0;
+          const revenue =
+            Number(
+              item?.revenue ??
+                item?.totalRevenue ??
+                item?.stats?.revenue ??
+                0
+            ) || 0;
 
-        return {
-          id:
-            item?._id ||
-            item?.id ||
-            index + 1,
+          return {
+            id:
+              item?._id ||
+              item?.id ||
+              index + 1,
 
-          name: getConferenceName(item),
+            name:
+              getConferenceName(item),
 
-          shortName:
-            item?.basicInformation?.shortName ||
-            item?.shortName ||
-            item?.code ||
-            "-",
+            shortName:
+              item?.basicInformation
+                ?.shortName ||
+              item?.shortName ||
+              item?.code ||
+              "-",
 
-          date: getConferenceDate(item),
+            date:
+              getConferenceDate(item),
 
-          registrations,
+            registrations,
 
-          speakers,
+            speakers,
 
-          revenue,
+            revenue,
 
-          status:
-            item?.status ||
-            "Upcoming",
-        };
-      });
+            status:
+              item?.status ||
+              "Upcoming",
+          };
+        }
+      );
 
       setConferenceData(normalized);
     } catch (error) {
@@ -275,125 +395,119 @@ const Reports = () => {
 
   /* =========================================================
      LOAD REGISTRATIONS
-     
-     IMPORTANT:
-     Full Name = First Name + Last Name
-     Conference column removed from data.
   ========================================================= */
 
   const fetchRegistrations = async () => {
     try {
-      const response = await axiosInstance.get(
-        "/user/registrations"
-      );
+      const response =
+        await axiosInstance.get(
+          "/user/registrations"
+        );
 
       console.log(
         "Reports registrations response:",
         response?.data
       );
 
-      const data = getArrayFromResponse(response);
+      const data =
+        getArrayFromResponse(response);
 
-      /*
-        Each registration is displayed as one row.
+      const normalized = data.map(
+        (item, index) => {
+          const firstName =
+            item?.firstName ||
+            item?.user?.firstName ||
+            item?.registration
+              ?.firstName ||
+            item?.attendee?.firstName ||
+            "";
 
-        Example:
-        firstName: "Gurumurthy"
-        lastName: "Karri"
+          const lastName =
+            item?.lastName ||
+            item?.user?.lastName ||
+            item?.registration
+              ?.lastName ||
+            item?.attendee?.lastName ||
+            "";
 
-        Display:
-        Gurumurthy Karri
-      */
+          const fullName =
+            `${firstName} ${lastName}`.trim() ||
+            item?.fullName ||
+            item?.user?.fullName ||
+            item?.user?.name ||
+            item?.registration
+              ?.fullName ||
+            item?.attendee
+              ?.fullName ||
+            item?.name ||
+            "Unknown";
 
-      const normalized = data.map((item, index) => {
-        const firstName =
-          item?.firstName ||
-          item?.user?.firstName ||
-          item?.registration?.firstName ||
-          item?.attendee?.firstName ||
-          "";
+          const rawStatus =
+            String(
+              item?.status ||
+                item?.registrationStatus ||
+                item?.paymentStatus ||
+                item?.payment?.status ||
+                "Pending"
+            ).toLowerCase();
 
-        const lastName =
-          item?.lastName ||
-          item?.user?.lastName ||
-          item?.registration?.lastName ||
-          item?.attendee?.lastName ||
-          "";
+          let confirmed = 0;
+          let pending = 0;
+          let cancelled = 0;
+          let displayStatus = "Pending";
 
-        const fullName =
-          `${firstName} ${lastName}`.trim() ||
-          item?.fullName ||
-          item?.user?.fullName ||
-          item?.user?.name ||
-          item?.registration?.fullName ||
-          item?.attendee?.fullName ||
-          item?.name ||
-          "Unknown";
+          if (
+            rawStatus === "confirmed" ||
+            rawStatus === "approved" ||
+            rawStatus === "completed" ||
+            rawStatus === "paid" ||
+            rawStatus === "success" ||
+            rawStatus === "successful"
+          ) {
+            confirmed = 1;
+            displayStatus = "Confirmed";
+          } else if (
+            rawStatus === "cancelled" ||
+            rawStatus === "canceled" ||
+            rawStatus === "rejected"
+          ) {
+            cancelled = 1;
+            displayStatus = "Cancelled";
+          } else if (
+            rawStatus === "failed"
+          ) {
+            cancelled = 1;
+            displayStatus = "Failed";
+          } else {
+            pending = 1;
+            displayStatus = "Pending";
+          }
 
-        const rawStatus = String(
-          item?.status ||
-            item?.registrationStatus ||
-            item?.paymentStatus ||
-            item?.payment?.status ||
-            "Pending"
-        ).toLowerCase();
+          return {
+            id:
+              item?._id ||
+              item?.id ||
+              index + 1,
 
-        let confirmed = 0;
-        let pending = 0;
-        let cancelled = 0;
-        let displayStatus = "Pending";
+            fullName,
 
-        if (
-          rawStatus === "confirmed" ||
-          rawStatus === "approved" ||
-          rawStatus === "completed" ||
-          rawStatus === "paid" ||
-          rawStatus === "success" ||
-          rawStatus === "successful"
-        ) {
-          confirmed = 1;
-          displayStatus = "Confirmed";
-        } else if (
-          rawStatus === "cancelled" ||
-          rawStatus === "canceled" ||
-          rawStatus === "rejected"
-        ) {
-          cancelled = 1;
-          displayStatus = "Cancelled";
-        } else if (
-          rawStatus === "failed"
-        ) {
-          cancelled = 1;
-          displayStatus = "Failed";
-        } else {
-          pending = 1;
-          displayStatus = "Pending";
+            total: 1,
+
+            confirmed,
+
+            pending,
+
+            cancelled,
+
+            percentage:
+              confirmed === 1
+                ? 100
+                : 0,
+
+            status: displayStatus,
+          };
         }
-
-        return {
-          id:
-            item?._id ||
-            item?.id ||
-            index + 1,
-
-          fullName,
-
-          total: 1,
-
-          confirmed,
-
-          pending,
-
-          cancelled,
-
-          percentage:
-            confirmed === 1
-              ? 100
-              : 0,
-
-          status: displayStatus,
-        };
-      });
+      );
 
       setRegistrationData(normalized);
     } catch (error) {
@@ -412,16 +526,18 @@ const Reports = () => {
 
   const fetchSpeakers = async () => {
     try {
-      const response = await axiosInstance.get(
-        "/admin/speakers"
-      );
+      const response =
+        await axiosInstance.get(
+          "/admin/speakers"
+        );
 
       console.log(
         "Reports speakers response:",
         response?.data
       );
 
-      const data = getArrayFromResponse(response);
+      const data =
+        getArrayFromResponse(response);
 
       const normalized = data.map(
         (item, index) => {
@@ -454,7 +570,8 @@ const Reports = () => {
             conference:
               item?.conference?.title ||
               item?.conference?.name ||
-              item?.conference?.basicInformation
+              item?.conference
+                ?.basicInformation
                 ?.conferenceTitle ||
               item?.conferenceId?.title ||
               item?.conferenceId?.name ||
@@ -498,16 +615,18 @@ const Reports = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await axiosInstance.get(
-        "/admin/payments"
-      );
+      const response =
+        await axiosInstance.get(
+          "/admin/payments"
+        );
 
       console.log(
         "Reports payments response:",
         response?.data
       );
 
-      const data = getArrayFromResponse(response);
+      const data =
+        getArrayFromResponse(response);
 
       const normalized = data.map(
         (item, index) => ({
@@ -617,8 +736,9 @@ const Reports = () => {
     paymentsData.reduce(
       (sum, item) =>
         sum +
-        (String(item.status).toLowerCase() ===
-        "paid"
+        (String(
+          item.status
+        ).toLowerCase() === "paid"
           ? Number(item.amount || 0)
           : 0),
       0
@@ -627,8 +747,9 @@ const Reports = () => {
   const upcomingConferences =
     conferenceData.filter(
       (item) =>
-        String(item.status).toLowerCase() ===
-        "upcoming"
+        String(
+          item.status
+        ).toLowerCase() === "upcoming"
     ).length;
 
   /* =========================================================
@@ -638,19 +759,31 @@ const Reports = () => {
   const filteredData = useMemo(() => {
     let data = [];
 
-    if (activeReport === "conferences") {
+    if (
+      activeReport ===
+      "conferences"
+    ) {
       data = conferenceData;
     }
 
-    if (activeReport === "registrations") {
+    if (
+      activeReport ===
+      "registrations"
+    ) {
       data = registrationData;
     }
 
-    if (activeReport === "speakers") {
+    if (
+      activeReport ===
+      "speakers"
+    ) {
       data = speakersData;
     }
 
-    if (activeReport === "payments") {
+    if (
+      activeReport ===
+      "payments"
+    ) {
       data = paymentsData;
     }
 
@@ -670,7 +803,9 @@ const Reports = () => {
 
       let matchesStatus = true;
 
-      if (statusFilter !== "All") {
+      if (
+        statusFilter !== "All"
+      ) {
         matchesStatus =
           String(
             item.status
@@ -866,7 +1001,8 @@ const Reports = () => {
     const blob = new Blob(
       [csvContent],
       {
-        type: "text/csv;charset=utf-8;",
+        type:
+          "text/csv;charset=utf-8;",
       }
     );
 
@@ -897,15 +1033,66 @@ const Reports = () => {
     window.print();
   };
 
+  /* =========================================================
+     REPORT TABS
+  ========================================================= */
+
+  const reportTabs = [
+    {
+      id: "conferences",
+      label: "All Conferences",
+      icon: CalendarDays,
+    },
+    {
+      id: "registrations",
+      label: "Registrations",
+      icon: Users,
+    },
+    {
+      id: "speakers",
+      label: "Speakers",
+      icon: Mic2,
+    },
+    {
+      id: "payments",
+      label: "Payments",
+      icon: CreditCard,
+    },
+  ];
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <div className="min-w-0 space-y-3">
+    <motion.div
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+      className="min-w-0 w-full space-y-3 overflow-hidden"
+    >
       {/* =====================================================
           SUMMARY CARDS
       ===================================================== */}
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <motion.div
+        variants={statsContainerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+      >
         {/* Conferences */}
-        <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+
+        <motion.div
+          variants={statCardVariants}
+          whileHover={{
+            y: -2,
+            transition: {
+              duration: 0.2,
+            },
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500">
@@ -917,21 +1104,41 @@ const Reports = () => {
               </p>
 
               <p className="mt-1 text-[10px] font-medium text-violet-600">
-                {upcomingConferences} upcoming
+                {upcomingConferences}{" "}
+                upcoming
               </p>
             </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <motion.div
+              whileHover={{
+                rotate: 4,
+                scale: 1.05,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"
+            >
               <CalendarDays
                 size={18}
                 className="text-violet-600"
               />
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Registrations */}
-        <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+
+        <motion.div
+          variants={statCardVariants}
+          whileHover={{
+            y: -2,
+            transition: {
+              duration: 0.2,
+            },
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500">
@@ -948,17 +1155,36 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <motion.div
+              whileHover={{
+                rotate: 4,
+                scale: 1.05,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"
+            >
               <Users
                 size={18}
                 className="text-violet-600"
               />
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Speakers */}
-        <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+
+        <motion.div
+          variants={statCardVariants}
+          whileHover={{
+            y: -2,
+            transition: {
+              duration: 0.2,
+            },
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500">
@@ -974,17 +1200,36 @@ const Reports = () => {
               </p>
             </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <motion.div
+              whileHover={{
+                rotate: 4,
+                scale: 1.05,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"
+            >
               <Mic2
                 size={18}
                 className="text-violet-600"
               />
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Revenue */}
-        <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+
+        <motion.div
+          variants={statCardVariants}
+          whileHover={{
+            y: -2,
+            transition: {
+              duration: 0.2,
+            },
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500">
@@ -1005,21 +1250,38 @@ const Reports = () => {
               </p>
             </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <motion.div
+              whileHover={{
+                rotate: 4,
+                scale: 1.05,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"
+            >
               <IndianRupee
                 size={18}
                 className="text-violet-600"
               />
-            </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* =====================================================
           REPORT CONTAINER
       ===================================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <motion.div
+        variants={sectionVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{
+          delay: 0.12,
+        }}
+        className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+      >
         {/* ===================================================
             REPORT HEADER
         =================================================== */}
@@ -1027,33 +1289,75 @@ const Reports = () => {
         <div className="border-b border-gray-100 px-4 py-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h2 className="text-[15px] font-bold text-gray-900">
+              <motion.h2
+                initial={{
+                  opacity: 0,
+                  x: -6,
+                }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  delay: 0.2,
+                }}
+                className="text-[15px] font-bold text-gray-900"
+              >
                 Reports & Analytics
-              </h2>
+              </motion.h2>
 
-              <p className="mt-0.5 text-[11px] text-gray-400">
-                Generate and review conference management reports.
-              </p>
+              <motion.p
+                initial={{
+                  opacity: 0,
+                  x: -6,
+                }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  delay: 0.24,
+                }}
+                className="mt-0.5 text-[11px] text-gray-400"
+              >
+                Generate and review
+                conference management
+                reports.
+              </motion.p>
             </div>
 
             <div className="flex items-center gap-2">
-              <button
+              <motion.button
                 type="button"
                 onClick={handlePrint}
-                className="flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-[10px] font-semibold text-gray-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
+                whileHover={{
+                  y: -1,
+                }}
+                whileTap={{
+                  scale: 0.95,
+                }}
+                className="flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-[11px] font-semibold text-gray-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
               >
                 <Printer size={13} />
                 Print
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 type="button"
                 onClick={handleExport}
-                className="flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[10px] font-semibold text-white transition hover:bg-violet-700"
+                whileHover={{
+                  y: -1,
+                }}
+                whileTap={{
+                  scale: 0.95,
+                }}
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[11px] font-semibold text-white transition hover:bg-violet-700"
               >
                 <Download size={13} />
                 Export Report
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -1063,62 +1367,65 @@ const Reports = () => {
         =================================================== */}
 
         <div className="flex flex-wrap gap-2 border-b border-gray-100 px-4 py-2.5">
-          {[
-            {
-              id: "conferences",
-              label: "All Conferences",
-              icon: CalendarDays,
-            },
-            {
-              id: "registrations",
-              label: "Registrations",
-              icon: Users,
-            },
-            {
-              id: "speakers",
-              label: "Speakers",
-              icon: Mic2,
-            },
-            {
-              id: "payments",
-              label: "Payments",
-              icon: CreditCard,
-            },
-          ].map((tab) => {
-            const Icon = tab.icon;
+          {reportTabs.map(
+            (tab) => {
+              const Icon = tab.icon;
 
-            const active =
-              activeReport ===
-              tab.id;
+              const active =
+                activeReport ===
+                tab.id;
 
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() =>
-                  handleReportChange(
-                    tab.id
-                  )
-                }
-                className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[10px] font-semibold transition ${
-                  active
-                    ? "bg-violet-600 text-white"
-                    : "border border-gray-200 bg-white text-gray-500 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
-                }`}
-              >
-                <Icon size={13} />
-                {tab.label}
-              </button>
-            );
-          })}
+              return (
+                <motion.button
+                  key={tab.id}
+                  type="button"
+                  onClick={() =>
+                    handleReportChange(
+                      tab.id
+                    )
+                  }
+                  whileHover={{
+                    y: -1,
+                  }}
+                  whileTap={{
+                    scale: 0.95,
+                  }}
+                  className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold transition ${
+                    active
+                      ? "bg-violet-600 text-white"
+                      : "border border-gray-200 bg-white text-gray-500 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
+                  }`}
+                >
+                  <Icon size={13} />
+
+                  {tab.label}
+                </motion.button>
+              );
+            }
+          )}
         </div>
 
         {/* ===================================================
             FILTER TOOLBAR
         =================================================== */}
 
-        <div className="flex flex-col gap-2 border-b border-gray-100 p-3 md:flex-row md:items-center">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 5,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+            delay: 0.2,
+          }}
+          className="flex flex-col gap-2 border-b border-gray-100 p-3 md:flex-row md:items-center"
+        >
           {/* Search */}
+
           <div className="relative min-w-0 flex-1">
             <Search
               size={14}
@@ -1147,6 +1454,7 @@ const Reports = () => {
           </div>
 
           {/* Status */}
+
           <div className="relative">
             <Filter
               size={13}
@@ -1159,9 +1467,10 @@ const Reports = () => {
                 setStatusFilter(
                   e.target.value
                 );
+
                 setCurrentPage(1);
               }}
-              className="h-9 rounded-lg border border-gray-200 bg-white pl-8 pr-7 text-[10px] font-medium text-gray-600 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
+              className="h-9 rounded-lg border border-gray-200 bg-white pl-8 pr-7 text-[11px] font-medium text-gray-600 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
             >
               <option value="All">
                 All Status
@@ -1194,8 +1503,9 @@ const Reports = () => {
           </div>
 
           {/* Date */}
+
           <select
-            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-[10px] font-medium text-gray-600 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-600 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100"
           >
             <option>
               All Time
@@ -1217,82 +1527,127 @@ const Reports = () => {
               This Year
             </option>
           </select>
-        </div>
+        </motion.div>
 
         {/* ===================================================
             TABLE
         =================================================== */}
 
-        <div className="w-full overflow-x-auto">
+        {/* 
+          overflow-hidden intentionally used here.
+          This removes the horizontal scrollbar below the table.
+        */}
+        <div className="w-full overflow-hidden">
           {loading ? (
-            <div className="flex min-h-[260px] flex-col items-center justify-center">
-              <span className="h-7 w-7 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+            <motion.div
+              initial={{
+                opacity: 0,
+                scale: 0.98,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                duration: 0.3,
+              }}
+              className="flex min-h-[260px] flex-col items-center justify-center"
+            >
+              <motion.span
+                animate={{
+                  rotate: 360,
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="h-7 w-7 rounded-full border-2 border-violet-200 border-t-violet-600"
+              />
 
               <p className="mt-3 text-[11px] text-gray-400">
                 Loading reports...
               </p>
-            </div>
+            </motion.div>
           ) : (
             <>
               {/* ================= ALL CONFERENCES ================= */}
 
               {activeReport ===
                 "conferences" && (
-                <table className="w-full min-w-[850px] text-left">
+                <table className="w-full table-fixed text-left">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/70">
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[32%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Conference
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[17%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Date
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[14%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Registrations
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[12%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Speakers
                       </th>
 
-                      <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[14%] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Revenue
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[11%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Status
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <motion.tbody
+                    variants={
+                      listContainerVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {paginatedData.map(
                       (conference) => (
-                        <tr
+                        <motion.tr
                           key={
                             conference.id
                           }
+                          variants={
+                            listItemVariants
+                          }
+                          whileHover={{
+                            x: 2,
+                          }}
                           className="border-b border-gray-50 transition hover:bg-violet-50/20"
                         >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50">
+                          <td className="max-w-0 px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <motion.div
+                                whileHover={{
+                                  scale: 1.05,
+                                  rotate: 3,
+                                }}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50"
+                              >
                                 <CalendarDays
-                                  size={14}
+                                  size={15}
                                   className="text-violet-600"
                                 />
-                              </div>
+                              </motion.div>
 
-                              <div>
-                                <p className="text-[11px] font-semibold text-gray-800">
+                              <div className="min-w-0">
+                                <p className="truncate text-[12px] font-semibold text-gray-800">
                                   {
                                     conference.name
                                   }
                                 </p>
 
-                                <p className="mt-0.5 text-[9px] text-gray-400">
+                                <p className="mt-0.5 truncate text-[10px] text-gray-400">
                                   {
                                     conference.shortName
                                   }
@@ -1301,14 +1656,14 @@ const Reports = () => {
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 text-[10px] text-gray-500">
+                          <td className="truncate px-4 py-3 text-[11px] text-gray-500">
                             {
                               conference.date
                             }
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="text-[11px] font-semibold text-gray-800">
+                            <span className="text-[12px] font-semibold text-gray-800">
                               {
                                 conference.registrations
                               }
@@ -1316,7 +1671,7 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="text-[11px] font-semibold text-gray-800">
+                            <span className="text-[12px] font-semibold text-gray-800">
                               {
                                 conference.speakers
                               }
@@ -1324,7 +1679,7 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3 text-right">
-                            <span className="text-[11px] font-semibold text-gray-800">
+                            <span className="text-[12px] font-semibold text-gray-800">
                               ₹
                               {Number(
                                 conference.revenue ||
@@ -1342,10 +1697,10 @@ const Reports = () => {
                               }
                             />
                           </td>
-                        </tr>
+                        </motion.tr>
                       )
                     )}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               )}
 
@@ -1353,59 +1708,72 @@ const Reports = () => {
 
               {activeReport ===
                 "registrations" && (
-                <table className="w-full min-w-[850px] text-left">
+                <table className="w-full table-fixed text-left">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/70">
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[28%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Full Name
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[12%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Total
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[15%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Confirmed
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[15%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Pending
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[15%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Cancelled
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[15%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Confirmation
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <motion.tbody
+                    variants={
+                      listContainerVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {paginatedData.map(
                       (item) => (
-                        <tr
+                        <motion.tr
                           key={item.id}
+                          variants={
+                            listItemVariants
+                          }
+                          whileHover={{
+                            x: 2,
+                          }}
                           className="border-b border-gray-50 transition hover:bg-violet-50/20"
                         >
                           <td className="px-4 py-3">
-                            <p className="text-[11px] font-semibold text-gray-800">
+                            <p className="truncate text-[12px] font-semibold text-gray-800">
                               {
                                 item.fullName
                               }
                             </p>
                           </td>
 
-                          <td className="px-4 py-3 text-center text-[11px] font-semibold text-gray-800">
+                          <td className="px-4 py-3 text-center text-[12px] font-semibold text-gray-800">
                             {item.total}
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                               <CheckCircle2
-                                size={12}
+                                size={13}
                               />
+
                               {
                                 item.confirmed
                               }
@@ -1413,10 +1781,11 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
                               <Clock3
-                                size={12}
+                                size={13}
                               />
+
                               {
                                 item.pending
                               }
@@ -1424,10 +1793,11 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-500">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500">
                               <XCircle
-                                size={12}
+                                size={13}
                               />
+
                               {
                                 item.cancelled
                               }
@@ -1437,15 +1807,22 @@ const Reports = () => {
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-2">
                               <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
-                                <div
-                                  className="h-full rounded-full bg-violet-600"
-                                  style={{
+                                <motion.div
+                                  initial={{
+                                    width: 0,
+                                  }}
+                                  animate={{
                                     width: `${item.percentage}%`,
                                   }}
+                                  transition={{
+                                    duration: 0.6,
+                                    ease: "easeOut",
+                                  }}
+                                  className="h-full rounded-full bg-violet-600"
                                 />
                               </div>
 
-                              <span className="text-[10px] font-semibold text-violet-600">
+                              <span className="text-[11px] font-semibold text-violet-600">
                                 {
                                   item.percentage
                                 }
@@ -1453,10 +1830,10 @@ const Reports = () => {
                               </span>
                             </div>
                           </td>
-                        </tr>
+                        </motion.tr>
                       )
                     )}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               )}
 
@@ -1464,48 +1841,63 @@ const Reports = () => {
 
               {activeReport ===
                 "speakers" && (
-                <table className="w-full min-w-[900px] text-left">
+                <table className="w-full table-fixed text-left">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/70">
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[28%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Speaker
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[32%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Conference
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[18%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Country
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[11%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Sessions
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[11%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Status
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <motion.tbody
+                    variants={
+                      listContainerVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {paginatedData.map(
                       (speaker) => (
-                        <tr
+                        <motion.tr
                           key={speaker.id}
+                          variants={
+                            listItemVariants
+                          }
+                          whileHover={{
+                            x: 2,
+                          }}
                           className="border-b border-gray-50 transition hover:bg-violet-50/20"
                         >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">
+                          <td className="max-w-0 px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <motion.div
+                                whileHover={{
+                                  scale: 1.05,
+                                }}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700"
+                              >
                                 {speaker.name
                                   .split(
                                     " "
                                   )
-                                  .slice(
-                                    1
-                                  )
+                                  .slice(0, 2)
                                   .map(
                                     (
                                       word
@@ -1517,20 +1909,17 @@ const Reports = () => {
                                   .join(
                                     ""
                                   )
-                                  .slice(
-                                    0,
-                                    2
-                                  )}
-                              </div>
+                                  .toUpperCase()}
+                              </motion.div>
 
-                              <div>
-                                <p className="text-[11px] font-semibold text-gray-800">
+                              <div className="min-w-0">
+                                <p className="truncate text-[12px] font-semibold text-gray-800">
                                   {
                                     speaker.name
                                   }
                                 </p>
 
-                                <p className="mt-0.5 text-[9px] text-gray-400">
+                                <p className="mt-0.5 truncate text-[10px] text-gray-400">
                                   {
                                     speaker.designation
                                   }
@@ -1539,20 +1928,22 @@ const Reports = () => {
                             </div>
                           </td>
 
-                          <td className="px-4 py-3 text-[10px] text-gray-600">
-                            {
-                              speaker.conference
-                            }
+                          <td className="max-w-0 px-4 py-3">
+                            <p className="truncate text-[11px] text-gray-600">
+                              {
+                                speaker.conference
+                              }
+                            </p>
                           </td>
 
-                          <td className="px-4 py-3 text-[10px] text-gray-600">
+                          <td className="truncate px-4 py-3 text-[11px] text-gray-600">
                             {
                               speaker.country
                             }
                           </td>
 
                           <td className="px-4 py-3 text-center">
-                            <span className="text-[11px] font-semibold text-gray-800">
+                            <span className="text-[12px] font-semibold text-gray-800">
                               {
                                 speaker.sessions
                               }
@@ -1566,10 +1957,10 @@ const Reports = () => {
                               }
                             />
                           </td>
-                        </tr>
+                        </motion.tr>
                       )
                     )}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               )}
 
@@ -1577,48 +1968,60 @@ const Reports = () => {
 
               {activeReport ===
                 "payments" && (
-                <table className="w-full min-w-[950px] text-left">
+                <table className="w-full table-fixed text-left">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/70">
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[14%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Payment ID
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[17%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Attendee
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[25%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Conference
                       </th>
 
-                      <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[12%] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Amount
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[11%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Method
                       </th>
 
-                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[11%] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Date
                       </th>
 
-                      <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="w-[10%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         Status
                       </th>
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <motion.tbody
+                    variants={
+                      listContainerVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {paginatedData.map(
                       (payment) => (
-                        <tr
+                        <motion.tr
                           key={payment.id}
+                          variants={
+                            listItemVariants
+                          }
+                          whileHover={{
+                            x: 2,
+                          }}
                           className="border-b border-gray-50 transition hover:bg-violet-50/20"
                         >
                           <td className="px-4 py-3">
-                            <span className="text-[10px] font-semibold text-violet-600">
+                            <span className="block truncate text-[11px] font-semibold text-violet-600">
                               {
                                 payment.id
                               }
@@ -1626,21 +2029,23 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3">
-                            <span className="text-[11px] font-medium text-gray-800">
+                            <span className="block truncate text-[12px] font-medium text-gray-800">
                               {
                                 payment.attendee
                               }
                             </span>
                           </td>
 
-                          <td className="px-4 py-3 text-[10px] text-gray-600">
-                            {
-                              payment.conference
-                            }
+                          <td className="max-w-0 px-4 py-3">
+                            <span className="block truncate text-[11px] text-gray-600">
+                              {
+                                payment.conference
+                              }
+                            </span>
                           </td>
 
                           <td className="px-4 py-3 text-right">
-                            <span className="text-[11px] font-semibold text-gray-800">
+                            <span className="text-[12px] font-semibold text-gray-800">
                               $
                               {
                                 payment.amount
@@ -1649,14 +2054,14 @@ const Reports = () => {
                           </td>
 
                           <td className="px-4 py-3">
-                            <span className="text-[10px] text-gray-600">
+                            <span className="block truncate text-[11px] text-gray-600">
                               {
                                 payment.method
                               }
                             </span>
                           </td>
 
-                          <td className="px-4 py-3 text-[10px] text-gray-500">
+                          <td className="px-4 py-3 text-[11px] text-gray-500">
                             {
                               payment.date
                             }
@@ -1669,10 +2074,10 @@ const Reports = () => {
                               }
                             />
                           </td>
-                        </tr>
+                        </motion.tr>
                       )
                     )}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               )}
 
@@ -1680,25 +2085,50 @@ const Reports = () => {
                   EMPTY STATE
               ================================================= */}
 
-              {paginatedData.length ===
-                0 && (
-                <div className="flex min-h-[260px] flex-col items-center justify-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50">
-                    <FileText
-                      size={21}
-                      className="text-violet-500"
-                    />
-                  </div>
+              <AnimatePresence mode="wait">
+                {paginatedData.length ===
+                  0 && (
+                  <motion.div
+                    key="empty-state"
+                    variants={
+                      emptyVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                    exit={{
+                      opacity: 0,
+                      y: 6,
+                    }}
+                    className="flex min-h-[260px] flex-col items-center justify-center"
+                  >
+                    <motion.div
+                      animate={{
+                        y: [0, -3, 0],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50"
+                    >
+                      <FileText
+                        size={22}
+                        className="text-violet-500"
+                      />
+                    </motion.div>
 
-                  <p className="mt-3 text-[12px] font-semibold text-gray-700">
-                    No report data found
-                  </p>
+                    <p className="mt-3 text-[12px] font-semibold text-gray-700">
+                      No report data found
+                    </p>
 
-                  <p className="mt-1 text-[10px] text-gray-400">
-                    Try changing your search or filters.
-                  </p>
-                </div>
-              )}
+                    <p className="mt-1 text-[10px] text-gray-400">
+                      Try changing your
+                      search or filters.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           )}
         </div>
@@ -1707,7 +2137,21 @@ const Reports = () => {
             PAGINATION
         =================================================== */}
 
-        <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 5,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+            delay: 0.25,
+          }}
+          className="flex flex-col gap-2 border-t border-gray-100 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+        >
           <p className="text-[10px] text-gray-500">
             Showing{" "}
             <span className="font-semibold text-gray-700">
@@ -1735,7 +2179,7 @@ const Reports = () => {
           </p>
 
           <div className="flex items-center gap-1">
-            <button
+            <motion.button
               type="button"
               disabled={
                 currentPage === 1
@@ -1749,12 +2193,18 @@ const Reports = () => {
                     )
                 )
               }
+              whileHover={{
+                y: -1,
+              }}
+              whileTap={{
+                scale: 0.94,
+              }}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft
-                size={13}
+                size={14}
               />
-            </button>
+            </motion.button>
 
             {Array.from(
               {
@@ -1763,7 +2213,7 @@ const Reports = () => {
               (_, index) =>
                 index + 1
             ).map((page) => (
-              <button
+              <motion.button
                 key={page}
                 type="button"
                 onClick={() =>
@@ -1771,7 +2221,20 @@ const Reports = () => {
                     page
                   )
                 }
-                className={`flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-[9px] font-semibold transition ${
+                whileHover={{
+                  y: -1,
+                }}
+                whileTap={{
+                  scale: 0.94,
+                }}
+                animate={{
+                  scale:
+                    currentPage ===
+                    page
+                      ? 1.03
+                      : 1,
+                }}
+                className={`flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-[10px] font-semibold transition ${
                   currentPage ===
                   page
                     ? "bg-violet-600 text-white"
@@ -1779,10 +2242,10 @@ const Reports = () => {
                 }`}
               >
                 {page}
-              </button>
+              </motion.button>
             ))}
 
-            <button
+            <motion.button
               type="button"
               disabled={
                 currentPage ===
@@ -1799,16 +2262,22 @@ const Reports = () => {
                     )
                 )
               }
+              whileHover={{
+                y: -1,
+              }}
+              whileTap={{
+                scale: 0.94,
+              }}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight
-                size={13}
+                size={14}
               />
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -1843,14 +2312,25 @@ const StatusBadge = ({
   };
 
   return (
-    <span
-      className={`inline-flex rounded-md px-2 py-1 text-[9px] font-semibold ${
+    <motion.span
+      initial={{
+        opacity: 0,
+        scale: 0.95,
+      }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+      }}
+      transition={{
+        duration: 0.2,
+      }}
+      className={`inline-flex rounded-md px-2 py-1 text-[10px] font-semibold ${
         styles[status] ||
         "bg-gray-100 text-gray-600"
       }`}
     >
       {status}
-    </span>
+    </motion.span>
   );
 };
 

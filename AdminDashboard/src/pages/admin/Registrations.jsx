@@ -15,8 +15,8 @@ import {
 
 import {
   Users,
-  CalendarDays,
   TrendingUp,
+  CalendarDays,
   UserCheck,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +24,8 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+
+import { motion } from "framer-motion";
 
 import {
   getAllRegistrations,
@@ -57,6 +59,14 @@ const Registrations = () => {
   const itemsPerPage = 6;
 
   /* ============================================================
+     FETCH ALL REGISTRATIONS
+  ============================================================ */
+
+  useEffect(() => {
+    dispatch(getAllRegistrations());
+  }, [dispatch]);
+
+  /* ============================================================
      NORMALIZE REGISTRATION DATA
   ============================================================ */
 
@@ -83,14 +93,6 @@ const Registrations = () => {
 
     return [];
   }, [registrationData]);
-
-  /* ============================================================
-     FETCH ALL REGISTRATIONS
-  ============================================================ */
-
-  useEffect(() => {
-    dispatch(getAllRegistrations());
-  }, [dispatch]);
 
   /* ============================================================
      EXTRACT ID
@@ -198,9 +200,7 @@ const Registrations = () => {
       return "";
     }
 
-    /* ----------------------------------------------------------
-       ARRAY DATE SUPPORT
-    ---------------------------------------------------------- */
+    /* ARRAY DATE SUPPORT */
 
     if (Array.isArray(dateValue)) {
       if (dateValue.length === 0) {
@@ -216,9 +216,7 @@ const Registrations = () => {
       return formattedDates.join(" – ");
     }
 
-    /* ----------------------------------------------------------
-       OBJECT DATE SUPPORT
-    ---------------------------------------------------------- */
+    /* OBJECT DATE SUPPORT */
 
     if (
       typeof dateValue === "object"
@@ -258,12 +256,7 @@ const Registrations = () => {
       return "";
     }
 
-    /* ----------------------------------------------------------
-       API FORMAT
-
-       2027-04-06T00:00:00.000Z -
-       2027-04-07T00:00:00.000Z
-    ---------------------------------------------------------- */
+    /* API RANGE FORMAT */
 
     if (value.includes(" - ")) {
       const [
@@ -321,7 +314,7 @@ const Registrations = () => {
         const endYear =
           end.getUTCFullYear();
 
-        /* Same date */
+        /* SAME DATE */
 
         if (
           startDay === endDay &&
@@ -331,7 +324,7 @@ const Registrations = () => {
           return `${startMonth} ${startDay}, ${startYear}`;
         }
 
-        /* Same month + same year */
+        /* SAME MONTH + YEAR */
 
         if (
           startMonth === endMonth &&
@@ -340,7 +333,7 @@ const Registrations = () => {
           return `${startMonth} ${startDay}–${endDay}, ${startYear}`;
         }
 
-        /* Different month + same year */
+        /* DIFFERENT MONTH + SAME YEAR */
 
         if (
           startYear === endYear
@@ -348,15 +341,13 @@ const Registrations = () => {
           return `${startMonth} ${startDay}–${endMonth} ${endDay}, ${startYear}`;
         }
 
-        /* Different year */
+        /* DIFFERENT YEAR */
 
         return `${startMonth} ${startDay}, ${startYear}–${endMonth} ${endDay}, ${endYear}`;
       }
     }
 
-    /* ----------------------------------------------------------
-       SINGLE ISO DATE
-    ---------------------------------------------------------- */
+    /* SINGLE ISO DATE */
 
     const date = new Date(
       value
@@ -377,10 +368,6 @@ const Registrations = () => {
         }
       );
     }
-
-    /* ----------------------------------------------------------
-       FALLBACK
-    ---------------------------------------------------------- */
 
     return value;
   };
@@ -515,7 +502,9 @@ const Registrations = () => {
         grouped[conferenceId]
           .registrations += 1;
 
-        if (registration?._id) {
+        if (
+          registration?._id
+        ) {
           grouped[conferenceId]
             .registrationIds
             .push(
@@ -531,15 +520,11 @@ const Registrations = () => {
   }, [registrationsList]);
 
   /* ============================================================
-     TOTAL REGISTRATIONS
+     STATISTICS
   ============================================================ */
 
   const totalRegistrations =
     registrationsList.length;
-
-  /* ============================================================
-     UPCOMING REGISTRATIONS
-  ============================================================ */
 
   const upcomingRegistrations =
     registrations
@@ -555,10 +540,6 @@ const Registrations = () => {
           item.registrations,
         0
       );
-
-  /* ============================================================
-     PUBLISHED CONFERENCES
-  ============================================================ */
 
   const publishedConferences =
     registrations.filter(
@@ -596,7 +577,7 @@ const Registrations = () => {
     ]);
 
   /* ============================================================
-     RESET PAGE WHEN DATA CHANGES
+     RESET PAGE
   ============================================================ */
 
   useEffect(() => {
@@ -747,11 +728,23 @@ const Registrations = () => {
     return (
       <div className="flex min-h-[300px] w-full items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
+
+          <motion.div
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="mx-auto h-8 w-8 rounded-full border-2 border-gray-200 border-t-violet-600"
+          />
 
           <p className="mt-3 text-[12px] text-gray-500">
             Loading registrations...
           </p>
+
         </div>
       </div>
     );
@@ -762,37 +755,80 @@ const Registrations = () => {
   ============================================================ */
 
   return (
-    <div
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 10,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.35,
+        ease: "easeOut",
+      }}
       className="w-full"
       onClick={() =>
         setOpenMenu(null)
       }
     >
+
       {/* ERROR */}
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-600">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: -6,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          className="mb-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-600"
+        >
           {typeof error ===
           "string"
             ? error
             : "Failed to load registrations."}
-        </div>
+        </motion.div>
       )}
 
-      {/* SUMMARY CARDS */}
+      {/* ======================================================
+          SUMMARY CARDS
+      ====================================================== */}
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
 
         {/* TOTAL */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
+        >
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Total Registrations
               </p>
 
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
+              <h2 className="mt-1 text-[21px] font-bold text-gray-900">
                 {totalRegistrations.toLocaleString()}
               </h2>
             </div>
@@ -803,19 +839,38 @@ const Registrations = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
-        </div>
+        </motion.div>
 
         {/* UPCOMING */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.06,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
+        >
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Upcoming Registrations
               </p>
 
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
+              <h2 className="mt-1 text-[21px] font-bold text-gray-900">
                 {upcomingRegistrations.toLocaleString()}
               </h2>
             </div>
@@ -826,19 +881,38 @@ const Registrations = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
-        </div>
+        </motion.div>
 
         {/* CONFERENCES */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.12,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
+        >
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Total Conferences
               </p>
 
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
+              <h2 className="mt-1 text-[21px] font-bold text-gray-900">
                 {registrations.length}
               </h2>
             </div>
@@ -849,19 +923,38 @@ const Registrations = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
-        </div>
+        </motion.div>
 
         {/* PUBLISHED */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.18,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
+        >
           <div className="flex items-center justify-between">
+
             <div>
               <p className="text-[11px] font-medium text-gray-500">
                 Published Conferences
               </p>
 
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
+              <h2 className="mt-1 text-[21px] font-bold text-gray-900">
                 {publishedConferences}
               </h2>
             </div>
@@ -872,17 +965,36 @@ const Registrations = () => {
                 className="text-violet-600"
               />
             </div>
+
           </div>
-        </div>
+        </motion.div>
+
       </div>
 
-      {/* CONFERENCE REGISTRATIONS */}
+      {/* ======================================================
+          CONFERENCE REGISTRATIONS
+      ====================================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 16,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.4,
+          delay: 0.12,
+        }}
+        className="overflow-visible rounded-xl border border-gray-100 bg-white shadow-sm"
+      >
 
         {/* HEADER */}
 
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+
           <div>
             <h2 className="text-[14px] font-semibold text-gray-900">
               Conference-wise Registrations
@@ -893,7 +1005,12 @@ const Registrations = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1.5">
+          <motion.div
+            whileHover={{
+              scale: 1.03,
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1.5"
+          >
             <Users
               size={13}
               className="text-violet-600"
@@ -903,7 +1020,8 @@ const Registrations = () => {
               {totalRegistrations.toLocaleString()}{" "}
               Total
             </span>
-          </div>
+          </motion.div>
+
         </div>
 
         {/* TABLE */}
@@ -914,11 +1032,11 @@ const Registrations = () => {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/70">
 
-                <th className="w-[38%] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                <th className="w-[40%] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   Conference
                 </th>
 
-                <th className="w-[20%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                <th className="w-[21%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   Date
                 </th>
 
@@ -926,7 +1044,7 @@ const Registrations = () => {
                   Registrations
                 </th>
 
-                <th className="w-[17%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                <th className="w-[14%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   Status
                 </th>
 
@@ -943,34 +1061,43 @@ const Registrations = () => {
               0 ? (
 
                 currentRegistrations.map(
-                  (item) => (
-                    <tr
+                  (item, index) => (
+
+                    <motion.tr
                       key={item.id}
+                      initial={{
+                        opacity: 0,
+                        y: 8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        duration: 0.28,
+                        delay:
+                          index * 0.04,
+                      }}
+                      whileHover={{
+                        backgroundColor:
+                          "rgba(139, 92, 246, 0.035)",
+                      }}
                       onClick={() =>
                         handleRowClick(
                           item
                         )
                       }
-                      className="cursor-pointer border-b border-gray-100 last:border-0 hover:bg-violet-50/30"
+                      className="cursor-pointer border-b border-gray-100 last:border-0"
                     >
 
                       {/* CONFERENCE */}
 
                       <td className="px-4 py-3">
-                        <div className="flex min-w-0 items-center gap-2.5">
 
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50">
-                            <CalendarDays
-                              size={14}
-                              className="text-violet-600"
-                            />
-                          </div>
+                        <p className="truncate text-[12px] font-semibold text-gray-800">
+                          {item.conference}
+                        </p>
 
-                          <p className="truncate text-[12px] font-semibold text-gray-800">
-                            {item.conference}
-                          </p>
-
-                        </div>
                       </td>
 
                       {/* DATE */}
@@ -983,6 +1110,7 @@ const Registrations = () => {
                       {/* REGISTRATIONS */}
 
                       <td className="px-3 py-3">
+
                         <div className="flex items-center gap-1.5">
 
                           <Users
@@ -995,11 +1123,13 @@ const Registrations = () => {
                           </span>
 
                         </div>
+
                       </td>
 
                       {/* STATUS */}
 
                       <td className="px-3 py-3">
+
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-[9px] font-semibold ${getStatusClass(
                             item.status
@@ -1007,6 +1137,7 @@ const Registrations = () => {
                         >
                           {item.status}
                         </span>
+
                       </td>
 
                       {/* ACTIONS */}
@@ -1018,8 +1149,11 @@ const Registrations = () => {
                         }
                       >
 
-                        <button
+                        <motion.button
                           type="button"
+                          whileTap={{
+                            scale: 0.9,
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
 
@@ -1036,16 +1170,29 @@ const Registrations = () => {
                           <MoreVertical
                             size={16}
                           />
-                        </button>
+                        </motion.button>
 
                         {openMenu ===
                           item.id && (
 
-                          <div
+                          <motion.div
+                            initial={{
+                              opacity: 0,
+                              scale: 0.96,
+                              y: 4,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              scale: 1,
+                              y: 0,
+                            }}
+                            transition={{
+                              duration: 0.15,
+                            }}
                             onClick={(e) =>
                               e.stopPropagation()
                             }
-                            className="absolute right-3 bottom-[calc(100%-2px)] z-50 w-32 overflow-hidden rounded-lg border border-gray-100 bg-white p-1.5 text-left shadow-xl"
+                            className="absolute bottom-[calc(100%-2px)] right-3 z-50 w-32 origin-bottom-right overflow-hidden rounded-lg border border-gray-100 bg-white p-1.5 text-left shadow-xl"
                           >
 
                             {/* VIEW */}
@@ -1057,7 +1204,7 @@ const Registrations = () => {
                                   item
                                 )
                               }
-                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-gray-600 hover:bg-violet-50 hover:text-violet-600"
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
                             >
                               <Eye
                                 size={14}
@@ -1078,7 +1225,7 @@ const Registrations = () => {
                                   item
                                 )
                               }
-                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <Trash2
                                 size={14}
@@ -1089,12 +1236,12 @@ const Registrations = () => {
                                 : "Delete"}
                             </button>
 
-                          </div>
+                          </motion.div>
                         )}
 
                       </td>
 
-                    </tr>
+                    </motion.tr>
                   )
                 )
 
@@ -1107,7 +1254,17 @@ const Registrations = () => {
                     className="px-4 py-12 text-center"
                   >
 
-                    <div className="flex flex-col items-center justify-center">
+                    <motion.div
+                      initial={{
+                        opacity: 0,
+                        y: 8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      className="flex flex-col items-center justify-center"
+                    >
 
                       <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50">
                         <Users
@@ -1128,7 +1285,7 @@ const Registrations = () => {
                         register.
                       </p>
 
-                    </div>
+                    </motion.div>
 
                   </td>
 
@@ -1139,7 +1296,9 @@ const Registrations = () => {
           </table>
         </div>
 
-        {/* PAGINATION */}
+        {/* ====================================================
+            PAGINATION
+        ==================================================== */}
 
         {registrations.length >
           0 && (
@@ -1179,8 +1338,11 @@ const Registrations = () => {
 
               {/* PREVIOUS */}
 
-              <button
+              <motion.button
                 type="button"
+                whileTap={{
+                  scale: 0.9,
+                }}
                 disabled={
                   currentPage ===
                   1
@@ -1196,7 +1358,7 @@ const Registrations = () => {
                 <ChevronLeft
                   size={14}
                 />
-              </button>
+              </motion.button>
 
               {/* PAGE NUMBERS */}
 
@@ -1209,9 +1371,13 @@ const Registrations = () => {
                   index + 1
               ).map(
                 (page) => (
-                  <button
+
+                  <motion.button
                     key={page}
                     type="button"
+                    whileTap={{
+                      scale: 0.9,
+                    }}
                     onClick={() =>
                       setCurrentPage(
                         page
@@ -1225,14 +1391,18 @@ const Registrations = () => {
                     }`}
                   >
                     {page}
-                  </button>
+                  </motion.button>
+
                 )
               )}
 
               {/* NEXT */}
 
-              <button
+              <motion.button
                 type="button"
+                whileTap={{
+                  scale: 0.9,
+                }}
                 disabled={
                   currentPage ===
                   totalPages
@@ -1248,13 +1418,14 @@ const Registrations = () => {
                 <ChevronRight
                   size={14}
                 />
-              </button>
+              </motion.button>
 
             </div>
           </div>
         )}
-      </div>
-    </div>
+
+      </motion.div>
+    </motion.div>
   );
 };
 

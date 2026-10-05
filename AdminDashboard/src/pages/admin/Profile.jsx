@@ -1,5 +1,8 @@
+
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+
 import {
   User,
   Mail,
@@ -23,6 +26,88 @@ import {
   updateProfile,
   clearUpdateProfileError,
 } from "../../redux/authSlice";
+
+/* =========================================================
+   MOTION VARIANTS
+========================================================= */
+
+const pageVariants = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: "easeOut",
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 14,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: "easeOut",
+    },
+  },
+};
+
+const nameVariants = {
+  hidden: {
+    opacity: 0,
+    x: -12,
+    y: 5,
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: "easeOut",
+    },
+  },
+};
+
+const avatarVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.85,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.45,
+      ease: "easeOut",
+    },
+  },
+};
+
+const buttonVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.35,
+      ease: "easeOut",
+    },
+  },
+};
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -53,6 +138,24 @@ const Profile = () => {
     twoFactorEnabled: user?.twoFactorEnabled ?? false,
     lastLogin: user?.lastLogin || null,
     permissions: user?.permissions || [],
+  };
+
+  /* =========================================================
+     CAPITALIZE NAME
+  ========================================================= */
+
+  const capitalizeName = (value) => {
+    if (!value) return "";
+
+    return value
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .map(
+        (word) =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join(" ");
   };
 
   const getFormData = () => ({
@@ -185,9 +288,33 @@ const Profile = () => {
     );
   };
 
+  const displayFirstName = capitalizeName(
+    profile.firstName
+  );
+
+  const displayLastName = capitalizeName(
+    profile.lastName
+  );
+
+  const initials =
+    displayFirstName?.charAt(0) +
+    displayLastName?.charAt(0);
+
   return (
-    <div className="min-w-0 space-y-3">
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+    <motion.div
+      className="min-w-0 space-y-3"
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* =====================================================
+          PROFILE HEADER
+      ===================================================== */}
+
+      <motion.div
+        variants={cardVariants}
+        className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+      >
         <div className="relative h-24 bg-gradient-to-r from-violet-700 via-violet-600 to-purple-600">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute -right-10 -top-16 h-40 w-40 rounded-full border-[20px] border-white" />
@@ -197,22 +324,35 @@ const Profile = () => {
         </div>
 
         <div className="relative px-4 pb-3">
-          <div className="-mt-9 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="-mt-11 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-3">
-              <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-xl border-4 border-white bg-violet-100 text-[20px] font-bold text-violet-700 shadow-sm">
-                {profile.firstName?.charAt(0)}
-                {profile.lastName?.charAt(0)}
-              </div>
+              {/* Avatar */}
 
-              <div className="pb-1">
-                <h2 className="text-[17px] font-bold leading-tight text-gray-900">
-                  {profile.firstName}{" "}
-                  {profile.lastName}
+              <motion.div
+                variants={avatarVariants}
+                whileHover={{
+                  scale: 1.04,
+                  transition: { duration: 0.2 },
+                }}
+                className="flex h-[78px] w-[78px] shrink-0 items-center justify-center rounded-xl border-4 border-white bg-violet-100 text-[21px] font-bold text-violet-700 shadow-sm"
+              >
+                {initials}
+              </motion.div>
+
+              {/* Name */}
+
+              <motion.div
+                variants={nameVariants}
+                className="pb-1"
+              >
+                <h2 className="text-[30px] font-bold leading-tight tracking-[-0.2px] text-white">
+                  {displayFirstName}{" "}
+                  {displayLastName}
                 </h2>
 
-                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <BriefcaseBusiness
-                    size={13}
+                    size={14}
                     className="text-violet-600"
                   />
 
@@ -228,77 +368,145 @@ const Profile = () => {
                     {profile.department || "—"}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
-            {!isEditing ? (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
-              >
-                <Pencil size={14} />
-                Edit Profile
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={updateProfileLoading}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 text-[12px] font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <X size={14} />
-                  Cancel
-                </button>
+            {/* Edit / Save */}
 
-                <button
+            <AnimatePresence mode="wait">
+              {!isEditing ? (
+                <motion.button
+                  key="edit"
                   type="button"
-                  onClick={handleSave}
-                  disabled={updateProfileLoading}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  onClick={handleEdit}
+                  variants={buttonVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{
+                    opacity: 0,
+                    scale: 0.95,
+                  }}
+                  whileHover={{
+                    y: -1,
+                    transition: { duration: 0.15 },
+                  }}
+                  whileTap={{
+                    scale: 0.97,
+                  }}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700"
                 >
-                  {updateProfileLoading ? (
-                    <>
-                      <Loader2
-                        size={14}
-                        className="animate-spin"
-                      />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={14} />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+                  <Pencil size={14} />
+                  Edit Profile
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="actions"
+                  initial={{
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  className="flex gap-2"
+                >
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={updateProfileLoading}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3.5 text-[12px] font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <X size={14} />
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={updateProfileLoading}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {updateProfileLoading ? (
+                      <>
+                        <Loader2
+                          size={14}
+                          className="animate-spin"
+                        />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {updateProfileError && (
-        <div className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3">
-          <span className="text-[12px] font-medium text-red-600">
-            {updateProfileError}
-          </span>
+      {/* =====================================================
+          ERROR
+      ===================================================== */}
 
-          <button
-            type="button"
-            onClick={() =>
-              dispatch(clearUpdateProfileError())
-            }
-            className="text-red-500 hover:text-red-700"
+      <AnimatePresence>
+        {updateProfileError && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -8,
+            }}
+            className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3"
           >
-            <X size={15} />
-          </button>
-        </div>
-      )}
+            <span className="text-[12px] font-medium text-red-600">
+              {updateProfileError}
+            </span>
 
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2">
+            <button
+              type="button"
+              onClick={() =>
+                dispatch(clearUpdateProfileError())
+              }
+              className="text-red-500 hover:text-red-700"
+            >
+              <X size={15} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
+
+      <motion.div
+        variants={cardVariants}
+        className="grid grid-cols-1 gap-3 xl:grid-cols-3"
+      >
+        {/* ===================================================
+            PERSONAL INFORMATION
+        =================================================== */}
+
+        <motion.div
+          variants={cardVariants}
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2"
+        >
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <div>
               <h3 className="text-[15px] font-semibold text-gray-900">
@@ -319,6 +527,8 @@ const Profile = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
+            {/* First Name */}
+
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 First Name
@@ -338,10 +548,14 @@ const Profile = () => {
                 />
               ) : (
                 <div className="flex h-10 items-center rounded-lg bg-gray-50 px-3 text-[12px] text-gray-700">
-                  {profile.firstName || "—"}
+                  {capitalizeName(
+                    profile.firstName
+                  ) || "—"}
                 </div>
               )}
             </div>
+
+            {/* Last Name */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -362,10 +576,14 @@ const Profile = () => {
                 />
               ) : (
                 <div className="flex h-10 items-center rounded-lg bg-gray-50 px-3 text-[12px] text-gray-700">
-                  {profile.lastName || "—"}
+                  {capitalizeName(
+                    profile.lastName
+                  ) || "—"}
                 </div>
               )}
             </div>
+
+            {/* Email */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -398,6 +616,8 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Phone */}
+
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 Phone Number
@@ -429,6 +649,8 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Department */}
+
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 Department
@@ -452,6 +674,8 @@ const Profile = () => {
                 </div>
               )}
             </div>
+
+            {/* Location */}
 
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -484,6 +708,8 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Timezone */}
+
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 Timezone
@@ -515,6 +741,8 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Role */}
+
             <div>
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
                 Account Role
@@ -530,6 +758,8 @@ const Profile = () => {
                 </span>
               </div>
             </div>
+
+            {/* About */}
 
             <div className="sm:col-span-2">
               <label className="mb-1 block text-[11px] font-semibold text-gray-500">
@@ -555,9 +785,18 @@ const Profile = () => {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="space-y-3">
+        {/* ===================================================
+            RIGHT SIDE
+        =================================================== */}
+
+        <motion.div
+          variants={cardVariants}
+          className="space-y-3"
+        >
+          {/* Account Status */}
+
           <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -653,6 +892,8 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* Security */}
+
           <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
@@ -717,10 +958,17 @@ const Profile = () => {
               </button>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      {/* =====================================================
+          ADMIN PERMISSIONS
+      ===================================================== */}
+
+      <motion.div
+        variants={cardVariants}
+        className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-[15px] font-semibold text-gray-900">
@@ -750,9 +998,27 @@ const Profile = () => {
                 "Reports",
                 "Employees",
               ]
-          ).map((permission) => (
-            <div
+          ).map((permission, index) => (
+            <motion.div
               key={permission}
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.3,
+                delay: index * 0.05,
+              }}
+              whileHover={{
+                y: -2,
+                transition: {
+                  duration: 0.15,
+                },
+              }}
               className="flex items-center gap-2 rounded-lg bg-violet-50/60 px-3 py-2.5"
             >
               <CheckCircle2
@@ -763,11 +1029,11 @@ const Profile = () => {
               <span className="truncate text-[11px] font-medium text-violet-700">
                 {permission}
               </span>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

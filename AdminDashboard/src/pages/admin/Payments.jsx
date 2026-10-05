@@ -9,6 +9,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { motion } from "framer-motion";
+
 const Payments = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -170,8 +172,21 @@ const Payments = () => {
   };
 
   return (
-    <div className="w-full overflow-hidden">
-
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 10,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.35,
+        ease: "easeOut",
+      }}
+      className="w-full overflow-hidden"
+    >
       {/* =====================================================
           SUMMARY CARDS
       ===================================================== */}
@@ -179,7 +194,25 @@ const Payments = () => {
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
         {/* TOTAL REVENUE */}
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[12px] font-medium text-gray-500">
@@ -198,10 +231,28 @@ const Payments = () => {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* PAID */}
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.06,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[12px] font-medium text-gray-500">
@@ -220,10 +271,28 @@ const Payments = () => {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* PENDING */}
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.12,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[12px] font-medium text-gray-500">
@@ -242,10 +311,28 @@ const Payments = () => {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* FAILED */}
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 12,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.35,
+            delay: 0.18,
+          }}
+          whileHover={{
+            y: -2,
+          }}
+          className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[12px] font-medium text-gray-500">
@@ -264,20 +351,46 @@ const Payments = () => {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* =====================================================
           PAYMENT TABLE
       ===================================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 16,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.4,
+          delay: 0.12,
+        }}
+        className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+      >
         {/* TABLE HEADER */}
 
         <div className="flex flex-col gap-2.5 border-b border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-          <div>
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: -8,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 0.3,
+              delay: 0.2,
+            }}
+          >
             <h2 className="text-[15px] font-semibold text-gray-900">
               Payment Transactions
             </h2>
@@ -285,11 +398,25 @@ const Payments = () => {
             <p className="mt-0.5 text-[11px] text-gray-500">
               Monitor conference payment activity
             </p>
-          </div>
+          </motion.div>
 
           {/* SEARCH */}
 
-          <div className="relative w-full sm:w-[230px]">
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: 8,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            transition={{
+              duration: 0.3,
+              delay: 0.22,
+            }}
+            className="relative w-full sm:w-[230px]"
+          >
             <Search
               size={15}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
@@ -302,7 +429,7 @@ const Payments = () => {
               placeholder="Search payments..."
               className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 pl-8 pr-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:bg-white"
             />
-          </div>
+          </motion.div>
         </div>
 
         {/* TABLE */}
@@ -340,78 +467,115 @@ const Payments = () => {
                 <th className="w-[12%] px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   Status
                 </th>
+
               </tr>
             </thead>
 
             <tbody>
               {currentPayments.length > 0 ? (
-                currentPayments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60"
-                  >
+                currentPayments.map(
+                  (payment, index) => (
+                    <motion.tr
+                      key={payment.id}
+                      initial={{
+                        opacity: 0,
+                        y: 8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        duration: 0.28,
+                        delay: index * 0.04,
+                      }}
+                      whileHover={{
+                        backgroundColor:
+                          "rgba(139, 92, 246, 0.035)",
+                      }}
+                      className="border-b border-gray-100 last:border-0"
+                    >
 
-                    {/* ID */}
-                    <td className="px-3 py-3">
-                      <span className="text-[11px] font-semibold text-violet-600">
-                        {payment.id}
-                      </span>
-                    </td>
+                      {/* ID */}
 
-                    {/* ATTENDEE */}
-                    <td className="px-3 py-3">
-                      <p className="truncate text-[12px] font-semibold text-gray-800">
-                        {payment.attendee}
-                      </p>
-                    </td>
+                      <td className="px-3 py-3">
+                        <span className="text-[11px] font-semibold text-violet-600">
+                          {payment.id}
+                        </span>
+                      </td>
 
-                    {/* CONFERENCE */}
-                    <td className="px-3 py-3">
-                      <p className="truncate text-[11px] text-gray-600">
-                        {payment.conference}
-                      </p>
-                    </td>
+                      {/* ATTENDEE */}
 
-                    {/* DATE */}
-                    <td className="px-3 py-3 text-[11px] text-gray-500">
-                      {payment.date}
-                    </td>
+                      <td className="px-3 py-3">
+                        <p className="truncate text-[12px] font-semibold text-gray-800">
+                          {payment.attendee}
+                        </p>
+                      </td>
 
-                    {/* AMOUNT */}
-                    <td className="px-3 py-3">
-                      <span className="text-[12px] font-semibold text-gray-800">
-                        ${payment.amount}
-                      </span>
-                    </td>
+                      {/* CONFERENCE */}
 
-                    {/* METHOD */}
-                    <td className="px-3 py-3">
-                      <span className="text-[11px] text-gray-600">
-                        {payment.method}
-                      </span>
-                    </td>
+                      <td className="px-3 py-3">
+                        <p className="truncate text-[11px] text-gray-600">
+                          {payment.conference}
+                        </p>
+                      </td>
 
-                    {/* STATUS */}
-                    <td className="px-3 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
-                          payment.status
-                        )}`}
-                      >
-                        {payment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      {/* DATE */}
+
+                      <td className="px-3 py-3 text-[11px] text-gray-500">
+                        {payment.date}
+                      </td>
+
+                      {/* AMOUNT */}
+
+                      <td className="px-3 py-3">
+                        <span className="text-[12px] font-semibold text-gray-800">
+                          ${payment.amount}
+                        </span>
+                      </td>
+
+                      {/* METHOD */}
+
+                      <td className="px-3 py-3">
+                        <span className="text-[11px] text-gray-600">
+                          {payment.method}
+                        </span>
+                      </td>
+
+                      {/* STATUS */}
+
+                      <td className="px-3 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
+                            payment.status
+                          )}`}
+                        >
+                          {payment.status}
+                        </span>
+                      </td>
+
+                    </motion.tr>
+                  )
+                )
               ) : (
                 <tr>
                   <td
                     colSpan="7"
                     className="px-4 py-10 text-center"
                   >
-                    <p className="text-[13px] font-medium text-gray-500">
+                    <motion.p
+                      initial={{
+                        opacity: 0,
+                        y: 6,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      className="text-[13px] font-medium text-gray-500"
+                    >
                       No payment transactions found.
-                    </p>
+                    </motion.p>
                   </td>
                 </tr>
               )}
@@ -423,14 +587,28 @@ const Payments = () => {
             PAGINATION
         ===================================================== */}
 
-        <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2.5">
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          transition={{
+            duration: 0.3,
+            delay: 0.25,
+          }}
+          className="flex items-center justify-between border-t border-gray-100 px-4 py-2.5"
+        >
 
           <p className="text-[11px] text-gray-500">
             Showing{" "}
             <span className="font-semibold text-gray-700">
               {filteredPayments.length === 0
                 ? 0
-                : (safePage - 1) * itemsPerPage + 1}
+                : (safePage - 1) *
+                    itemsPerPage +
+                  1}
             </span>{" "}
             -{" "}
             <span className="font-semibold text-gray-700">
@@ -447,8 +625,13 @@ const Payments = () => {
 
           <div className="flex items-center gap-1">
 
-            <button
+            {/* PREVIOUS */}
+
+            <motion.button
               type="button"
+              whileTap={{
+                scale: 0.9,
+              }}
               disabled={safePage === 1}
               onClick={() =>
                 setCurrentPage((prev) =>
@@ -458,16 +641,23 @@ const Payments = () => {
               className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft size={15} />
-            </button>
+            </motion.button>
+
+            {/* PAGE NUMBERS */}
 
             {Array.from(
               { length: totalPages },
               (_, index) => index + 1
             ).map((page) => (
-              <button
+              <motion.button
                 key={page}
                 type="button"
-                onClick={() => setCurrentPage(page)}
+                whileTap={{
+                  scale: 0.9,
+                }}
+                onClick={() =>
+                  setCurrentPage(page)
+                }
                 className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[11px] font-semibold transition ${
                   safePage === page
                     ? "bg-violet-600 text-white"
@@ -475,26 +665,36 @@ const Payments = () => {
                 }`}
               >
                 {page}
-              </button>
+              </motion.button>
             ))}
 
-            <button
+            {/* NEXT */}
+
+            <motion.button
               type="button"
-              disabled={safePage === totalPages}
+              whileTap={{
+                scale: 0.9,
+              }}
+              disabled={
+                safePage === totalPages
+              }
               onClick={() =>
                 setCurrentPage((prev) =>
-                  Math.min(totalPages, prev + 1)
+                  Math.min(
+                    totalPages,
+                    prev + 1
+                  )
                 )
               }
               className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight size={15} />
-            </button>
+            </motion.button>
 
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 
