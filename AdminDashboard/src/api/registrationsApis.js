@@ -31,6 +31,14 @@ export const getAllRegistrationsApi = async () => {
 // ======================================================
 // Get Registration By ID
 // ======================================================
+export const getConferenceWiseRegisteredUsersApi = async () => {
+  const response = await axiosInstance.get(
+    "/user/registrations/conference-users"
+  );
+
+  return response.data;
+};
+
 
 export const getRegistrationByIdApi = async (id) => {
   const response = await axiosInstance.get(

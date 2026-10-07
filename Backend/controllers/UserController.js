@@ -736,3 +736,160 @@ exports.getSubscriberById = async (req, res) => {
     });
   }
 };
+
+
+exports.getConferenceWiseRegisteredUsers = catchAsync(
+  async (req, res, next) => {
+    /* =========================================================
+       GET ALL CONFERENCES
+    ========================================================= */
+
+    const conferences = await Conference.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    /* =========================================================
+       GET ALL REGISTRATIONS
+    ========================================================= */
+
+    const registrations = await Registration.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    /* =========================================================
+       GROUP REGISTRATIONS BY CONFERENCE
+       
+       Registration structure:
+
+       conference: {
+         conferenceId: ObjectId,
+         title: String,
+         date: String,
+         location: String
+       }
+    ========================================================= */
+
+    const data = conferences.map((conference) => {
+      const conferenceId = String(
+        conference._id
+      );
+
+      /* =======================================================
+         GET USERS REGISTERED FOR THIS CONFERENCE
+      ======================================================= */
+
+      const conferenceRegistrations =
+        registrations.filter(
+          (registration) =>
+            String(
+              registration?.conference
+                ?.conferenceId
+            ) === conferenceId
+        );
+
+      /* =======================================================
+         RETURN CONFERENCE DATA
+      ======================================================= */
+
+      return {
+        /* =====================================================
+           CONFERENCE INFORMATION
+        ===================================================== */
+
+        conferenceId:
+          conference._id,
+
+        conferenceName:
+          conference.title ||
+          conference.name ||
+          "Untitled Conference",
+
+        conferenceStatus:
+          conference.status || null,
+
+        /* =====================================================
+           CONFERENCE DATES
+           
+           From Conference collection
+        ===================================================== */
+
+        conferenceDates: {
+          startDate:
+            conference.startDate || null,
+
+          endDate:
+            conference.endDate || null,
+        },
+
+        /* =====================================================
+           CONFERENCE LOCATION
+           
+           From Conference collection
+        ===================================================== */
+
+        conferenceLocation:
+          conference.location ||
+          conference.venue?.city ||
+          null,
+
+        /* =====================================================
+           CONFERENCE MODE
+        ===================================================== */
+
+        conferenceMode:
+          conference.mode ||
+          conference.time ||
+          null,
+
+        /* =====================================================
+           PARTICIPANTS
+        ===================================================== */
+
+        participants:
+          conference.participants || null,
+
+        /* =====================================================
+           TOTAL REGISTERED USERS
+        ===================================================== */
+
+        totalRegisteredUsers:
+          conferenceRegistrations.length,
+
+        /* =====================================================
+           COMPLETE REGISTERED USER DETAILS
+        ===================================================== */
+
+        users:
+          conferenceRegistrations,
+      };
+    });
+
+    /* =========================================================
+       TOTAL REGISTERED USERS ACROSS ALL CONFERENCES
+    ========================================================= */
+
+    const totalRegisteredUsersAllConferences =
+      registrations.length;
+
+    /* =========================================================
+       TOTAL CONFERENCES
+    ========================================================= */
+
+    const totalConferences =
+      conferences.length;
+
+    /* =========================================================
+       RESPONSE
+    ========================================================= */
+
+    return res.status(200).json({
+      success: true,
+
+      data,
+
+      totalRegisteredUsersAllConferences,
+
+      totalConferences,
+    });
+  }
+);

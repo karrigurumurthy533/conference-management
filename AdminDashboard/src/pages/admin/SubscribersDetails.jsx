@@ -355,19 +355,6 @@ const SubscribersDetails = () => {
               "Unable to load subscriber details."}
           </p>
 
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                "/admin/subscribers"
-              )
-            }
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-violet-700"
-          >
-            <ArrowLeft size={14} />
-            Back to Subscribers
-          </button>
-
         </div>
       </motion.div>
     );

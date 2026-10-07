@@ -54,6 +54,13 @@ router.get(
   UserController.getRegistrationsByConferenceId
 );
 
+
+router.get(
+  "/registrations/conference-users",
+  authMiddleware("admin"),
+  UserController.getConferenceWiseRegisteredUsers
+);
+
 // Get registration by registration ID
 router.get(
   "/registrations/:id",

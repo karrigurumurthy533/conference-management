@@ -36,6 +36,8 @@ import UserDownloadBrochureDetails from "./pages/admin/UserDownloadBrochureDetai
 import AbstractDetails from "./pages/admin/AbstractDetails";
 import Subscribers from "./pages/admin/Subscribers";
 import SubscribersDetails from "./pages/admin/SubscribersDetails";
+import CreateInvoice from "./pages/admin/createInvoice";
+import InvoiceDetails from "./pages/admin/InvoiceDetails";
 
 function App() {
   return (
@@ -95,6 +97,8 @@ function App() {
         <Route path="brochures/upload" element={<UploadBrochure />} />
 
         <Route path="/admin/invoices" element={<Invoices />} />
+        <Route path="/admin/invoices/create" element={<CreateInvoice />} />
+        <Route path="/admin/invoices/:invoiceId" element={<InvoiceDetails />} />
 
         <Route path="/admin/abstracts" element={<Abstracts />} />
         <Route path="/admin/abstracts/:id" element={<AbstractDetails />} />
@@ -116,10 +120,7 @@ function App() {
 
         <Route path="notifications" element={<Notifications />} />
         <Route path="/admin/subscribers" element={<Subscribers />} />
-        <Route
-          path="/admin/subscribers/:id"
-          element={<SubscribersDetails />}
-        />
+        <Route path="/admin/subscribers/:id" element={<SubscribersDetails />} />
 
         <Route path="profile" element={<Profile />} />
       </Route>

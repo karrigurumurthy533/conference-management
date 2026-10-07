@@ -1,3 +1,4 @@
+
 import React, {
   useEffect,
   useMemo,
@@ -22,14 +23,12 @@ import {
   ChevronRight,
   MoreVertical,
   Eye,
-  Trash2,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
 
 import {
-  getAllRegistrations,
-  deleteRegistration,
+  getConferenceWiseRegisteredUsers,
 } from "../../redux/registrationsSlice";
 
 const Registrations = () => {
@@ -41,10 +40,9 @@ const Registrations = () => {
   ============================================================ */
 
   const {
-    registrations: registrationData = [],
-    loading,
-    deleteLoading,
-    error,
+    conferenceWiseRegisteredUsers = [],
+    conferenceWiseRegisteredLoading,
+    conferenceWiseRegisteredError,
   } = useSelector(
     (state) => state.registrations || {}
   );
@@ -59,43 +57,18 @@ const Registrations = () => {
   const itemsPerPage = 6;
 
   /* ============================================================
-     FETCH ALL REGISTRATIONS
+     FETCH CONFERENCE-WISE REGISTERED USERS
+     ONLY API USED IN THIS PAGE
   ============================================================ */
 
   useEffect(() => {
-    dispatch(getAllRegistrations());
+    dispatch(
+      getConferenceWiseRegisteredUsers()
+    );
   }, [dispatch]);
 
   /* ============================================================
-     NORMALIZE REGISTRATION DATA
-  ============================================================ */
-
-  const registrationsList = useMemo(() => {
-    if (Array.isArray(registrationData)) {
-      return registrationData;
-    }
-
-    if (
-      Array.isArray(
-        registrationData?.data
-      )
-    ) {
-      return registrationData.data;
-    }
-
-    if (
-      Array.isArray(
-        registrationData?.registrations
-      )
-    ) {
-      return registrationData.registrations;
-    }
-
-    return [];
-  }, [registrationData]);
-
-  /* ============================================================
-     EXTRACT ID
+     HELPERS
   ============================================================ */
 
   const extractId = (value) => {
@@ -126,32 +99,13 @@ const Registrations = () => {
      GET CONFERENCE ID
   ============================================================ */
 
-  const getConferenceId = (
-    registration
-  ) => {
+  const getConferenceId = (conference) => {
     const possibleIds = [
-      registration?.conference
-        ?.conferenceId?._id,
-
-      registration?.conference
-        ?.conferenceId?.id,
-
-      registration?.conference
-        ?.conferenceId,
-
-      registration?.conference?._id,
-
-      registration?.conference?.id,
-
-      registration?.conferenceId?._id,
-
-      registration?.conferenceId?.id,
-
-      registration?.conferenceId,
-
-      registration?.conferenceID,
-
-      registration?.conference_id,
+      conference?.conferenceId?._id,
+      conference?.conferenceId?.id,
+      conference?.conferenceId,
+      conference?._id,
+      conference?.id,
     ];
 
     for (const value of possibleIds) {
@@ -169,33 +123,21 @@ const Registrations = () => {
      GET CONFERENCE TITLE
   ============================================================ */
 
-  const getConferenceTitle = (
-    registration
-  ) => {
+  const getConferenceTitle = (conference) => {
     return (
-      registration?.conference
-        ?.conferenceId?.title ||
-
-      registration?.conference?.title ||
-
-      registration?.conference?.name ||
-
-      registration?.conference
-        ?.conferenceTitle ||
-
-      registration?.conferenceTitle ||
-
+      conference?.conferenceName ||
+      conference?.title ||
+      conference?.name ||
+      conference?.conferenceTitle ||
       "Unknown Conference"
     );
   };
 
   /* ============================================================
-     FORMAT CONFERENCE DATE
+     FORMAT DATE
   ============================================================ */
 
-  const formatConferenceDate = (
-    dateValue
-  ) => {
+  const formatConferenceDate = (dateValue) => {
     if (!dateValue) {
       return "";
     }
@@ -349,9 +291,7 @@ const Registrations = () => {
 
     /* SINGLE ISO DATE */
 
-    const date = new Date(
-      value
-    );
+    const date = new Date(value);
 
     if (
       !Number.isNaN(
@@ -377,24 +317,13 @@ const Registrations = () => {
   ============================================================ */
 
   const getConferenceDate = (
-    registration
+    conference
   ) => {
     const dateValue =
-      registration?.conference
-        ?.conferenceId?.conferenceDates ||
-
-      registration?.conference
-        ?.conferenceId?.date ||
-
-      registration?.conference?.date ||
-
-      registration?.conference
-        ?.conferenceDates ||
-
-      registration?.conference?.dates ||
-
-      registration?.conferenceDate ||
-
+      conference?.conferenceDates ||
+      conference?.date ||
+      conference?.dates ||
+      conference?.conferenceDate ||
       "";
 
     return formatConferenceDate(
@@ -403,151 +332,168 @@ const Registrations = () => {
   };
 
   /* ============================================================
-     GET CONFERENCE LOCATION
+     GET LOCATION
   ============================================================ */
 
   const getConferenceLocation = (
-    registration
+    conference
   ) => {
     return (
-      registration?.conference
-        ?.conferenceId?.location ||
-
-      registration?.conference
-        ?.location ||
-
+      conference?.location ||
+      conference?.venue ||
+      conference?.mode ||
       ""
     );
   };
 
   /* ============================================================
-     GET CONFERENCE STATUS
+     GET STATUS
   ============================================================ */
 
   const getConferenceStatus = (
-    registration
+    conference
   ) => {
     return (
-      registration?.conference
-        ?.conferenceId?.status ||
-
-      registration?.conference
-        ?.status ||
-
+      conference?.status ||
       "Upcoming"
     );
   };
 
   /* ============================================================
-     GROUP REGISTRATIONS BY CONFERENCE
+     NORMALIZE CONFERENCE-WISE API DATA
   ============================================================ */
 
   const registrations = useMemo(() => {
-    const grouped = {};
+    if (
+      !Array.isArray(
+        conferenceWiseRegisteredUsers
+      )
+    ) {
+      return [];
+    }
 
-    registrationsList.forEach(
-      (registration) => {
+    return conferenceWiseRegisteredUsers.map(
+      (conference, index) => {
         const conferenceId =
           getConferenceId(
-            registration
-          );
+            conference
+          ) ||
+          `conference-${index}`;
 
-        if (!conferenceId) {
-          return;
-        }
-
-        const conferenceTitle =
+        const conferenceName =
           getConferenceTitle(
-            registration
+            conference
           );
 
-        const conferenceDate =
+        const date =
           getConferenceDate(
-            registration
+            conference
           );
 
-        const conferenceLocation =
+        const location =
           getConferenceLocation(
-            registration
+            conference
           );
 
         const status =
           getConferenceStatus(
-            registration
+            conference
           );
 
-        if (
-          !grouped[conferenceId]
-        ) {
-          grouped[conferenceId] = {
-            id: conferenceId,
+        const users =
+          Array.isArray(
+            conference?.users
+          )
+            ? conference.users
+            : [];
 
-            conference:
-              conferenceTitle,
+        /*
+         * Backend expected:
+         *
+         * {
+         *   conferenceId,
+         *   conferenceName,
+         *   totalRegisteredUsers,
+         *   users: [],
+         *   date,
+         *   location,
+         *   status
+         * }
+         */
 
-            date:
-              conferenceDate,
+        const totalRegisteredUsers =
+          Number(
+            conference?.totalRegisteredUsers
+          ) ||
+          users.length;
 
-            location:
-              conferenceLocation,
+        return {
+          id: conferenceId,
 
-            registrations: 0,
+          conference:
+            conferenceName,
 
-            status,
+          date,
 
-            registrationIds: [],
-          };
-        }
+          location,
 
-        grouped[conferenceId]
-          .registrations += 1;
+          registrations:
+            totalRegisteredUsers,
 
-        if (
-          registration?._id
-        ) {
-          grouped[conferenceId]
-            .registrationIds
-            .push(
-              registration._id
-            );
-        }
+          status,
+
+          users,
+        };
       }
     );
-
-    return Object.values(
-      grouped
-    );
-  }, [registrationsList]);
+  }, [
+    conferenceWiseRegisteredUsers,
+  ]);
 
   /* ============================================================
      STATISTICS
   ============================================================ */
 
   const totalRegistrations =
-    registrationsList.length;
+    useMemo(() => {
+      return registrations.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.registrations
+          ),
+        0
+      );
+    }, [registrations]);
 
   const upcomingRegistrations =
-    registrations
-      .filter(
+    useMemo(() => {
+      return registrations
+        .filter(
+          (item) =>
+            String(item.status)
+              .toLowerCase() ===
+            "upcoming"
+        )
+        .reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.registrations
+            ),
+          0
+        );
+    }, [registrations]);
+
+  const publishedConferences =
+    useMemo(() => {
+      return registrations.filter(
         (item) =>
           String(item.status)
             .toLowerCase() ===
-          "upcoming"
-      )
-      .reduce(
-        (total, item) =>
-          total +
-          item.registrations,
-        0
-      );
-
-  const publishedConferences =
-    registrations.filter(
-      (item) =>
-        String(item.status)
-          .toLowerCase() ===
-        "published"
-    ).length;
+          "published"
+      ).length;
+    }, [registrations]);
 
   /* ============================================================
      PAGINATION
@@ -582,7 +528,9 @@ const Registrations = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [registrations.length]);
+  }, [
+    registrations.length,
+  ]);
 
   /* ============================================================
      KEEP PAGE VALID
@@ -659,49 +607,6 @@ const Registrations = () => {
   };
 
   /* ============================================================
-     DELETE
-  ============================================================ */
-
-  const handleDelete = async (
-    item
-  ) => {
-    setOpenMenu(null);
-
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete registrations for "${item.conference}"?`
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      for (
-        const registrationId of
-        item.registrationIds
-      ) {
-        await dispatch(
-          deleteRegistration(
-            registrationId
-          )
-        ).unwrap();
-      }
-
-      await dispatch(
-        getAllRegistrations()
-      );
-    } catch (
-      deleteError
-    ) {
-      console.error(
-        "Failed to delete registrations:",
-        deleteError
-      );
-    }
-  };
-
-  /* ============================================================
      ROW CLICK
   ============================================================ */
 
@@ -718,12 +623,129 @@ const Registrations = () => {
   };
 
   /* ============================================================
+     ACTION MENU
+  ============================================================ */
+
+  const handleMenuClick = (
+    event,
+    itemId
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const normalizedId =
+      String(itemId);
+
+    setOpenMenu(
+      (previous) =>
+        previous ===
+        normalizedId
+          ? null
+          : normalizedId
+    );
+  };
+
+  /* ============================================================
+     OUTSIDE CLICK
+  ============================================================ */
+
+  useEffect(() => {
+    if (
+      openMenu === null
+    ) {
+      return;
+    }
+
+    const handleOutsideClick = (
+      event
+    ) => {
+      const target =
+        event.target;
+
+      if (
+        target?.closest?.(
+          "[data-registration-action-menu]"
+        )
+      ) {
+        return;
+      }
+
+      if (
+        target?.closest?.(
+          "[data-registration-action-button]"
+        )
+      ) {
+        return;
+      }
+
+      setOpenMenu(null);
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, [openMenu]);
+
+  /* ============================================================
+     CLOSE MENU ON SCROLL / RESIZE
+  ============================================================ */
+
+  useEffect(() => {
+    if (
+      openMenu === null
+    ) {
+      return;
+    }
+
+    const handleScroll = () => {
+      setOpenMenu(null);
+    };
+
+    const handleResize = () => {
+      setOpenMenu(null);
+    };
+
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      true
+    );
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        handleScroll,
+        true
+      );
+
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+    };
+  }, [openMenu]);
+
+  /* ============================================================
      LOADING
   ============================================================ */
 
   if (
-    loading &&
-    registrationsList.length === 0
+    conferenceWiseRegisteredLoading &&
+    conferenceWiseRegisteredUsers.length ===
+      0
   ) {
     return (
       <div className="flex min-h-[300px] w-full items-center justify-center">
@@ -751,6 +773,13 @@ const Registrations = () => {
   }
 
   /* ============================================================
+     ERROR
+  ============================================================ */
+
+  const displayError =
+    conferenceWiseRegisteredError;
+
+  /* ============================================================
      UI
   ============================================================ */
 
@@ -776,7 +805,7 @@ const Registrations = () => {
 
       {/* ERROR */}
 
-      {error && (
+      {displayError && (
         <motion.div
           initial={{
             opacity: 0,
@@ -788,9 +817,9 @@ const Registrations = () => {
           }}
           className="mb-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-600"
         >
-          {typeof error ===
+          {typeof displayError ===
           "string"
-            ? error
+            ? displayError
             : "Failed to load registrations."}
         </motion.div>
       )}
@@ -1154,17 +1183,13 @@ const Registrations = () => {
                           whileTap={{
                             scale: 0.9,
                           }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            setOpenMenu(
-                              (prev) =>
-                                prev ===
-                                item.id
-                                  ? null
-                                  : item.id
-                            );
-                          }}
+                          data-registration-action-button
+                          onClick={(e) =>
+                            handleMenuClick(
+                              e,
+                              item.id
+                            )
+                          }
                           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition hover:bg-violet-50 hover:text-violet-600"
                         >
                           <MoreVertical
@@ -1173,7 +1198,9 @@ const Registrations = () => {
                         </motion.button>
 
                         {openMenu ===
-                          item.id && (
+                          String(
+                            item.id
+                          ) && (
 
                           <motion.div
                             initial={{
@@ -1189,21 +1216,25 @@ const Registrations = () => {
                             transition={{
                               duration: 0.15,
                             }}
+                            data-registration-action-menu
                             onClick={(e) =>
                               e.stopPropagation()
                             }
-                            className="absolute bottom-[calc(100%-2px)] right-3 z-50 w-32 origin-bottom-right overflow-hidden rounded-lg border border-gray-100 bg-white p-1.5 text-left shadow-xl"
+                            className="absolute bottom-[calc(100%-2px)] right-3 z-[9999] w-32 origin-bottom-right overflow-hidden rounded-lg border border-gray-100 bg-white p-1.5 text-left shadow-2xl"
                           >
 
                             {/* VIEW */}
 
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+
                                 handleView(
                                   item
-                                )
-                              }
+                                );
+                              }}
                               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
                             >
                               <Eye
@@ -1211,29 +1242,6 @@ const Registrations = () => {
                               />
 
                               View
-                            </button>
-
-                            {/* DELETE */}
-
-                            <button
-                              type="button"
-                              disabled={
-                                deleteLoading
-                              }
-                              onClick={() =>
-                                handleDelete(
-                                  item
-                                )
-                              }
-                              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] font-medium text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              <Trash2
-                                size={14}
-                              />
-
-                              {deleteLoading
-                                ? "Deleting..."
-                                : "Delete"}
                             </button>
 
                           </motion.div>
@@ -1293,6 +1301,7 @@ const Registrations = () => {
               )}
 
             </tbody>
+
           </table>
         </div>
 
@@ -1347,12 +1356,14 @@ const Registrations = () => {
                   currentPage ===
                   1
                 }
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
+
                   setCurrentPage(
                     (prev) =>
                       prev - 1
-                  )
-                }
+                  );
+                }}
                 className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft
@@ -1378,11 +1389,13 @@ const Registrations = () => {
                     whileTap={{
                       scale: 0.9,
                     }}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
+
                       setCurrentPage(
                         page
-                      )
-                    }
+                      );
+                    }}
                     className={`flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-[10px] font-semibold transition ${
                       currentPage ===
                       page
@@ -1407,12 +1420,14 @@ const Registrations = () => {
                   currentPage ===
                   totalPages
                 }
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
+
                   setCurrentPage(
                     (prev) =>
                       prev + 1
-                  )
-                }
+                  );
+                }}
                 className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRight
@@ -1421,10 +1436,12 @@ const Registrations = () => {
               </motion.button>
 
             </div>
+
           </div>
         )}
 
       </motion.div>
+
     </motion.div>
   );
 };

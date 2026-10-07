@@ -5,6 +5,7 @@ import {
   getAllRegistrationsApi,
   getRegistrationByIdApi,
   getRegistrationsByConferenceIdApi,
+  getConferenceWiseRegisteredUsersApi,
   deleteRegistrationApi,
 } from "../api/registrationsApis";
 
@@ -66,28 +67,67 @@ export const getRegistrationById = createAsyncThunk(
 // GET REGISTRATIONS BY CONFERENCE ID
 // ======================================================
 
-export const getRegistrationsByConferenceId = createAsyncThunk(
-  "registrations/getRegistrationsByConferenceId",
+export const getRegistrationsByConferenceId =
+  createAsyncThunk(
+    "registrations/getRegistrationsByConferenceId",
 
-  async (conferenceId, { rejectWithValue }) => {
-    try {
-      if (!conferenceId) {
+    async (conferenceId, { rejectWithValue }) => {
+      try {
+        if (!conferenceId) {
+          return rejectWithValue(
+            "Conference ID is required"
+          );
+        }
+
+        return await getRegistrationsByConferenceIdApi(
+          conferenceId
+        );
+      } catch (error) {
         return rejectWithValue(
-          "Conference ID is required"
+          error.response?.data?.message ||
+            "Failed to fetch conference registrations"
         );
       }
-
-      return await getRegistrationsByConferenceIdApi(
-        conferenceId
-      );
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-          "Failed to fetch conference registrations"
-      );
     }
-  }
-);
+  );
+
+// ======================================================
+// GET CONFERENCE-WISE REGISTERED USERS
+// ======================================================
+//
+// Returns:
+//
+// [
+//   {
+//     conferenceName: "Autism Research Conference",
+//     totalRegisteredUsers: 125,
+//     users: [
+//       {
+//         name: "John Doe",
+//         email: "john@example.com",
+//         phone: "9876543210"
+//       }
+//     ]
+//   }
+// ]
+//
+// ======================================================
+
+export const getConferenceWiseRegisteredUsers =
+  createAsyncThunk(
+    "registrations/getConferenceWiseRegisteredUsers",
+
+    async (_, { rejectWithValue }) => {
+      try {
+        return await getConferenceWiseRegisteredUsersApi();
+      } catch (error) {
+        return rejectWithValue(
+          error.response?.data?.message ||
+            "Failed to fetch conference-wise registered users"
+        );
+      }
+    }
+  );
 
 // ======================================================
 // DELETE REGISTRATION
@@ -118,23 +158,38 @@ export const deleteRegistration = createAsyncThunk(
 // ======================================================
 
 const initialState = {
+  // ----------------------------------------------------
   // All registrations
+  // ----------------------------------------------------
+
   registrations: [],
 
+  // ----------------------------------------------------
   // Selected registration
+  // ----------------------------------------------------
+
   selectedRegistration: null,
 
-  // Conference-wise registered users
+  // ----------------------------------------------------
+  // Conference-specific registered users
+  // ----------------------------------------------------
+
   conferenceRegisteredUsers: [],
 
-  // Conference-wise summary
+  // ----------------------------------------------------
+  // Conference-specific summary
+  // ----------------------------------------------------
+
   conferenceRegisteredSummary: {
     totalRegistrations: 0,
     paidRegistrations: 0,
     pendingRegistrations: 0,
   },
 
-  // Conference-wise pagination
+  // ----------------------------------------------------
+  // Conference-specific pagination
+  // ----------------------------------------------------
+
   conferenceRegisteredPagination: {
     currentPage: 1,
     totalPages: 0,
@@ -142,18 +197,40 @@ const initialState = {
     limit: 10,
   },
 
+  // ----------------------------------------------------
+  // ALL CONFERENCES + REGISTERED USERS
+  // ----------------------------------------------------
+
+  conferenceWiseRegisteredUsers: [],
+
+  conferenceWiseRegisteredLoading: false,
+
+  conferenceWiseRegisteredError: null,
+
+  // ----------------------------------------------------
   // Loading states
+  // ----------------------------------------------------
+
   loading: false,
+
   createLoading: false,
+
   deleteLoading: false,
 
   conferenceRegisteredLoading: false,
 
+  // ----------------------------------------------------
   // Errors
+  // ----------------------------------------------------
+
   error: null,
+
   conferenceRegisteredError: null,
 
+  // ----------------------------------------------------
   // Success
+  // ----------------------------------------------------
+
   success: false,
 
   message: "",
@@ -169,35 +246,39 @@ const registrationsSlice = createSlice({
   initialState,
 
   reducers: {
-    // --------------------------------------------------
-    // Clear Error
-    // --------------------------------------------------
+    // ==================================================
+    // CLEAR ERROR
+    // ==================================================
 
     clearRegistrationError: (state) => {
       state.error = null;
+
       state.conferenceRegisteredError = null;
+
+      state.conferenceWiseRegisteredError = null;
     },
 
-    // --------------------------------------------------
-    // Clear Success
-    // --------------------------------------------------
+    // ==================================================
+    // CLEAR SUCCESS
+    // ==================================================
 
     clearRegistrationSuccess: (state) => {
       state.success = false;
+
       state.message = "";
     },
 
-    // --------------------------------------------------
-    // Clear Selected Registration
-    // --------------------------------------------------
+    // ==================================================
+    // CLEAR SELECTED REGISTRATION
+    // ==================================================
 
     clearSelectedRegistration: (state) => {
       state.selectedRegistration = null;
     },
 
-    // --------------------------------------------------
-    // Clear Conference Users
-    // --------------------------------------------------
+    // ==================================================
+    // CLEAR CONFERENCE USERS
+    // ==================================================
 
     clearConferenceRegisteredUsers: (state) => {
       state.conferenceRegisteredUsers = [];
@@ -218,9 +299,19 @@ const registrationsSlice = createSlice({
       state.conferenceRegisteredError = null;
     },
 
-    // --------------------------------------------------
-    // Reset
-    // --------------------------------------------------
+    // ==================================================
+    // CLEAR CONFERENCE-WISE USERS
+    // ==================================================
+
+    clearConferenceWiseRegisteredUsers: (state) => {
+      state.conferenceWiseRegisteredUsers = [];
+
+      state.conferenceWiseRegisteredError = null;
+    },
+
+    // ==================================================
+    // RESET
+    // ==================================================
 
     resetRegistrationState: () => initialState,
   },
@@ -236,7 +327,9 @@ const registrationsSlice = createSlice({
         createRegistration.pending,
         (state) => {
           state.createLoading = true;
+
           state.error = null;
+
           state.success = false;
         }
       )
@@ -245,6 +338,7 @@ const registrationsSlice = createSlice({
         createRegistration.fulfilled,
         (state, action) => {
           state.createLoading = false;
+
           state.success = true;
 
           state.message =
@@ -267,7 +361,9 @@ const registrationsSlice = createSlice({
         createRegistration.rejected,
         (state, action) => {
           state.createLoading = false;
+
           state.success = false;
+
           state.error = action.payload;
         }
       );
@@ -282,6 +378,7 @@ const registrationsSlice = createSlice({
         getAllRegistrations.pending,
         (state) => {
           state.loading = true;
+
           state.error = null;
         }
       )
@@ -305,6 +402,7 @@ const registrationsSlice = createSlice({
         getAllRegistrations.rejected,
         (state, action) => {
           state.loading = false;
+
           state.error = action.payload;
         }
       );
@@ -319,7 +417,9 @@ const registrationsSlice = createSlice({
         getRegistrationById.pending,
         (state) => {
           state.loading = true;
+
           state.error = null;
+
           state.selectedRegistration = null;
         }
       )
@@ -340,6 +440,7 @@ const registrationsSlice = createSlice({
         getRegistrationById.rejected,
         (state, action) => {
           state.loading = false;
+
           state.error = action.payload;
         }
       );
@@ -357,7 +458,6 @@ const registrationsSlice = createSlice({
 
           state.conferenceRegisteredError = null;
 
-          // Clear old conference data while loading
           state.conferenceRegisteredUsers = [];
 
           state.conferenceRegisteredSummary = {
@@ -382,16 +482,12 @@ const registrationsSlice = createSlice({
 
           const payload = action.payload || {};
 
-          // ----------------------------------------------
-          // API DATA
-          // ----------------------------------------------
-
           const data =
             payload?.data || payload;
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // REGISTERED USERS
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           if (Array.isArray(data)) {
             state.conferenceRegisteredUsers =
@@ -401,9 +497,9 @@ const registrationsSlice = createSlice({
               data?.registrations || [];
           }
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // SUMMARY
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           state.conferenceRegisteredSummary =
             data?.summary || {
@@ -416,9 +512,9 @@ const registrationsSlice = createSlice({
               pendingRegistrations: 0,
             };
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // PAGINATION
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           state.conferenceRegisteredPagination =
             data?.pagination || {
@@ -433,9 +529,9 @@ const registrationsSlice = createSlice({
               limit: 10,
             };
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // MESSAGE
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           state.message =
             payload?.message || "";
@@ -445,13 +541,91 @@ const registrationsSlice = createSlice({
       .addCase(
         getRegistrationsByConferenceId.rejected,
         (state, action) => {
-          state.conferenceRegisteredLoading = false;
+          state.conferenceRegisteredLoading =
+            false;
 
           state.conferenceRegisteredError =
             action.payload ||
             "Failed to fetch conference registered users";
 
           state.conferenceRegisteredUsers = [];
+        }
+      );
+
+    // ==================================================
+    // GET ALL CONFERENCES + REGISTERED USERS
+    // ==================================================
+
+    builder
+
+      .addCase(
+        getConferenceWiseRegisteredUsers.pending,
+        (state) => {
+          state.conferenceWiseRegisteredLoading =
+            true;
+
+          state.conferenceWiseRegisteredError =
+            null;
+        }
+      )
+
+      .addCase(
+        getConferenceWiseRegisteredUsers.fulfilled,
+        (state, action) => {
+          state.conferenceWiseRegisteredLoading =
+            false;
+
+          const payload =
+            action.payload || {};
+
+          /*
+           * Supports:
+           *
+           * {
+           *   success: true,
+           *   data: [...]
+           * }
+           *
+           * OR
+           *
+           * {
+           *   data: {
+           *     conferences: [...]
+           *   }
+           * }
+           */
+
+          const data =
+            payload?.data || payload;
+
+          if (Array.isArray(data)) {
+            state.conferenceWiseRegisteredUsers =
+              data;
+          } else {
+            state.conferenceWiseRegisteredUsers =
+              data?.conferences ||
+              data?.results ||
+              data?.data ||
+              [];
+          }
+
+          state.message =
+            payload?.message || "";
+        }
+      )
+
+      .addCase(
+        getConferenceWiseRegisteredUsers.rejected,
+        (state, action) => {
+          state.conferenceWiseRegisteredLoading =
+            false;
+
+          state.conferenceWiseRegisteredError =
+            action.payload ||
+            "Failed to fetch conference-wise registered users";
+
+          state.conferenceWiseRegisteredUsers =
+            [];
         }
       );
 
@@ -465,6 +639,7 @@ const registrationsSlice = createSlice({
         deleteRegistration.pending,
         (state) => {
           state.deleteLoading = true;
+
           state.error = null;
         }
       )
@@ -473,6 +648,7 @@ const registrationsSlice = createSlice({
         deleteRegistration.fulfilled,
         (state, action) => {
           state.deleteLoading = false;
+
           state.success = true;
 
           state.message =
@@ -482,9 +658,9 @@ const registrationsSlice = createSlice({
           const deletedId =
             action.payload?.id;
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // Remove from all registrations
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           state.registrations =
             state.registrations.filter(
@@ -493,9 +669,9 @@ const registrationsSlice = createSlice({
                 registration.id !== deletedId
             );
 
-          // ----------------------------------------------
+          // ------------------------------------------------
           // Remove from conference registrations
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           state.conferenceRegisteredUsers =
             state.conferenceRegisteredUsers.filter(
@@ -504,9 +680,9 @@ const registrationsSlice = createSlice({
                 registration.id !== deletedId
             );
 
-          // ----------------------------------------------
-          // Update total count
-          // ----------------------------------------------
+          // ------------------------------------------------
+          // Update conference-specific count
+          // ------------------------------------------------
 
           if (
             state.conferenceRegisteredSummary
@@ -519,9 +695,44 @@ const registrationsSlice = createSlice({
               );
           }
 
-          // ----------------------------------------------
+          // ------------------------------------------------
+          // Update conference-wise users
+          // ------------------------------------------------
+
+          state.conferenceWiseRegisteredUsers =
+            state.conferenceWiseRegisteredUsers.map(
+              (conference) => {
+                if (
+                  !Array.isArray(
+                    conference.users
+                  )
+                ) {
+                  return conference;
+                }
+
+                const users =
+                  conference.users.filter(
+                    (user) =>
+                      user._id !== deletedId &&
+                      user.id !== deletedId &&
+                      user.registrationId !==
+                        deletedId
+                  );
+
+                return {
+                  ...conference,
+
+                  users,
+
+                  totalRegisteredUsers:
+                    users.length,
+                };
+              }
+            );
+
+          // ------------------------------------------------
           // Clear selected registration
-          // ----------------------------------------------
+          // ------------------------------------------------
 
           if (
             state.selectedRegistration?._id ===
@@ -538,6 +749,7 @@ const registrationsSlice = createSlice({
         deleteRegistration.rejected,
         (state, action) => {
           state.deleteLoading = false;
+
           state.error = action.payload;
         }
       );
@@ -553,8 +765,65 @@ export const {
   clearRegistrationSuccess,
   clearSelectedRegistration,
   clearConferenceRegisteredUsers,
+  clearConferenceWiseRegisteredUsers,
   resetRegistrationState,
 } = registrationsSlice.actions;
+
+// ======================================================
+// SELECTORS
+// ======================================================
+
+export const selectRegistrations = (state) =>
+  state.registrations?.registrations || [];
+
+export const selectSelectedRegistration = (state) =>
+  state.registrations?.selectedRegistration ||
+  null;
+
+export const selectConferenceRegisteredUsers = (
+  state
+) =>
+  state.registrations
+    ?.conferenceRegisteredUsers || [];
+
+export const selectConferenceRegisteredSummary = (
+  state
+) =>
+  state.registrations
+    ?.conferenceRegisteredSummary || {
+    totalRegistrations: 0,
+    paidRegistrations: 0,
+    pendingRegistrations: 0,
+  };
+
+export const selectConferenceRegisteredPagination = (
+  state
+) =>
+  state.registrations
+    ?.conferenceRegisteredPagination || {
+    currentPage: 1,
+    totalPages: 0,
+    totalRegistrations: 0,
+    limit: 10,
+  };
+
+export const selectConferenceWiseRegisteredUsers = (
+  state
+) =>
+  state.registrations
+    ?.conferenceWiseRegisteredUsers || [];
+
+export const selectConferenceWiseRegisteredLoading = (
+  state
+) =>
+  state.registrations
+    ?.conferenceWiseRegisteredLoading || false;
+
+export const selectConferenceWiseRegisteredError = (
+  state
+) =>
+  state.registrations
+    ?.conferenceWiseRegisteredError || null;
 
 // ======================================================
 // REDUCER
