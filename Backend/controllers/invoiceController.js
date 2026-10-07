@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 const Invoice = require("../models/Invoice");
 const Conference = require("../models/conference");
 const invoiceTemplate = require("../utils/invoiceTemplate");
-const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
 
 
@@ -1171,6 +1170,8 @@ exports.downloadInvoicePdf = async (req, res) => {
   let browser;
 
   try {
+    const puppeteer = await import("puppeteer-core");
+
     const { id } = req.params;
 
     if (!id) {
@@ -1191,7 +1192,7 @@ exports.downloadInvoicePdf = async (req, res) => {
 
     const html = invoiceTemplate(invoice);
 
-    browser = await puppeteer.launch({
+    browser = await puppeteer.default.launch({
       args: chromium.args,
       executablePath: await chromium.executablePath(),
       headless: true,
