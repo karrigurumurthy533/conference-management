@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const Invoice = require("../models/Invoice");
 const Conference = require("../models/conference");
 const invoiceTemplate = require("../utils/invoiceTemplate");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 
 
 
@@ -1163,6 +1165,8 @@ exports.deleteInvoice = async (
 
 
 
+
+
 exports.downloadInvoicePdf = async (req, res) => {
   let browser;
 
@@ -1187,15 +1191,10 @@ exports.downloadInvoicePdf = async (req, res) => {
 
     const html = invoiceTemplate(invoice);
 
-    const puppeteer = await import("puppeteer");
-
-    browser = await puppeteer.default.launch({
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
     });
 
     const page = await browser.newPage();
@@ -1253,7 +1252,11 @@ exports.downloadInvoicePdf = async (req, res) => {
     });
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error("Browser close error:", closeError);
+      }
     }
   }
 };
