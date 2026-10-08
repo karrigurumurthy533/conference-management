@@ -12,6 +12,8 @@ const bcrypt = require("bcryptjs");
 const Review = require("../models/review");
 
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
+const BankAccount = require("../models/BankAccount");
+const { sendEmployeeCredentials } = require("../utils/emailService");
 
 
 
@@ -790,11 +792,17 @@ exports.createEmployee = async (req, res) => {
       permissions = [],
     } = req.body;
 
-    // --------------------------------------------------
-    // REQUIRED FIELDS
-    // --------------------------------------------------
 
-    if (!fullName || !email || !password || !employeeType) {
+    // ==================================================
+    // REQUIRED FIELDS
+    // ==================================================
+
+    if (
+      !fullName ||
+      !email ||
+      !password ||
+      !employeeType
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -802,26 +810,31 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------
+
+    // ==================================================
     // PASSWORD VALIDATION
-    // --------------------------------------------------
+    // ==================================================
 
     if (password.trim().length < 6) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters.",
+        message:
+          "Password must be at least 6 characters.",
       });
     }
 
-    // --------------------------------------------------
+
+    // ==================================================
     // NORMALIZE EMAIL
-    // --------------------------------------------------
+    // ==================================================
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail =
+      email.trim().toLowerCase();
 
-    // --------------------------------------------------
+
+    // ==================================================
     // EMPLOYEE TYPE
-    // --------------------------------------------------
+    // ==================================================
 
     const allowedEmployeeTypes = [
       "event manager",
@@ -830,159 +843,309 @@ exports.createEmployee = async (req, res) => {
       "webiner",
     ];
 
-    const normalizedEmployeeType = employeeType
-      .trim()
-      .toLowerCase();
+    const normalizedEmployeeType =
+      employeeType
+        .trim()
+        .toLowerCase();
 
-    if (!allowedEmployeeTypes.includes(normalizedEmployeeType)) {
+
+    if (
+      !allowedEmployeeTypes.includes(
+        normalizedEmployeeType
+      )
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid employee type.",
+        message:
+          "Invalid employee type.",
       });
     }
 
-    // --------------------------------------------------
-    // CHECK EXISTING EMPLOYEE
-    // --------------------------------------------------
 
-    const existingEmployee = await Employee.findOne({
-      email: normalizedEmail,
-    });
+    // ==================================================
+    // CHECK EXISTING EMPLOYEE
+    // ==================================================
+
+    const existingEmployee =
+      await Employee.findOne({
+        email: normalizedEmail,
+      });
+
 
     if (existingEmployee) {
       return res.status(409).json({
         success: false,
-        message: "Employee with this email already exists.",
+        message:
+          "Employee with this email already exists.",
       });
     }
 
-    // --------------------------------------------------
+
+    // ==================================================
     // ASSIGNED CONFERENCES VALIDATION
-    // --------------------------------------------------
+    // ==================================================
 
     if (!Array.isArray(assignedConferences)) {
       return res.status(400).json({
         success: false,
-        message: "assignedConferences must be an array.",
+        message:
+          "assignedConferences must be an array.",
       });
     }
 
-    for (const conferenceId of assignedConferences) {
-      if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
+
+    for (
+      const conferenceId of assignedConferences
+    ) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          conferenceId
+        )
+      ) {
         return res.status(400).json({
           success: false,
-          message: `Invalid conference ID: ${conferenceId}`,
+          message:
+            `Invalid conference ID: ${conferenceId}`,
         });
       }
     }
+
 
     if (assignedConferences.length > 0) {
-      const conferences = await Conference.find({
-        _id: {
-          $in: assignedConferences,
-        },
-      }).select("_id");
 
-      if (conferences.length !== assignedConferences.length) {
+      const conferences =
+        await Conference.find({
+          _id: {
+            $in: assignedConferences,
+          },
+        }).select("_id");
+
+
+      if (
+        conferences.length !==
+        assignedConferences.length
+      ) {
         return res.status(404).json({
           success: false,
-          message: "One or more assigned conferences were not found.",
+          message:
+            "One or more assigned conferences were not found.",
         });
       }
     }
 
-    // --------------------------------------------------
+
+    // ==================================================
     // STATUS VALIDATION
-    // --------------------------------------------------
+    // ==================================================
 
     const employeeStatus = status
       ? status.trim().toLowerCase()
       : "active";
 
-    if (!["active", "inactive"].includes(employeeStatus)) {
+
+    if (
+      !["active", "inactive"].includes(
+        employeeStatus
+      )
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid employee status.",
+        message:
+          "Invalid employee status.",
       });
     }
 
-    // --------------------------------------------------
-    // CREATE EMPLOYEE
-    // --------------------------------------------------
+
+    // ==================================================
+    // KEEP ORIGINAL PASSWORD FOR EMAIL
+    // ==================================================
+
     // IMPORTANT:
-    // Password is NOT hashed here.
-    // Employee schema pre("save") middleware hashes it.
-    // --------------------------------------------------
+    // This is the plain password entered by admin.
+    // It is used ONLY to send the welcome email.
+    //
+    // Employee schema pre-save middleware will hash
+    // the password before storing it in MongoDB.
 
-    const employee = await Employee.create({
-      fullName: fullName.trim(),
+    const temporaryPassword =
+      password.trim();
 
-      email: normalizedEmail,
 
-      // Main authentication role
-      role: "Employee",
+    // ==================================================
+    // CREATE EMPLOYEE
+    // ==================================================
 
-      // Employee job type
-      employeeType: normalizedEmployeeType,
+    const employee =
+      await Employee.create({
 
-      password: password.trim(),
+        fullName:
+          fullName.trim(),
 
-      phoneNumber: phoneNumber?.trim() || "",
+        email:
+          normalizedEmail,
 
-      assignedConferences,
+        // Main authentication role
+        role: "Employee",
 
-      status: employeeStatus,
+        // Employee job type
+        employeeType:
+          normalizedEmployeeType,
 
-      department: department?.trim() || "",
+        password:
+          temporaryPassword,
 
-      designation: designation?.trim() || "",
+        phoneNumber:
+          phoneNumber?.trim() || "",
 
-      country: country?.trim() || "",
+        assignedConferences,
 
-      location: location?.trim() || "",
+        status:
+          employeeStatus,
 
-      timezone: timezone?.trim() || "Asia/Kolkata",
+        department:
+          department?.trim() || "",
 
-      about: about?.trim() || "",
+        designation:
+          designation?.trim() || "",
 
-      permissions: Array.isArray(permissions)
-        ? permissions
-        : [],
+        country:
+          country?.trim() || "",
 
-      lastLogin: null,
+        location:
+          location?.trim() || "",
 
-      lastLogout: null,
-    });
+        timezone:
+          timezone?.trim() ||
+          "Asia/Kolkata",
 
-    // --------------------------------------------------
+        about:
+          about?.trim() || "",
+
+        permissions:
+          Array.isArray(permissions)
+            ? permissions
+            : [],
+
+        lastLogin:
+          null,
+
+        lastLogout:
+          null,
+      });
+
+
+    // ==================================================
     // GET CREATED EMPLOYEE
-    // --------------------------------------------------
+    // ==================================================
 
-    const populatedEmployee = await Employee.findById(
-      employee._id
-    )
-      .select("-password")
-      .populate(
-        "assignedConferences",
-        "basicInformation conferenceDates venueInformation"
+    const populatedEmployee =
+      await Employee.findById(
+        employee._id
+      )
+        .select("-password")
+        .populate(
+          "assignedConferences",
+          "basicInformation conferenceDates venueInformation"
+        );
+
+
+    // ==================================================
+    // SEND LOGIN EMAIL
+    // ==================================================
+
+    let emailSent = false;
+
+    try {
+
+      await sendEmployeeCredentials({
+
+        name:
+          employee.fullName,
+
+        email:
+          employee.email,
+
+        password:
+          temporaryPassword,
+
+        employeeType:
+          employee.employeeType,
+      });
+
+      emailSent = true;
+
+      console.log(
+        `✅ Employee credentials email sent to ${employee.email}`
       );
 
-    // --------------------------------------------------
+    } catch (emailError) {
+
+      // -----------------------------------------------
+      // IMPORTANT
+      // Employee is already created.
+      // Don't delete the employee just because email
+      // failed.
+      // -----------------------------------------------
+
+      console.error(
+        "❌ Employee created, but credential email failed:"
+      );
+
+      console.error(
+        emailError
+      );
+    }
+
+
+    // ==================================================
     // RESPONSE
-    // --------------------------------------------------
+    // ==================================================
 
     return res.status(201).json({
+
       success: true,
-      message: "Employee created successfully.",
-      data: populatedEmployee,
+
+      message: emailSent
+        ? "Employee created successfully and login credentials sent to employee email."
+        : "Employee created successfully, but login credentials email could not be sent.",
+
+      emailSent,
+
+      data:
+        populatedEmployee,
     });
+
   } catch (error) {
-    console.error("Create Employee Error:", error);
+
+    console.error(
+      "Create Employee Error:",
+      error
+    );
+
+
+    // ==================================================
+    // DUPLICATE KEY
+    // ==================================================
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Employee with this email already exists.",
+      });
+    }
+
+
+    // ==================================================
+    // SERVER ERROR
+    // ==================================================
 
     return res.status(500).json({
       success: false,
-      message: "Failed to create employee.",
-      error: error.message,
+      message:
+        "Failed to create employee.",
+      error:
+        error.message,
     });
   }
 };
@@ -2597,10 +2760,52 @@ exports.downloadConferenceBrochure = catchAsync(
   }
 );
 
+exports.deleteDownloadBrochure = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-// ======================================================
-// CREATE REVIEW
-// ======================================================
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Download brochure ID is required",
+      });
+    }
+
+    const downloadBrochure =
+      await DownloadBrochure.findById(id);
+
+    if (!downloadBrochure) {
+      return res.status(404).json({
+        success: false,
+        message: "Download brochure request not found",
+      });
+    }
+
+    await DownloadBrochure.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Download brochure request deleted successfully",
+      data: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Delete Download Brochure Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to delete download brochure request",
+      error: error.message,
+    });
+  }
+};
+
 
 exports.createReview = async (req, res) => {
   try {
@@ -3008,6 +3213,51 @@ exports.deleteReview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to delete review",
+    });
+  }
+};
+
+
+
+exports.getActiveBankAccount = async (
+  req,
+  res
+) => {
+  try {
+    const bankAccount =
+      await BankAccount.findOne({
+        isActive: true,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
+    if (!bankAccount) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "No active bank account configured",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Active bank account fetched successfully",
+      data: bankAccount,
+    });
+  } catch (error) {
+    console.error(
+      "GET ACTIVE BANK ACCOUNT ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch active bank account",
+      error: error.message,
     });
   }
 };

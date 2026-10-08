@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -134,6 +135,54 @@ const menuVariants = {
     y: -4,
     transition: {
       duration: 0.12,
+      ease: "easeIn",
+    },
+  },
+};
+
+const deleteModalVariants = {
+  hidden: {
+    opacity: 0,
+  },
+
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.18,
+    },
+  },
+
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.15,
+    },
+  },
+};
+
+const deleteDialogVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.94,
+    y: 12,
+  },
+
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.22,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+
+  exit: {
+    opacity: 0,
+    scale: 0.96,
+    y: 8,
+    transition: {
+      duration: 0.15,
       ease: "easeIn",
     },
   },
@@ -381,6 +430,10 @@ const Invoices = () => {
   const [currentPage, setCurrentPage] =
     useState(1);
 
+  // DELETE CONFIRMATION TARGET
+  const [deleteTarget, setDeleteTarget] =
+    useState(null);
+
   const itemsPerPage = 6;
 
   // =======================================================
@@ -522,62 +575,119 @@ const Invoices = () => {
   };
 
   // =======================================================
-  // DOWNLOAD
+  // OPEN DELETE CONFIRMATION
   // =======================================================
 
+  const handleDeleteInvoice = (
+    invoice
+  ) => {
+    const invoiceId =
+      getInvoiceId(invoice);
 
+    if (!invoiceId) {
+      console.warn(
+        "Cannot delete invoice: invoice ID is missing"
+      );
+      return;
+    }
+
+    // Close action menu first
+    setOpenMenu(null);
+
+    // Open custom confirmation popup
+    setDeleteTarget(invoice);
+  };
 
   // =======================================================
-  // DELETE
+  // CLOSE DELETE POPUP
   // =======================================================
 
-  const handleDeleteInvoice =
-    async (invoiceId) => {
-      if (!invoiceId) return;
+  const handleCloseDeletePopup = () => {
+    if (deleteLoading) return;
 
-      setOpenMenu(null);
+    setDeleteTarget(null);
+  };
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this invoice?"
+  // =======================================================
+  // CONFIRM DELETE
+  // =======================================================
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    const invoiceId =
+      getInvoiceId(deleteTarget);
+
+    if (!invoiceId) return;
+
+    try {
+      await dispatch(
+        deleteInvoice(invoiceId)
+      ).unwrap();
+
+      // Close popup after successful delete
+      setDeleteTarget(null);
+
+      // If current page has only one item,
+      // move to previous page
+      if (
+        invoices.length === 1 &&
+        currentPage > 1
+      ) {
+        setCurrentPage(
+          (page) => page - 1
         );
-
-      if (!confirmed) return;
-
-      try {
-        await dispatch(
-          deleteInvoice(invoiceId)
-        ).unwrap();
-
-        if (
-          invoices.length === 1 &&
-          currentPage > 1
-        ) {
-          setCurrentPage(
-            (page) => page - 1
-          );
-        } else {
-          dispatch(
-            getAllInvoices({
-              page: currentPage,
-              limit: itemsPerPage,
-              search:
-                search.trim(),
-              status:
-                statusFilter ===
-                "All Status"
-                  ? ""
-                  : statusFilter,
-            })
-          );
-        }
-      } catch (deleteError) {
-        console.error(
-          "Delete invoice error:",
-          deleteError
+      } else {
+        // Refresh current page
+        dispatch(
+          getAllInvoices({
+            page: currentPage,
+            limit: itemsPerPage,
+            search: search.trim(),
+            status:
+              statusFilter ===
+              "All Status"
+                ? ""
+                : statusFilter,
+          })
         );
       }
+    } catch (deleteError) {
+      console.error(
+        "Delete invoice error:",
+        deleteError
+      );
+    }
+  };
+
+  // =======================================================
+  // ESCAPE KEY FOR DELETE POPUP
+  // =======================================================
+
+  useEffect(() => {
+    if (!deleteTarget) return;
+
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        handleCloseDeletePopup();
+      }
     };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, [
+    deleteTarget,
+    deleteLoading,
+  ]);
 
   // =======================================================
   // CLOSE MENU OUTSIDE CLICK
@@ -1199,7 +1309,8 @@ const Invoices = () => {
 
             <div
               className={`w-full overflow-x-auto transition-opacity duration-300 ${
-                loading && invoices.length > 0
+                loading &&
+                invoices.length > 0
                   ? "opacity-75"
                   : "opacity-100"
               }`}
@@ -1240,75 +1351,104 @@ const Invoices = () => {
                 <tbody>
                   {/* SMOOTH INITIAL LOADING */}
 
-                  {loading && invoices.length === 0 ? (
+                  {loading &&
+                  invoices.length === 0 ? (
                     <AnimatePresence mode="wait">
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <motion.tr
-                          key={`invoice-skeleton-${index}`}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            duration: 0.28,
-                            delay: index * 0.045,
-                            ease: "easeOut",
-                          }}
-                          className="border-b border-gray-50"
-                        >
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-2.5">
-                              <motion.div
-                                animate={{ opacity: [0.45, 0.85, 0.45] }}
-                                transition={{
-                                  duration: 1.3,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                }}
-                                className="h-9 w-9 shrink-0 rounded-lg bg-gray-100"
-                              />
-                              <div className="min-w-0 space-y-1.5">
+                      {Array.from({
+                        length: 6,
+                      }).map(
+                        (_, index) => (
+                          <motion.tr
+                            key={`invoice-skeleton-${index}`}
+                            initial={{
+                              opacity: 0,
+                              y: 6,
+                            }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                            }}
+                            transition={{
+                              duration: 0.28,
+                              delay:
+                                index *
+                                0.045,
+                              ease: "easeOut",
+                            }}
+                            className="border-b border-gray-50"
+                          >
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-2.5">
                                 <motion.div
-                                  animate={{ opacity: [0.45, 0.8, 0.45] }}
+                                  animate={{
+                                    opacity: [
+                                      0.45,
+                                      0.85,
+                                      0.45,
+                                    ],
+                                  }}
                                   transition={{
                                     duration: 1.3,
-                                    repeat: Infinity,
+                                    repeat:
+                                      Infinity,
                                     ease: "easeInOut",
-                                    delay: 0.05,
                                   }}
-                                  className="h-3 w-24 rounded bg-gray-100"
+                                  className="h-9 w-9 shrink-0 rounded-lg bg-gray-100"
                                 />
-                                <div className="h-2.5 w-12 rounded bg-gray-50" />
+
+                                <div className="min-w-0 space-y-1.5">
+                                  <motion.div
+                                    animate={{
+                                      opacity: [
+                                        0.45,
+                                        0.8,
+                                        0.45,
+                                      ],
+                                    }}
+                                    transition={{
+                                      duration: 1.3,
+                                      repeat:
+                                        Infinity,
+                                      ease: "easeInOut",
+                                      delay: 0.05,
+                                    }}
+                                    className="h-3 w-24 rounded bg-gray-100"
+                                  />
+
+                                  <div className="h-2.5 w-12 rounded bg-gray-50" />
+                                </div>
                               </div>
-                            </div>
-                          </td>
+                            </td>
 
-                          <td className="px-4 py-3.5">
-                            <div className="space-y-1.5">
-                              <div className="h-3 w-28 rounded bg-gray-100" />
-                              <div className="h-2.5 w-36 rounded bg-gray-50" />
-                            </div>
-                          </td>
+                            <td className="px-4 py-3.5">
+                              <div className="space-y-1.5">
+                                <div className="h-3 w-28 rounded bg-gray-100" />
+                                <div className="h-2.5 w-36 rounded bg-gray-50" />
+                              </div>
+                            </td>
 
-                          <td className="px-4 py-3.5">
-                            <div className="h-3 w-40 rounded bg-gray-100" />
-                          </td>
+                            <td className="px-4 py-3.5">
+                              <div className="h-3 w-40 rounded bg-gray-100" />
+                            </td>
 
-                          <td className="px-4 py-3.5">
-                            <div className="h-3 w-16 rounded bg-gray-100" />
-                          </td>
+                            <td className="px-4 py-3.5">
+                              <div className="h-3 w-16 rounded bg-gray-100" />
+                            </td>
 
-                          <td className="px-4 py-3.5">
-                            <div className="h-3 w-20 rounded bg-gray-100" />
-                          </td>
+                            <td className="px-4 py-3.5">
+                              <div className="h-3 w-20 rounded bg-gray-100" />
+                            </td>
 
-                          <td className="px-4 py-3.5">
-                            <div className="h-6 w-16 rounded-md bg-gray-100" />
-                          </td>
+                            <td className="px-4 py-3.5">
+                              <div className="h-6 w-16 rounded-md bg-gray-100" />
+                            </td>
 
-                          <td className="px-4 py-3.5 text-center">
-                            <div className="mx-auto h-8 w-8 rounded-md bg-gray-100" />
-                          </td>
-                        </motion.tr>
-                      ))}
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="mx-auto h-8 w-8 rounded-md bg-gray-100" />
+                            </td>
+                          </motion.tr>
+                        )
+                      )}
                     </AnimatePresence>
                   ) : invoices.length >
                     0 ? (
@@ -1494,7 +1634,9 @@ const Invoices = () => {
                                   whileTap={{
                                     scale: 0.92,
                                   }}
-                                  onClick={(e) => {
+                                  onClick={(
+                                    e
+                                  ) => {
                                     e.preventDefault();
                                     e.stopPropagation();
 
@@ -1823,15 +1965,10 @@ const Invoices = () => {
                   </span>
                 </motion.button>
 
-
                 {/* DELETE */}
 
                 <motion.button
                   type="button"
-                  disabled={
-                    deleteLoading ===
-                    openMenu
-                  }
                   whileHover={{
                     x: 2,
                   }}
@@ -1840,36 +1977,198 @@ const Invoices = () => {
                     e.stopPropagation();
 
                     handleDeleteInvoice(
-                      openMenu
+                      activeInvoice
                     );
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[11px] text-red-500 transition hover:bg-red-50"
                 >
-                  {deleteLoading === openMenu ? (
-                    <motion.span
-                      initial={{ opacity: 0.35, scale: 0.8 }}
-                      animate={{
-                        opacity: [0.35, 1, 0.35],
-                        scale: [0.8, 1, 0.8],
-                      }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                      className="h-3 w-3 rounded-full bg-red-500"
-                    />
-                  ) : (
-                    <Trash2 size={13} />
-                  )}
+                  <Trash2 size={13} />
 
                   <span>
-                    {deleteLoading ===
-                    openMenu
-                      ? "Deleting..."
-                      : "Delete"}
+                    Delete
                   </span>
                 </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* =====================================================
+          DELETE CONFIRMATION POPUP
+          RENDERED DIRECTLY INTO BODY
+          ===================================================== */}
+
+      {typeof document !==
+        "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {deleteTarget && (
+              <motion.div
+                key="delete-modal"
+                variants={
+                  deleteModalVariants
+                }
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={
+                  handleCloseDeletePopup
+                }
+                className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+              >
+                <motion.div
+                  variants={
+                    deleteDialogVariants
+                  }
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  onClick={(e) =>
+                    e.stopPropagation()
+                  }
+                  className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
+                >
+                  {/* HEADER */}
+
+                  <div className="flex items-start justify-between px-5 pt-5">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        initial={{
+                          scale: 0.8,
+                          opacity: 0,
+                        }}
+                        animate={{
+                          scale: 1,
+                          opacity: 1,
+                        }}
+                        transition={{
+                          delay: 0.08,
+                          duration: 0.2,
+                        }}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50"
+                      >
+                        <AlertTriangle
+                          size={19}
+                          className="text-red-500"
+                        />
+                      </motion.div>
+
+                      <div>
+                        <h3 className="text-[14px] font-bold text-gray-900">
+                          Delete Invoice?
+                        </h3>
+
+                        <p className="mt-0.5 text-[10px] text-gray-400">
+                          This action cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={
+                        deleteLoading
+                      }
+                      onClick={
+                        handleCloseDeletePopup
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  {/* CONTENT */}
+
+                  <div className="px-5 pb-4 pt-4">
+                    <p className="text-[12px] leading-5 text-gray-600">
+                      Are you sure you want to
+                      delete this invoice?
+                    </p>
+
+                    <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5">
+                      <p className="truncate text-[12px] font-semibold text-gray-800">
+                        {getInvoiceNumber(
+                          deleteTarget
+                        )}
+                      </p>
+
+                      <p className="mt-0.5 truncate text-[10px] text-gray-500">
+                        {getCustomerName(
+                          deleteTarget
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* FOOTER */}
+
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5">
+                    <motion.button
+                      type="button"
+                      disabled={
+                        deleteLoading
+                      }
+                      whileHover={{
+                        y: -1,
+                      }}
+                      whileTap={{
+                        scale: 0.97,
+                      }}
+                      onClick={
+                        handleCloseDeletePopup
+                      }
+                      className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Cancel
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      disabled={
+                        deleteLoading
+                      }
+                      whileHover={{
+                        y: -1,
+                      }}
+                      whileTap={{
+                        scale: 0.97,
+                      }}
+                      onClick={
+                        handleConfirmDelete
+                      }
+                      className="flex h-9 min-w-[112px] items-center justify-center gap-1.5 rounded-lg bg-red-500 px-4 text-[11px] font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deleteLoading ? (
+                        <>
+                          <motion.span
+                            animate={{
+                              rotate: 360,
+                            }}
+                            transition={{
+                              duration: 0.8,
+                              repeat:
+                                Infinity,
+                              ease: "linear",
+                            }}
+                            className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white"
+                          />
+
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2
+                            size={13}
+                          />
+
+                          Delete Invoice
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>,

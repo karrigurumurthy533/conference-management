@@ -70,6 +70,7 @@ router.get(
 // Delete registration
 router.delete(
   "/registrations/:id",
+  authMiddleware("admin"),
   UserController.deleteRegistration
 );
 
@@ -85,17 +86,26 @@ router.post(
 
 router.get(
   "/abstracts",
+  authMiddleware("admin"),
   UserController.getAllAbstracts
 );
 
 router.get(
   "/abstracts/:id",
+  authMiddleware("admin"),
   UserController.getAbstractById
 );
 
 router.delete(
   "/abstracts/:id",
+  authMiddleware("admin"),
   UserController.deleteAbstract
+);
+
+router.get(
+  "/abstracts/:id/download",
+  authMiddleware("admin"),
+  UserController.downloadAbstract
 );
 
 router.post("/subscribe", UserController.subscribe);

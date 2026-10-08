@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo } from "react";
 
 import { useNavigate, useParams } from "react-router-dom";
@@ -75,10 +74,7 @@ const getCustomer = (invoice) => {
       invoice?.name ||
       "Customer",
 
-    email:
-      invoice?.customer?.email ||
-      invoice?.email ||
-      "-",
+    email: invoice?.customer?.email || invoice?.email || "-",
 
     phone:
       invoice?.customer?.phone ||
@@ -133,11 +129,7 @@ const getTax = (invoice) => {
 };
 
 const getCurrency = (invoice) => {
-  return (
-    invoice?.currency ||
-    invoice?.currencyCode ||
-    "USD"
-  );
+  return invoice?.currency || invoice?.currencyCode || "USD";
 };
 
 // =========================================================
@@ -167,13 +159,9 @@ const InvoiceDetails = () => {
 
   const error = useSelector(selectInvoiceError);
 
-  const downloading = useSelector(
-    selectInvoiceDownloading
-  );
+  const downloading = useSelector(selectInvoiceDownloading);
 
-  const downloadError = useSelector(
-    selectInvoiceDownloadError
-  );
+  const downloadError = useSelector(selectInvoiceDownloadError);
 
   // =======================================================
   // FETCH INVOICE BY ID
@@ -228,75 +216,55 @@ const InvoiceDetails = () => {
   // =======================================================
 
   const handleDownload = async () => {
-  console.log("DOWNLOAD BUTTON CLICKED");
+    console.log("DOWNLOAD BUTTON CLICKED");
 
-  if (!invoiceId) {
-    console.error("Invoice ID is missing");
-    return;
-  }
-
-  try {
-    console.log(
-      "Downloading invoice PDF:",
-      invoiceId
-    );
-
-    const pdfBlob = await dispatch(
-      downloadInvoicePdf(invoiceId)
-    ).unwrap();
-
-    console.log(
-      "PDF response received:",
-      pdfBlob
-    );
-
-    if (!pdfBlob) {
-      throw new Error("PDF response is empty");
+    if (!invoiceId) {
+      console.error("Invoice ID is missing");
+      return;
     }
 
-    const blob = new Blob(
-      [pdfBlob],
-      {
-        type: "application/pdf",
+    try {
+      console.log("Downloading invoice PDF:", invoiceId);
+
+      const pdfBlob = await dispatch(downloadInvoicePdf(invoiceId)).unwrap();
+
+      console.log("PDF response received:", pdfBlob);
+
+      if (!pdfBlob) {
+        throw new Error("PDF response is empty");
       }
-    );
 
-    const url =
-      window.URL.createObjectURL(blob);
+      const blob = new Blob([pdfBlob], {
+        type: "application/pdf",
+      });
 
-    const link =
-      document.createElement("a");
+      const url = window.URL.createObjectURL(blob);
 
-    link.href = url;
+      const link = document.createElement("a");
 
-    const invoiceNumber =
-      invoice?.invoiceNumber ||
-      invoice?.invoiceId ||
-      invoice?._id ||
-      invoiceId;
+      link.href = url;
 
-    link.download =
-      `GlobalScion-Invoice-${invoiceNumber}.pdf`;
+      const invoiceNumber =
+        invoice?.invoiceNumber ||
+        invoice?.invoiceId ||
+        invoice?._id ||
+        invoiceId;
 
-    document.body.appendChild(link);
+      link.download = `GlobalScion-Invoice-${invoiceNumber}.pdf`;
 
-    link.click();
+      document.body.appendChild(link);
 
-    link.remove();
+      link.click();
 
-    window.URL.revokeObjectURL(url);
+      link.remove();
 
-    console.log(
-      "Invoice PDF downloaded successfully"
-    );
+      window.URL.revokeObjectURL(url);
 
-  } catch (downloadError) {
-    console.error(
-      "Invoice PDF download failed:",
-      downloadError
-    );
-  }
-};
+      console.log("Invoice PDF downloaded successfully");
+    } catch (downloadError) {
+      console.error("Invoice PDF download failed:", downloadError);
+    }
+  };
 
   // =======================================================
   // PRINT
@@ -314,10 +282,7 @@ const InvoiceDetails = () => {
     return (
       <div className="flex min-h-[70vh] items-center justify-center bg-white">
         <div className="flex flex-col items-center">
-          <Loader2
-            size={34}
-            className="animate-spin text-violet-600"
-          />
+          <Loader2 size={34} className="animate-spin text-violet-600" />
 
           <p className="mt-3 text-base font-medium text-black">
             Loading invoice...
@@ -335,29 +300,22 @@ const InvoiceDetails = () => {
     return (
       <div className="min-h-[70vh] bg-white px-5 py-10">
         <div className="mx-auto max-w-3xl rounded-xl border border-violet-200 bg-white p-8 text-center shadow-sm">
-          <FileText
-            size={44}
-            className="mx-auto text-violet-500"
-          />
+          <FileText size={44} className="mx-auto text-violet-500" />
 
           <h2 className="mt-3 text-xl font-bold text-black">
             Invoice Not Found
           </h2>
 
           <p className="mt-1 text-base text-black">
-            {error ||
-              "Unable to find this invoice."}
+            {error || "Unable to find this invoice."}
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              navigate("/invoices")
-            }
+            onClick={() => navigate("/invoices")}
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-violet-700"
           >
             <ArrowLeft size={17} />
-
             Back to Invoices
           </button>
         </div>
@@ -369,15 +327,8 @@ const InvoiceDetails = () => {
   // INVOICE DATA
   // =======================================================
 
-  const {
-    customer,
-    description,
-    price,
-    tax,
-    subtotal,
-    total,
-    currency,
-  } = invoiceData;
+  const { customer, description, price, tax, subtotal, total, currency } =
+    invoiceData;
 
   // =======================================================
   // UI
@@ -385,13 +336,11 @@ const InvoiceDetails = () => {
 
   return (
     <div className="min-h-screen bg-white px-3 py-4 sm:px-5 lg:px-6">
-
       {/* ===================================================
           TOP ACTION BAR
       =================================================== */}
 
       <div className="mx-auto mb-4 flex max-w-[1180px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-
         {/* BACK */}
 
         <button
@@ -400,12 +349,10 @@ const InvoiceDetails = () => {
           className="inline-flex w-fit items-center gap-2 rounded-lg border border-violet-200 bg-white px-4 py-2.5 text-base font-medium text-black shadow-sm transition hover:bg-violet-50 hover:text-violet-700"
         >
           <ArrowLeft size={17} />
-
           Back
         </button>
 
         <div className="flex items-center gap-2">
-
           {/* PRINT */}
 
           <button
@@ -414,7 +361,6 @@ const InvoiceDetails = () => {
             className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-white px-4 py-2.5 text-base font-semibold text-black shadow-sm transition hover:bg-violet-50 hover:text-violet-700"
           >
             <Printer size={17} />
-
             Print
           </button>
 
@@ -429,13 +375,11 @@ const InvoiceDetails = () => {
             {downloading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-
                 Generating PDF...
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-
                 Download PDF
               </>
             )}
@@ -486,14 +430,12 @@ const InvoiceDetails = () => {
           lg:py-[42px]
         "
       >
-
         {/* =================================================
             WATERMARK
         ================================================= */}
 
         <div className="pointer-events-none absolute left-1/2 top-[52%] z-0 -translate-x-1/2 -translate-y-1/2 rotate-[-32deg] select-none whitespace-nowrap text-[78px] font-black uppercase tracking-wider text-violet-100 sm:text-[95px]">
           GlobalScion
-
           <span className="block text-center text-[40px] sm:text-[50px]">
             Conferences
           </span>
@@ -504,9 +446,7 @@ const InvoiceDetails = () => {
         ================================================= */}
 
         <div className="relative z-10">
-
           <div className="flex items-start justify-between gap-8">
-
             {/* LOGO */}
 
             <div className="flex items-center">
@@ -526,29 +466,18 @@ const InvoiceDetails = () => {
             {/* INVOICE TITLE */}
 
             <div className="text-right">
-
               <h1 className="text-[40px] font-black tracking-wide text-violet-700 sm:text-[48px]">
                 INVOICE
               </h1>
 
               <div className="mt-2 flex items-center justify-end gap-2 text-[14px] text-black">
+                <CalendarDays size={16} className="text-violet-600" />
 
-                <CalendarDays
-                  size={16}
-                  className="text-violet-600"
-                />
-
-                <span>
-                  Date:
-                </span>
+                <span>Date:</span>
 
                 <span className="font-semibold">
-                  {formatDate(
-                    invoice?.invoiceDate ||
-                      invoice?.createdAt
-                  )}
+                  {formatDate(invoice?.invoiceDate || invoice?.createdAt)}
                 </span>
-
               </div>
             </div>
           </div>
@@ -560,12 +489,8 @@ const InvoiceDetails = () => {
           {/* COMPANY DETAILS */}
 
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-
             <div className="space-y-1.5 text-[14px] text-black">
-
-              <p className="font-bold">
-                GlobalScion Conferences
-              </p>
+              <p className="font-bold">GlobalScion Conferences</p>
 
               <p>
                 Email:{" "}
@@ -574,18 +499,12 @@ const InvoiceDetails = () => {
                 </span>
               </p>
 
-              <p>
-                Phone: +44 3308088650
-              </p>
+              <p>Phone: +44 3308088650</p>
 
-              <p>
-                Website: www.globalscion.com
-              </p>
-
+              <p>Website: www.globalscion.com</p>
             </div>
 
             <div className="hidden sm:block" />
-
           </div>
 
           {/* SECOND LINE */}
@@ -596,35 +515,42 @@ const InvoiceDetails = () => {
               CUSTOMER BOX
           ================================================= */}
 
-          <div className="mt-3 border border-violet-300 bg-white px-4 py-3">
+          {/* =================================================
+    CUSTOMER BOX
+================================================= */}
 
+          <div className="mt-3 border border-violet-300 bg-white px-4 py-3">
             <p className="text-[13px] font-semibold uppercase text-black">
               TO:
             </p>
 
             <div className="mt-2 space-y-2 text-[14px] text-black">
+              {/* NAME */}
 
               <p>
-                <span className="font-semibold">
-                  Name:
-                </span>{" "}
-                {customer.name}
+                <span className="font-semibold">Name:</span> {customer.name}
               </p>
 
+              {/* AFFILIATION */}
+
               <p>
-                <span className="font-semibold">
-                  Email ID:
-                </span>{" "}
+                <span className="font-semibold">Affiliation:</span>{" "}
+                {invoice?.customer?.affiliation || "-"}
+              </p>
+
+              {/* EMAIL */}
+
+              <p>
+                <span className="font-semibold">Email ID:</span>{" "}
                 {customer.email}
               </p>
 
+              {/* CONTACT NUMBER */}
+
               <p>
-                <span className="font-semibold">
-                  Contact Number:
-                </span>{" "}
+                <span className="font-semibold">Contact Number:</span>{" "}
                 {customer.phone}
               </p>
-
             </div>
           </div>
 
@@ -633,13 +559,9 @@ const InvoiceDetails = () => {
           ================================================= */}
 
           <div className="mt-7 overflow-hidden border border-violet-400">
-
             <table className="w-full border-collapse">
-
               <thead>
-
                 <tr className="bg-violet-600 text-white">
-
                   <th className="w-[9%] border-r border-violet-300 px-3 py-3.5 text-center text-[14px] font-bold">
                     Item
                   </th>
@@ -651,15 +573,11 @@ const InvoiceDetails = () => {
                   <th className="w-[18%] px-3 py-3.5 text-center text-[14px] font-bold">
                     Price
                   </th>
-
                 </tr>
-
               </thead>
 
               <tbody>
-
                 <tr className="min-h-[72px]">
-
                   <td className="border-r border-t border-violet-300 px-3 py-5 text-center text-[14px] text-black">
                     1
                   </td>
@@ -669,28 +587,20 @@ const InvoiceDetails = () => {
                   </td>
 
                   <td className="border-t border-violet-300 px-3 py-5 text-center text-[14px] font-semibold text-black">
-                    {formatAmount(
-                      price,
-                      currency
-                    )}
+                    {formatAmount(price, currency)}
                   </td>
-
                 </tr>
 
                 {/* EMPTY ROW */}
 
                 <tr>
-
                   <td className="h-7 border-r border-t border-violet-300" />
 
                   <td className="border-r border-t border-violet-300" />
 
                   <td className="border-t border-violet-300" />
-
                 </tr>
-
               </tbody>
-
             </table>
           </div>
 
@@ -699,25 +609,18 @@ const InvoiceDetails = () => {
           ================================================= */}
 
           <div className="mt-7 grid grid-cols-1 gap-7 sm:grid-cols-[1fr_270px]">
-
             {/* ACCOUNT DETAILS */}
 
             <div>
-
               <h3 className="text-[18px] font-bold text-violet-600">
                 Account Details:
               </h3>
 
               <ul className="mt-2 space-y-1.5 text-[13px] text-black">
-
                 <li className="flex gap-1.5">
                   <span>▪</span>
 
-                  <span>
-                    Bank:{" "}
-                    {invoice?.accountDetails?.bank ||
-                      "HDFC"}
-                  </span>
+                  <span>Bank: {invoice?.accountDetails?.bank || "HDFC"}</span>
                 </li>
 
                 <li className="flex gap-1.5">
@@ -725,8 +628,7 @@ const InvoiceDetails = () => {
 
                   <span>
                     Account no:{" "}
-                    {invoice?.accountDetails?.accountNo ||
-                      "50200113849832"}
+                    {invoice?.accountDetails?.accountNo || "50200113849832"}
                   </span>
                 </li>
 
@@ -744,9 +646,7 @@ const InvoiceDetails = () => {
                   <span>▪</span>
 
                   <span>
-                    IFSC:{" "}
-                    {invoice?.accountDetails?.ifsc ||
-                      "HDFC0006774"}
+                    IFSC: {invoice?.accountDetails?.ifsc || "HDFC0006774"}
                   </span>
                 </li>
 
@@ -755,67 +655,40 @@ const InvoiceDetails = () => {
 
                   <span>
                     Swift Code:{" "}
-                    {invoice?.accountDetails?.swiftCode ||
-                      "HDFCINBBXXX"}
+                    {invoice?.accountDetails?.swiftCode || "HDFCINBBXXX"}
                   </span>
                 </li>
-
               </ul>
             </div>
 
             {/* TOTALS */}
 
             <div className="space-y-2 text-[14px]">
-
               <div className="flex items-center justify-between gap-5">
-
-                <span className="font-bold text-black">
-                  Sub Total
-                </span>
+                <span className="font-bold text-black">Sub Total</span>
 
                 <span className="font-semibold text-black">
-                  {formatAmount(
-                    subtotal,
-                    currency
-                  )}
+                  {formatAmount(subtotal, currency)}
                 </span>
-
               </div>
 
               <div className="flex items-center justify-between gap-5">
-
-                <span className="font-bold text-black">
-                  Tax
-                </span>
+                <span className="font-bold text-black">Tax</span>
 
                 <span className="font-semibold text-black">
-                  {formatAmount(
-                    tax,
-                    currency
-                  )}
+                  {formatAmount(tax, currency)}
                 </span>
-
               </div>
 
               <div className="mt-2 flex items-center justify-between gap-5 bg-violet-600 px-3 py-2.5 text-white">
+                <span className="font-bold">Total</span>
 
                 <span className="font-bold">
-                  Total
+                  {formatAmount(total, currency)}
                 </span>
-
-                <span className="font-bold">
-                  {formatAmount(
-                    total,
-                    currency
-                  )}
-                </span>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       </motion.div>
 
@@ -873,10 +746,8 @@ const InvoiceDetails = () => {
           }
         }
       `}</style>
-
     </div>
   );
 };
 
 export default InvoiceDetails;
-

@@ -1,98 +1,128 @@
 const fs = require("fs");
 const path = require("path");
 
-const logoPath = path.join(
-    __dirname,
-    "../assets/web_logo.png"
-);
+// ------------------------------------------------------------
+// GlobalScion Invoice Template
+// Layout/colors matched to the supplied invoice PDF.
+// Logo is embedded as Base64 from assets/web_logo.png.
+// ------------------------------------------------------------
 
-const logoBase64 = fs
-    .readFileSync(logoPath)
-    .toString("base64");
+const logoPath = path.join(__dirname, "../assets/web_logo.png");
 
+const logoBase64 = fs.readFileSync(logoPath).toString("base64");
 const logoSrc = `data:image/png;base64,${logoBase64}`;
+
 const invoiceTemplate = (invoice) => {
-    const customer = invoice?.customer || invoice?.user || {};
+  const customer = invoice?.customer || invoice?.user || {};
 
-    const customerName =
-        customer?.name ||
-        `${customer?.firstName || ""} ${customer?.lastName || ""}`.trim() ||
-        invoice?.fullName ||
-        "N/A";
+  const customerName =
+    customer?.fullName ||
+    invoice?.fullName ||
+    "N/A";
 
-    const customerEmail =
-        customer?.email ||
-        invoice?.email ||
-        "N/A";
+  const customerEmail =
+    customer?.email ||
+    invoice?.email ||
+    "N/A";
 
-    const customerPhone =
-        customer?.phone ||
-        invoice?.phone ||
-        "N/A";
+  const customerPhone =
+    customer?.phone ||
+    invoice?.phone ||
+    "";
 
-    const invoiceDate = invoice?.createdAt
-        ? new Date(invoice.createdAt).toLocaleDateString("en-GB")
-        : new Date().toLocaleDateString("en-GB");
+  const affiliation =
+    customer?.affiliation ||
+    invoice?.affiliation ||
+    "";
 
-    const invoiceNumber =
-        invoice?.invoiceNumber ||
-        invoice?.invoiceNo ||
-        invoice?._id ||
-        "N/A";
+  const city =
+    customer?.city ||
+    invoice?.city ||
+    "";
 
-    const conferenceTitle =
-        invoice?.conference?.title ||
-        invoice?.conference?.name ||
-        invoice?.conferenceTitle ||
-        "Conference Registration";
+  const country =
+    customer?.country ||
+    invoice?.country ||
+    "";
 
-    const registrationType =
-        invoice?.registration?.option ||
-        invoice?.registration?.category ||
-        invoice?.registrationType ||
-        "Online Registration";
+  const locationText = [city, country]
+    .filter(Boolean)
+    .join(", ");
 
-    const amount =
-        Number(
-            invoice?.registration?.price ??
-            invoice?.price ??
-            invoice?.amount ??
-            invoice?.totalAmount ??
-            0
-        ) || 0;
+  const invoiceDate = invoice?.createdAt
+    ? new Date(invoice.createdAt).toLocaleDateString("en-GB")
+    : new Date().toLocaleDateString("en-GB");
 
-    const tax =
-        Number(invoice?.tax ?? invoice?.taxAmount ?? 0) || 0;
+  const invoiceNumber =
+    invoice?.invoiceNumber ||
+    invoice?.invoiceNo ||
+    invoice?._id ||
+    "N/A";
 
-    const currency =
-        invoice?.currency ||
-        invoice?.registration?.currency ||
-        "USD";
+  const conferenceTitle =
+    invoice?.conference?.title ||
+    invoice?.conference?.name ||
+    invoice?.conferenceTitle ||
+    "Conference Registration";
 
-    const currencySymbol =
-        currency === "GBP"
-            ? "£"
-            : currency === "EUR"
-                ? "€"
-                : currency === "INR"
-                    ? "₹"
-                    : "$";
+  const registrationType =
+    invoice?.registration?.option ||
+    invoice?.registration?.category ||
+    invoice?.registrationType ||
+    "Online Registration";
 
-    const subtotal = amount;
-    const total = subtotal + tax;
+  // ============================================================
+  // EXACT DESCRIPTION FROM INVOICE
+  // No automatic text is added.
+  // ============================================================
 
-    const formatAmount = (value) => {
-        return `${currencySymbol} ${Number(value || 0).toFixed(2)}`;
-    };
+  const description =
+    invoice?.description || "";
 
-    const formatTableAmount = (value) => {
-        return `${currencySymbol}${Number(value || 0).toFixed(2)}`;
-    };
+  const amount =
+    Number(
+      invoice?.registration?.price ??
+      invoice?.price ??
+      invoice?.amount ??
+      invoice?.totalAmount ??
+      0
+    ) || 0;
 
-    return `
+  const tax =
+    Number(invoice?.tax ?? invoice?.taxAmount ?? 0) || 0;
+
+  const currency =
+    invoice?.currency ||
+    invoice?.registration?.currency ||
+    "USD";
+
+  const currencySymbol =
+    currency === "GBP"
+      ? "£"
+      : currency === "EUR"
+        ? "€"
+        : currency === "INR"
+          ? "₹"
+          : "$";
+
+  const subtotal = amount;
+  const total = subtotal + tax;
+
+  const formatAmount = (value) =>
+    `${currencySymbol} ${Number(value || 0).toFixed(2)}`;
+
+  const formatTableAmount = (value) =>
+    `${currencySymbol}${Number(value || 0).toFixed(2)}`;
+
+  const affiliationText = affiliation
+    ? affiliation
+    : "";
+
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8" />
 
   <title>GlobalScion Invoice</title>
@@ -107,9 +137,17 @@ const invoiceTemplate = (invoice) => {
     body {
       margin: 0;
       padding: 0;
+      width: 210mm;
+      min-height: 297mm;
       background: #ffffff;
+    }
+
+    body {
       font-family: Arial, Helvetica, sans-serif;
-      color: #111827;
+      color: #111111;
+
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     @page {
@@ -117,182 +155,370 @@ const invoiceTemplate = (invoice) => {
       margin: 0;
     }
 
-    body {
-      width: 210mm;
-      min-height: 297mm;
-      background: #ffffff;
-    }
+    /* ========================================================
+       MAIN A4 PAPER
+       ======================================================== */
 
     .invoice-paper {
       position: relative;
+
       width: 210mm;
+      height: 297mm;
       min-height: 297mm;
-      padding: 12mm;
-      background: #ffffff;
+
+      padding: 13.5mm 15.5mm 12mm;
+
       overflow: hidden;
+
+      background: #ffffff;
     }
+
+    /* ========================================================
+       WATERMARK
+       ======================================================== */
 
     .watermark {
       position: absolute;
-      left: 50%;
-      top: 52%;
-      transform: translate(-50%, -50%) rotate(-32deg);
+
+      left: 48%;
+      top: 58%;
+
+      width: 150mm;
+
+      transform:
+        translate(-50%, -50%)
+        rotate(-38deg);
+
+      opacity: 0.24;
+
       z-index: 0;
-      white-space: nowrap;
-      text-align: center;
-      user-select: none;
-      font-size: 78px;
-      line-height: 1;
-      font-weight: 900;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #ede9fe;
+
       pointer-events: none;
+      user-select: none;
+
+      text-align: center;
     }
 
-    .watermark span {
-      display: block;
-      margin-top: 8px;
-      font-size: 40px;
-      letter-spacing: 2px;
+    .watermark-logo {
+      width: 92mm;
+      height: auto;
+
+      opacity: 0.72;
     }
+
+    .watermark-text {
+      margin-top: -8mm;
+
+      font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+      font-size: 29mm;
+
+      line-height: 0.9;
+
+      font-weight: 700;
+
+      letter-spacing: 1px;
+
+      color: #d8c8e7;
+
+      white-space: nowrap;
+    }
+
+    .watermark-subtext {
+      margin-top: 3mm;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 13mm;
+
+      line-height: 1;
+
+      color: #d8c8e7;
+
+      white-space: nowrap;
+    }
+
+    /* ========================================================
+       CONTENT
+       ======================================================== */
 
     .content {
       position: relative;
+
       z-index: 2;
     }
 
+    /* ========================================================
+       HEADER
+       ======================================================== */
+
     .header {
       display: flex;
+
       justify-content: space-between;
+
       align-items: flex-start;
+
       width: 100%;
+
+      height: 25mm;
     }
 
     .logo-wrapper {
-      width: 55%;
+      width: 57%;
+
+      padding-top: 0;
     }
 
     .logo {
-      width: 230px;
+      display: block;
+
+      width: 72mm;
+
       height: auto;
+
+      max-height: 25mm;
+
       object-fit: contain;
+
+      object-position: left center;
     }
 
     .invoice-header-right {
-      width: 45%;
+      width: 43%;
+
       text-align: right;
+
+      padding-top: 0;
     }
 
     .invoice-title {
       margin: 0;
-      color: #7c3aed;
-      font-size: 34px;
+
+      color: #173a63;
+
+      font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+      font-size: 27px;
+
       line-height: 1;
+
       font-weight: 800;
-      letter-spacing: 0.5px;
+
+      letter-spacing: 0.3px;
     }
 
     .invoice-number {
-      margin-top: 8px;
-      font-size: 11px;
-      color: #6b7280;
+      display: none;
     }
 
     .date-row {
       display: flex;
+
       justify-content: flex-end;
+
       align-items: center;
-      gap: 6px;
-      margin-top: 12px;
-      font-size: 12px;
-      color: #374151;
+
+      gap: 5px;
+
+      margin-top: 14px;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 10.5px;
+
+      color: #111111;
+    }
+
+    .date-row strong {
+      font-weight: 400;
     }
 
     .header-line {
       width: 100%;
-      height: 3px;
-      margin-top: 18px;
-      background: #7c3aed;
+
+      height: 2px;
+
+      margin-top: 1mm;
+
+      background: #111111;
     }
 
+    /* ========================================================
+       COMPANY INFORMATION
+       ======================================================== */
+
     .company-section {
-      margin-top: 18px;
+      margin-top: 4mm;
+
+      margin-left: 2mm;
+
+      font-family:
+        "Segoe Print",
+        "Comic Sans MS",
+        cursive;
     }
 
     .company-name {
-      margin: 0 0 8px;
-      font-size: 17px;
-      font-weight: 700;
-      color: #111827;
+      margin: 0 0 1.5mm;
+
+      font-size: 12px;
+
+      line-height: 1.2;
+
+      font-weight: 400;
+
+      color: #111111;
     }
 
     .company-detail {
-      margin: 4px 0;
-      font-size: 11px;
-      line-height: 1.5;
-      color: #374151;
+      margin: 1.2mm 0;
+
+      font-size: 10.5px;
+
+      line-height: 1.25;
+
+      color: #111111;
+    }
+
+    .company-detail.email {
+      color: #0000ee;
+
+      text-decoration: underline;
     }
 
     .company-line {
       width: 100%;
-      height: 2px;
-      margin-top: 15px;
-      background: #7c3aed;
+
+      height: 1.5px;
+
+      margin-top: 3.5mm;
+
+      background: #111111;
     }
 
+    /* ========================================================
+       CUSTOMER BOX
+       ======================================================== */
+
     .customer-box {
-      margin-top: 20px;
-      border: 1px solid #c4b5fd;
-      padding: 14px 16px;
-      background: #ffffff;
+      margin-top: 0.7mm;
+
+      min-height: 28.5mm;
+
+      border: 1px solid #444444;
+
+      padding: 1.2mm 1.6mm 1.8mm;
+
+      background: transparent;
+
+      font-family:
+        "Segoe Print",
+        "Comic Sans MS",
+        cursive;
     }
 
     .customer-heading {
-      margin-bottom: 10px;
-      font-size: 12px;
-      font-weight: 800;
-      color: #7c3aed;
+      margin-bottom: 1.7mm;
+
+      font-size: 10.5px;
+
+      line-height: 1;
+
+      font-weight: 400;
+
+      color: #111111;
+
       text-transform: uppercase;
     }
 
     .customer-row {
       display: flex;
-      margin: 5px 0;
-      font-size: 11px;
-      line-height: 1.5;
+
+      margin: 1.9mm 0;
+
+      font-size: 10.5px;
+
+      line-height: 1.15;
+
+      color: #111111;
     }
 
     .customer-label {
-      width: 125px;
-      font-weight: 600;
-      color: #374151;
+      flex: 0 0 auto;
+
+      margin-right: 2px;
+
+      font-weight: 400;
+
+      color: #111111;
     }
 
     .customer-value {
       flex: 1;
-      color: #111827;
+
+      color: #111111;
     }
 
+    .customer-value.email {
+      color: #111111;
+    }
+
+    /* ========================================================
+       ITEMS TABLE
+       ======================================================== */
+
     .items-section {
-      margin-top: 22px;
+      margin-top: 3.2mm;
     }
 
     .items-table {
       width: 100%;
+
       border-collapse: collapse;
-      border: 1px solid #a78bfa;
+
+      border: 1px solid #3e4f61;
+
       table-layout: fixed;
+
+      background: #ffffff;
     }
 
     .items-table th {
-      padding: 10px 8px;
-      background: #7c3aed;
+      height: 13mm;
+
+      padding: 2.5mm 2mm;
+
+      background: #4f81bd;
+
       color: #ffffff;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
       font-size: 11px;
+
       font-weight: 700;
-      text-align: left;
-      border-right: 1px solid #a78bfa;
+
+      text-align: center;
+
+      vertical-align: middle;
+
+      border-right: 1px solid #3e4f61;
     }
 
     .items-table th:last-child {
@@ -300,14 +526,26 @@ const invoiceTemplate = (invoice) => {
     }
 
     .items-table td {
-      padding: 11px 8px;
-      min-height: 42px;
-      font-size: 11px;
-      color: #111827;
-      vertical-align: top;
-      border-top: 1px solid #c4b5fd;
-      border-right: 1px solid #c4b5fd;
-      line-height: 1.45;
+      height: 27mm;
+
+      padding: 2.5mm 2mm;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 10px;
+
+      color: #111111;
+
+      vertical-align: middle;
+
+      border-top: 1px solid #555555;
+
+      border-right: 1px solid #555555;
+
+      line-height: 1.35;
     }
 
     .items-table td:last-child {
@@ -315,125 +553,263 @@ const invoiceTemplate = (invoice) => {
     }
 
     .serial-column {
-      width: 9%;
-      text-align: center;
+      width: 7.5%;
+
+      text-align: center !important;
     }
 
     .description-column {
-      width: 73%;
+      width: 74%;
+
+      text-align: center !important;
     }
 
     .price-column {
-      width: 18%;
-      text-align: right;
+      width: 18.5%;
+
+      text-align: center !important;
+    }
+
+    .description-value {
+      display: block;
+
+      max-width: 125mm;
+
+      margin: 0 auto;
+
+      /* ONLY TEXT SIZE CHANGED */
+      font-size: 12px;
+
+      font-weight: 700;
+
+      line-height: 1.35;
+
+      text-align: center;
+    }
+
+    .price-value {
+      font-size: 10px;
+
+      font-weight: 400;
     }
 
     .empty-row td {
-      height: 34px;
+      height: 8.5mm;
+
+      padding: 0;
     }
+
+    /* ========================================================
+       BOTTOM SECTION
+       ======================================================== */
 
     .bottom-section {
       display: grid;
-      grid-template-columns: 1fr 270px;
-      gap: 30px;
-      margin-top: 30px;
+
+      grid-template-columns: 1fr 42mm;
+
+      gap: 8mm;
+
+      margin-top: 10mm;
+
       align-items: start;
     }
 
+    /* ========================================================
+       ACCOUNT DETAILS
+       ======================================================== */
+
     .account-title {
-      margin: 0 0 12px;
-      color: #111827;
-      font-size: 13px;
+      margin: 0 0 3mm;
+
+      color: #ff3366;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 12px;
+
+      line-height: 1;
+
       font-weight: 800;
     }
 
     .account-row {
       display: flex;
-      margin: 5px 0;
-      font-size: 10.5px;
-      line-height: 1.5;
+
+      margin: 1mm 0;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 9.5px;
+
+      line-height: 1.2;
+
+      color: #111111;
+    }
+
+    .account-row::before {
+      content: "▪";
+
+      margin-right: 2.5mm;
+
+      font-size: 9px;
     }
 
     .account-label {
-      width: 115px;
-      font-weight: 700;
-      color: #374151;
+      width: auto;
+
+      min-width: 23mm;
+
+      font-weight: 400;
+
+      color: #111111;
     }
 
     .account-value {
       flex: 1;
-      color: #111827;
+
+      color: #111111;
     }
 
+    /* ========================================================
+       TOTALS
+       ======================================================== */
+
     .totals {
-      width: 270px;
+      width: 42mm;
+
       margin-left: auto;
+
+      padding-top: 0;
     }
 
     .total-row {
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
-      padding: 8px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 11px;
+
+      padding: 0 1mm 1.8mm;
+
+      margin-bottom: 1.2mm;
+
+      border-bottom: none;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 9.5px;
+
+      line-height: 1;
     }
 
-    .total-label {
-      font-weight: 600;
-      color: #374151;
-    }
-
+    .total-label,
     .total-value {
-      font-weight: 600;
-      color: #111827;
+      color: #111111;
+
+      font-weight: 700;
     }
 
     .grand-total {
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
-      margin-top: 5px;
-      padding: 12px;
-      background: #7c3aed;
+
+      width: 42mm;
+
+      min-height: 9.5mm;
+
+      margin-top: 2.5mm;
+
+      padding: 2mm 2.5mm;
+
+      background: #8064a2;
+
       color: #ffffff;
-      font-size: 14px;
-      font-weight: 800;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      font-size: 10px;
+
+      font-weight: 700;
+
+      border: 2px solid #eee9f2;
+
+      box-shadow:
+        0 0 0 1px #d8d8d8;
     }
 
+    /* ========================================================
+       FOOTER
+       ======================================================== */
+
     .footer-note {
-      position: absolute;
-      left: 12mm;
-      right: 12mm;
-      bottom: 8mm;
-      text-align: center;
-      font-size: 9px;
-      color: #9ca3af;
+      display: none;
     }
 
   </style>
+
 </head>
 
 <body>
 
   <div class="invoice-paper">
 
+    <!-- ======================================================
+         WATERMARK
+         ====================================================== -->
+
     <div class="watermark">
-      GlobalScion
-      <span>Conferences</span>
+
+      <img
+        src="${logoSrc}"
+        class="watermark-logo"
+        alt=""
+      />
+
+      <div class="watermark-text">
+        GlobalScion
+      </div>
+
+      <div class="watermark-subtext">
+        Conferences
+      </div>
+
     </div>
 
+    <!-- ======================================================
+         CONTENT
+         ====================================================== -->
+
     <div class="content">
+
+      <!-- ====================================================
+           HEADER
+           ==================================================== -->
 
       <div class="header">
 
         <div class="logo-wrapper">
 
           <img
-  src="${logoSrc}"
-  class="logo"
-  alt="GlobalScion Conferences"
-/>
+            src="${logoSrc}"
+            class="logo"
+            alt="GlobalScion Conferences"
+          />
 
         </div>
 
@@ -463,15 +839,21 @@ const invoiceTemplate = (invoice) => {
 
       </div>
 
+      <!-- Header Divider -->
+
       <div class="header-line"></div>
+
+      <!-- ====================================================
+           COMPANY INFORMATION
+           ==================================================== -->
 
       <div class="company-section">
 
-        <h2 class="company-name">
+        <div class="company-name">
           GlobalScion Conferences
-        </h2>
+        </div>
 
-        <div class="company-detail">
+        <div class="company-detail email">
           Email: info@globalscion.com
         </div>
 
@@ -485,13 +867,21 @@ const invoiceTemplate = (invoice) => {
 
       </div>
 
+      <!-- Company Divider -->
+
       <div class="company-line"></div>
+
+      <!-- ====================================================
+           CUSTOMER INFORMATION
+           ==================================================== -->
 
       <div class="customer-box">
 
         <div class="customer-heading">
           TO:
         </div>
+
+        <!-- Name -->
 
         <div class="customer-row">
 
@@ -505,31 +895,61 @@ const invoiceTemplate = (invoice) => {
 
         </div>
 
+        <!-- Affiliation -->
+
+        ${
+          affiliationText
+            ? `
+        <div class="customer-row">
+
+          <div class="customer-label">
+            Affiliation:
+          </div>
+
+          <div class="customer-value">
+            ${affiliationText}
+          </div>
+
+        </div>
+        `
+            : ""
+        }
+
+        <!-- Location -->
+
+        ${
+          locationText
+            ? `
+        <div class="customer-row">
+
+          <div class="customer-value">
+            ${locationText}
+          </div>
+
+        </div>
+        `
+            : ""
+        }
+
+        <!-- Email -->
+
         <div class="customer-row">
 
           <div class="customer-label">
             Email ID:
           </div>
 
-          <div class="customer-value">
+          <div class="customer-value email">
             ${customerEmail}
           </div>
 
         </div>
 
-        <div class="customer-row">
-
-          <div class="customer-label">
-            Contact Number:
-          </div>
-
-          <div class="customer-value">
-            ${customerPhone}
-          </div>
-
-        </div>
-
       </div>
+
+      <!-- ====================================================
+           ITEMS
+           ==================================================== -->
 
       <div class="items-section">
 
@@ -540,11 +960,11 @@ const invoiceTemplate = (invoice) => {
             <tr>
 
               <th class="serial-column">
-                #
+                Item
               </th>
 
               <th class="description-column">
-                Item Description
+                Description
               </th>
 
               <th class="price-column">
@@ -564,11 +984,15 @@ const invoiceTemplate = (invoice) => {
               </td>
 
               <td class="description-column">
-                ${registrationType} - ${conferenceTitle}
+                <span class="description-value">${description}</span>
               </td>
 
               <td class="price-column">
-                ${formatTableAmount(amount)}
+
+                <span class="price-value">
+                  ${formatTableAmount(amount)}
+                </span>
+
               </td>
 
             </tr>
@@ -576,7 +1000,9 @@ const invoiceTemplate = (invoice) => {
             <tr class="empty-row">
 
               <td></td>
+
               <td></td>
+
               <td></td>
 
             </tr>
@@ -587,7 +1013,13 @@ const invoiceTemplate = (invoice) => {
 
       </div>
 
+      <!-- ====================================================
+           ACCOUNT + TOTALS
+           ==================================================== -->
+
       <div class="bottom-section">
+
+        <!-- ACCOUNT DETAILS -->
 
         <div>
 
@@ -657,6 +1089,8 @@ const invoiceTemplate = (invoice) => {
 
         </div>
 
+        <!-- TOTALS -->
+
         <div class="totals">
 
           <div class="total-row">
@@ -699,10 +1133,6 @@ const invoiceTemplate = (invoice) => {
 
       </div>
 
-    </div>
-
-    <div class="footer-note">
-      GlobalScion Conferences • www.globalscion.com
     </div>
 
   </div>

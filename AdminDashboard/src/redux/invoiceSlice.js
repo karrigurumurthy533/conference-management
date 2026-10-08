@@ -12,6 +12,7 @@ import {
   markInvoiceAsPaidApi,
   deleteInvoiceApi,
   downloadInvoicePdfApi,
+  getActiveBankAccountApi,
 } from "../api/invoiceApi";
 
 
@@ -118,7 +119,7 @@ export const updateInvoice = createAsyncThunk(
 
 
 // ======================================================
-// UPDATE INVOICE STATUS
+// UPDATE INVOICE PAYMENT STATUS
 // ======================================================
 
 export const updateInvoiceStatus =
@@ -215,6 +216,7 @@ export const deleteInvoice = createAsyncThunk(
 
 export const downloadInvoicePdf = createAsyncThunk(
   "invoice/downloadInvoicePdf",
+
   async (invoiceId, { rejectWithValue }) => {
     try {
       console.log(
@@ -222,7 +224,10 @@ export const downloadInvoicePdf = createAsyncThunk(
         invoiceId
       );
 
-      const response = await downloadInvoicePdfApi(invoiceId);
+      const response =
+        await downloadInvoicePdfApi(
+          invoiceId
+        );
 
       console.log(
         "PDF response received"
@@ -246,13 +251,58 @@ export const downloadInvoicePdf = createAsyncThunk(
 
 
 // ======================================================
+// GET ACTIVE BANK ACCOUNT
+// ======================================================
+
+export const getActiveBankAccount =
+  createAsyncThunk(
+    "invoice/getActiveBankAccount",
+
+    async (_, { rejectWithValue }) => {
+      try {
+        const response =
+          await getActiveBankAccountApi();
+
+        return response;
+      } catch (error) {
+        return rejectWithValue(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch active bank account"
+        );
+      }
+    }
+  );
+
+
+// ======================================================
 // INITIAL STATE
 // ======================================================
 
 const initialState = {
+  // ================================================
+  // INVOICES
+  // ================================================
+
   invoices: [],
 
   invoice: null,
+
+
+  // ================================================
+  // ACTIVE BANK ACCOUNT
+  // ================================================
+
+  bankAccount: null,
+
+  bankAccountLoading: false,
+
+  bankAccountError: null,
+
+
+  // ================================================
+  // GENERAL LOADING
+  // ================================================
 
   loading: false,
 
@@ -264,13 +314,28 @@ const initialState = {
 
   downloading: false,
 
+
+  // ================================================
+  // ERRORS
+  // ================================================
+
   error: null,
 
   downloadError: null,
 
+
+  // ================================================
+  // SUCCESS
+  // ================================================
+
   success: false,
 
   message: "",
+
+
+  // ================================================
+  // PAGINATION
+  // ================================================
 
   pagination: {
     currentPage: 1,
@@ -295,27 +360,36 @@ const invoiceSlice = createSlice({
 
   reducers: {
 
-    // ----------------------------------------------
-    // CLEAR ERROR
-    // ----------------------------------------------
+    // ==================================================
+    // CLEAR INVOICE ERROR
+    // ==================================================
 
     clearInvoiceError: (state) => {
       state.error = null;
     },
 
 
-    // ----------------------------------------------
+    // ==================================================
+    // CLEAR BANK ACCOUNT ERROR
+    // ==================================================
+
+    clearBankAccountError: (state) => {
+      state.bankAccountError = null;
+    },
+
+
+    // ==================================================
     // CLEAR DOWNLOAD ERROR
-    // ----------------------------------------------
+    // ==================================================
 
     clearInvoiceDownloadError: (state) => {
       state.downloadError = null;
     },
 
 
-    // ----------------------------------------------
+    // ==================================================
     // CLEAR SUCCESS
-    // ----------------------------------------------
+    // ==================================================
 
     clearInvoiceSuccess: (state) => {
       state.success = false;
@@ -324,18 +398,31 @@ const invoiceSlice = createSlice({
     },
 
 
-    // ----------------------------------------------
+    // ==================================================
     // CLEAR SELECTED INVOICE
-    // ----------------------------------------------
+    // ==================================================
 
     clearSelectedInvoice: (state) => {
       state.invoice = null;
     },
 
 
-    // ----------------------------------------------
+    // ==================================================
+    // CLEAR BANK ACCOUNT
+    // ==================================================
+
+    clearBankAccount: (state) => {
+      state.bankAccount = null;
+
+      state.bankAccountError = null;
+
+      state.bankAccountLoading = false;
+    },
+
+
+    // ==================================================
     // RESET STATE
-    // ----------------------------------------------
+    // ==================================================
 
     resetInvoiceState: () => {
       return initialState;
@@ -343,7 +430,12 @@ const invoiceSlice = createSlice({
   },
 
 
+  // ====================================================
+  // EXTRA REDUCERS
+  // ====================================================
+
   extraReducers: (builder) => {
+
 
     // ==================================================
     // CREATE INVOICE
@@ -377,12 +469,16 @@ const invoiceSlice = createSlice({
 
           state.success = true;
 
+          state.error = null;
+
           state.message =
             action.payload?.message ||
             "Invoice created successfully";
 
+
           const newInvoice =
             action.payload?.data;
+
 
           if (newInvoice) {
 
@@ -445,6 +541,7 @@ const invoiceSlice = createSlice({
             action.payload?.message ||
             "";
 
+
           if (
             action.payload?.pagination
           ) {
@@ -467,6 +564,51 @@ const invoiceSlice = createSlice({
           state.error =
             action.payload ||
             "Failed to fetch invoices";
+        }
+      );
+
+
+    // ==================================================
+    // GET ACTIVE BANK ACCOUNT
+    // ==================================================
+
+    builder
+
+      .addCase(
+        getActiveBankAccount.pending,
+        (state) => {
+
+          state.bankAccountLoading = true;
+
+          state.bankAccountError = null;
+        }
+      )
+
+      .addCase(
+        getActiveBankAccount.fulfilled,
+        (state, action) => {
+
+          state.bankAccountLoading = false;
+
+          state.bankAccountError = null;
+
+          state.bankAccount =
+            action.payload?.data ||
+            null;
+        }
+      )
+
+      .addCase(
+        getActiveBankAccount.rejected,
+        (state, action) => {
+
+          state.bankAccountLoading = false;
+
+          state.bankAccount = null;
+
+          state.bankAccountError =
+            action.payload ||
+            "Failed to fetch active bank account";
         }
       );
 
@@ -552,17 +694,22 @@ const invoiceSlice = createSlice({
 
           state.success = true;
 
+          state.error = null;
+
           state.message =
             action.payload?.message ||
             "Invoice updated successfully";
 
+
           const updatedInvoice =
             action.payload?.data;
+
 
           if (updatedInvoice) {
 
             state.invoice =
               updatedInvoice;
+
 
             const index =
               state.invoices.findIndex(
@@ -570,6 +717,7 @@ const invoiceSlice = createSlice({
                   item._id ===
                   updatedInvoice._id
               );
+
 
             if (index !== -1) {
 
@@ -627,17 +775,22 @@ const invoiceSlice = createSlice({
 
           state.success = true;
 
+          state.error = null;
+
           state.message =
             action.payload?.message ||
             "Payment status updated successfully";
 
+
           const updatedInvoice =
             action.payload?.data;
+
 
           if (updatedInvoice) {
 
             state.invoice =
               updatedInvoice;
+
 
             const index =
               state.invoices.findIndex(
@@ -645,6 +798,7 @@ const invoiceSlice = createSlice({
                   item._id ===
                   updatedInvoice._id
               );
+
 
             if (index !== -1) {
 
@@ -702,17 +856,22 @@ const invoiceSlice = createSlice({
 
           state.success = true;
 
+          state.error = null;
+
           state.message =
             action.payload?.message ||
             "Invoice marked as paid successfully";
 
+
           const updatedInvoice =
             action.payload?.data;
+
 
           if (updatedInvoice) {
 
             state.invoice =
               updatedInvoice;
+
 
             const index =
               state.invoices.findIndex(
@@ -720,6 +879,7 @@ const invoiceSlice = createSlice({
                   item._id ===
                   updatedInvoice._id
               );
+
 
             if (index !== -1) {
 
@@ -777,18 +937,23 @@ const invoiceSlice = createSlice({
 
           state.success = true;
 
+          state.error = null;
+
           state.message =
             action.payload?.message ||
             "Invoice deleted successfully";
 
+
           const deletedId =
             action.payload?.deletedId;
+
 
           state.invoices =
             state.invoices.filter(
               (item) =>
                 item._id !== deletedId
             );
+
 
           if (
             state.invoice?._id ===
@@ -864,15 +1029,17 @@ const invoiceSlice = createSlice({
 
 export const {
   clearInvoiceError,
+  clearBankAccountError,
   clearInvoiceDownloadError,
   clearInvoiceSuccess,
   clearSelectedInvoice,
+  clearBankAccount,
   resetInvoiceState,
 } = invoiceSlice.actions;
 
 
 // ======================================================
-// SELECTORS
+// INVOICE SELECTORS
 // ======================================================
 
 export const selectInvoices = (state) =>
@@ -900,6 +1067,28 @@ export const selectInvoiceDeleting = (state) =>
 
 
 // ======================================================
+// BANK ACCOUNT SELECTORS
+// ======================================================
+
+export const selectActiveBankAccount = (
+  state
+) =>
+  state.invoice?.bankAccount || null;
+
+
+export const selectBankAccountLoading = (
+  state
+) =>
+  state.invoice?.bankAccountLoading || false;
+
+
+export const selectBankAccountError = (
+  state
+) =>
+  state.invoice?.bankAccountError || null;
+
+
+// ======================================================
 // DOWNLOAD SELECTORS
 // ======================================================
 
@@ -919,17 +1108,27 @@ export const selectInvoiceDownloadError = (
 // GENERAL SELECTORS
 // ======================================================
 
-export const selectInvoiceError = (state) =>
+export const selectInvoiceError = (
+  state
+) =>
   state.invoice?.error || null;
 
 
-export const selectInvoiceSuccess = (state) =>
+export const selectInvoiceSuccess = (
+  state
+) =>
   state.invoice?.success || false;
 
 
-export const selectInvoiceMessage = (state) =>
+export const selectInvoiceMessage = (
+  state
+) =>
   state.invoice?.message || "";
 
+
+// ======================================================
+// PAGINATION SELECTOR
+// ======================================================
 
 export const selectInvoicePagination = (
   state
@@ -939,7 +1138,11 @@ export const selectInvoicePagination = (
     itemsPerPage: 10,
     totalItems: 0,
     totalPages: 0,
-  };
+};
 
+
+// ======================================================
+// DEFAULT EXPORT
+// ======================================================
 
 export default invoiceSlice.reducer;

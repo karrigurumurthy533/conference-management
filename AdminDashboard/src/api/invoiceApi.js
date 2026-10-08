@@ -1,6 +1,8 @@
-
 import axiosInstance from "../redux/axiosInstance";
 
+// =====================================================
+// CREATE INVOICE
+// =====================================================
 
 export const createInvoiceApi = async (invoiceData) => {
   const response = await axiosInstance.post(
@@ -11,6 +13,10 @@ export const createInvoiceApi = async (invoiceData) => {
   return response.data;
 };
 
+
+// =====================================================
+// GET ALL INVOICES
+// =====================================================
 
 export const getAllInvoicesApi = async (params = {}) => {
   const response = await axiosInstance.get(
@@ -24,6 +30,10 @@ export const getAllInvoicesApi = async (params = {}) => {
 };
 
 
+// =====================================================
+// GET INVOICE BY ID
+// =====================================================
+
 export const getInvoiceByIdApi = async (id) => {
   const response = await axiosInstance.get(
     `/invoices/${id}`
@@ -33,7 +43,14 @@ export const getInvoiceByIdApi = async (id) => {
 };
 
 
-export const updateInvoiceApi = async (id, invoiceData) => {
+// =====================================================
+// UPDATE INVOICE
+// =====================================================
+
+export const updateInvoiceApi = async (
+  id,
+  invoiceData
+) => {
   const response = await axiosInstance.put(
     `/invoices/${id}`,
     invoiceData
@@ -42,6 +59,10 @@ export const updateInvoiceApi = async (id, invoiceData) => {
   return response.data;
 };
 
+
+// =====================================================
+// UPDATE PAYMENT STATUS
+// =====================================================
 
 export const updateInvoiceStatusApi = async (
   id,
@@ -56,7 +77,13 @@ export const updateInvoiceStatusApi = async (
 };
 
 
-export const downloadInvoicePdfApi = async (invoiceId) => {
+// =====================================================
+// DOWNLOAD INVOICE PDF
+// =====================================================
+
+export const downloadInvoicePdfApi = async (
+  invoiceId
+) => {
   const response = await axiosInstance.get(
     `/invoices/${invoiceId}/download`,
     {
@@ -67,6 +94,10 @@ export const downloadInvoicePdfApi = async (invoiceId) => {
   return response.data;
 };
 
+
+// =====================================================
+// MARK INVOICE AS PAID
+// =====================================================
 
 export const markInvoiceAsPaidApi = async (
   id,
@@ -81,9 +112,26 @@ export const markInvoiceAsPaidApi = async (
 };
 
 
+// =====================================================
+// DELETE INVOICE
+// =====================================================
+
 export const deleteInvoiceApi = async (id) => {
   const response = await axiosInstance.delete(
     `/invoices/${id}`
+  );
+
+  return response.data;
+};
+
+
+// =====================================================
+// GET ACTIVE BANK ACCOUNT
+// =====================================================
+
+export const getActiveBankAccountApi = async () => {
+  const response = await axiosInstance.get(
+    "/admin/bank-accounts/active"
   );
 
   return response.data;

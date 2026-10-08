@@ -1,865 +1,1185 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import {
-  CheckCircle2,
-  Clock3,
-  Search,
-  X,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  UserCheck,
-  UserX,
   CalendarDays,
-  SlidersHorizontal,
+  ChevronDown,
+  Clock3,
+  DoorOpen,
+  Fingerprint,
+  User,
+  Users,
+  CheckCircle2,
+  ArrowRight,
+  Building2,
+  LogOut,
 } from "lucide-react";
 
-// ==========================================================
-// ATTENDANCE DATA
-// ==========================================================
+import {
+  selectEmployee,
+  employeeClockIn,
+  employeeClockOut,
+  getTodayAttendance,
+  getMonthlyAttendance,
+  selectTodayAttendance,
+  selectTodayAttendanceLoading,
+  selectMonthlyAttendance,
+  selectMonthlyAttendanceLoading,
+  selectClockInLoading,
+  selectClockOutLoading,
+  selectClockInError,
+  selectClockOutError,
+  selectTodayAttendanceError,
+  selectMonthlyAttendanceError,
+} from "../redux/employeeSlice";
 
-const attendanceData = [
-  {
-    id: 1,
-    name: "Dr. Michael Anderson",
-    email: "michael.anderson@example.com",
-    conference: "Mental Health & Psychiatry",
-    date: "Sep 17, 2026",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:12 AM",
-  },
-  {
-    id: 2,
-    name: "Dr. Emily Carter",
-    email: "emily.carter@example.com",
-    conference: "Mental Health & Psychiatry",
-    date: "Sep 17, 2026",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:18 AM",
-  },
-  {
-    id: 3,
-    name: "James Wilson",
-    email: "james.wilson@example.com",
-    conference: "Mental Health & Psychiatry",
-    date: "Sep 17, 2026",
-    type: "Delegate",
-    status: "Present",
-    checkIn: "09:24 AM",
-  },
-  {
-    id: 4,
-    name: "Sophia Miller",
-    email: "sophia.miller@example.com",
-    conference: "Endocrine & Metabolic Innovation",
-    date: "Oct 08, 2026",
-    type: "Delegate",
-    status: "Absent",
-    checkIn: "-",
-  },
-  {
-    id: 5,
-    name: "Dr. David Brown",
-    email: "david.brown@example.com",
-    conference: "Food, Nutrition & Wellness",
-    date: "Sep 17, 2026",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:35 AM",
-  },
-  {
-    id: 6,
-    name: "Olivia Johnson",
-    email: "olivia.johnson@example.com",
-    conference: "Food, Nutrition & Wellness",
-    date: "Sep 17, 2026",
-    type: "Delegate",
-    status: "Late",
-    checkIn: "10:08 AM",
-  },
-  {
-    id: 7,
-    name: "Dr. Robert Davis",
-    email: "robert.davis@example.com",
-    conference: "Oncology Research & AI Innovations",
-    date: "Nov 12, 2026",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:05 AM",
-  },
-  {
-    id: 8,
-    name: "Emma Wilson",
-    email: "emma.wilson@example.com",
-    conference: "Oncology Research & AI Innovations",
-    date: "Nov 12, 2026",
-    type: "Delegate",
-    status: "Absent",
-    checkIn: "-",
-  },
-  {
-    id: 9,
-    name: "Dr. Daniel Moore",
-    email: "daniel.moore@example.com",
-    conference: "Healthcare Innovation",
-    date: "Dec 03, 2026",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:20 AM",
-  },
-  {
-    id: 10,
-    name: "Isabella Taylor",
-    email: "isabella.taylor@example.com",
-    conference: "Healthcare Innovation",
-    date: "Dec 03, 2026",
-    type: "Delegate",
-    status: "Late",
-    checkIn: "10:15 AM",
-  },
-  {
-    id: 11,
-    name: "Dr. William Thomas",
-    email: "william.thomas@example.com",
-    conference: "AI & Digital Psychiatry",
-    date: "Jan 15, 2027",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:10 AM",
-  },
-  {
-    id: 12,
-    name: "Ava Martin",
-    email: "ava.martin@example.com",
-    conference: "AI & Digital Psychiatry",
-    date: "Jan 15, 2027",
-    type: "Delegate",
-    status: "Absent",
-    checkIn: "-",
-  },
-  {
-    id: 13,
-    name: "Dr. James Harris",
-    email: "james.harris@example.com",
-    conference: "Precision Medicine",
-    date: "Feb 20, 2027",
-    type: "Speaker",
-    status: "Present",
-    checkIn: "09:28 AM",
-  },
-  {
-    id: 14,
-    name: "Mia Thompson",
-    email: "mia.thompson@example.com",
-    conference: "Precision Medicine",
-    date: "Feb 20, 2027",
-    type: "Delegate",
-    status: "Present",
-    checkIn: "09:42 AM",
-  },
-  {
-    id: 15,
-    name: "Dr. Christopher Lee",
-    email: "christopher.lee@example.com",
-    conference: "Cardiovascular Diseases",
-    date: "Mar 10, 2027",
-    type: "Speaker",
-    status: "Late",
-    checkIn: "10:22 AM",
-  },
-  {
-    id: 16,
-    name: "Charlotte Garcia",
-    email: "charlotte.garcia@example.com",
-    conference: "Cardiovascular Diseases",
-    date: "Mar 10, 2027",
-    type: "Delegate",
-    status: "Present",
-    checkIn: "09:31 AM",
-  },
-];
+function EmployeeAttendance() {
+  const dispatch = useDispatch();
 
-// ==========================================================
-// COMPONENT
-// ==========================================================
+  const employee = useSelector(selectEmployee);
 
-function Attendance() {
-  const [attendance, setAttendance] = useState(attendanceData);
+  /* -------------------------------------------------------------------------- */
+  /* Attendance Redux Data                                                      */
+  /* -------------------------------------------------------------------------- */
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
+  const todayAttendance = useSelector(selectTodayAttendance);
 
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const ITEMS_PER_PAGE = 5;
-
-  // ========================================================
-  // FILTER DATA
-  // ========================================================
-
-  const filteredAttendance = useMemo(() => {
-    const searchValue = search.trim().toLowerCase();
-
-    return attendance.filter((item) => {
-      const matchesSearch =
-        !searchValue ||
-        item.name.toLowerCase().includes(searchValue) ||
-        item.email.toLowerCase().includes(searchValue) ||
-        item.conference.toLowerCase().includes(searchValue);
-
-      const matchesStatus =
-        statusFilter === "All" || item.status === statusFilter;
-
-      const matchesType =
-        typeFilter === "All" || item.type === typeFilter;
-
-      return matchesSearch && matchesStatus && matchesType;
-    });
-  }, [attendance, search, statusFilter, typeFilter]);
-
-  // ========================================================
-  // PAGINATION
-  // ========================================================
-
-  const totalPages = Math.ceil(
-    filteredAttendance.length / ITEMS_PER_PAGE
+  const todayAttendanceLoading = useSelector(
+    selectTodayAttendanceLoading
   );
 
-  const paginatedAttendance = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const monthlyAttendance = useSelector(
+    selectMonthlyAttendance
+  );
 
-    return filteredAttendance.slice(
-      startIndex,
-      startIndex + ITEMS_PER_PAGE
-    );
-  }, [filteredAttendance, currentPage]);
+  const monthlyAttendanceLoading = useSelector(
+    selectMonthlyAttendanceLoading
+  );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter, typeFilter]);
+  const clockInLoading = useSelector(
+    selectClockInLoading
+  );
 
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
+  const clockOutLoading = useSelector(
+    selectClockOutLoading
+  );
+
+  const clockInError = useSelector(
+    selectClockInError
+  );
+
+  const clockOutError = useSelector(
+    selectClockOutError
+  );
+
+  const todayAttendanceError = useSelector(
+    selectTodayAttendanceError
+  );
+
+  const monthlyAttendanceError = useSelector(
+    selectMonthlyAttendanceError
+  );
+
+  /* -------------------------------------------------------------------------- */
+  /* Employee Data                                                              */
+  /* -------------------------------------------------------------------------- */
+
+  const fullName = employee?.fullName || "Employee";
+  const email = employee?.email || "-";
+  const employeeType = employee?.employeeType || "Employee";
+
+  const assignedConference =
+    employee?.assignedConferences?.[0];
+
+  const conferenceTitle =
+    typeof assignedConference === "string"
+      ? assignedConference
+      : assignedConference?.title ||
+        assignedConference?.name ||
+        "No conference assigned";
+
+  /* -------------------------------------------------------------------------- */
+  /* Date                                                                       */
+  /* -------------------------------------------------------------------------- */
+
+  const today = new Date();
+
+  const formattedDate = today.toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     }
-  }, [currentPage, totalPages]);
+  );
 
-  // ========================================================
-  // STATS
-  // ========================================================
+  /* -------------------------------------------------------------------------- */
+  /* Month / Year Filter                                                        */
+  /* -------------------------------------------------------------------------- */
 
-  const totalCount = attendance.length;
+  const [selectedMonth, setSelectedMonth] = useState(
+    today.getMonth()
+  );
 
-  const presentCount = attendance.filter(
-    (item) => item.status === "Present"
-  ).length;
+  const [selectedYear, setSelectedYear] = useState(
+    today.getFullYear()
+  );
 
-  const lateCount = attendance.filter(
-    (item) => item.status === "Late"
-  ).length;
+  /* -------------------------------------------------------------------------- */
+  /* Fetch Today's Attendance                                                   */
+  /* -------------------------------------------------------------------------- */
 
-  const absentCount = attendance.filter(
-    (item) => item.status === "Absent"
-  ).length;
+  useEffect(() => {
+    dispatch(getTodayAttendance());
+  }, [dispatch]);
 
-  // ========================================================
-  // CLEAR FILTERS
-  // ========================================================
+  /* -------------------------------------------------------------------------- */
+  /* Fetch Monthly Attendance                                                   */
+  /* -------------------------------------------------------------------------- */
 
-  const clearFilters = () => {
-    setSearch("");
-    setStatusFilter("All");
-    setTypeFilter("All");
-    setCurrentPage(1);
+  useEffect(() => {
+    dispatch(
+      getMonthlyAttendance({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      })
+    );
+  }, [
+    dispatch,
+    selectedMonth,
+    selectedYear,
+  ]);
+
+  /* -------------------------------------------------------------------------- */
+  /* Attendance Status                                                          */
+  /* -------------------------------------------------------------------------- */
+
+  const attendanceStatus = useMemo(() => {
+    if (!todayAttendance) {
+      return "not-marked";
+    }
+
+    if (
+      todayAttendance.checkIn &&
+      !todayAttendance.checkOut
+    ) {
+      return "checked-in";
+    }
+
+    if (
+      todayAttendance.checkIn &&
+      todayAttendance.checkOut
+    ) {
+      return "completed";
+    }
+
+    return "not-marked";
+  }, [todayAttendance]);
+
+  const isCheckedIn =
+    attendanceStatus === "checked-in";
+
+  const isCompleted =
+    attendanceStatus === "completed";
+
+  /* -------------------------------------------------------------------------- */
+  /* Check-in / Check-out Times                                                 */
+  /* -------------------------------------------------------------------------- */
+
+  const formatTime = (dateValue) => {
+    if (!dateValue) {
+      return "-";
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return "-";
+    }
+
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  const hasFilters =
-    search || statusFilter !== "All" || typeFilter !== "All";
+  const checkInTime = formatTime(
+    todayAttendance?.checkIn
+  );
 
-  // ========================================================
-  // STATUS STYLE
-  // ========================================================
+  const checkOutTime = formatTime(
+    todayAttendance?.checkOut
+  );
 
-  const getStatusStyle = (status) => {
-    if (status === "Present") {
+  /* -------------------------------------------------------------------------- */
+  /* Check In                                                                   */
+  /* -------------------------------------------------------------------------- */
+
+  const handleCheckIn = async () => {
+    if (isCheckedIn || isCompleted || clockInLoading) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        employeeClockIn()
+      ).unwrap();
+
+      /*
+       * Refresh today's attendance after successful
+       * clock-in.
+       */
+      dispatch(getTodayAttendance());
+
+      /*
+       * If selected month is current month,
+       * refresh monthly history also.
+       */
+      if (
+        selectedMonth === today.getMonth() &&
+        selectedYear === today.getFullYear()
+      ) {
+        dispatch(
+          getMonthlyAttendance({
+            month: selectedMonth + 1,
+            year: selectedYear,
+          })
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Clock-in failed:",
+        error
+      );
+    }
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* Check Out                                                                  */
+  /* -------------------------------------------------------------------------- */
+
+  const handleCheckOut = async () => {
+    if (!isCheckedIn || clockOutLoading) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        employeeClockOut()
+      ).unwrap();
+
+      /*
+       * Refresh today's attendance after
+       * successful clock-out.
+       */
+      dispatch(getTodayAttendance());
+
+      /*
+       * Refresh current month's attendance.
+       */
+      if (
+        selectedMonth === today.getMonth() &&
+        selectedYear === today.getFullYear()
+      ) {
+        dispatch(
+          getMonthlyAttendance({
+            month: selectedMonth + 1,
+            year: selectedYear,
+          })
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Clock-out failed:",
+        error
+      );
+    }
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* Attendance History                                                         */
+  /* -------------------------------------------------------------------------- */
+
+  const attendanceHistory = useMemo(() => {
+    const days =
+      monthlyAttendance?.days || [];
+
+    return days.map((day, index) => {
+      const date = new Date(day.date);
+
       return {
-        wrapper: "bg-emerald-50 text-emerald-600",
-        icon: CheckCircle2,
+        id:
+          `${day.date || "attendance"}-${index}`,
+
+        date: date.toLocaleDateString(
+          "en-US",
+          {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }
+        ),
+
+        month: date.getMonth(),
+
+        year: date.getFullYear(),
+
+        conference:
+          monthlyAttendance?.conference?.title ||
+          monthlyAttendance?.conference?.name ||
+          conferenceTitle,
+
+        checkIn: formatTime(
+          day.checkIn
+        ),
+
+        checkOut: formatTime(
+          day.checkOut
+        ),
+
+        status:
+          day.checkOut
+            ? "Present"
+            : day.checkIn
+            ? "Checked In"
+            : day.status || "Absent",
+
+        workingHours:
+          day.workingHours || 0,
+      };
+    });
+  }, [
+    monthlyAttendance,
+    conferenceTitle,
+  ]);
+
+  /* -------------------------------------------------------------------------- */
+  /* Filtered Attendance                                                        */
+  /* -------------------------------------------------------------------------- */
+
+  const filteredAttendance =
+    useMemo(
+      () =>
+        attendanceHistory.filter(
+          (item) =>
+            item.month ===
+              selectedMonth &&
+            item.year === selectedYear
+        ),
+      [
+        attendanceHistory,
+        selectedMonth,
+        selectedYear,
+      ]
+    );
+
+  const attendanceCount =
+    filteredAttendance.length;
+
+  /* -------------------------------------------------------------------------- */
+  /* Month / Year Names                                                         */
+  /* -------------------------------------------------------------------------- */
+
+  const selectedMonthName =
+    new Date(
+      selectedYear,
+      selectedMonth,
+      1
+    ).toLocaleDateString(
+      "en-US",
+      {
+        month: "long",
+      }
+    );
+
+  const availableYears = [
+    2026,
+    2027,
+    2028,
+  ];
+
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  /* -------------------------------------------------------------------------- */
+  /* Avatar Initials                                                            */
+  /* -------------------------------------------------------------------------- */
+
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((name) =>
+      name.charAt(0).toUpperCase()
+    )
+    .join("");
+
+  /* -------------------------------------------------------------------------- */
+  /* Status UI                                                                  */
+  /* -------------------------------------------------------------------------- */
+
+  const getStatusStyles = () => {
+    if (isCompleted) {
+      return {
+        container:
+          "bg-green-50 border-green-200 text-green-700",
+        dot: "bg-green-500",
+        text: "Attendance Completed",
       };
     }
 
-    if (status === "Late") {
+    if (isCheckedIn) {
       return {
-        wrapper: "bg-amber-50 text-amber-600",
-        icon: Clock3,
+        container:
+          "bg-blue-50 border-blue-200 text-blue-700",
+        dot: "bg-blue-500",
+        text: "Checked In",
       };
     }
 
     return {
-      wrapper: "bg-red-50 text-red-500",
-      icon: UserX,
+      container:
+        "bg-gray-50 border-gray-200 text-gray-600",
+      dot: "bg-gray-400",
+      text: "Not Marked",
     };
   };
 
-  // ========================================================
-  // RENDER
-  // ========================================================
+  const statusStyles =
+    getStatusStyles();
+
+  /* -------------------------------------------------------------------------- */
+  /* Error Message                                                              */
+  /* -------------------------------------------------------------------------- */
+
+  const attendanceError =
+    clockInError ||
+    clockOutError ||
+    todayAttendanceError ||
+    monthlyAttendanceError;
+
+  /* -------------------------------------------------------------------------- */
+  /* JSX                                                                        */
+  /* -------------------------------------------------------------------------- */
 
   return (
-    <section className="min-h-screen bg-slate-50 px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section
+      className="
+        min-h-screen
+        bg-[#fbfaff]
+        px-4
+        py-5
+        sm:px-6
+        lg:px-8
+      "
+    >
+      {/* Decorative Background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-purple-100/40 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-purple-100/30 blur-3xl" />
+      </div>
 
-        {/* ==================================================
-            STATS
-        ================================================== */}
+      {/* Main Container */}
+      <div className="relative mx-auto max-w-6xl">
 
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* ------------------------------------------------------------------ */}
+        {/* Header                                                             */}
+        {/* ------------------------------------------------------------------ */}
 
-          {/* TOTAL */}
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium text-gray-500">
-                  Total
-                </p>
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#8138A2] text-white shadow-sm">
+              <CalendarDays size={21} />
+            </div>
 
-                <p className="mt-1 text-xl font-semibold text-gray-900">
-                  {totalCount}
-                </p>
-              </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                Attendance
+              </h1>
 
-              <Users className="h-5 w-5 text-gray-400" />
+              <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
+                Manage your daily attendance and working hours
+              </p>
             </div>
           </div>
 
-          {/* PRESENT */}
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium text-gray-500">
-                  Present
-                </p>
+          {/* Current Date */}
+          <div className="flex w-fit items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 shadow-sm">
+            <CalendarDays
+              size={15}
+              className="text-[#8138A2]"
+            />
 
-                <p className="mt-1 text-xl font-semibold text-gray-900">
-                  {presentCount}
-                </p>
-              </div>
-
-              <UserCheck className="h-5 w-5 text-emerald-500" />
-            </div>
-          </div>
-
-          {/* LATE */}
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium text-gray-500">
-                  Late
-                </p>
-
-                <p className="mt-1 text-xl font-semibold text-gray-900">
-                  {lateCount}
-                </p>
-              </div>
-
-              <Clock3 className="h-5 w-5 text-amber-500" />
-            </div>
-          </div>
-
-          {/* ABSENT */}
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium text-gray-500">
-                  Absent
-                </p>
-
-                <p className="mt-1 text-xl font-semibold text-gray-900">
-                  {absentCount}
-                </p>
-              </div>
-
-              <UserX className="h-5 w-5 text-red-500" />
-            </div>
-          </div>
-
-        </div>
-
-        {/* ==================================================
-            FILTER BAR
-        ================================================== */}
-
-        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-3">
-
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-
-            {/* SEARCH */}
-
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search name, email or conference..."
-                className="
-                  h-9
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-200
-                  bg-white
-                  pl-9
-                  pr-3
-                  text-xs
-                  text-gray-700
-                  outline-none
-                  placeholder:text-gray-400
-                  focus:border-[#8138A2]
-                  focus:ring-1
-                  focus:ring-[#8138A2]/20
-                "
-              />
-            </div>
-
-            {/* STATUS */}
-
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="
-                  h-9
-                  min-w-[135px]
-                  appearance-none
-                  rounded-lg
-                  border
-                  border-slate-200
-                  bg-white
-                  px-3
-                  pr-8
-                  text-xs
-                  text-gray-600
-                  outline-none
-                  focus:border-[#8138A2]
-                "
-              >
-                <option value="All">All Status</option>
-                <option value="Present">Present</option>
-                <option value="Late">Late</option>
-                <option value="Absent">Absent</option>
-              </select>
-
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            </div>
-
-            {/* TYPE */}
-
-            <div className="relative">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="
-                  h-9
-                  min-w-[130px]
-                  appearance-none
-                  rounded-lg
-                  border
-                  border-slate-200
-                  bg-white
-                  px-3
-                  pr-8
-                  text-xs
-                  text-gray-600
-                  outline-none
-                  focus:border-[#8138A2]
-                "
-              >
-                <option value="All">All Types</option>
-                <option value="Speaker">Speaker</option>
-                <option value="Delegate">Delegate</option>
-              </select>
-
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            </div>
-
-            {/* CLEAR */}
-
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="
-                  flex
-                  h-9
-                  items-center
-                  justify-center
-                  gap-1.5
-                  rounded-lg
-                  px-3
-                  text-xs
-                  font-medium
-                  text-gray-500
-                  transition
-                  hover:bg-red-50
-                  hover:text-red-500
-                "
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </button>
-            )}
-          </div>
-
-          {/* FILTER INFO */}
-
-          <div className="mt-2 flex items-center gap-1 text-[11px] text-gray-400">
-            <SlidersHorizontal className="h-3 w-3" />
             <span>
-              Showing {filteredAttendance.length} matching records
+              {formattedDate}
             </span>
           </div>
         </div>
 
-        {/* ==================================================
-            TABLE
-        ================================================== */}
+        {/* ------------------------------------------------------------------ */}
+        {/* Error Message                                                      */}
+        {/* ------------------------------------------------------------------ */}
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-          {/* DESKTOP TABLE */}
-
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-left">
-
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Participant
-                  </th>
-
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Conference
-                  </th>
-
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Date
-                  </th>
-
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Type
-                  </th>
-
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Check-in
-                  </th>
-
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedAttendance.map((item) => {
-                  const statusStyle = getStatusStyle(item.status);
-                  const StatusIcon = statusStyle.icon;
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/70"
-                    >
-                      {/* PARTICIPANT */}
-
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[11px] font-semibold text-[#8138A2]">
-                            {item.name
-                              .split(" ")
-                              .map((word) => word[0])
-                              .slice(0, 2)
-                              .join("")}
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate text-[12px] font-semibold text-gray-900">
-                              {item.name}
-                            </p>
-
-                            <p className="truncate text-[11px] text-gray-400">
-                              {item.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* CONFERENCE */}
-
-                      <td className="max-w-[220px] px-4 py-3">
-                        <p className="truncate text-[12px] font-medium text-gray-700">
-                          {item.conference}
-                        </p>
-                      </td>
-
-                      {/* DATE */}
-
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                          <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
-                          {item.date}
-                        </div>
-                      </td>
-
-                      {/* TYPE */}
-
-                      <td className="px-4 py-3">
-                        <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-gray-600">
-                          {item.type}
-                        </span>
-                      </td>
-
-                      {/* CHECK IN */}
-
-                      <td className="px-4 py-3">
-                        <span className="text-[11px] text-gray-500">
-                          {item.checkIn}
-                        </span>
-                      </td>
-
-                      {/* STATUS */}
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium ${statusStyle.wrapper}`}
-                        >
-                          <StatusIcon className="h-3 w-3" />
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {attendanceError && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+            {attendanceError}
           </div>
+        )}
 
-          {/* ==================================================
-              MOBILE LIST
-          ================================================== */}
+        {/* ------------------------------------------------------------------ */}
+        {/* Main Attendance Card                                               */}
+        {/* ------------------------------------------------------------------ */}
 
-          <div className="md:hidden">
-            {paginatedAttendance.map((item, index) => {
-              const statusStyle = getStatusStyle(item.status);
-              const StatusIcon = statusStyle.icon;
+        <div className="mb-5 rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-              return (
-                <div
-                  key={item.id}
-                  className={`p-4 ${
-                    index !== paginatedAttendance.length - 1
-                      ? "border-b border-slate-100"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
+          {/* Employee Header */}
+          <div className="border-b border-gray-100 p-4 sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[11px] font-semibold text-[#8138A2]">
-                      {item.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .slice(0, 2)
-                        .join("")}
-                    </div>
+              <div className="flex items-center gap-3">
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-[13px] font-semibold text-gray-900">
-                            {item.name}
-                          </p>
-
-                          <p className="truncate text-[11px] text-gray-400">
-                            {item.email}
-                          </p>
-                        </div>
-
-                        <span
-                          className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium ${statusStyle.wrapper}`}
-                        >
-                          <StatusIcon className="h-3 w-3" />
-                          {item.status}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-[11px] font-medium text-gray-600">
-                        {item.conference}
-                      </p>
-
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-400">
-                        <span>{item.date}</span>
-                        <span>{item.type}</span>
-                        <span>Check-in: {item.checkIn}</span>
-                      </div>
-                    </div>
-                  </div>
+                {/* Avatar */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#8138A2] text-sm font-bold text-white">
+                  {initials || (
+                    <User size={20} />
+                  )}
                 </div>
-              );
-            })}
-          </div>
 
-          {/* ==================================================
-              EMPTY STATE
-          ================================================== */}
+                <div className="min-w-0">
+                  <h2 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                    {fullName}
+                  </h2>
 
-          {paginatedAttendance.length === 0 && (
-            <div className="flex flex-col items-center justify-center px-6 py-12">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                <Search className="h-4 w-4 text-gray-400" />
+                  <p className="truncate text-xs text-gray-500 sm:text-sm">
+                    {email}
+                  </p>
+                </div>
               </div>
 
-              <h3 className="mt-3 text-sm font-semibold text-gray-800">
-                No attendance records found
-              </h3>
+              {/* Status */}
+              <div
+                className={`
+                  flex w-fit items-center gap-2
+                  rounded-full
+                  border
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-medium
+                  ${statusStyles.container}
+                `}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${statusStyles.dot}`}
+                />
 
-              <p className="mt-1 text-xs text-gray-400">
-                Try changing your search or filters.
+                {statusStyles.text}
+              </div>
+            </div>
+          </div>
+
+          {/* Event Information */}
+          <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+
+            {/* Today */}
+            <div className="p-4 sm:p-5">
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                <CalendarDays
+                  size={15}
+                  className="text-[#8138A2]"
+                />
+
+                Today
+              </div>
+
+              <p className="text-sm font-semibold text-gray-900">
+                {formattedDate}
               </p>
             </div>
-          )}
 
-          {/* ==================================================
-              PAGINATION
-          ================================================== */}
+            {/* Conference */}
+            <div className="p-4 sm:p-5">
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                <Building2
+                  size={15}
+                  className="text-[#8138A2]"
+                />
 
-          {filteredAttendance.length > 0 && (
-            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                Conference
+              </div>
 
-              {/* SUMMARY */}
+              <p className="line-clamp-2 text-sm font-semibold text-gray-900">
+                {conferenceTitle}
+              </p>
+            </div>
 
-              <p className="text-[11px] text-gray-400">
-                Showing{" "}
-                <span className="font-medium text-gray-600">
-                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                </span>{" "}
-                -{" "}
-                <span className="font-medium text-gray-600">
-                  {Math.min(
-                    currentPage * ITEMS_PER_PAGE,
-                    filteredAttendance.length
-                  )}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium text-gray-600">
-                  {filteredAttendance.length}
-                </span>{" "}
-                records
+            {/* Employee Type */}
+            <div className="p-4 sm:p-5">
+              <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                <Users
+                  size={15}
+                  className="text-[#8138A2]"
+                />
+
+                Employee Type
+              </div>
+
+              <p className="text-sm font-semibold text-gray-900">
+                {employeeType}
+              </p>
+            </div>
+          </div>
+
+          {/* Check In / Out Area */}
+          <div className="border-t border-gray-100 p-5 sm:p-7">
+
+            <div className="flex flex-col items-center justify-center">
+
+              {/* Fingerprint */}
+              <div
+                className={`
+                  mb-4
+                  flex
+                  h-20
+                  w-20
+                  items-center
+                  justify-center
+                  rounded-full
+                  border-8
+                  ${
+                    isCompleted
+                      ? "border-green-50 bg-green-100 text-green-600"
+                      : isCheckedIn
+                      ? "border-blue-50 bg-blue-100 text-blue-600"
+                      : "border-purple-50 bg-purple-100 text-[#8138A2]"
+                  }
+                `}
+              >
+                {isCompleted ? (
+                  <CheckCircle2 size={34} />
+                ) : (
+                  <Fingerprint size={34} />
+                )}
+              </div>
+
+              {/* Heading */}
+              <h3 className="text-base font-semibold text-gray-900">
+                {isCompleted
+                  ? "Attendance Completed"
+                  : isCheckedIn
+                  ? "You are Checked In"
+                  : "Mark Your Attendance"}
+              </h3>
+
+              <p className="mt-1 max-w-md text-center text-xs text-gray-500 sm:text-sm">
+                {isCompleted
+                  ? "Your attendance for today has been completed successfully."
+                  : isCheckedIn
+                  ? "You have successfully checked in. Don't forget to check out."
+                  : "Click the button below to record your attendance for today."}
               </p>
 
-              {/* PAGINATION */}
+              {/* Action Button */}
+              <div className="mt-5">
 
-              <div className="flex items-center gap-1">
+                {/* Check In */}
+                {!isCheckedIn &&
+                  !isCompleted && (
+                    <button
+                      type="button"
+                      onClick={handleCheckIn}
+                      disabled={
+                        clockInLoading ||
+                        todayAttendanceLoading
+                      }
+                      className="
+                        inline-flex
+                        h-11
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-lg
+                        bg-[#8138A2]
+                        px-6
+                        text-sm
+                        font-semibold
+                        text-white
+                        shadow-sm
+                        transition
+                        hover:bg-[#702f8d]
+                        active:scale-[0.98]
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                      "
+                    >
+                      {clockInLoading ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
 
-                {/* PREVIOUS */}
+                          Checking In...
+                        </>
+                      ) : (
+                        <>
+                          <DoorOpen size={18} />
 
-                <button
-                  type="button"
-                  disabled={currentPage === 1}
-                  onClick={() =>
-                    setCurrentPage((page) => Math.max(page - 1, 1))
-                  }
-                  className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-                    rounded-md
-                    border
-                    border-slate-200
-                    text-gray-500
-                    transition
-                    hover:bg-slate-50
-                    disabled:cursor-not-allowed
-                    disabled:opacity-40
-                  "
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
+                          Check In
 
-                {/* PAGE NUMBERS */}
+                          <ArrowRight size={16} />
+                        </>
+                      )}
+                    </button>
+                  )}
 
-                {Array.from(
-                  { length: totalPages },
-                  (_, index) => index + 1
-                ).map((page) => (
+                {/* Check Out */}
+                {isCheckedIn && (
                   <button
-                    key={page}
                     type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[11px] font-medium transition ${
-                      currentPage === page
-                        ? "bg-[#8138A2] text-white"
-                        : "border border-slate-200 text-gray-500 hover:bg-slate-50"
-                    }`}
+                    onClick={handleCheckOut}
+                    disabled={
+                      clockOutLoading
+                    }
+                    className="
+                      inline-flex
+                      h-11
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-lg
+                      bg-[#8138A2]
+                      px-6
+                      text-sm
+                      font-semibold
+                      text-white
+                      shadow-sm
+                      transition
+                      hover:bg-[#702f8d]
+                      active:scale-[0.98]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+                    "
                   >
-                    {page}
+                    {clockOutLoading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+
+                        Checking Out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut size={18} />
+
+                        Check Out
+                      </>
+                    )}
                   </button>
-                ))}
+                )}
 
-                {/* NEXT */}
+                {/* Completed */}
+                {isCompleted && (
+                  <div
+                    className="
+                      inline-flex
+                      h-11
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-lg
+                      bg-green-50
+                      px-6
+                      text-sm
+                      font-semibold
+                      text-green-700
+                    "
+                  >
+                    <CheckCircle2 size={18} />
 
-                <button
-                  type="button"
-                  disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((page) =>
-                      Math.min(page + 1, totalPages)
+                    Completed
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Today's Timing */}
+            <div className="mx-auto mt-7 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
+
+              {/* Check In Time */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                  <Clock3
+                    size={15}
+                    className="text-[#8138A2]"
+                  />
+
+                  Check-in Time
+                </div>
+
+                <p className="text-lg font-bold text-gray-900">
+                  {checkInTime}
+                </p>
+              </div>
+
+              {/* Check Out Time */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-500">
+                  <Clock3
+                    size={15}
+                    className="text-[#8138A2]"
+                  />
+
+                  Check-out Time
+                </div>
+
+                <p className="text-lg font-bold text-gray-900">
+                  {checkOutTime}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* Recent Attendance                                                  */}
+        {/* ------------------------------------------------------------------ */}
+
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+          {/* Card Header */}
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                Recent Attendance
+              </h2>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Your attendance records for the selected month
+              </p>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+
+              {/* Month */}
+              <div className="relative">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) =>
+                    setSelectedMonth(
+                      Number(e.target.value)
                     )
                   }
                   className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-                    rounded-md
+                    h-9
+                    appearance-none
+                    rounded-lg
                     border
-                    border-slate-200
-                    text-gray-500
+                    border-gray-200
+                    bg-white
+                    py-0
+                    pl-3
+                    pr-8
+                    text-xs
+                    font-medium
+                    text-gray-700
+                    outline-none
                     transition
-                    hover:bg-slate-50
-                    disabled:cursor-not-allowed
-                    disabled:opacity-40
+                    focus:border-[#8138A2]
+                    focus:ring-2
+                    focus:ring-purple-100
                   "
                 >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+                  {months.map(
+                    (month, index) => (
+                      <option
+                        key={month}
+                        value={index}
+                      >
+                        {month}
+                      </option>
+                    )
+                  )}
+                </select>
+
+                <ChevronDown
+                  size={14}
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+              </div>
+
+              {/* Year */}
+              <div className="relative">
+                <select
+                  value={selectedYear}
+                  onChange={(e) =>
+                    setSelectedYear(
+                      Number(e.target.value)
+                    )
+                  }
+                  className="
+                    h-9
+                    appearance-none
+                    rounded-lg
+                    border
+                    border-gray-200
+                    bg-white
+                    py-0
+                    pl-3
+                    pr-8
+                    text-xs
+                    font-medium
+                    text-gray-700
+                    outline-none
+                    transition
+                    focus:border-[#8138A2]
+                    focus:ring-2
+                    focus:ring-purple-100
+                  "
+                >
+                  {availableYears.map(
+                    (year) => (
+                      <option
+                        key={year}
+                        value={year}
+                      >
+                        {year}
+                      </option>
+                    )
+                  )}
+                </select>
+
+                <ChevronDown
+                  size={14}
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+              </div>
+
+              {/* Count */}
+              <div className="flex h-9 items-center rounded-lg bg-purple-50 px-3 text-xs font-semibold text-[#8138A2]">
+                {attendanceCount} Attendance
               </div>
             </div>
+          </div>
+
+          {/* Loading */}
+          {monthlyAttendanceLoading ? (
+            <div className="flex items-center justify-center px-5 py-12">
+              <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#8138A2] border-t-transparent" />
+
+                Loading attendance...
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/70">
+
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Date
+                      </th>
+
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Conference
+                      </th>
+
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Check-in Time
+                      </th>
+
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Check-out Time
+                      </th>
+
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredAttendance.length >
+                    0 ? (
+                      filteredAttendance.map(
+                        (item) => (
+                          <tr
+                            key={item.id}
+                            className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50"
+                          >
+                            {/* Date */}
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-[#8138A2]">
+                                  <CalendarDays
+                                    size={15}
+                                  />
+                                </div>
+
+                                <span className="text-xs font-medium text-gray-800">
+                                  {item.date}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Conference */}
+                            <td className="max-w-[240px] px-5 py-4">
+                              <p className="truncate text-xs font-medium text-gray-800">
+                                {item.conference}
+                              </p>
+                            </td>
+
+                            {/* Check In */}
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <div className="flex items-center gap-2 text-xs text-gray-700">
+                                <Clock3
+                                  size={14}
+                                  className="text-gray-400"
+                                />
+
+                                {item.checkIn}
+                              </div>
+                            </td>
+
+                            {/* Check Out */}
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <div className="flex items-center gap-2 text-xs text-gray-700">
+                                <Clock3
+                                  size={14}
+                                  className="text-gray-400"
+                                />
+
+                                {item.checkOut}
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-5 py-4">
+                              <span
+                                className={`
+                                  inline-flex
+                                  items-center
+                                  gap-1.5
+                                  rounded-full
+                                  px-2.5
+                                  py-1
+                                  text-[11px]
+                                  font-semibold
+                                  ${
+                                    item.status ===
+                                    "Present"
+                                      ? "bg-green-50 text-green-700"
+                                      : item.status ===
+                                        "Checked In"
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "bg-gray-50 text-gray-600"
+                                  }
+                                `}
+                              >
+                                <span
+                                  className={`
+                                    h-1.5
+                                    w-1.5
+                                    rounded-full
+                                    ${
+                                      item.status ===
+                                      "Present"
+                                        ? "bg-green-500"
+                                        : item.status ===
+                                          "Checked In"
+                                        ? "bg-blue-500"
+                                        : "bg-gray-400"
+                                    }
+                                  `}
+                                />
+
+                                {item.status}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      )
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="px-5 py-12 text-center"
+                        >
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                              <CalendarDays
+                                size={21}
+                              />
+                            </div>
+
+                            <p className="text-sm font-semibold text-gray-700">
+                              No attendance records
+                            </p>
+
+                            <p className="mt-1 text-xs text-gray-500">
+                              No attendance found for{" "}
+                              {selectedMonthName}{" "}
+                              {selectedYear}.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Footer */}
+              <div className="flex flex-col gap-2 border-t border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-gray-500">
+                  Showing{" "}
+                  {attendanceCount} record
+                  {attendanceCount !== 1
+                    ? "s"
+                    : ""}
+                </p>
+
+                <button
+                  type="button"
+                  className="
+                    inline-flex
+                    w-fit
+                    items-center
+                    gap-1.5
+                    text-xs
+                    font-semibold
+                    text-[#8138A2]
+                    transition
+                    hover:text-[#702f8d]
+                  "
+                >
+                  View History
+
+                  <ArrowRight
+                    size={14}
+                  />
+                </button>
+              </div>
+            </>
           )}
-        </div>
-
-        {/* ==================================================
-            BOTTOM INFO
-        ================================================== */}
-
-        <div className="mt-2 flex items-center justify-between px-1">
-          <p className="text-[11px] text-gray-400">
-            {ITEMS_PER_PAGE} records per page
-          </p>
-
-          <p className="text-[11px] text-gray-400">
-            Attendance Management
-          </p>
         </div>
       </div>
     </section>
   );
 }
 
-export default Attendance;
+export default EmployeeAttendance;

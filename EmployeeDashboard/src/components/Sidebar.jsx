@@ -9,9 +9,13 @@ import {
   Users,
   UserRound,
   BookOpen,
+  X,
 } from "lucide-react";
 
-import { NavLink, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
 
 import {
   employeeLogoutApi,
@@ -65,7 +69,10 @@ const menuItems = [
   },
 ];
 
-function Sidebar() {
+function Sidebar({
+  isOpen,
+  onClose,
+}) {
   const navigate = useNavigate();
 
   // ======================================================
@@ -74,10 +81,6 @@ function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      // --------------------------------------------------
-      // CALL LOGOUT API
-      // --------------------------------------------------
-
       await employeeLogoutApi();
     } catch (error) {
       console.error(
@@ -85,19 +88,26 @@ function Sidebar() {
         error
       );
     } finally {
-    
+      localStorage.removeItem(
+        "employeeToken"
+      );
 
-      localStorage.removeItem("employeeToken");
-      localStorage.removeItem("employeeUser");
+      localStorage.removeItem(
+        "employeeUser"
+      );
 
       // Backward compatibility
-      localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("userEmail");
+      localStorage.removeItem(
+        "isLoggedIn"
+      );
 
-      // --------------------------------------------------
-      // REDIRECT TO LOGIN
-      // --------------------------------------------------
+      localStorage.removeItem(
+        "userRole"
+      );
+
+      localStorage.removeItem(
+        "userEmail"
+      );
 
       navigate("/login", {
         replace: true,
@@ -105,122 +115,246 @@ function Sidebar() {
     }
   };
 
-
+  // ======================================================
+  // NAV LINK CLASS
+  // ======================================================
 
   const navClass = ({ isActive }) =>
     `group flex h-[40px] items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 ${
       isActive
-        ? "bg-purple-50 text-[#7C3AED]"
-        : "text-gray-600 hover:bg-gray-50 hover:text-[#7C3AED]"
+        ? "bg-[#8138A2] text-white"
+        : "text-gray-600 hover:bg-purple-50 hover:text-[#8138A2]"
     }`;
 
+  // ======================================================
+  // MOBILE NAVIGATION CLICK
+  // ======================================================
+
+  const handleNavigation = () => {
+    if (window.innerWidth < 1024) {
+      onClose?.();
+    }
+  };
+
   return (
-    <aside
-      className="
-        fixed
-        left-0
-        top-0
-        z-50
-        flex
-        h-screen
-        w-[220px]
-        flex-col
-        border-r
-        border-gray-200
-        bg-white
-      "
-    >
+    <>
       {/* ==================================================
-          LOGO
+          MOBILE OVERLAY
       ================================================== */}
 
-      <div className="flex h-[60px] shrink-0 items-center border-b border-gray-100 px-4">
-        <img
-          src="/web_logo.png"
-          alt="GlobalScion"
-          className="h-9 w-auto object-contain"
-        />
-      </div>
-
-      {/* ==================================================
-          NAVIGATION
-      ================================================== */}
-
-      <nav className="flex-1 overflow-hidden px-3 py-2">
-        <div className="space-y-0.5">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={navClass}
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon
-                      size={18}
-                      strokeWidth={
-                        isActive ? 2.4 : 2
-                      }
-                      className={`shrink-0 transition-colors ${
-                        isActive
-                          ? "text-[#7C3AED]"
-                          : "text-gray-500 group-hover:text-[#7C3AED]"
-                      }`}
-                    />
-
-                    <span className="truncate">
-                      {item.name}
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
-
-     
-
-      <div className="shrink-0 border-t border-gray-100 px-3 py-2">
+      {isOpen && (
         <button
           type="button"
-          onClick={handleLogout}
+          aria-label="Close sidebar"
+          onClick={onClose}
           className="
-            group
+            fixed
+            inset-0
+            z-[55]
+            bg-black/30
+            lg:hidden
+          "
+        />
+      )}
+
+      {/* ==================================================
+          SIDEBAR
+      ================================================== */}
+
+      <aside
+        className={`
+          fixed
+          left-0
+          top-0
+          z-[60]
+          flex
+          h-screen
+          w-[220px]
+          flex-col
+          border-r
+          border-gray-200
+          bg-white
+          transition-transform
+          duration-300
+          ease-in-out
+          lg:translate-x-0
+
+          ${
+            isOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+        `}
+      >
+        {/* ==================================================
+            LOGO
+        ================================================== */}
+
+        <div
+          className="
             flex
-            h-[40px]
-            w-full
+            h-[70px]
+            shrink-0
             items-center
-            gap-2.5
-            rounded-lg
-            px-2.5
-            text-[13px]
-            font-medium
-            text-gray-600
-            transition-all
-            duration-200
-            hover:bg-red-50
-            hover:text-red-500
+            justify-between
+            border-b
+            border-gray-100
+            px-4
           "
         >
-          <LogOut
-            size={18}
-            strokeWidth={2}
+          <img
+            src="/web_logo.png"
+            alt="GlobalScion"
             className="
-              shrink-0
-              text-gray-500
-              transition-colors
-              group-hover:text-red-500
+              h-9
+              w-auto
+              object-contain
             "
           />
 
-          <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+          {/* =================================================
+              MOBILE CLOSE BUTTON
+          ================================================== */}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-lg
+              text-gray-500
+              transition
+              hover:bg-purple-50
+              hover:text-[#8138A2]
+              lg:hidden
+            "
+            aria-label="Close menu"
+          >
+            <X
+              size={18}
+              strokeWidth={1.8}
+            />
+          </button>
+        </div>
+
+        {/* ==================================================
+            NAVIGATION
+        ================================================== */}
+
+        <nav
+          className="
+            flex-1
+            overflow-hidden
+            px-3
+            py-2
+          "
+        >
+          <div className="space-y-0.5">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={handleNavigation}
+                  className={navClass}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {/* =================================================
+                          ICON
+                      ================================================== */}
+
+                      <Icon
+                        size={18}
+                        strokeWidth={
+                          isActive
+                            ? 2.4
+                            : 2
+                        }
+                        className={`
+                          shrink-0
+                          transition-colors
+                          ${
+                            isActive
+                              ? "text-white"
+                              : "text-gray-500 group-hover:text-[#8138A2]"
+                          }
+                        `}
+                      />
+
+                      {/* =================================================
+                          MENU NAME
+                      ================================================== */}
+
+                      <span className="truncate">
+                        {item.name}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* ==================================================
+            LOGOUT
+        ================================================== */}
+
+        <div
+          className="
+            shrink-0
+            border-t
+            border-gray-100
+            px-3
+            py-2
+          "
+        >
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="
+              group
+              flex
+              h-[40px]
+              w-full
+              items-center
+              gap-2.5
+              rounded-lg
+              px-2.5
+              text-[13px]
+              font-medium
+              text-gray-600
+              transition-all
+              duration-200
+              hover:bg-red-50
+              hover:text-red-500
+            "
+          >
+            <LogOut
+              size={18}
+              strokeWidth={2}
+              className="
+                shrink-0
+                text-gray-500
+                transition-colors
+                group-hover:text-red-500
+              "
+            />
+
+            <span>
+              Logout
+            </span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 

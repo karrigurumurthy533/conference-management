@@ -1,61 +1,125 @@
+import { useState } from "react";
+
 import {
   Bell,
   ChevronDown,
   CircleHelp,
   Mail,
+  Menu,
   Search,
+  X,
 } from "lucide-react";
 
-function Navbar() {
+import { useSelector } from "react-redux";
+
+import { selectEmployee } from "../redux/employeeSlice";
+
+function Navbar({ onMenuClick, isSidebarOpen }) {
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
+  // =========================================================
+  // EMPLOYEE DATA FROM REDUX
+  // =========================================================
+
+  const employee = useSelector(selectEmployee);
+
+  const fullName = employee?.fullName || "Employee";
+  const email = employee?.email || "";
+
+  // =========================================================
+  // CREATE INITIALS
+  // =========================================================
+
+  const initials =
+    fullName
+      ?.trim()
+      ?.split(/\s+/)
+      ?.filter(Boolean)
+      ?.slice(0, 2)
+      ?.map((name) => name.charAt(0).toUpperCase())
+      ?.join("") || "E";
+
   return (
     <header
       className="
-        sticky
+        fixed
+        left-0
+        right-0
         top-0
-        z-40
-        h-[60px]
+        z-50
+        h-[70px]
         border-b
-        border-[#e5e7eb]
+        border-violet-100
         bg-white
       "
     >
-      <div className="flex h-full items-center justify-between px-5">
+      <div
+        className="
+          flex
+          h-full
+          items-center
+          justify-between
+          px-3
+          sm:px-5
+          lg:px-8
+        "
+      >
         {/* =====================================================
-            SEARCH
+            LEFT SIDE
         ====================================================== */}
-        <div className="flex min-w-0 items-center">
-          <div className="relative w-[420px]">
-            <Search
-              size={17}
-              strokeWidth={1.8}
-              className="
-                absolute
-                left-3.5
-                top-1/2
-                -translate-y-1/2
-                text-[#64748b]
-              "
-            />
 
-            <input
-              type="text"
-              placeholder="Search speakers, abstracts, registrations..."
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
+          {/* =================================================
+              MOBILE MENU
+          ================================================== */}
+
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-500
+              transition
+              hover:bg-violet-50
+              hover:text-[#8138A2]
+              lg:hidden
+            "
+            aria-label="Toggle menu"
+          >
+            {isSidebarOpen ? (
+              <X
+                size={20}
+                strokeWidth={1.8}
+              />
+            ) : (
+              <Menu
+                size={20}
+                strokeWidth={1.8}
+              />
+            )}
+          </button>
+
+          {/* =================================================
+              LOGO
+          ================================================== */}
+
+          <div className="flex min-w-0 shrink-0 items-center">
+            <img
+              src="/web_logo.png"
+              alt="Conference Hub"
               className="
-                h-[36px]
-                w-full
-                rounded-lg
-                border
-                border-[#dfe3eb]
-                bg-[#f7f8fc]
-                pl-10
-                pr-4
-                text-[13px]
-                text-[#111827]
-                outline-none
-                placeholder:text-[#94a3b8]
-                transition
-                focus:border-violet-300
-                focus:bg-white
+                h-9
+                w-auto
+                max-w-[145px]
+                object-contain
+                sm:h-10
+                sm:max-w-none
               "
             />
           </div>
@@ -64,141 +128,351 @@ function Navbar() {
         {/* =====================================================
             RIGHT SIDE
         ====================================================== */}
-        <div className="flex shrink-0 items-center gap-3">
-          {/* Notification */}
+
+        <div
+          className="
+            flex
+            min-w-0
+            items-center
+            gap-1.5
+            sm:gap-2.5
+            lg:gap-3
+          "
+        >
+          {/* =================================================
+              DESKTOP SEARCH
+          ================================================== */}
+
+          <div
+            className="
+              relative
+              hidden
+              w-[260px]
+              lg:block
+              xl:w-[360px]
+            "
+          >
+            <Search
+              size={16}
+              strokeWidth={1.8}
+              className="
+                absolute
+                left-3
+                top-1/2
+                -translate-y-1/2
+                text-slate-400
+              "
+            />
+
+            <input
+              type="text"
+              placeholder="Search speakers, abstracts, registrations..."
+              className="
+                h-9
+                w-full
+                rounded-lg
+                border
+                border-slate-200
+                bg-slate-50
+                pl-9
+                pr-3
+                text-[11px]
+                text-slate-700
+                outline-none
+                placeholder:text-slate-400
+                transition
+                focus:border-[#8138A2]
+                focus:bg-white
+                focus:ring-1
+                focus:ring-[#8138A2]/10
+              "
+            />
+          </div>
+
+          {/* =================================================
+              MOBILE SEARCH BUTTON
+          ================================================== */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowMobileSearch((prev) => !prev)
+            }
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-500
+              transition
+              hover:bg-violet-50
+              hover:text-[#8138A2]
+              lg:hidden
+            "
+            aria-label="Search"
+          >
+            <Search
+              size={18}
+              strokeWidth={1.8}
+            />
+          </button>
+
+          {/* =================================================
+              NOTIFICATION
+          ================================================== */}
+
           <button
             type="button"
             className="
               relative
               flex
-              h-8
-              w-8
+              h-9
+              w-9
+              shrink-0
               items-center
               justify-center
               rounded-lg
-              text-[#64748b]
+              text-slate-500
               transition
-              hover:bg-[#f5f3ff]
-              hover:text-violet-600
+              hover:bg-violet-50
+              hover:text-[#8138A2]
             "
+            aria-label="Notifications"
           >
             <Bell
-              size={19}
+              size={18}
               strokeWidth={1.8}
             />
 
             <span
               className="
                 absolute
-                right-[4px]
-                top-[3px]
-                h-2
-                w-2
+                right-[7px]
+                top-[6px]
+                h-1.5
+                w-1.5
                 rounded-full
-                bg-red-500
+                bg-[#8138A2]
                 ring-2
                 ring-white
               "
             />
           </button>
 
-          {/* Mail */}
+          {/* =================================================
+              MAIL
+          ================================================== */}
+
           <button
             type="button"
             className="
-              flex
-              h-8
-              w-8
+              hidden
+              h-9
+              w-9
+              shrink-0
               items-center
               justify-center
               rounded-lg
-              text-[#64748b]
+              text-slate-500
               transition
-              hover:bg-[#f5f3ff]
-              hover:text-violet-600
+              hover:bg-violet-50
+              hover:text-[#8138A2]
+              sm:flex
             "
+            aria-label="Mail"
           >
             <Mail
-              size={19}
-              strokeWidth={1.8}
-            />
-          </button>
-
-          {/* Help */}
-          <button
-            type="button"
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-lg
-              text-[#64748b]
-              transition
-              hover:bg-[#f5f3ff]
-              hover:text-violet-600
-            "
-          >
-            <CircleHelp
-              size={19}
+              size={18}
               strokeWidth={1.8}
             />
           </button>
 
           {/* =================================================
-              USER PROFILE
+              HELP
           ================================================== */}
-          <div className="ml-1 flex items-center gap-2.5">
-            {/* Avatar */}
+
+          <button
+            type="button"
+            className="
+              hidden
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-500
+              transition
+              hover:bg-violet-50
+              hover:text-[#8138A2]
+              md:flex
+            "
+            aria-label="Help"
+          >
+            <CircleHelp
+              size={18}
+              strokeWidth={1.8}
+            />
+          </button>
+
+          {/* =================================================
+              DIVIDER
+          ================================================== */}
+
+          <div
+            className="
+              hidden
+              h-7
+              w-px
+              bg-slate-200
+              sm:block
+            "
+          />
+
+          {/* =================================================
+              PROFILE
+          ================================================== */}
+
+          <button
+            type="button"
+            title={email ? `${fullName} - ${email}` : fullName}
+            className="
+              flex
+              shrink-0
+              items-center
+              gap-1.5
+              rounded-lg
+              px-1
+              py-1
+              transition
+              hover:bg-slate-50
+              sm:gap-2
+              sm:px-1.5
+            "
+          >
+            {/* =================================================
+                AVATAR
+            ================================================== */}
+
             <div
               className="
                 flex
-                h-8
-                w-8
+                h-9
+                w-9
+                shrink-0
                 items-center
                 justify-center
                 rounded-full
-                bg-[#ede9fe]
+                bg-[#8138A2]
+                text-[11px]
+                font-bold
+                text-white
               "
             >
-              <span className="text-[11px] font-semibold text-violet-600">
-                JM
-              </span>
+              {initials}
             </div>
 
-            {/* Name */}
+            {/* =================================================
+                NAME
+            ================================================== */}
+
             <span
               className="
-                text-[13px]
-                font-semibold
-                text-[#111827]
+                hidden
+                max-w-[120px]
+                truncate
                 whitespace-nowrap
+                text-[12px]
+                font-semibold
+                text-slate-700
+                sm:block
+                lg:max-w-[160px]
               "
             >
-              John Mathew
+              {fullName}
             </span>
 
-            {/* Dropdown */}
-            <button
-              type="button"
+            {/* =================================================
+                DROPDOWN
+            ================================================== */}
+
+            <ChevronDown
               className="
-                flex
-                items-center
-                justify-center
-                text-[#64748b]
-                transition
-                hover:text-violet-600
+                hidden
+                h-3.5
+                w-3.5
+                shrink-0
+                text-slate-400
+                sm:block
               "
-            >
-              <ChevronDown
-                size={16}
-                strokeWidth={1.8}
-              />
-            </button>
-          </div>
+            />
+          </button>
         </div>
       </div>
+
+      {/* =====================================================
+          MOBILE SEARCH BAR
+      ====================================================== */}
+
+      {showMobileSearch && (
+        <div
+          className="
+            absolute
+            left-0
+            right-0
+            top-[70px]
+            border-b
+            border-slate-200
+            bg-white
+            px-3
+            py-2
+            shadow-sm
+            lg:hidden
+          "
+        >
+          <div className="relative">
+            <Search
+              size={16}
+              strokeWidth={1.8}
+              className="
+                absolute
+                left-3
+                top-1/2
+                -translate-y-1/2
+                text-slate-400
+              "
+            />
+
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search speakers, abstracts, registrations..."
+              className="
+                h-10
+                w-full
+                rounded-lg
+                border
+                border-slate-200
+                bg-slate-50
+                pl-9
+                pr-3
+                text-[12px]
+                text-slate-700
+                outline-none
+                placeholder:text-slate-400
+                transition
+                focus:border-[#8138A2]
+                focus:bg-white
+                focus:ring-1
+                focus:ring-[#8138A2]/10
+              "
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

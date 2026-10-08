@@ -609,6 +609,109 @@ exports.deleteAbstract = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.downloadAbstract = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Validate MongoDB ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError("Invalid abstract ID", 400));
+  }
+
+  // Find abstract
+  const abstract = await Abstract.findById(id)
+    .populate(
+      "abstractDetails.conferenceId",
+      "title dates location"
+    );
+
+  if (!abstract) {
+    return next(new AppError("Abstract not found", 404));
+  }
+
+  // Check abstract file
+  if (!abstract.abstractFile) {
+    return next(
+      new AppError("Abstract file not found", 404)
+    );
+  }
+
+  // Get Cloudinary URL
+  const fileUrl =
+    abstract.abstractFile.fileUrl ||
+    abstract.abstractFile.url ||
+    abstract.abstractFile.secure_url;
+
+  if (!fileUrl) {
+    return next(
+      new AppError("Abstract file URL not found", 404)
+    );
+  }
+
+  // Full name
+  const fullName = `${abstract.presenter?.firstName || ""} ${
+    abstract.presenter?.lastName || ""
+  }`.trim();
+
+  // Response
+  return res.status(200).json({
+    success: true,
+    message: "Abstract download URL generated successfully",
+
+    data: {
+      abstractId: abstract._id,
+
+      presenter: {
+        title: abstract.presenter?.title || "",
+        firstName: abstract.presenter?.firstName || "",
+        lastName: abstract.presenter?.lastName || "",
+        fullName,
+        email: abstract.presenter?.email || "",
+        phone: abstract.presenter?.phone || "",
+      },
+
+      abstractDetails: {
+        category:
+          abstract.abstractDetails?.category || "",
+
+        conference: abstract.abstractDetails?.conferenceId
+          ? {
+              id: abstract.abstractDetails.conferenceId._id,
+              title:
+                abstract.abstractDetails.conferenceId.title ||
+                "",
+              dates:
+                abstract.abstractDetails.conferenceId.dates ||
+                null,
+              location:
+                abstract.abstractDetails.conferenceId.location ||
+                null,
+            }
+          : null,
+      },
+
+      location: {
+        country: abstract.location?.country || "",
+        fullPostalAddress:
+          abstract.location?.fullPostalAddress || "",
+      },
+
+      file: {
+        fileName:
+          abstract.abstractFile.originalFileName || "abstract",
+        fileType:
+          abstract.abstractFile.fileType || "",
+        fileSize:
+          abstract.abstractFile.fileSize || 0,
+        fileUrl,
+      },
+
+      status: abstract.status,
+      reviewStatus: abstract.reviewStatus,
+      submittedAt: abstract.submittedAt,
+    },
+  });
+});
+
 
 
 exports.subscribe = async (req, res) => {

@@ -1,4 +1,3 @@
-
 import {
   createAsyncThunk,
   createSlice,
@@ -12,8 +11,10 @@ import {
   deleteBrochureApi,
   getBrochureDownloadRequestsApi,
   getBrochureDownloadRequestByIdApi,
+  deleteDownloadBrochureApi,
   getBrochureDownloadStatsApi,
 } from "../api/brochureApi";
+
 
 /* =========================================================
    UPLOAD BROCHURE
@@ -21,6 +22,7 @@ import {
 
 export const uploadBrochure = createAsyncThunk(
   "brochure/uploadBrochure",
+
   async (formData, { rejectWithValue }) => {
     try {
       return await uploadBrochureApi(formData);
@@ -40,6 +42,7 @@ export const uploadBrochure = createAsyncThunk(
 
 export const getAllBrochures = createAsyncThunk(
   "brochure/getAllBrochures",
+
   async (_, { rejectWithValue }) => {
     try {
       return await getAllBrochuresApi();
@@ -59,6 +62,7 @@ export const getAllBrochures = createAsyncThunk(
 
 export const getBrochureById = createAsyncThunk(
   "brochure/getBrochureById",
+
   async (id, { rejectWithValue }) => {
     try {
       return await getBrochureByIdApi(id);
@@ -100,6 +104,7 @@ export const updateBrochure = createAsyncThunk(
 
 /* =========================================================
    DELETE BROCHURE
+   Deletes uploaded brochure
 ========================================================= */
 
 export const deleteBrochure = createAsyncThunk(
@@ -107,6 +112,12 @@ export const deleteBrochure = createAsyncThunk(
 
   async (id, { rejectWithValue }) => {
     try {
+      if (!id) {
+        return rejectWithValue(
+          "Brochure ID is required"
+        );
+      }
+
       const response =
         await deleteBrochureApi(id);
 
@@ -175,6 +186,40 @@ export const getBrochureDownloadRequestById =
 
 
 /* =========================================================
+   DELETE DOWNLOAD BROCHURE
+   Deletes record from downloadbrochures collection
+========================================================= */
+
+export const deleteDownloadBrochure =
+  createAsyncThunk(
+    "brochure/deleteDownloadBrochure",
+
+    async (id, { rejectWithValue }) => {
+      try {
+        if (!id) {
+          return rejectWithValue(
+            "Download brochure ID is required"
+          );
+        }
+
+        const response =
+          await deleteDownloadBrochureApi(id);
+
+        return {
+          id,
+          ...response,
+        };
+      } catch (error) {
+        return rejectWithValue(
+          error.response?.data?.message ||
+            "Failed to delete download brochure"
+        );
+      }
+    }
+  );
+
+
+/* =========================================================
    GET BROCHURE DOWNLOAD STATISTICS
 ========================================================= */
 
@@ -200,27 +245,56 @@ export const getBrochureDownloadStats =
 ========================================================= */
 
 const initialState = {
+  /* -------------------------------------------------------
+     BROCHURES
+  ------------------------------------------------------- */
+
   brochures: [],
   brochure: null,
 
-  downloads: [],
 
-  // ✅ ADDED
+  /* -------------------------------------------------------
+     DOWNLOAD REQUESTS
+  ------------------------------------------------------- */
+
+  downloads: [],
   selectedDownload: null,
+
+
+  /* -------------------------------------------------------
+     DOWNLOAD STATISTICS
+  ------------------------------------------------------- */
 
   downloadStats: null,
 
+
+  /* -------------------------------------------------------
+     LOADING STATES
+  ------------------------------------------------------- */
+
   loading: false,
+
   uploadLoading: false,
+
   updateLoading: false,
+
   deleteLoading: false,
+
+  deletingId: null,
+
   statsLoading: false,
 
-  // ✅ ADDED
   downloadDetailsLoading: false,
 
+
+  /* -------------------------------------------------------
+     COMMON STATE
+  ------------------------------------------------------- */
+
   error: null,
+
   success: false,
+
   message: "",
 };
 
@@ -262,7 +336,9 @@ const brochureSlice = createSlice({
 
     clearSelectedDownload: (state) => {
       state.selectedDownload = null;
+
       state.downloadDetailsLoading = false;
+
       state.error = null;
     },
   },
@@ -283,8 +359,11 @@ const brochureSlice = createSlice({
         uploadBrochure.pending,
         (state) => {
           state.uploadLoading = true;
+
           state.error = null;
+
           state.success = false;
+
           state.message = "";
         }
       )
@@ -293,6 +372,7 @@ const brochureSlice = createSlice({
         uploadBrochure.fulfilled,
         (state, action) => {
           state.uploadLoading = false;
+
           state.success = true;
 
           state.message =
@@ -314,7 +394,9 @@ const brochureSlice = createSlice({
         uploadBrochure.rejected,
         (state, action) => {
           state.uploadLoading = false;
+
           state.success = false;
+
           state.error = action.payload;
         }
       )
@@ -328,6 +410,7 @@ const brochureSlice = createSlice({
         getAllBrochures.pending,
         (state) => {
           state.loading = true;
+
           state.error = null;
         }
       )
@@ -346,6 +429,7 @@ const brochureSlice = createSlice({
         getAllBrochures.rejected,
         (state, action) => {
           state.loading = false;
+
           state.error = action.payload;
         }
       )
@@ -359,6 +443,7 @@ const brochureSlice = createSlice({
         getBrochureById.pending,
         (state) => {
           state.loading = true;
+
           state.error = null;
         }
       )
@@ -369,7 +454,8 @@ const brochureSlice = createSlice({
           state.loading = false;
 
           state.brochure =
-            action.payload?.data || null;
+            action.payload?.data ||
+            null;
         }
       )
 
@@ -377,6 +463,7 @@ const brochureSlice = createSlice({
         getBrochureById.rejected,
         (state, action) => {
           state.loading = false;
+
           state.error = action.payload;
         }
       )
@@ -390,7 +477,9 @@ const brochureSlice = createSlice({
         updateBrochure.pending,
         (state) => {
           state.updateLoading = true;
+
           state.error = null;
+
           state.success = false;
         }
       )
@@ -399,6 +488,7 @@ const brochureSlice = createSlice({
         updateBrochure.fulfilled,
         (state, action) => {
           state.updateLoading = false;
+
           state.success = true;
 
           state.message =
@@ -436,7 +526,9 @@ const brochureSlice = createSlice({
         updateBrochure.rejected,
         (state, action) => {
           state.updateLoading = false;
+
           state.success = false;
+
           state.error = action.payload;
         }
       )
@@ -444,13 +536,16 @@ const brochureSlice = createSlice({
 
       /* =====================================================
          DELETE BROCHURE
+         Deletes uploaded brochure
       ===================================================== */
 
       .addCase(
         deleteBrochure.pending,
         (state) => {
           state.deleteLoading = true;
+
           state.error = null;
+
           state.success = false;
         }
       )
@@ -459,9 +554,11 @@ const brochureSlice = createSlice({
         deleteBrochure.fulfilled,
         (state, action) => {
           state.deleteLoading = false;
+
           state.success = true;
 
           state.message =
+            action.payload?.data?.message ||
             action.payload?.message ||
             "Brochure deleted successfully";
 
@@ -485,7 +582,9 @@ const brochureSlice = createSlice({
         deleteBrochure.rejected,
         (state, action) => {
           state.deleteLoading = false;
+
           state.success = false;
+
           state.error = action.payload;
         }
       )
@@ -499,6 +598,7 @@ const brochureSlice = createSlice({
         getBrochureDownloads.pending,
         (state) => {
           state.loading = true;
+
           state.error = null;
         }
       )
@@ -520,6 +620,7 @@ const brochureSlice = createSlice({
         getBrochureDownloads.rejected,
         (state, action) => {
           state.loading = false;
+
           state.error = action.payload;
         }
       )
@@ -546,7 +647,7 @@ const brochureSlice = createSlice({
           state.downloadDetailsLoading = false;
 
           /*
-            Supports responses such as:
+            Supports:
 
             {
               data: {...}
@@ -599,6 +700,85 @@ const brochureSlice = createSlice({
 
 
       /* =====================================================
+         DELETE DOWNLOAD BROCHURE
+         
+         Deletes record from:
+         downloadbrochures collection
+      ===================================================== */
+
+      .addCase(
+        deleteDownloadBrochure.pending,
+        (state, action) => {
+          state.deleteLoading = true;
+
+          state.deletingId =
+            action.meta.arg;
+
+          state.error = null;
+
+          state.success = false;
+        }
+      )
+
+      .addCase(
+        deleteDownloadBrochure.fulfilled,
+        (state, action) => {
+          state.deleteLoading = false;
+
+          const deletedId =
+            action.payload.id;
+
+          /*
+            Remove deleted request
+            immediately from Redux state
+          */
+
+          state.downloads =
+            state.downloads.filter(
+              (item) =>
+                item._id !== deletedId
+            );
+
+          /*
+            If currently selected download
+            is the deleted one, clear it.
+          */
+
+          if (
+            state.selectedDownload?._id ===
+            deletedId
+          ) {
+            state.selectedDownload = null;
+          }
+
+          state.deletingId = null;
+
+          state.success = true;
+
+          state.message =
+            action.payload?.data?.message ||
+            action.payload?.message ||
+            "Download brochure deleted successfully";
+        }
+      )
+
+      .addCase(
+        deleteDownloadBrochure.rejected,
+        (state, action) => {
+          state.deleteLoading = false;
+
+          state.deletingId = null;
+
+          state.success = false;
+
+          state.error =
+            action.payload ||
+            "Failed to delete download brochure";
+        }
+      )
+
+
+      /* =====================================================
          DOWNLOAD STATISTICS
       ===================================================== */
 
@@ -606,6 +786,7 @@ const brochureSlice = createSlice({
         getBrochureDownloadStats.pending,
         (state) => {
           state.statsLoading = true;
+
           state.error = null;
         }
       )
@@ -626,6 +807,7 @@ const brochureSlice = createSlice({
         getBrochureDownloadStats.rejected,
         (state, action) => {
           state.statsLoading = false;
+
           state.error = action.payload;
         }
       );
@@ -640,10 +822,7 @@ const brochureSlice = createSlice({
 export const {
   clearBrochureMessage,
   clearBrochure,
-
-  // ✅ THIS FIXES YOUR CURRENT ERROR
   clearSelectedDownload,
-
 } = brochureSlice.actions;
 
 
@@ -659,29 +838,51 @@ export const selectBrochure = (state) =>
   state.brochure?.brochure || null;
 
 
-export const selectBrochureDownloads = (state) =>
+export const selectBrochureDownloads = (
+  state
+) =>
   state.brochure?.downloads || [];
 
 
-export const selectSelectedDownload = (state) =>
-  state.brochure?.selectedDownload || null;
+export const selectSelectedDownload = (
+  state
+) =>
+  state.brochure?.selectedDownload ||
+  null;
 
 
 export const selectBrochureDownloadStats = (
   state
 ) =>
-  state.brochure?.downloadStats || null;
+  state.brochure?.downloadStats ||
+  null;
 
 
-export const selectBrochureLoading = (state) =>
+export const selectBrochureLoading = (
+  state
+) =>
   state.brochure?.loading || false;
 
 
 export const selectDownloadDetailsLoading = (
   state
 ) =>
-  state.brochure?.downloadDetailsLoading ||
+  state.brochure
+    ?.downloadDetailsLoading || false;
+
+
+export const selectDeleteLoading = (
+  state
+) =>
+  state.brochure?.deleteLoading ||
   false;
+
+
+export const selectDeletingId = (
+  state
+) =>
+  state.brochure?.deletingId ||
+  null;
 
 
 /* =========================================================

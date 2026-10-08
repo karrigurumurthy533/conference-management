@@ -9,6 +9,14 @@ import {
     getMyRegistrationsApi,
     getMyAbstractsApi,
     getEmployeeDashboardApi,
+
+    // ==================================================
+    // ATTENDANCE APIs
+    // ==================================================
+    employeeClockInApi,
+    employeeClockOutApi,
+    getTodayAttendanceApi,
+    getMonthlyAttendanceApi,
 } from "../api/employeeApis";
 
 // ======================================================
@@ -79,7 +87,8 @@ export const getEmployeeConference = createAsyncThunk(
     "employee/getEmployeeConference",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getEmployeeConferenceApi();
+            const response =
+                await getEmployeeConferenceApi();
 
             return response;
         } catch (error) {
@@ -99,7 +108,8 @@ export const getEmployeeSpeakers = createAsyncThunk(
     "employee/getEmployeeSpeakers",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getMySpeakersApi();
+            const response =
+                await getMySpeakersApi();
 
             return response;
         } catch (error) {
@@ -119,7 +129,8 @@ export const getEmployeeBrochures = createAsyncThunk(
     "employee/getEmployeeBrochures",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getMyBrochuresApi();
+            const response =
+                await getMyBrochuresApi();
 
             return response;
         } catch (error) {
@@ -139,7 +150,8 @@ export const getEmployeeRegistrations = createAsyncThunk(
     "employee/getEmployeeRegistrations",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getMyRegistrationsApi();
+            const response =
+                await getMyRegistrationsApi();
 
             return response;
         } catch (error) {
@@ -159,7 +171,8 @@ export const getEmployeeAbstracts = createAsyncThunk(
     "employee/getEmployeeAbstracts",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getMyAbstractsApi();
+            const response =
+                await getMyAbstractsApi();
 
             return response;
         } catch (error) {
@@ -179,7 +192,8 @@ export const getEmployeeDashboard = createAsyncThunk(
     "employee/getEmployeeDashboard",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await getEmployeeDashboardApi();
+            const response =
+                await getEmployeeDashboardApi();
 
             return response;
         } catch (error) {
@@ -192,11 +206,104 @@ export const getEmployeeDashboard = createAsyncThunk(
 );
 
 // ======================================================
+// ATTENDANCE - CLOCK IN
+// ======================================================
+
+export const employeeClockIn = createAsyncThunk(
+    "employee/clockIn",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response =
+                await employeeClockInApi();
+
+            return response;
+        } catch (error) {
+            return rejectWithValue(
+                error?.response?.data?.message ||
+                    "Clock-in failed"
+            );
+        }
+    }
+);
+
+// ======================================================
+// ATTENDANCE - CLOCK OUT
+// ======================================================
+
+export const employeeClockOut = createAsyncThunk(
+    "employee/clockOut",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response =
+                await employeeClockOutApi();
+
+            return response;
+        } catch (error) {
+            return rejectWithValue(
+                error?.response?.data?.message ||
+                    "Clock-out failed"
+            );
+        }
+    }
+);
+
+// ======================================================
+// ATTENDANCE - TODAY
+// ======================================================
+
+export const getTodayAttendance = createAsyncThunk(
+    "employee/getTodayAttendance",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response =
+                await getTodayAttendanceApi();
+
+            return response;
+        } catch (error) {
+            return rejectWithValue(
+                error?.response?.data?.message ||
+                    "Failed to fetch today's attendance"
+            );
+        }
+    }
+);
+
+// ======================================================
+// ATTENDANCE - MONTHLY
+// ======================================================
+
+export const getMonthlyAttendance = createAsyncThunk(
+    "employee/getMonthlyAttendance",
+    async (
+        { month, year },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response =
+                await getMonthlyAttendanceApi(
+                    month,
+                    year
+                );
+
+            return response;
+        } catch (error) {
+            return rejectWithValue(
+                error?.response?.data?.message ||
+                    "Failed to fetch monthly attendance"
+            );
+        }
+    }
+);
+
+// ======================================================
 // INITIAL STATE
 // ======================================================
 
 const initialState = {
-    // Employee authentication
+    // ==================================================
+    // Employee Authentication
+    // ==================================================
+
     employee:
         JSON.parse(
             localStorage.getItem("employeeUser")
@@ -209,35 +316,74 @@ const initialState = {
     error: null,
     success: false,
 
+    // ==================================================
     // My Conference
+    // ==================================================
+
     conference: null,
     conferenceLoading: false,
     conferenceError: null,
 
+    // ==================================================
     // My Speakers
+    // ==================================================
+
     speakers: [],
     speakersLoading: false,
     speakersError: null,
 
+    // ==================================================
     // My Brochures
+    // ==================================================
+
     brochures: [],
     brochuresLoading: false,
     brochuresError: null,
 
+    // ==================================================
     // My Registrations
+    // ==================================================
+
     registrations: [],
     registrationsLoading: false,
     registrationsError: null,
 
+    // ==================================================
     // My Abstracts
+    // ==================================================
+
     abstracts: [],
     abstractsLoading: false,
     abstractsError: null,
 
+    // ==================================================
     // Dashboard
+    // ==================================================
+
     dashboard: null,
     dashboardLoading: false,
     dashboardError: null,
+
+    // ==================================================
+    // ATTENDANCE
+    // ==================================================
+
+    todayAttendance: null,
+    todayAttendanceLoading: false,
+    todayAttendanceError: null,
+
+    monthlyAttendance: null,
+    monthlyAttendanceLoading: false,
+    monthlyAttendanceError: null,
+
+    clockInLoading: false,
+    clockInError: null,
+
+    clockOutLoading: false,
+    clockOutError: null,
+
+    attendanceSuccess: false,
+    attendanceMessage: null,
 };
 
 // ======================================================
@@ -315,6 +461,26 @@ const employeeSlice = createSlice({
         },
 
         // ==================================================
+        // CLEAR ATTENDANCE ERROR
+        // ==================================================
+
+        clearAttendanceError: (state) => {
+            state.todayAttendanceError = null;
+            state.monthlyAttendanceError = null;
+            state.clockInError = null;
+            state.clockOutError = null;
+        },
+
+        // ==================================================
+        // CLEAR ATTENDANCE SUCCESS
+        // ==================================================
+
+        clearAttendanceSuccess: (state) => {
+            state.attendanceSuccess = false;
+            state.attendanceMessage = null;
+        },
+
+        // ==================================================
         // CLEAR ALL EMPLOYEE DATA
         // ==================================================
 
@@ -325,6 +491,15 @@ const employeeSlice = createSlice({
             state.registrations = [];
             state.abstracts = [];
             state.dashboard = null;
+
+            state.todayAttendance = null;
+            state.monthlyAttendance = null;
+            state.todayAttendanceError = null;
+            state.monthlyAttendanceError = null;
+            state.clockInError = null;
+            state.clockOutError = null;
+            state.attendanceSuccess = false;
+            state.attendanceMessage = null;
         },
     },
 
@@ -399,6 +574,18 @@ const employeeSlice = createSlice({
                     state.registrations = [];
                     state.abstracts = [];
                     state.dashboard = null;
+
+                    state.todayAttendance = null;
+                    state.monthlyAttendance = null;
+
+                    state.todayAttendanceError = null;
+                    state.monthlyAttendanceError = null;
+
+                    state.clockInError = null;
+                    state.clockOutError = null;
+
+                    state.attendanceSuccess = false;
+                    state.attendanceMessage = null;
                 }
             )
 
@@ -417,6 +604,18 @@ const employeeSlice = createSlice({
                     state.registrations = [];
                     state.abstracts = [];
                     state.dashboard = null;
+
+                    state.todayAttendance = null;
+                    state.monthlyAttendance = null;
+
+                    state.todayAttendanceError = null;
+                    state.monthlyAttendanceError = null;
+
+                    state.clockInError = null;
+                    state.clockOutError = null;
+
+                    state.attendanceSuccess = false;
+                    state.attendanceMessage = null;
 
                     state.error =
                         action.payload ||
@@ -442,18 +641,8 @@ const employeeSlice = createSlice({
                     state.conferenceLoading = false;
                     state.conferenceError = null;
 
-                    /*
-                     * Backend:
-                     * {
-                     *   success: true,
-                     *   data: [...]
-                     * }
-                     *
-                     * If only one conference is assigned,
-                     * use first item.
-                     */
-
-                    const data = action.payload?.data || [];
+                    const data =
+                        action.payload?.data || [];
 
                     state.conference =
                         Array.isArray(data)
@@ -641,6 +830,185 @@ const employeeSlice = createSlice({
                         action.payload ||
                         "Failed to fetch dashboard";
                 }
+            )
+
+            // ==================================================
+            // ATTENDANCE - CLOCK IN
+            // ==================================================
+
+            .addCase(
+                employeeClockIn.pending,
+                (state) => {
+                    state.clockInLoading = true;
+                    state.clockInError = null;
+                    state.attendanceSuccess = false;
+                    state.attendanceMessage = null;
+                }
+            )
+
+            .addCase(
+                employeeClockIn.fulfilled,
+                (state, action) => {
+                    state.clockInLoading = false;
+                    state.clockInError = null;
+
+                    state.attendanceSuccess = true;
+
+                    state.attendanceMessage =
+                        action.payload?.message ||
+                        "Clock-in successful";
+
+                    /*
+                     * Backend returns:
+                     *
+                     * data: {
+                     *   attendanceId,
+                     *   employeeId,
+                     *   fullName,
+                     *   date,
+                     *   checkIn,
+                     *   status
+                     * }
+                     */
+
+                    if (action.payload?.data) {
+                        state.todayAttendance = {
+                            ...state.todayAttendance,
+                            ...action.payload.data,
+                        };
+                    }
+                }
+            )
+
+            .addCase(
+                employeeClockIn.rejected,
+                (state, action) => {
+                    state.clockInLoading = false;
+                    state.attendanceSuccess = false;
+
+                    state.clockInError =
+                        action.payload ||
+                        "Clock-in failed";
+
+                    state.attendanceMessage = null;
+                }
+            )
+
+            // ==================================================
+            // ATTENDANCE - CLOCK OUT
+            // ==================================================
+
+            .addCase(
+                employeeClockOut.pending,
+                (state) => {
+                    state.clockOutLoading = true;
+                    state.clockOutError = null;
+                    state.attendanceSuccess = false;
+                    state.attendanceMessage = null;
+                }
+            )
+
+            .addCase(
+                employeeClockOut.fulfilled,
+                (state, action) => {
+                    state.clockOutLoading = false;
+                    state.clockOutError = null;
+
+                    state.attendanceSuccess = true;
+
+                    state.attendanceMessage =
+                        action.payload?.message ||
+                        "Clock-out successful";
+
+                    if (action.payload?.data) {
+                        state.todayAttendance = {
+                            ...state.todayAttendance,
+                            ...action.payload.data,
+                        };
+                    }
+                }
+            )
+
+            .addCase(
+                employeeClockOut.rejected,
+                (state, action) => {
+                    state.clockOutLoading = false;
+                    state.attendanceSuccess = false;
+
+                    state.clockOutError =
+                        action.payload ||
+                        "Clock-out failed";
+
+                    state.attendanceMessage = null;
+                }
+            )
+
+            // ==================================================
+            // ATTENDANCE - TODAY
+            // ==================================================
+
+            .addCase(
+                getTodayAttendance.pending,
+                (state) => {
+                    state.todayAttendanceLoading = true;
+                    state.todayAttendanceError = null;
+                }
+            )
+
+            .addCase(
+                getTodayAttendance.fulfilled,
+                (state, action) => {
+                    state.todayAttendanceLoading = false;
+                    state.todayAttendanceError = null;
+
+                    state.todayAttendance =
+                        action.payload?.data || null;
+                }
+            )
+
+            .addCase(
+                getTodayAttendance.rejected,
+                (state, action) => {
+                    state.todayAttendanceLoading = false;
+
+                    state.todayAttendanceError =
+                        action.payload ||
+                        "Failed to fetch today's attendance";
+                }
+            )
+
+            // ==================================================
+            // ATTENDANCE - MONTHLY
+            // ==================================================
+
+            .addCase(
+                getMonthlyAttendance.pending,
+                (state) => {
+                    state.monthlyAttendanceLoading = true;
+                    state.monthlyAttendanceError = null;
+                }
+            )
+
+            .addCase(
+                getMonthlyAttendance.fulfilled,
+                (state, action) => {
+                    state.monthlyAttendanceLoading = false;
+                    state.monthlyAttendanceError = null;
+
+                    state.monthlyAttendance =
+                        action.payload?.data || null;
+                }
+            )
+
+            .addCase(
+                getMonthlyAttendance.rejected,
+                (state, action) => {
+                    state.monthlyAttendanceLoading = false;
+
+                    state.monthlyAttendanceError =
+                        action.payload ||
+                        "Failed to fetch monthly attendance";
+                }
             );
     },
 });
@@ -652,20 +1020,24 @@ const employeeSlice = createSlice({
 export const {
     clearEmployeeError,
     clearEmployeeSuccess,
+
     clearConferenceError,
     clearSpeakersError,
     clearBrochuresError,
     clearRegistrationsError,
     clearAbstractsError,
     clearDashboardError,
+
+    clearAttendanceError,
+    clearAttendanceSuccess,
+
     clearEmployeeData,
 } = employeeSlice.actions;
 
 // ======================================================
-// SELECTORS
+// EMPLOYEE SELECTORS
 // ======================================================
 
-// Employee
 export const selectEmployee = (state) =>
     state.employee.employee;
 
@@ -682,7 +1054,7 @@ export const selectEmployeeSuccess = (state) =>
     state.employee.success;
 
 // ======================================================
-// CONFERENCE
+// CONFERENCE SELECTORS
 // ======================================================
 
 export const selectEmployeeConference = (state) =>
@@ -695,7 +1067,7 @@ export const selectEmployeeConferenceError = (state) =>
     state.employee.conferenceError;
 
 // ======================================================
-// SPEAKERS
+// SPEAKERS SELECTORS
 // ======================================================
 
 export const selectEmployeeSpeakers = (state) =>
@@ -708,7 +1080,7 @@ export const selectEmployeeSpeakersError = (state) =>
     state.employee.speakersError;
 
 // ======================================================
-// BROCHURES
+// BROCHURES SELECTORS
 // ======================================================
 
 export const selectEmployeeBrochures = (state) =>
@@ -721,7 +1093,7 @@ export const selectEmployeeBrochuresError = (state) =>
     state.employee.brochuresError;
 
 // ======================================================
-// REGISTRATIONS
+// REGISTRATIONS SELECTORS
 // ======================================================
 
 export const selectEmployeeRegistrations = (state) =>
@@ -734,7 +1106,7 @@ export const selectEmployeeRegistrationsError = (state) =>
     state.employee.registrationsError;
 
 // ======================================================
-// ABSTRACTS
+// ABSTRACTS SELECTORS
 // ======================================================
 
 export const selectEmployeeAbstracts = (state) =>
@@ -747,7 +1119,7 @@ export const selectEmployeeAbstractsError = (state) =>
     state.employee.abstractsError;
 
 // ======================================================
-// DASHBOARD
+// DASHBOARD SELECTORS
 // ======================================================
 
 export const selectEmployeeDashboard = (state) =>
@@ -758,6 +1130,51 @@ export const selectEmployeeDashboardLoading = (state) =>
 
 export const selectEmployeeDashboardError = (state) =>
     state.employee.dashboardError;
+
+// ======================================================
+// ATTENDANCE SELECTORS
+// ======================================================
+
+// Today's attendance
+export const selectTodayAttendance = (state) =>
+    state.employee.todayAttendance;
+
+export const selectTodayAttendanceLoading = (state) =>
+    state.employee.todayAttendanceLoading;
+
+export const selectTodayAttendanceError = (state) =>
+    state.employee.todayAttendanceError;
+
+// Monthly attendance
+export const selectMonthlyAttendance = (state) =>
+    state.employee.monthlyAttendance;
+
+export const selectMonthlyAttendanceLoading = (state) =>
+    state.employee.monthlyAttendanceLoading;
+
+export const selectMonthlyAttendanceError = (state) =>
+    state.employee.monthlyAttendanceError;
+
+// Clock In
+export const selectClockInLoading = (state) =>
+    state.employee.clockInLoading;
+
+export const selectClockInError = (state) =>
+    state.employee.clockInError;
+
+// Clock Out
+export const selectClockOutLoading = (state) =>
+    state.employee.clockOutLoading;
+
+export const selectClockOutError = (state) =>
+    state.employee.clockOutError;
+
+// General attendance success
+export const selectAttendanceSuccess = (state) =>
+    state.employee.attendanceSuccess;
+
+export const selectAttendanceMessage = (state) =>
+    state.employee.attendanceMessage;
 
 // ======================================================
 // REDUCER

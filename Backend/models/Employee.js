@@ -134,10 +134,6 @@ const employeeSchema = new mongoose.Schema(
             default: [],
         },
 
-        // =====================================================
-        // LOGIN / LOGOUT TRACKING
-        // =====================================================
-
         lastLogin: {
             type: Date,
             default: null,

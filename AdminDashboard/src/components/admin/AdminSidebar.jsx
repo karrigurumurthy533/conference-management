@@ -15,9 +15,9 @@ import {
   Receipt,
   Download,
   FileText,
-  Users
+  Users,
+  CalendarCheck,
 } from "lucide-react";
-
 import { logout } from "../../redux/authSlice";
 
 const AdminSidebar = () => {
@@ -139,6 +139,21 @@ const AdminSidebar = () => {
                 className={iconClass({ isActive })}
               />
               <span>Employees</span>
+            </>
+          )}
+        </NavLink>
+
+        {/* Employee Attendance */}
+        <NavLink to="/admin/employee-attendance" className={navClass}>
+          {({ isActive }) => (
+            <>
+              <CalendarCheck
+                size={17}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={iconClass({ isActive })}
+              />
+
+              <span>Employee Attendance</span>
             </>
           )}
         </NavLink>

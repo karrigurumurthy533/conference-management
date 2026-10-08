@@ -6,6 +6,9 @@ import {
 import {
   getAdminStatisticsApi,
   getAdminDashboardOverviewApi,
+  getAdminAttendanceDashboardApi,
+  getAllAdminAttendanceApi,
+  getAdminEmployeeAttendanceApi,
 } from "../api/dashboardApis";
 
 
@@ -40,28 +43,148 @@ export const getAdminStatistics = createAsyncThunk(
 // GET ADMIN DASHBOARD OVERVIEW
 // ============================================================
 
-export const getAdminDashboardOverview = createAsyncThunk(
-  "dashboard/getAdminDashboardOverview",
+export const getAdminDashboardOverview =
+  createAsyncThunk(
+    "dashboard/getAdminDashboardOverview",
 
-  async (_, { rejectWithValue }) => {
-    try {
-      const response =
-        await getAdminDashboardOverviewApi();
+    async (_, { rejectWithValue }) => {
+      try {
+        const response =
+          await getAdminDashboardOverviewApi();
 
-      return (
-        response?.data?.data ||
-        response?.data ||
-        {}
-      );
-    } catch (error) {
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to fetch dashboard overview"
-      );
+        return (
+          response?.data?.data ||
+          response?.data ||
+          {}
+        );
+      } catch (error) {
+        return rejectWithValue(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch dashboard overview"
+        );
+      }
     }
-  }
-);
+  );
+
+
+// ============================================================
+// GET ADMIN ATTENDANCE DASHBOARD
+// ============================================================
+
+export const getAdminAttendanceDashboard =
+  createAsyncThunk(
+    "dashboard/getAdminAttendanceDashboard",
+
+    async (
+      { month, year } = {},
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await getAdminAttendanceDashboardApi({
+            month,
+            year,
+          });
+
+        return (
+          response?.data?.data ||
+          response?.data ||
+          {}
+        );
+      } catch (error) {
+        return rejectWithValue(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch attendance dashboard"
+        );
+      }
+    }
+  );
+
+
+// ============================================================
+// GET ALL ADMIN ATTENDANCE
+// ============================================================
+
+export const getAllAdminAttendance =
+  createAsyncThunk(
+    "dashboard/getAllAdminAttendance",
+
+    async (
+      {
+        search = "",
+        date = "",
+        status = "",
+        page = 1,
+        limit = 10,
+      } = {},
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await getAllAdminAttendanceApi({
+            search,
+            date,
+            status,
+            page,
+            limit,
+          });
+
+        return (
+          response?.data?.data ||
+          response?.data ||
+          {}
+        );
+      } catch (error) {
+        return rejectWithValue(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch attendance records"
+        );
+      }
+    }
+  );
+
+
+// ============================================================
+// GET SINGLE EMPLOYEE ATTENDANCE
+// ============================================================
+
+export const getAdminEmployeeAttendance =
+  createAsyncThunk(
+    "dashboard/getAdminEmployeeAttendance",
+
+    async (
+      {
+        id,
+        month,
+        year,
+      },
+      { rejectWithValue }
+    ) => {
+      try {
+        const response =
+          await getAdminEmployeeAttendanceApi(
+            id,
+            month,
+            year
+          );
+
+        return (
+          response?.data?.data ||
+          response?.data ||
+          {}
+        );
+      } catch (error) {
+        return rejectWithValue(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch employee attendance"
+        );
+      }
+    }
+  );
 
 
 // ============================================================
@@ -114,6 +237,52 @@ const initialState = {
   overviewLoading: false,
 
   overviewError: null,
+
+
+  // ==========================================================
+  // ATTENDANCE DASHBOARD
+  // ==========================================================
+
+  attendanceDashboard: {
+    totalEmployees: 0,
+    todayPresent: 0,
+    todayAbsent: 0,
+    monthPresent: 0,
+    monthAbsent: 0,
+  },
+
+  attendanceDashboardLoading: false,
+
+  attendanceDashboardError: null,
+
+
+  // ==========================================================
+  // ALL ATTENDANCE
+  // ==========================================================
+
+  attendanceRecords: [],
+
+  attendancePagination: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  },
+
+  attendanceLoading: false,
+
+  attendanceError: null,
+
+
+  // ==========================================================
+  // SINGLE EMPLOYEE ATTENDANCE
+  // ==========================================================
+
+  employeeAttendance: null,
+
+  employeeAttendanceLoading: false,
+
+  employeeAttendanceError: null,
 };
 
 
@@ -136,6 +305,10 @@ const dashboardSlice = createSlice({
     clearDashboardError: (state) => {
       state.adminError = null;
       state.overviewError = null;
+
+      state.attendanceDashboardError = null;
+      state.attendanceError = null;
+      state.employeeAttendanceError = null;
     },
 
 
@@ -162,6 +335,48 @@ const dashboardSlice = createSlice({
       state.registrationOverview = [];
       state.recentConferences = [];
       state.recentActivities = [];
+    },
+
+
+    // ========================================================
+    // CLEAR ATTENDANCE
+    // ========================================================
+
+    clearAttendanceData: (state) => {
+      state.attendanceDashboard = {
+        totalEmployees: 0,
+        todayPresent: 0,
+        todayAbsent: 0,
+        monthPresent: 0,
+        monthAbsent: 0,
+      };
+
+      state.attendanceRecords = [];
+
+      state.attendancePagination = {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      };
+
+      state.employeeAttendance = null;
+
+      state.attendanceDashboardError = null;
+
+      state.attendanceError = null;
+
+      state.employeeAttendanceError = null;
+    },
+
+
+    // ========================================================
+    // CLEAR EMPLOYEE ATTENDANCE
+    // ========================================================
+
+    clearEmployeeAttendance: (state) => {
+      state.employeeAttendance = null;
+      state.employeeAttendanceError = null;
     },
   },
 
@@ -279,6 +494,173 @@ const dashboardSlice = createSlice({
           "Failed to fetch dashboard overview";
       }
     );
+
+
+    // ========================================================
+    // ATTENDANCE DASHBOARD - PENDING
+    // ========================================================
+
+    builder.addCase(
+      getAdminAttendanceDashboard.pending,
+      (state) => {
+        state.attendanceDashboardLoading = true;
+
+        state.attendanceDashboardError = null;
+      }
+    );
+
+
+    // ========================================================
+    // ATTENDANCE DASHBOARD - SUCCESS
+    // ========================================================
+
+    builder.addCase(
+      getAdminAttendanceDashboard.fulfilled,
+      (state, action) => {
+        state.attendanceDashboardLoading = false;
+
+        state.attendanceDashboard = {
+          totalEmployees:
+            action.payload?.totalEmployees ?? 0,
+
+          todayPresent:
+            action.payload?.todayPresent ?? 0,
+
+          todayAbsent:
+            action.payload?.todayAbsent ?? 0,
+
+          monthPresent:
+            action.payload?.monthPresent ?? 0,
+
+          monthAbsent:
+            action.payload?.monthAbsent ?? 0,
+        };
+      }
+    );
+
+
+    // ========================================================
+    // ATTENDANCE DASHBOARD - FAILED
+    // ========================================================
+
+    builder.addCase(
+      getAdminAttendanceDashboard.rejected,
+      (state, action) => {
+        state.attendanceDashboardLoading = false;
+
+        state.attendanceDashboardError =
+          action.payload ||
+          "Failed to fetch attendance dashboard";
+      }
+    );
+
+
+    // ========================================================
+    // ALL ATTENDANCE - PENDING
+    // ========================================================
+
+    builder.addCase(
+      getAllAdminAttendance.pending,
+      (state) => {
+        state.attendanceLoading = true;
+
+        state.attendanceError = null;
+      }
+    );
+
+
+    // ========================================================
+    // ALL ATTENDANCE - SUCCESS
+    // ========================================================
+
+    builder.addCase(
+      getAllAdminAttendance.fulfilled,
+      (state, action) => {
+        state.attendanceLoading = false;
+
+        state.attendanceRecords =
+          action.payload?.attendance || [];
+
+        state.attendancePagination = {
+          page:
+            action.payload?.pagination?.page ??
+            1,
+
+          limit:
+            action.payload?.pagination?.limit ??
+            10,
+
+          total:
+            action.payload?.pagination?.total ??
+            0,
+
+          totalPages:
+            action.payload?.pagination?.totalPages ??
+            0,
+        };
+      }
+    );
+
+
+    // ========================================================
+    // ALL ATTENDANCE - FAILED
+    // ========================================================
+
+    builder.addCase(
+      getAllAdminAttendance.rejected,
+      (state, action) => {
+        state.attendanceLoading = false;
+
+        state.attendanceError =
+          action.payload ||
+          "Failed to fetch attendance records";
+      }
+    );
+
+
+    // ========================================================
+    // SINGLE EMPLOYEE ATTENDANCE - PENDING
+    // ========================================================
+
+    builder.addCase(
+      getAdminEmployeeAttendance.pending,
+      (state) => {
+        state.employeeAttendanceLoading = true;
+
+        state.employeeAttendanceError = null;
+      }
+    );
+
+
+    // ========================================================
+    // SINGLE EMPLOYEE ATTENDANCE - SUCCESS
+    // ========================================================
+
+    builder.addCase(
+      getAdminEmployeeAttendance.fulfilled,
+      (state, action) => {
+        state.employeeAttendanceLoading = false;
+
+        state.employeeAttendance =
+          action.payload || null;
+      }
+    );
+
+
+    // ========================================================
+    // SINGLE EMPLOYEE ATTENDANCE - FAILED
+    // ========================================================
+
+    builder.addCase(
+      getAdminEmployeeAttendance.rejected,
+      (state, action) => {
+        state.employeeAttendanceLoading = false;
+
+        state.employeeAttendanceError =
+          action.payload ||
+          "Failed to fetch employee attendance";
+      }
+    );
   },
 });
 
@@ -291,6 +673,8 @@ export const {
   clearDashboardError,
   clearAdminStatistics,
   clearDashboardOverview,
+  clearAttendanceData,
+  clearEmployeeAttendance,
 } = dashboardSlice.actions;
 
 
@@ -342,6 +726,74 @@ export const selectOverviewError = (
 ) => state.dashboard.overviewError;
 
 
+// ============================================================
+// SELECTORS - ATTENDANCE DASHBOARD
+// ============================================================
 
+export const selectAttendanceDashboard = (
+  state
+) => state.dashboard.attendanceDashboard;
+
+
+export const selectAttendanceDashboardLoading = (
+  state
+) =>
+  state.dashboard.attendanceDashboardLoading;
+
+
+export const selectAttendanceDashboardError = (
+  state
+) =>
+  state.dashboard.attendanceDashboardError;
+
+
+// ============================================================
+// SELECTORS - ALL ATTENDANCE
+// ============================================================
+
+export const selectAttendanceRecords = (
+  state
+) => state.dashboard.attendanceRecords;
+
+
+export const selectAttendancePagination = (
+  state
+) => state.dashboard.attendancePagination;
+
+
+export const selectAttendanceLoading = (
+  state
+) => state.dashboard.attendanceLoading;
+
+
+export const selectAttendanceError = (
+  state
+) => state.dashboard.attendanceError;
+
+
+// ============================================================
+// SELECTORS - SINGLE EMPLOYEE ATTENDANCE
+// ============================================================
+
+export const selectEmployeeAttendance = (
+  state
+) => state.dashboard.employeeAttendance;
+
+
+export const selectEmployeeAttendanceLoading = (
+  state
+) =>
+  state.dashboard.employeeAttendanceLoading;
+
+
+export const selectEmployeeAttendanceError = (
+  state
+) =>
+  state.dashboard.employeeAttendanceError;
+
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default dashboardSlice.reducer;

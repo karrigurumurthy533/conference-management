@@ -96,3 +96,60 @@ export const getEmployeeDashboardApi = async () => {
 
     return response.data;
 };
+
+// ======================================================
+// EMPLOYEE ATTENDANCE - CLOCK IN
+// ======================================================
+
+export const employeeClockInApi = async () => {
+    const response = await axiosInstance.post(
+        "/employee/clock-in"
+    );
+
+    return response.data;
+};
+
+// ======================================================
+// EMPLOYEE ATTENDANCE - CLOCK OUT
+// ======================================================
+
+export const employeeClockOutApi = async () => {
+    const response = await axiosInstance.post(
+        "/employee/clock-out"
+    );
+
+    return response.data;
+};
+
+// ======================================================
+// EMPLOYEE ATTENDANCE - TODAY
+// ======================================================
+
+export const getTodayAttendanceApi = async () => {
+    const response = await axiosInstance.get(
+        "/employee/today"
+    );
+
+    return response.data;
+};
+
+// ======================================================
+// EMPLOYEE ATTENDANCE - MONTHLY
+// ======================================================
+
+export const getMonthlyAttendanceApi = async (
+    month,
+    year
+) => {
+    const response = await axiosInstance.get(
+        "/employee/monthly",
+        {
+            params: {
+                month,
+                year,
+            },
+        }
+    );
+
+    return response.data;
+};

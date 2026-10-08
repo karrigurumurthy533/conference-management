@@ -1,22 +1,25 @@
-
-
-
 const mongoose = require("mongoose");
 
 const Invoice = require("../models/Invoice");
 const Conference = require("../models/conference");
+const BankAccount = require("../models/BankAccount");
+
 const invoiceTemplate = require("../utils/invoiceTemplate");
-const chromium = require("@sparticuz/chromium");
+const {
+  getBrowser,
+} = require("../utils/pdfBrowser");
 
-
+/* =========================================================
+   OBJECT ID VALIDATION
+========================================================= */
 
 const isValidObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
-// =====================================================
-// CREATE INVOICE
-// =====================================================
+/* =========================================================
+   CREATE INVOICE
+========================================================= */
 
 exports.createInvoice = async (req, res) => {
   try {
@@ -27,35 +30,29 @@ exports.createInvoice = async (req, res) => {
       amount,
       taxPercentage,
       currency,
-      paymentStatus,
-      bank,
+      description,
     } = req.body;
 
-    // ---------------------------------------------------
-    // VALIDATE CONFERENCE ID
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       VALIDATE CONFERENCE ID
+    ----------------------------------------------------- */
 
-    if (!conferenceId) {
+    if (
+      !conferenceId ||
+      !isValidObjectId(conferenceId)
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Conference ID is required",
+        message: "Valid conferenceId is required",
       });
     }
 
-    if (!isValidObjectId(conferenceId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid conference ID",
-      });
-    }
+    /* -----------------------------------------------------
+       CHECK CONFERENCE
+    ----------------------------------------------------- */
 
-    // ---------------------------------------------------
-    // CHECK CONFERENCE EXISTS
-    // ---------------------------------------------------
-
-    const conference = await Conference.findById(
-      conferenceId
-    );
+    const conference =
+      await Conference.findById(conferenceId);
 
     if (!conference) {
       return res.status(404).json({
@@ -64,215 +61,194 @@ exports.createInvoice = async (req, res) => {
       });
     }
 
-    // ---------------------------------------------------
-    // VALIDATE CUSTOMER
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       VALIDATE CUSTOMER
+    ----------------------------------------------------- */
 
-    if (!customer) {
-      return res.status(400).json({
-        success: false,
-        message: "Customer details are required",
-      });
-    }
-
-    if (!customer.fullName) {
+    if (!customer?.fullName?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Customer full name is required",
       });
     }
 
-    if (!customer.email) {
+    if (!customer?.email?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Customer email is required",
       });
     }
 
-    // ---------------------------------------------------
-    // VALIDATE AMOUNT
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       VALIDATE AMOUNT
+    ----------------------------------------------------- */
+
+    const invoiceAmount = Number(amount);
 
     if (
-      amount === undefined ||
-      amount === null ||
-      amount === ""
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount is required",
-      });
-    }
-
-    const finalAmount = Number(amount);
-
-    if (
-      Number.isNaN(finalAmount) ||
-      finalAmount < 0
+      !Number.isFinite(invoiceAmount) ||
+      invoiceAmount <= 0
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Amount must be a valid positive number",
+          "Invoice amount must be greater than 0",
       });
     }
 
-    // ---------------------------------------------------
-    // TAX PERCENTAGE
-    // DEFAULT = 20%
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       TAX PERCENTAGE
+    ----------------------------------------------------- */
+
+    const percentage = Number(taxPercentage);
 
     const finalTaxPercentage =
-      taxPercentage !== undefined &&
-      taxPercentage !== null &&
-      taxPercentage !== ""
-        ? Number(taxPercentage)
-        : 20;
+      Number.isFinite(percentage) &&
+      percentage >= 0
+        ? percentage
+        : 0;
 
-    if (
-      Number.isNaN(finalTaxPercentage) ||
-      finalTaxPercentage < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid tax percentage",
-      });
-    }
+    /* -----------------------------------------------------
+       CURRENCY
+    ----------------------------------------------------- */
 
-    // ---------------------------------------------------
-    // CALCULATE TAX
-    // ---------------------------------------------------
-
-    const calculatedTax = Number(
-      (
-        (finalAmount * finalTaxPercentage) /
-        100
-      ).toFixed(2)
-    );
-
-    // ---------------------------------------------------
-    // CALCULATE TOTAL
-    // ---------------------------------------------------
-
-    const calculatedTotal = Number(
-      (
-        finalAmount +
-        calculatedTax
-      ).toFixed(2)
-    );
-
-    // ---------------------------------------------------
-    // PAYMENT STATUS
-    // ---------------------------------------------------
-
-    const finalPaymentStatus =
-      paymentStatus || "Pending";
-
-    const allowedPaymentStatuses = [
-      "Pending",
-      "Paid",
-      "Failed",
-      "Cancelled",
-      "Refunded",
+    const allowedCurrencies = [
+      "USD",
+      "GBP",
+      "EUR",
+      "INR",
     ];
 
+    const finalCurrency =
+      String(currency || "USD").toUpperCase();
+
     if (
-      !allowedPaymentStatuses.includes(
-        finalPaymentStatus
+      !allowedCurrencies.includes(
+        finalCurrency
       )
     ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid payment status",
+        message: "Invalid currency",
       });
     }
 
-    // ---------------------------------------------------
-    // INVOICE STATUS
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       FIND ACTIVE BANK ACCOUNT
+       
+       IMPORTANT:
+       We don't store bank details in Invoice.
+       Only bankAccountId is stored.
+    ----------------------------------------------------- */
 
-    let invoiceStatus = "Draft";
+    const bankAccount =
+      await BankAccount.findOne({
+        isActive: true,
+      }).sort({
+        createdAt: -1,
+      });
 
-    if (finalPaymentStatus === "Paid") {
-      invoiceStatus = "Paid";
-    } else if (
-      finalPaymentStatus === "Cancelled"
-    ) {
-      invoiceStatus = "Cancelled";
-    } else if (
-      finalPaymentStatus === "Pending"
-    ) {
-      invoiceStatus = "Pending";
+    if (!bankAccount) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "No active bank account configured",
+      });
     }
 
-    // ---------------------------------------------------
-    // CREATE INVOICE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       CREATE INVOICE
+    ----------------------------------------------------- */
 
-    const invoice = await Invoice.create({
+    const invoice = new Invoice({
       invoiceDate:
         invoiceDate || new Date(),
 
       customer: {
-        fullName: customer.fullName,
-        email: customer.email,
-        phone: customer.phone || "",
-        country: customer.country || "",
-        address: customer.address || "",
+        fullName:
+          customer.fullName.trim(),
+
+        email:
+          customer.email.trim(),
+
+        phone:
+          customer.phone?.trim() || "",
+
+        country:
+          customer.country?.trim() || "",
+
+        address:
+          customer.address?.trim() || "",
+
+        affiliation:
+          customer.affiliation?.trim() || "",
       },
 
       conferenceId,
 
-      amount: finalAmount,
+      /* -----------------------------------------------
+         ONLY REFERENCE IS STORED
+      ----------------------------------------------- */
 
-      taxPercentage: finalTaxPercentage,
+      bankAccountId:
+        bankAccount._id,
 
-      tax: calculatedTax,
+      description:
+        description?.trim() || "",
 
-      totalAmount: calculatedTotal,
+      amount:
+        invoiceAmount,
 
-      currency: currency || "USD",
+      taxPercentage:
+        finalTaxPercentage,
 
-      paymentStatus: finalPaymentStatus,
+      currency:
+        finalCurrency,
 
-      bank: {
-        bankName: bank?.bankName || "",
-        accountName: bank?.accountName || "",
-        accountNumber:
-          bank?.accountNumber || "",
-        ifscCode: bank?.ifscCode || "",
-        swiftCode: bank?.swiftCode || "",
-      },
+      paymentStatus:
+        "Pending",
 
-      status: invoiceStatus,
-
-      paidAt:
-        finalPaymentStatus === "Paid"
-          ? new Date()
-          : undefined,
+      status:
+        "Draft",
     });
 
-    // ---------------------------------------------------
-    // POPULATE RESPONSE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       SAVE
+       
+       Invoice schema automatically calculates:
+       - invoiceNumber
+       - tax
+       - totalAmount
+    ----------------------------------------------------- */
 
-    const populatedInvoice =
-      await Invoice.findById(invoice._id)
-        .populate("conferenceId");
+    await invoice.save();
 
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       POPULATE RESPONSE
+    ----------------------------------------------------- */
+
+    await invoice.populate([
+      {
+        path: "conferenceId",
+      },
+      {
+        path: "bankAccountId",
+      },
+    ]);
+
+    /* -----------------------------------------------------
+       RESPONSE
+    ----------------------------------------------------- */
 
     return res.status(201).json({
       success: true,
       message:
         "Invoice created successfully",
-      data: populatedInvoice,
+      data: invoice,
     });
   } catch (error) {
     console.error(
-      "Create Invoice Error:",
+      "CREATE INVOICE ERROR:",
       error
     );
 
@@ -285,9 +261,9 @@ exports.createInvoice = async (req, res) => {
   }
 };
 
-// =====================================================
-// GET ALL INVOICES
-// =====================================================
+/* =========================================================
+   GET ALL INVOICES
+========================================================= */
 
 exports.getAllInvoices = async (
   req,
@@ -295,7 +271,7 @@ exports.getAllInvoices = async (
 ) => {
   try {
     const {
-      search,
+      search = "",
       status,
       paymentStatus,
       conferenceId,
@@ -303,161 +279,138 @@ exports.getAllInvoices = async (
       limit = 10,
     } = req.query;
 
-    // ---------------------------------------------------
-    // PAGINATION
-    // ---------------------------------------------------
+    const currentPage =
+      Math.max(Number(page), 1);
 
-    const currentPage = Math.max(
-      parseInt(page) || 1,
-      1
-    );
-
-    const perPage = Math.max(
-      parseInt(limit) || 10,
-      1
-    );
+    const itemsPerPage =
+      Math.max(Number(limit), 1);
 
     const skip =
       (currentPage - 1) *
-      perPage;
-
-    // ---------------------------------------------------
-    // FILTER
-    // ---------------------------------------------------
+      itemsPerPage;
 
     const filter = {};
 
-    // ---------------------------------------------------
-    // SEARCH
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       SEARCH
+    ----------------------------------------------------- */
 
-    if (search && search.trim()) {
-      const searchValue =
-        search.trim();
+    if (search.trim()) {
+      const searchRegex =
+        new RegExp(
+          search.trim(),
+          "i"
+        );
 
       filter.$or = [
         {
-          invoiceNumber: {
-            $regex: searchValue,
-            $options: "i",
-          },
+          invoiceNumber:
+            searchRegex,
         },
 
         {
-          "customer.fullName": {
-            $regex: searchValue,
-            $options: "i",
-          },
+          "customer.fullName":
+            searchRegex,
         },
 
         {
-          "customer.email": {
-            $regex: searchValue,
-            $options: "i",
-          },
+          "customer.email":
+            searchRegex,
         },
 
         {
-          "customer.phone": {
-            $regex: searchValue,
-            $options: "i",
-          },
+          "customer.phone":
+            searchRegex,
+        },
+
+        {
+          "customer.affiliation":
+            searchRegex,
         },
       ];
     }
 
-    // ---------------------------------------------------
-    // STATUS
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       STATUS
+    ----------------------------------------------------- */
 
     if (status) {
       filter.status = status;
     }
 
-    // ---------------------------------------------------
-    // PAYMENT STATUS
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       PAYMENT STATUS
+    ----------------------------------------------------- */
 
     if (paymentStatus) {
       filter.paymentStatus =
         paymentStatus;
     }
 
-    // ---------------------------------------------------
-    // CONFERENCE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       CONFERENCE
+    ----------------------------------------------------- */
 
-    if (conferenceId) {
-      if (
-        !isValidObjectId(
-          conferenceId
-        )
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid conference ID",
-        });
-      }
-
+    if (
+      conferenceId &&
+      isValidObjectId(conferenceId)
+    ) {
       filter.conferenceId =
         conferenceId;
     }
 
-    // ---------------------------------------------------
-    // FETCH INVOICES
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       FETCH
+    ----------------------------------------------------- */
 
     const [
       invoices,
-      totalInvoices,
+      total,
     ] = await Promise.all([
       Invoice.find(filter)
-        .populate("conferenceId")
+        .populate(
+          "conferenceId"
+        )
+        .populate(
+          "bankAccountId"
+        )
         .sort({
           createdAt: -1,
         })
         .skip(skip)
-        .limit(perPage),
+        .limit(itemsPerPage),
 
-      Invoice.countDocuments(filter),
+      Invoice.countDocuments(
+        filter
+      ),
     ]);
 
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       RESPONSE
+    ----------------------------------------------------- */
 
     return res.status(200).json({
       success: true,
-      message:
-        "Invoices fetched successfully",
 
       data: invoices,
 
       pagination: {
-        currentPage,
-        limit: perPage,
-        totalInvoices,
+        total,
 
-        totalPages: Math.ceil(
-          totalInvoices /
-            perPage
-        ),
+        page: currentPage,
 
-        hasNextPage:
-          currentPage <
+        limit: itemsPerPage,
+
+        totalPages:
           Math.ceil(
-            totalInvoices /
-              perPage
+            total /
+              itemsPerPage
           ),
-
-        hasPreviousPage:
-          currentPage > 1,
       },
     });
   } catch (error) {
     console.error(
-      "Get All Invoices Error:",
+      "GET ALL INVOICES ERROR:",
       error
     );
 
@@ -470,20 +423,17 @@ exports.getAllInvoices = async (
   }
 };
 
-// =====================================================
-// GET SINGLE INVOICE
-// =====================================================
+/* =========================================================
+   GET INVOICE BY ID
+========================================================= */
 
 exports.getInvoiceById = async (
   req,
   res
 ) => {
   try {
-    const { id } = req.params;
-
-    // ---------------------------------------------------
-    // VALIDATE ID
-    // ---------------------------------------------------
+    const { id } =
+      req.params;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -493,13 +443,14 @@ exports.getInvoiceById = async (
       });
     }
 
-    // ---------------------------------------------------
-    // FIND INVOICE
-    // ---------------------------------------------------
-
     const invoice =
       await Invoice.findById(id)
-        .populate("conferenceId");
+        .populate(
+          "conferenceId"
+        )
+        .populate(
+          "bankAccountId"
+        );
 
     if (!invoice) {
       return res.status(404).json({
@@ -509,19 +460,13 @@ exports.getInvoiceById = async (
       });
     }
 
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
-
     return res.status(200).json({
       success: true,
-      message:
-        "Invoice fetched successfully",
       data: invoice,
     });
   } catch (error) {
     console.error(
-      "Get Invoice Error:",
+      "GET INVOICE ERROR:",
       error
     );
 
@@ -534,20 +479,17 @@ exports.getInvoiceById = async (
   }
 };
 
-// =====================================================
-// UPDATE INVOICE
-// =====================================================
+/* =========================================================
+   UPDATE INVOICE
+========================================================= */
 
 exports.updateInvoice = async (
   req,
   res
 ) => {
   try {
-    const { id } = req.params;
-
-    // ---------------------------------------------------
-    // VALIDATE INVOICE ID
-    // ---------------------------------------------------
+    const { id } =
+      req.params;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -557,14 +499,10 @@ exports.updateInvoice = async (
       });
     }
 
-    // ---------------------------------------------------
-    // FIND EXISTING INVOICE
-    // ---------------------------------------------------
-
-    const existingInvoice =
+    const invoice =
       await Invoice.findById(id);
 
-    if (!existingInvoice) {
+    if (!invoice) {
       return res.status(404).json({
         success: false,
         message:
@@ -572,61 +510,86 @@ exports.updateInvoice = async (
       });
     }
 
-    // ---------------------------------------------------
-    // ALLOWED FIELDS
-    // ---------------------------------------------------
+    const {
+      invoiceDate,
+      customer,
+      conferenceId,
+      bankAccountId,
+      description,
+      amount,
+      taxPercentage,
+      currency,
+      status,
+      paymentStatus,
+    } = req.body;
 
-    const allowedFields = [
-      "invoiceDate",
-      "customer",
-      "conferenceId",
-      "amount",
-      "taxPercentage",
-      "currency",
-      "paymentStatus",
-      "bank",
-      "status",
-      "paidAt",
-    ];
-
-    // ---------------------------------------------------
-    // UPDATE FIELDS
-    // ---------------------------------------------------
-
-    allowedFields.forEach(
-      (field) => {
-        if (
-          req.body[field] !==
-          undefined
-        ) {
-          existingInvoice[field] =
-            req.body[field];
-        }
-      }
-    );
-
-    // ---------------------------------------------------
-    // VALIDATE CONFERENCE
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       INVOICE DATE
+    ----------------------------------------------------- */
 
     if (
-      req.body.conferenceId
+      invoiceDate !==
+      undefined
+    ) {
+      invoice.invoiceDate =
+        invoiceDate;
+    }
+
+    /* -----------------------------------------------------
+       CUSTOMER
+    ----------------------------------------------------- */
+
+    if (customer) {
+      invoice.customer = {
+        fullName:
+          customer.fullName?.trim() ||
+          invoice.customer.fullName,
+
+        email:
+          customer.email?.trim() ||
+          invoice.customer.email,
+
+        phone:
+          customer.phone?.trim() ||
+          "",
+
+        country:
+          customer.country?.trim() ||
+          "",
+
+        address:
+          customer.address?.trim() ||
+          "",
+
+        affiliation:
+          customer.affiliation?.trim() ||
+          "",
+      };
+    }
+
+    /* -----------------------------------------------------
+       CONFERENCE
+    ----------------------------------------------------- */
+
+    if (
+      conferenceId !==
+      undefined
     ) {
       if (
         !isValidObjectId(
-          req.body.conferenceId
+          conferenceId
         )
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Invalid conference ID",
+            "Invalid conferenceId",
         });
       }
 
       const conference =
         await Conference.findById(
-          req.body.conferenceId
+          conferenceId
         );
 
       if (!conference) {
@@ -636,192 +599,262 @@ exports.updateInvoice = async (
             "Conference not found",
         });
       }
+
+      invoice.conferenceId =
+        conferenceId;
     }
 
-    // ---------------------------------------------------
-    // VALIDATE CUSTOMER
-    // ---------------------------------------------------
+    /* -----------------------------------------------------
+       BANK ACCOUNT
+       
+       Optional update.
+    ----------------------------------------------------- */
 
-    if (req.body.customer) {
+    if (
+      bankAccountId !==
+      undefined
+    ) {
       if (
-        !req.body.customer.fullName
+        !isValidObjectId(
+          bankAccountId
+        )
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Customer full name is required",
+            "Invalid bankAccountId",
         });
       }
 
+      const bankAccount =
+        await BankAccount.findById(
+          bankAccountId
+        );
+
+      if (!bankAccount) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Bank account not found",
+        });
+      }
+
+      invoice.bankAccountId =
+        bankAccountId;
+    }
+
+    /* -----------------------------------------------------
+       DESCRIPTION
+    ----------------------------------------------------- */
+
+    if (
+      description !==
+      undefined
+    ) {
+      invoice.description =
+        description;
+    }
+
+    /* -----------------------------------------------------
+       AMOUNT
+    ----------------------------------------------------- */
+
+    if (
+      amount !==
+      undefined
+    ) {
+      const newAmount =
+        Number(amount);
+
       if (
-        !req.body.customer.email
+        !Number.isFinite(
+          newAmount
+        ) ||
+        newAmount < 0
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Customer email is required",
+            "Invalid invoice amount",
         });
       }
+
+      invoice.amount =
+        newAmount;
     }
 
-    // ---------------------------------------------------
-    // VALIDATE AMOUNT
-    // ---------------------------------------------------
-
-    const updatedAmount =
-      Number(
-        existingInvoice.amount
-      );
+    /* -----------------------------------------------------
+       TAX %
+    ----------------------------------------------------- */
 
     if (
-      Number.isNaN(
-        updatedAmount
-      ) ||
-      updatedAmount < 0
+      taxPercentage !==
+      undefined
     ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Amount must be a valid positive number",
-      });
-    }
-
-    existingInvoice.amount =
-      updatedAmount;
-
-    // ---------------------------------------------------
-    // TAX PERCENTAGE
-    // ---------------------------------------------------
-
-    const updatedTaxPercentage =
-      existingInvoice.taxPercentage !==
-        undefined &&
-      existingInvoice.taxPercentage !==
-        null
-        ? Number(
-            existingInvoice.taxPercentage
-          )
-        : 20;
-
-    if (
-      Number.isNaN(
-        updatedTaxPercentage
-      ) ||
-      updatedTaxPercentage < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid tax percentage",
-      });
-    }
-
-    existingInvoice.taxPercentage =
-      updatedTaxPercentage;
-
-    // ---------------------------------------------------
-    // PAYMENT STATUS
-    // ---------------------------------------------------
-
-    const allowedPaymentStatuses = [
-      "Pending",
-      "Paid",
-      "Failed",
-      "Cancelled",
-      "Refunded",
-    ];
-
-    if (
-      !allowedPaymentStatuses.includes(
-        existingInvoice.paymentStatus
-      )
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid payment status",
-      });
-    }
-
-    // ---------------------------------------------------
-    // UPDATE TAX
-    // ---------------------------------------------------
-
-    existingInvoice.tax =
-      Number(
-        (
-          (existingInvoice.amount *
-            existingInvoice.taxPercentage) /
-          100
-        ).toFixed(2)
-      );
-
-    // ---------------------------------------------------
-    // UPDATE TOTAL
-    // ---------------------------------------------------
-
-    existingInvoice.totalAmount =
-      Number(
-        (
-          existingInvoice.amount +
-          existingInvoice.tax
-        ).toFixed(2)
-      );
-
-    // ---------------------------------------------------
-    // UPDATE PAYMENT / INVOICE STATUS
-    // ---------------------------------------------------
-
-    if (
-      existingInvoice.paymentStatus ===
-      "Paid"
-    ) {
-      existingInvoice.status =
-        "Paid";
+      const newTaxPercentage =
+        Number(
+          taxPercentage
+        );
 
       if (
-        !existingInvoice.paidAt
+        !Number.isFinite(
+          newTaxPercentage
+        ) ||
+        newTaxPercentage < 0
       ) {
-        existingInvoice.paidAt =
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid tax percentage",
+        });
+      }
+
+      invoice.taxPercentage =
+        newTaxPercentage;
+    }
+
+    /* -----------------------------------------------------
+       CURRENCY
+    ----------------------------------------------------- */
+
+    if (
+      currency !==
+      undefined
+    ) {
+      const finalCurrency =
+        String(
+          currency
+        ).toUpperCase();
+
+      if (
+        ![
+          "USD",
+          "GBP",
+          "EUR",
+          "INR",
+        ].includes(
+          finalCurrency
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid currency",
+        });
+      }
+
+      invoice.currency =
+        finalCurrency;
+    }
+
+    /* -----------------------------------------------------
+       INVOICE STATUS
+    ----------------------------------------------------- */
+
+    if (
+      status !==
+      undefined
+    ) {
+      const allowedStatuses = [
+        "Draft",
+        "Issued",
+        "Pending",
+        "Paid",
+        "Cancelled",
+      ];
+
+      if (
+        !allowedStatuses.includes(
+          status
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid invoice status",
+        });
+      }
+
+      invoice.status =
+        status;
+    }
+
+    /* -----------------------------------------------------
+       PAYMENT STATUS
+    ----------------------------------------------------- */
+
+    if (
+      paymentStatus !==
+      undefined
+    ) {
+      const allowedPaymentStatuses =
+        [
+          "Pending",
+          "Paid",
+          "Failed",
+          "Cancelled",
+          "Refunded",
+        ];
+
+      if (
+        !allowedPaymentStatuses.includes(
+          paymentStatus
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid payment status",
+        });
+      }
+
+      invoice.paymentStatus =
+        paymentStatus;
+
+      if (
+        paymentStatus ===
+        "Paid"
+      ) {
+        invoice.paidAt =
           new Date();
+
+        invoice.status =
+          "Paid";
       }
     }
 
-    if (
-      existingInvoice.paymentStatus ===
-      "Cancelled"
-    ) {
-      existingInvoice.status =
-        "Cancelled";
-    }
+    /* -----------------------------------------------------
+       SAVE
+       
+       Schema recalculates:
+       tax
+       totalAmount
+    ----------------------------------------------------- */
 
-    // ---------------------------------------------------
-    // SAVE
-    // ---------------------------------------------------
+    await invoice.save();
 
-    await existingInvoice.save();
+    /* -----------------------------------------------------
+       POPULATE
+    ----------------------------------------------------- */
 
-    // ---------------------------------------------------
-    // GET UPDATED INVOICE
-    // ---------------------------------------------------
-
-    const updatedInvoice =
-      await Invoice.findById(id)
-        .populate("conferenceId");
-
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    await invoice.populate([
+      {
+        path: "conferenceId",
+      },
+      {
+        path: "bankAccountId",
+      },
+    ]);
 
     return res.status(200).json({
       success: true,
       message:
         "Invoice updated successfully",
-      data: updatedInvoice,
+      data: invoice,
     });
   } catch (error) {
     console.error(
-      "Update Invoice Error:",
+      "UPDATE INVOICE ERROR:",
       error
     );
 
@@ -834,24 +867,21 @@ exports.updateInvoice = async (
   }
 };
 
-// =====================================================
-// UPDATE PAYMENT STATUS
-// =====================================================
+/* =========================================================
+   UPDATE PAYMENT STATUS
+========================================================= */
 
 exports.updatePaymentStatus = async (
   req,
   res
 ) => {
   try {
-    const { id } = req.params;
+    const { id } =
+      req.params;
 
     const {
       paymentStatus,
     } = req.body;
-
-    // ---------------------------------------------------
-    // VALIDATE ID
-    // ---------------------------------------------------
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -860,10 +890,6 @@ exports.updatePaymentStatus = async (
           "Invalid invoice ID",
       });
     }
-
-    // ---------------------------------------------------
-    // VALIDATE PAYMENT STATUS
-    // ---------------------------------------------------
 
     const allowedStatuses = [
       "Pending",
@@ -885,10 +911,6 @@ exports.updatePaymentStatus = async (
       });
     }
 
-    // ---------------------------------------------------
-    // FIND INVOICE
-    // ---------------------------------------------------
-
     const invoice =
       await Invoice.findById(id);
 
@@ -900,96 +922,40 @@ exports.updatePaymentStatus = async (
       });
     }
 
-    // ---------------------------------------------------
-    // UPDATE PAYMENT STATUS
-    // ---------------------------------------------------
-
     invoice.paymentStatus =
       paymentStatus;
 
-    // ---------------------------------------------------
-    // UPDATE INVOICE STATUS
-    // ---------------------------------------------------
-
     if (
-      paymentStatus === "Paid"
+      paymentStatus ===
+      "Paid"
     ) {
-      invoice.status =
-        "Paid";
-
       invoice.paidAt =
         new Date();
-    }
 
-    if (
-      paymentStatus === "Cancelled"
-    ) {
       invoice.status =
-        "Cancelled";
+        "Paid";
     }
-
-    if (
-      paymentStatus === "Pending"
-    ) {
-      invoice.status =
-        "Pending";
-
-      invoice.paidAt = null;
-    }
-
-    if (
-      paymentStatus === "Failed"
-    ) {
-      invoice.paidAt = null;
-
-      if (
-        invoice.status === "Paid"
-      ) {
-        invoice.status =
-          "Pending";
-      }
-    }
-
-    if (
-      paymentStatus === "Refunded"
-    ) {
-      invoice.paidAt = null;
-
-      if (
-        invoice.status === "Paid"
-      ) {
-        invoice.status =
-          "Pending";
-      }
-    }
-
-    // ---------------------------------------------------
-    // SAVE
-    // ---------------------------------------------------
 
     await invoice.save();
 
-    // ---------------------------------------------------
-    // GET UPDATED INVOICE
-    // ---------------------------------------------------
-
-    const updatedInvoice =
-      await Invoice.findById(id)
-        .populate("conferenceId");
-
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    await invoice.populate([
+      {
+        path: "conferenceId",
+      },
+      {
+        path: "bankAccountId",
+      },
+    ]);
 
     return res.status(200).json({
       success: true,
       message:
         "Payment status updated successfully",
-      data: updatedInvoice,
+      data: invoice,
     });
   } catch (error) {
     console.error(
-      "Update Payment Status Error:",
+      "UPDATE PAYMENT STATUS ERROR:",
       error
     );
 
@@ -1002,20 +968,17 @@ exports.updatePaymentStatus = async (
   }
 };
 
-// =====================================================
-// MARK INVOICE AS PAID
-// =====================================================
+/* =========================================================
+   MARK INVOICE AS PAID
+========================================================= */
 
 exports.markInvoiceAsPaid = async (
   req,
   res
 ) => {
   try {
-    const { id } = req.params;
-
-    // ---------------------------------------------------
-    // VALIDATE ID
-    // ---------------------------------------------------
+    const { id } =
+      req.params;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -1024,10 +987,6 @@ exports.markInvoiceAsPaid = async (
           "Invalid invoice ID",
       });
     }
-
-    // ---------------------------------------------------
-    // FIND INVOICE
-    // ---------------------------------------------------
 
     const invoice =
       await Invoice.findById(id);
@@ -1040,10 +999,6 @@ exports.markInvoiceAsPaid = async (
       });
     }
 
-    // ---------------------------------------------------
-    // MARK AS PAID
-    // ---------------------------------------------------
-
     invoice.paymentStatus =
       "Paid";
 
@@ -1053,33 +1008,26 @@ exports.markInvoiceAsPaid = async (
     invoice.paidAt =
       new Date();
 
-    // ---------------------------------------------------
-    // SAVE
-    // ---------------------------------------------------
-
     await invoice.save();
 
-    // ---------------------------------------------------
-    // GET UPDATED INVOICE
-    // ---------------------------------------------------
-
-    const updatedInvoice =
-      await Invoice.findById(id)
-        .populate("conferenceId");
-
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    await invoice.populate([
+      {
+        path: "conferenceId",
+      },
+      {
+        path: "bankAccountId",
+      },
+    ]);
 
     return res.status(200).json({
       success: true,
       message:
-        "Invoice marked as paid successfully",
-      data: updatedInvoice,
+        "Invoice marked as paid",
+      data: invoice,
     });
   } catch (error) {
     console.error(
-      "Mark Invoice Paid Error:",
+      "MARK INVOICE PAID ERROR:",
       error
     );
 
@@ -1092,20 +1040,17 @@ exports.markInvoiceAsPaid = async (
   }
 };
 
-// =====================================================
-// DELETE INVOICE
-// =====================================================
+/* =========================================================
+   DELETE INVOICE
+========================================================= */
 
 exports.deleteInvoice = async (
   req,
   res
 ) => {
   try {
-    const { id } = req.params;
-
-    // ---------------------------------------------------
-    // VALIDATE ID
-    // ---------------------------------------------------
+    const { id } =
+      req.params;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -1115,14 +1060,8 @@ exports.deleteInvoice = async (
       });
     }
 
-    // ---------------------------------------------------
-    // DELETE INVOICE
-    // ---------------------------------------------------
-
     const invoice =
-      await Invoice.findByIdAndDelete(
-        id
-      );
+      await Invoice.findById(id);
 
     if (!invoice) {
       return res.status(404).json({
@@ -1132,9 +1071,9 @@ exports.deleteInvoice = async (
       });
     }
 
-    // ---------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------
+    await Invoice.findByIdAndDelete(
+      id
+    );
 
     return res.status(200).json({
       success: true,
@@ -1143,7 +1082,7 @@ exports.deleteInvoice = async (
     });
   } catch (error) {
     console.error(
-      "Delete Invoice Error:",
+      "DELETE INVOICE ERROR:",
       error
     );
 
@@ -1156,32 +1095,43 @@ exports.deleteInvoice = async (
   }
 };
 
+/* =========================================================
+   DOWNLOAD INVOICE PDF
+========================================================= */
 
+/* =========================================================
+   DOWNLOAD INVOICE PDF
+========================================================= */
 
-
-
-
-
-
-
-
-
-exports.downloadInvoicePdf = async (req, res) => {
-  let browser;
+exports.downloadInvoicePdf = async (
+  req,
+  res
+) => {
+  let page = null;
 
   try {
-    const puppeteer = await import("puppeteer-core");
-
     const { id } = req.params;
 
-    if (!id) {
+    /* -----------------------------------------------------
+       VALIDATE ID
+    ----------------------------------------------------- */
+
+    if (!isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invoice ID is required",
+        message: "Invalid invoice ID",
       });
     }
 
-    const invoice = await Invoice.findById(id);
+    /* -----------------------------------------------------
+       GET INVOICE
+    ----------------------------------------------------- */
+
+    const invoice =
+      await Invoice.findById(id)
+        .populate("conferenceId")
+        .populate("bankAccountId")
+        .lean();
 
     if (!invoice) {
       return res.status(404).json({
@@ -1190,36 +1140,60 @@ exports.downloadInvoicePdf = async (req, res) => {
       });
     }
 
+    /* -----------------------------------------------------
+       CHECK BANK ACCOUNT
+    ----------------------------------------------------- */
+
+    if (!invoice.bankAccountId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Bank account is not configured for this invoice",
+      });
+    }
+
+    /* -----------------------------------------------------
+       GENERATE HTML
+    ----------------------------------------------------- */
+
     const html = invoiceTemplate(invoice);
 
-    browser = await puppeteer.default.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    });
+    /* -----------------------------------------------------
+       REUSE CHROMIUM
+       
+       IMPORTANT:
+       Browser is NOT launched for every request.
+    ----------------------------------------------------- */
 
-    const page = await browser.newPage();
+    const browser = await getBrowser();
 
-    await page.setViewport({
-      width: 794,
-      height: 1123,
-      deviceScaleFactor: 1,
-    });
+    /* -----------------------------------------------------
+       CREATE PAGE
+    ----------------------------------------------------- */
+
+    page = await browser.newPage();
+
+    /* -----------------------------------------------------
+       SET HTML
+
+       domcontentloaded is much faster than networkidle0
+    ----------------------------------------------------- */
 
     await page.setContent(html, {
-      waitUntil: "networkidle0",
+      waitUntil: "domcontentloaded",
     });
 
-    await page.evaluate(async () => {
-      if (document.fonts?.ready) {
-        await document.fonts.ready;
-      }
-    });
+    /* -----------------------------------------------------
+       GENERATE PDF
+    ----------------------------------------------------- */
 
     const pdf = await page.pdf({
       format: "A4",
+
       printBackground: true,
-      preferCSSPageSize: true,
+
+      preferCSSPageSize: false,
+
       margin: {
         top: "0",
         right: "0",
@@ -1228,36 +1202,54 @@ exports.downloadInvoicePdf = async (req, res) => {
       },
     });
 
-    const invoiceNumber =
-      invoice.invoiceNumber ||
-      invoice.invoiceId ||
-      invoice._id.toString();
+    /* -----------------------------------------------------
+       RESPONSE
+    ----------------------------------------------------- */
 
-    res.setHeader("Content-Type", "application/pdf");
+    res.set({
+      "Content-Type": "application/pdf",
 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="GlobalScion-Invoice-${invoiceNumber}.pdf"`
-    );
+      "Content-Disposition":
+        `attachment; filename="${invoice.invoiceNumber}.pdf"`,
 
-    res.setHeader("Content-Length", pdf.length);
+      "Content-Length": pdf.length,
 
-    return res.send(pdf);
+      "Cache-Control":
+        "private, max-age=300",
+    });
+
+    return res.end(pdf);
+
   } catch (error) {
-    console.error("Download Invoice PDF Error:", error);
+    console.error(
+      "DOWNLOAD INVOICE PDF ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to generate invoice PDF",
+      message:
+        "Failed to generate invoice PDF",
       error: error.message,
     });
+
   } finally {
-    if (browser) {
+    /* -----------------------------------------------------
+       CLOSE ONLY PAGE
+
+       DO NOT CLOSE BROWSER
+    ----------------------------------------------------- */
+
+    if (page) {
       try {
-        await browser.close();
-      } catch (closeError) {
-        console.error("Browser close error:", closeError);
+        await page.close();
+      } catch (pageError) {
+        console.error(
+          "PDF PAGE CLOSE ERROR:",
+          pageError
+        );
       }
     }
   }
 };
+

@@ -1,44 +1,6 @@
 const mongoose = require("mongoose");
 
 /* =========================================================
-   BANK SCHEMA
-========================================================= */
-
-const bankSchema = new mongoose.Schema(
-  {
-    bankName: {
-      type: String,
-      trim: true,
-    },
-
-    accountName: {
-      type: String,
-      trim: true,
-    },
-
-    accountNumber: {
-      type: String,
-      trim: true,
-    },
-
-    ifscCode: {
-      type: String,
-      trim: true,
-      uppercase: true,
-    },
-
-    swiftCode: {
-      type: String,
-      trim: true,
-      uppercase: true,
-    },
-  },
-  {
-    _id: false,
-  }
-);
-
-/* =========================================================
    CUSTOMER SCHEMA
 ========================================================= */
 
@@ -46,29 +8,38 @@ const customerSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
+      required: [true, "Customer full name is required"],
       trim: true,
     },
 
     email: {
       type: String,
-      required: true,
+      required: [true, "Customer email is required"],
       trim: true,
       lowercase: true,
     },
 
     phone: {
       type: String,
+      default: "",
       trim: true,
     },
 
     country: {
       type: String,
+      default: "",
       trim: true,
     },
 
     address: {
       type: String,
+      default: "",
+      trim: true,
+    },
+
+    affiliation: {
+      type: String,
+      default: "",
       trim: true,
     },
   },
@@ -89,10 +60,9 @@ const invoiceSchema = new mongoose.Schema(
 
     invoiceNumber: {
       type: String,
-      required: true,
       unique: true,
-      trim: true,
       index: true,
+      trim: true,
     },
 
     /* -----------------------------------------------------
@@ -120,8 +90,33 @@ const invoiceSchema = new mongoose.Schema(
     conferenceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Conference",
-      required: true,
+      required: [true, "Conference is required"],
       index: true,
+    },
+
+    /* -----------------------------------------------------
+       BANK ACCOUNT REFERENCE
+
+       Bank details are NOT duplicated inside invoice.
+
+       Invoice only stores which bank account was used.
+    ----------------------------------------------------- */
+
+    bankAccountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BankAccount",
+      required: [true, "Bank account is required"],
+      index: true,
+    },
+
+    /* -----------------------------------------------------
+       DESCRIPTION
+    ----------------------------------------------------- */
+
+    description: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     /* -----------------------------------------------------
@@ -130,19 +125,23 @@ const invoiceSchema = new mongoose.Schema(
 
     amount: {
       type: Number,
-      required: true,
-      min: 0,
+      required: [true, "Invoice amount is required"],
+      min: [0, "Invoice amount cannot be negative"],
     },
 
     /* -----------------------------------------------------
-       TAX
+       TAX PERCENTAGE
     ----------------------------------------------------- */
 
     taxPercentage: {
       type: Number,
       default: 20,
-      min: 0,
+      min: [0, "Tax percentage cannot be negative"],
     },
+
+    /* -----------------------------------------------------
+       TAX
+    ----------------------------------------------------- */
 
     tax: {
       type: Number,
@@ -151,12 +150,12 @@ const invoiceSchema = new mongoose.Schema(
     },
 
     /* -----------------------------------------------------
-       TOTAL
+       TOTAL AMOUNT
     ----------------------------------------------------- */
 
     totalAmount: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
     },
 
@@ -169,7 +168,6 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["USD", "GBP", "EUR", "INR"],
       default: "USD",
       uppercase: true,
-      trim: true,
     },
 
     /* -----------------------------------------------------
@@ -190,40 +188,12 @@ const invoiceSchema = new mongoose.Schema(
     },
 
     /* -----------------------------------------------------
-       BANK DETAILS
-    ----------------------------------------------------- */
-
-    bank: {
-      type: bankSchema,
-
-      default: () => ({}),
-    },
-
-    /* -----------------------------------------------------
        INVOICE STATUS
     ----------------------------------------------------- */
 
-    status: {
-      type: String,
-      enum: [
-        "Draft",
-        "Issued",
-        "Pending",
-        "Paid",
-        "Cancelled",
-      ],
-      default: "Draft",
-      index: true,
-    },
 
-    /* -----------------------------------------------------
-       PAID DATE
-    ----------------------------------------------------- */
 
-    paidAt: {
-      type: Date,
-      default: null,
-    },
+    
   },
 
   {
@@ -232,27 +202,21 @@ const invoiceSchema = new mongoose.Schema(
 );
 
 /* =========================================================
-   AUTO GENERATE INVOICE NUMBER + CALCULATE TAX
+   PRE VALIDATE
 ========================================================= */
 
 invoiceSchema.pre("validate", async function () {
-  /*
-   * Generate invoice number only for new invoices.
-   *
-   * Format:
-   * INV-0001
-   * INV-0002
-   * INV-0003
-   */
+  /* -------------------------------------------------------
+     GENERATE INVOICE NUMBER
+  ------------------------------------------------------- */
 
-  if (this.isNew && !this.invoiceNumber) {
-    const Invoice = this.constructor;
-
-    const lastInvoice = await Invoice.findOne({
-      invoiceNumber: {
-        $regex: /^INV-\d+$/,
-      },
-    })
+  if (!this.invoiceNumber) {
+    const lastInvoice = await this.constructor
+      .findOne({
+        invoiceNumber: {
+          $regex: /^INV-\d+$/,
+        },
+      })
       .sort({
         createdAt: -1,
       })
@@ -263,64 +227,48 @@ invoiceSchema.pre("validate", async function () {
 
     if (lastInvoice?.invoiceNumber) {
       const match =
-        lastInvoice.invoiceNumber.match(/^INV-(\d+)$/);
+        lastInvoice.invoiceNumber.match(
+          /^INV-(\d+)$/
+        );
 
       if (match) {
-        const lastNumber = parseInt(match[1], 10);
-
-        if (Number.isFinite(lastNumber)) {
-          nextNumber = lastNumber + 1;
-        }
+        nextNumber =
+          Number(match[1]) + 1;
       }
     }
 
-    this.invoiceNumber = `INV-${String(nextNumber).padStart(
-      4,
-      "0"
-    )}`;
+    this.invoiceNumber =
+      `INV-${String(nextNumber).padStart(4, "0")}`;
   }
 
   /* -------------------------------------------------------
      CALCULATE TAX
   ------------------------------------------------------- */
 
-  const amount = Number(this.amount) || 0;
+  const amount =
+    Number(this.amount) || 0;
 
   const taxPercentage =
-    this.taxPercentage !== undefined &&
-    this.taxPercentage !== null
-      ? Number(this.taxPercentage)
-      : 20;
+    Number(this.taxPercentage) || 0;
 
-  this.taxPercentage = Math.max(
-    taxPercentage,
-    0
-  );
+  const calculatedTax =
+    (amount * taxPercentage) / 100;
+
+  this.tax =
+    Math.round(calculatedTax * 100) / 100;
 
   /* -------------------------------------------------------
-     TAX AMOUNT
+     CALCULATE TOTAL
   ------------------------------------------------------- */
 
-  this.tax = Number(
-    (
-      (amount * this.taxPercentage) /
-      100
-    ).toFixed(2)
-  );
-
-  /* -------------------------------------------------------
-     TOTAL AMOUNT
-  ------------------------------------------------------- */
-
-  this.totalAmount = Number(
-    (
-      amount + this.tax
-    ).toFixed(2)
-  );
+  this.totalAmount =
+    Math.round(
+      (amount + this.tax) * 100
+    ) / 100;
 });
 
 /* =========================================================
-   MODEL
+   EXPORT
 ========================================================= */
 
 const Invoice =

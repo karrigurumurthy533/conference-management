@@ -27,8 +27,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import {
   createInvoice,
+  getActiveBankAccount,
   clearInvoiceError,
   clearInvoiceSuccess,
+  selectActiveBankAccount,
+  selectBankAccountLoading,
+  selectBankAccountError,
 } from "../../redux/invoiceSlice";
 
 import { getConferences } from "../../redux/conferenceSlice";
@@ -42,8 +46,9 @@ const CreateInvoice = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+
   // =====================================================
-  // REDUX
+  // REDUX - INVOICE
   // =====================================================
 
   const {
@@ -55,6 +60,28 @@ const CreateInvoice = () => {
     (state) => state.invoice
   );
 
+
+  // =====================================================
+  // REDUX - BANK ACCOUNT
+  // =====================================================
+
+  const bankAccount = useSelector(
+    selectActiveBankAccount
+  );
+
+  const bankLoading = useSelector(
+    selectBankAccountLoading
+  );
+
+  const bankError = useSelector(
+    selectBankAccountError
+  );
+
+
+  // =====================================================
+  // REDUX - CONFERENCES
+  // =====================================================
+
   const {
     conferences = [],
     loading: conferencesLoading,
@@ -62,59 +89,55 @@ const CreateInvoice = () => {
     (state) => state.conference
   );
 
+
   // =====================================================
   // FORM DATA
   // =====================================================
 
-  const [formData, setFormData] = useState({
-    invoiceDate: new Date()
-      .toISOString()
-      .split("T")[0],
+  const [formData, setFormData] =
+    useState({
+      invoiceDate:
+        new Date()
+          .toISOString()
+          .split("T")[0],
 
-    userId: "",
+      customer: {
+        fullName: "",
+        email: "",
+        phone: "",
+        country: "",
+        address: "",
+        affiliation: "",
+      },
 
-    customer: {
-      fullName: "",
-      email: "",
-      phone: "",
-      country: "",
-      address: "",
-    },
+      conferenceId: "",
 
-    conferenceId: "",
+      amount: "",
 
-    // Invoice amount is the taxable base amount
-    amount: "",
+      taxPercentage: 20,
 
-    // Default tax = 20%
-    taxPercentage: 20,
+      currency: "USD",
 
-    currency: "USD",
+      description: "",
+    });
 
-    paymentStatus: "Pending",
-
-    // Bank Details
-    bank: {
-      bankName: "",
-      accountName: "",
-      accountNumber: "",
-      ifscCode: "",
-      swiftCode: "",
-    },
-  });
 
   // =====================================================
-  // LOAD CONFERENCES
+  // LOAD CONFERENCES + ACTIVE BANK ACCOUNT
   // =====================================================
 
   useEffect(() => {
     dispatch(getConferences());
 
+    dispatch(getActiveBankAccount());
+
     return () => {
       dispatch(clearInvoiceError());
+
       dispatch(clearInvoiceSuccess());
     };
   }, [dispatch]);
+
 
   // =====================================================
   // NORMAL INPUT CHANGE
@@ -128,15 +151,19 @@ const CreateInvoice = () => {
 
     setFormData((prev) => ({
       ...prev,
+
       [name]: value,
     }));
   };
 
+
   // =====================================================
-  // CUSTOMER CHANGE
+  // CUSTOMER INPUT CHANGE
   // =====================================================
 
-  const handleCustomerChange = (e) => {
+  const handleCustomerChange = (
+    e
+  ) => {
     const {
       name,
       value,
@@ -147,96 +174,128 @@ const CreateInvoice = () => {
 
       customer: {
         ...prev.customer,
+
         [name]: value,
       },
     }));
   };
 
+
   // =====================================================
-  // BANK CHANGE
+  // DESCRIPTION CHANGE
   // =====================================================
 
-  const handleBankChange = (e) => {
-    const {
-      name,
-      value,
-    } = e.target;
+  const handleDescriptionChange =
+    (e) => {
+      setFormData((prev) => ({
+        ...prev,
 
-    setFormData((prev) => ({
-      ...prev,
+        description:
+          e.target.value,
+      }));
+    };
 
-      bank: {
-        ...prev.bank,
-        [name]: value,
-      },
-    }));
-  };
 
   // =====================================================
   // INVOICE AMOUNT
   // =====================================================
 
-  const invoiceAmount = useMemo(() => {
-    return Math.max(
-      Number(formData.amount) || 0,
-      0
-    );
-  }, [formData.amount]);
+  const invoiceAmount = useMemo(
+    () => {
+      return Math.max(
+        Number(formData.amount) || 0,
+        0
+      );
+    },
+    [formData.amount]
+  );
+
 
   // =====================================================
   // TAX
   // =====================================================
 
-  const tax = useMemo(() => {
-    const percentage =
-      Number(formData.taxPercentage) || 0;
+  const tax = useMemo(
+    () => {
+      const percentage =
+        Number(
+          formData.taxPercentage
+        ) || 0;
 
-    return (
-      invoiceAmount * percentage
-    ) / 100;
-  }, [
-    invoiceAmount,
-    formData.taxPercentage,
-  ]);
+      return (
+        invoiceAmount *
+        percentage
+      ) / 100;
+    },
+    [
+      invoiceAmount,
+      formData.taxPercentage,
+    ]
+  );
+
 
   // =====================================================
   // TOTAL
   // =====================================================
 
-  const totalAmount = useMemo(() => {
-    return invoiceAmount + tax;
-  }, [
-    invoiceAmount,
-    tax,
-  ]);
+  const totalAmount = useMemo(
+    () => {
+      return invoiceAmount + tax;
+    },
+    [
+      invoiceAmount,
+      tax,
+    ]
+  );
+
 
   // =====================================================
   // FORMAT CURRENCY
   // =====================================================
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (
+    amount
+  ) => {
     return new Intl.NumberFormat(
       "en-US",
       {
         style: "currency",
-        currency: formData.currency,
+
+        currency:
+          formData.currency,
       }
-    ).format(Number(amount) || 0);
+    ).format(
+      Number(amount) || 0
+    );
   };
+
 
   // =====================================================
   // SUBMIT
   // =====================================================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
 
-    dispatch(clearInvoiceError());
-    dispatch(clearInvoiceSuccess());
 
-    // ---------------------------------------------------
+    // =================================================
+    // CLEAR PREVIOUS STATES
+    // =================================================
+
+    dispatch(
+      clearInvoiceError()
+    );
+
+    dispatch(
+      clearInvoiceSuccess()
+    );
+
+
+    // =================================================
     // VALIDATION
-    // ---------------------------------------------------
+    // =================================================
 
     if (
       !formData.customer.fullName.trim()
@@ -244,103 +303,114 @@ const CreateInvoice = () => {
       return;
     }
 
+
     if (
       !formData.customer.email.trim()
     ) {
       return;
     }
 
+
     if (!formData.conferenceId) {
       return;
     }
+
 
     if (invoiceAmount <= 0) {
       return;
     }
 
-    // ---------------------------------------------------
+
+    // =================================================
+    // BANK ACCOUNT VALIDATION
+    // =================================================
+
+    if (!bankAccount) {
+      return;
+    }
+
+
+    // =================================================
     // PAYLOAD
-    // ---------------------------------------------------
+    //
+    // IMPORTANT:
+    // Do NOT send bank details.
+    //
+    // Backend automatically finds
+    // active BankAccount and stores
+    // bankAccountId in Invoice.
+    // =================================================
 
     const payload = {
       invoiceDate:
         formData.invoiceDate,
 
-      userId:
-        formData.userId || undefined,
-
       customer: {
         fullName:
-          formData.customer.fullName,
+          formData.customer.fullName.trim(),
 
         email:
-          formData.customer.email,
+          formData.customer.email.trim(),
 
         phone:
-          formData.customer.phone,
+          formData.customer.phone.trim(),
 
         country:
-          formData.customer.country,
+          formData.customer.country.trim(),
 
         address:
-          formData.customer.address,
+          formData.customer.address.trim(),
+
+        affiliation:
+          formData.customer.affiliation.trim(),
       },
 
       conferenceId:
         formData.conferenceId,
 
-      // Invoice amount
-      amount: invoiceAmount,
-
-      // Tax
-      tax,
+      amount:
+        invoiceAmount,
 
       taxPercentage:
-        Number(formData.taxPercentage) || 0,
-
-      totalAmount,
+        Number(
+          formData.taxPercentage
+        ) || 0,
 
       currency:
         formData.currency,
 
-      paymentStatus:
-        formData.paymentStatus,
-
-      // Bank details
-      bank: {
-        bankName:
-          formData.bank.bankName,
-
-        accountName:
-          formData.bank.accountName,
-
-        accountNumber:
-          formData.bank.accountNumber,
-
-        ifscCode:
-          formData.bank.ifscCode,
-
-        swiftCode:
-          formData.bank.swiftCode,
-      },
+      description:
+        formData.description.trim(),
     };
 
-    // ---------------------------------------------------
-    // CREATE INVOICE
-    // ---------------------------------------------------
 
-    const result = await dispatch(
-      createInvoice(payload)
-    );
+    // =================================================
+    // CREATE INVOICE
+    // =================================================
+
+    const result =
+      await dispatch(
+        createInvoice(payload)
+      );
+
+
+    // =================================================
+    // SUCCESS
+    // =================================================
 
     if (
-      createInvoice.fulfilled.match(result)
+      createInvoice.fulfilled.match(
+        result
+      )
     ) {
       setTimeout(() => {
-        navigate("/admin/invoices");
+        navigate(
+          "/admin/invoices"
+        );
       }, 1200);
     }
   };
+
 
   // =====================================================
   // UI
@@ -351,6 +421,7 @@ const CreateInvoice = () => {
 
       <div className="mx-auto max-w-6xl">
 
+
         {/* =================================================
             HEADER
         ================================================= */}
@@ -359,25 +430,35 @@ const CreateInvoice = () => {
 
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-violet-600"
           >
+
             <ArrowLeft size={17} />
+
             Back
+
           </button>
+
 
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
 
             <div className="flex items-center gap-3">
 
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100">
+
                 <FileText
                   size={21}
                   className="text-violet-600"
                 />
+
               </div>
 
+
               <div>
+
                 <h1 className="text-xl font-bold text-slate-900">
                   Create Invoice
                 </h1>
@@ -385,11 +466,14 @@ const CreateInvoice = () => {
                 <p className="text-xs text-slate-500">
                   Create a new conference invoice
                 </p>
+
               </div>
 
             </div>
 
+
             <div className="rounded-lg border border-slate-200 bg-white px-4 py-2.5">
+
               <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                 Invoice Number
               </p>
@@ -397,9 +481,11 @@ const CreateInvoice = () => {
               <p className="text-sm font-semibold text-slate-800">
                 Auto Generated
               </p>
+
             </div>
 
           </div>
+
         </div>
 
 
@@ -416,15 +502,21 @@ const CreateInvoice = () => {
             />
 
             <div>
+
               <p className="text-sm font-semibold">
                 Failed to create invoice
               </p>
 
               <p className="mt-0.5 text-xs">
-                {typeof error === "string"
+
+                {typeof error ===
+                "string"
                   ? error
-                  : "Something went wrong while creating the invoice."}
+                  : error?.message ||
+                    "Something went wrong while creating the invoice."}
+
               </p>
+
             </div>
 
           </div>
@@ -444,6 +536,7 @@ const CreateInvoice = () => {
             />
 
             <div>
+
               <p className="text-sm font-semibold">
                 Invoice created successfully
               </p>
@@ -453,6 +546,7 @@ const CreateInvoice = () => {
                   {message}
                 </p>
               )}
+
             </div>
 
           </div>
@@ -464,9 +558,12 @@ const CreateInvoice = () => {
         ================================================= */}
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           className="space-y-4"
         >
+
 
           {/* =================================================
               CUSTOMER + CONFERENCE
@@ -485,15 +582,18 @@ const CreateInvoice = () => {
               description="Enter customer details and select the conference"
             />
 
+
             <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
 
-              {/* Full Name */}
+
+              {/* FULL NAME */}
 
               <InputField
                 label="Full Name"
                 name="fullName"
                 value={
-                  formData.customer.fullName
+                  formData.customer
+                    .fullName
                 }
                 onChange={
                   handleCustomerChange
@@ -506,14 +606,15 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Email */}
+              {/* EMAIL */}
 
               <InputField
                 label="Email"
                 name="email"
                 type="email"
                 value={
-                  formData.customer.email
+                  formData.customer
+                    .email
                 }
                 onChange={
                   handleCustomerChange
@@ -526,13 +627,14 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Phone */}
+              {/* PHONE */}
 
               <InputField
                 label="Phone"
                 name="phone"
                 value={
-                  formData.customer.phone
+                  formData.customer
+                    .phone
                 }
                 onChange={
                   handleCustomerChange
@@ -544,13 +646,14 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Country */}
+              {/* COUNTRY */}
 
               <InputField
                 label="Country"
                 name="country"
                 value={
-                  formData.customer.country
+                  formData.customer
+                    .country
                 }
                 onChange={
                   handleCustomerChange
@@ -562,38 +665,58 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Address */}
+              {/* ADDRESS */}
 
-              <div className="md:col-span-2">
-
-                <InputField
-                  label="Address"
-                  name="address"
-                  value={
-                    formData.customer.address
-                  }
-                  onChange={
-                    handleCustomerChange
-                  }
-                  placeholder="Full billing address"
-                  icon={
-                    <MapPin size={16} />
-                  }
-                />
-
-              </div>
+              <InputField
+                label="Address"
+                name="address"
+                value={
+                  formData.customer
+                    .address
+                }
+                onChange={
+                  handleCustomerChange
+                }
+                placeholder="Full billing address"
+                icon={
+                  <MapPin size={16} />
+                }
+              />
 
 
-              {/* Conference */}
+              {/* AFFILIATION */}
+
+              <InputField
+                label="Affiliation"
+                name="affiliation"
+                value={
+                  formData.customer
+                    .affiliation
+                }
+                onChange={
+                  handleCustomerChange
+                }
+                placeholder="Organization / Institution"
+                icon={
+                  <Building2 size={16} />
+                }
+              />
+
+
+              {/* CONFERENCE */}
 
               <div className="md:col-span-2">
 
                 <label className="mb-2 block text-sm font-medium text-slate-700">
+
                   Conference
+
                   <span className="ml-1 text-red-500">
                     *
                   </span>
+
                 </label>
+
 
                 <div className="relative">
 
@@ -602,16 +725,24 @@ const CreateInvoice = () => {
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
 
+
                   <select
                     value={
                       formData.conferenceId
                     }
-                    onChange={(e) =>
+                    onChange={(
+                      e
+                    ) =>
                       setFormData(
-                        (prev) => ({
+                        (
+                          prev
+                        ) => ({
                           ...prev,
+
                           conferenceId:
-                            e.target.value,
+                            e
+                              .target
+                              .value,
                         })
                       )
                     }
@@ -623,13 +754,18 @@ const CreateInvoice = () => {
                   >
 
                     <option value="">
+
                       {conferencesLoading
                         ? "Loading conferences..."
                         : "Select Conference"}
+
                     </option>
 
+
                     {conferences.map(
-                      (conference) => {
+                      (
+                        conference
+                      ) => {
 
                         const title =
                           conference
@@ -639,6 +775,7 @@ const CreateInvoice = () => {
                           conference?.title ||
                           conference?.name ||
                           "Untitled Conference";
+
 
                         return (
                           <option
@@ -652,6 +789,7 @@ const CreateInvoice = () => {
                             {title}
                           </option>
                         );
+
                       }
                     )}
 
@@ -662,6 +800,7 @@ const CreateInvoice = () => {
               </div>
 
             </div>
+
           </div>
 
 
@@ -679,12 +818,14 @@ const CreateInvoice = () => {
                 />
               }
               title="Invoice & Amount"
-              description="Enter invoice amount, tax and payment status"
+              description="Enter invoice amount and tax details"
             />
+
 
             <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-4">
 
-              {/* Invoice Date */}
+
+              {/* INVOICE DATE */}
 
               <InputField
                 label="Invoice Date"
@@ -693,7 +834,9 @@ const CreateInvoice = () => {
                 value={
                   formData.invoiceDate
                 }
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
                 icon={
                   <CalendarDays size={16} />
                 }
@@ -701,17 +844,20 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Currency */}
+              {/* CURRENCY */}
 
               <SelectField
                 label="Currency"
                 value={
                   formData.currency
                 }
-                onChange={(e) =>
+                onChange={(
+                  e
+                ) =>
                   setFormData(
                     (prev) => ({
                       ...prev,
+
                       currency:
                         e.target.value,
                     })
@@ -726,53 +872,7 @@ const CreateInvoice = () => {
               />
 
 
-              {/* Payment Status */}
-
-              <SelectField
-                label="Payment Status"
-                value={
-                  formData.paymentStatus
-                }
-                onChange={(e) =>
-                  setFormData(
-                    (prev) => ({
-                      ...prev,
-                      paymentStatus:
-                        e.target.value,
-                    })
-                  )
-                }
-                options={[
-                  "Pending",
-                  "Paid",
-                  "Failed",
-                  "Cancelled",
-                  "Refunded",
-                ]}
-              />
-
-
-              {/* Amount */}
-
-              <InputField
-                label={`Invoice Amount (${formData.currency})`}
-                name="amount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  formData.amount
-                }
-                onChange={handleChange}
-                placeholder="0.00"
-                icon={
-                  <CreditCard size={16} />
-                }
-                required
-              />
-
-
-              {/* Tax */}
+              {/* TAX PERCENTAGE */}
 
               <InputField
                 label="Tax Percentage"
@@ -783,11 +883,60 @@ const CreateInvoice = () => {
                 value={
                   formData.taxPercentage
                 }
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
                 placeholder="20"
               />
 
+
+              {/* AMOUNT */}
+
+              <InputField
+                label={`Invoice Amount (${formData.currency})`}
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  formData.amount
+                }
+                onChange={
+                  handleChange
+                }
+                placeholder="0.00"
+                icon={
+                  <CreditCard size={16} />
+                }
+                required
+              />
+
             </div>
+
+
+            {/* DESCRIPTION */}
+
+            <div className="border-t border-slate-200 px-5 py-4">
+
+              <label className="mb-1.5 block text-xs font-medium text-slate-700">
+                Description
+              </label>
+
+
+              <textarea
+                value={
+                  formData.description
+                }
+                onChange={
+                  handleDescriptionChange
+                }
+                rows={3}
+                placeholder="Enter invoice description..."
+                className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+              />
+
+            </div>
+
           </div>
 
 
@@ -805,95 +954,140 @@ const CreateInvoice = () => {
                 />
               }
               title="Bank Details"
-              description="Enter bank account details for the invoice"
+              description="Bank account details configured for invoice payment"
             />
 
-            <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
 
-              {/* Bank Name */}
+            {bankLoading ? (
 
-              <InputField
-                label="Bank Name"
-                name="bankName"
-                value={
-                  formData.bank.bankName
-                }
-                onChange={
-                  handleBankChange
-                }
-                placeholder="Bank name"
-                icon={
-                  <Landmark size={16} />
-                }
-              />
+              <div className="flex items-center gap-3 p-5 text-sm text-slate-500">
 
+                <Loader2
+                  size={18}
+                  className="animate-spin text-violet-600"
+                />
 
-              {/* Account Name */}
+                Loading bank account...
 
-              <InputField
-                label="Account Name"
-                name="accountName"
-                value={
-                  formData.bank.accountName
-                }
-                onChange={
-                  handleBankChange
-                }
-                placeholder="Account holder name"
-                icon={
-                  <User size={16} />
-                }
-              />
+              </div>
 
+            ) : !bankAccount ? (
 
-              {/* Account Number */}
+              <div className="p-5">
 
-              <InputField
-                label="Account Number"
-                name="accountNumber"
-                value={
-                  formData.bank.accountNumber
-                }
-                onChange={
-                  handleBankChange
-                }
-                placeholder="Account number"
-                icon={
-                  <CreditCard size={16} />
-                }
-              />
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-700">
+
+                  <AlertCircle
+                    size={19}
+                    className="mt-0.5 shrink-0"
+                  />
+
+                  <div>
+
+                    <p className="text-sm font-semibold">
+                      No active bank account
+                    </p>
+
+                    <p className="mt-1 text-xs">
+
+                      {bankError ||
+                        "Please configure an active bank account before creating an invoice."}
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            ) : (
+
+              <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
 
 
-              {/* IFSC */}
+                {/* BANK NAME */}
 
-              <InputField
-                label="IFSC Code"
-                name="ifscCode"
-                value={
-                  formData.bank.ifscCode
-                }
-                onChange={
-                  handleBankChange
-                }
-                placeholder="IFSC code"
-              />
+                <InputField
+                  label="Bank Name"
+                  name="bankName"
+                  value={
+                    bankAccount?.bankName ||
+                    ""
+                  }
+                  placeholder="Bank name"
+                  icon={
+                    <Landmark size={16} />
+                  }
+                  disabled
+                />
 
 
-              {/* SWIFT */}
+                {/* ACCOUNT NAME */}
 
-              <InputField
-                label="SWIFT Code"
-                name="swiftCode"
-                value={
-                  formData.bank.swiftCode
-                }
-                onChange={
-                  handleBankChange
-                }
-                placeholder="SWIFT code"
-              />
+                <InputField
+                  label="Account Name"
+                  name="accountName"
+                  value={
+                    bankAccount?.accountName ||
+                    ""
+                  }
+                  placeholder="Account holder name"
+                  icon={
+                    <User size={16} />
+                  }
+                  disabled
+                />
 
-            </div>
+
+                {/* ACCOUNT NUMBER */}
+
+                <InputField
+                  label="Account Number"
+                  name="accountNumber"
+                  value={
+                    bankAccount?.accountNumber ||
+                    ""
+                  }
+                  placeholder="Account number"
+                  icon={
+                    <CreditCard size={16} />
+                  }
+                  disabled
+                />
+
+
+                {/* IFSC */}
+
+                <InputField
+                  label="IFSC Code"
+                  name="ifscCode"
+                  value={
+                    bankAccount?.ifscCode ||
+                    ""
+                  }
+                  placeholder="IFSC code"
+                  disabled
+                />
+
+
+                {/* SWIFT */}
+
+                <InputField
+                  label="SWIFT Code"
+                  name="swiftCode"
+                  value={
+                    bankAccount?.swiftCode ||
+                    ""
+                  }
+                  placeholder="SWIFT code"
+                  disabled
+                />
+
+              </div>
+
+            )}
+
           </div>
 
 
@@ -906,6 +1100,7 @@ const CreateInvoice = () => {
             <div className="mb-4 flex items-center justify-between">
 
               <div>
+
                 <h2 className="text-base font-semibold text-slate-900">
                   Invoice Summary
                 </h2>
@@ -913,12 +1108,18 @@ const CreateInvoice = () => {
                 <p className="text-xs text-slate-500">
                   Automatically calculated
                 </p>
+
               </div>
 
+
               <div className="rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
-                Tax {Number(
+
+                Tax{" "}
+                {Number(
                   formData.taxPercentage
-                ) || 0}%
+                ) || 0}
+                %
+
               </div>
 
             </div>
@@ -953,9 +1154,11 @@ const CreateInvoice = () => {
                   </span>
 
                   <span className="text-xl font-bold text-violet-600">
+
                     {formatCurrency(
                       totalAmount
                     )}
+
                   </span>
 
                 </div>
@@ -963,6 +1166,7 @@ const CreateInvoice = () => {
               </div>
 
             </div>
+
           </div>
 
 
@@ -974,7 +1178,9 @@ const CreateInvoice = () => {
 
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() =>
+                navigate(-1)
+              }
               disabled={creating}
               className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
@@ -984,11 +1190,16 @@ const CreateInvoice = () => {
 
             <button
               type="submit"
-              disabled={creating}
+              disabled={
+                creating ||
+                bankLoading ||
+                !bankAccount
+              }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
 
               {creating ? (
+
                 <>
                   <Loader2
                     size={17}
@@ -997,12 +1208,15 @@ const CreateInvoice = () => {
 
                   Creating...
                 </>
+
               ) : (
+
                 <>
                   <Save size={17} />
 
                   Create Invoice
                 </>
+
               )}
 
             </button>
@@ -1012,6 +1226,7 @@ const CreateInvoice = () => {
         </form>
 
       </div>
+
     </div>
   );
 };
@@ -1032,8 +1247,11 @@ const SectionHeader = ({
       <div className="flex items-center gap-3">
 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100">
+
           {icon}
+
         </div>
+
 
         <div>
 
@@ -1069,6 +1287,7 @@ const InputField = ({
   icon,
   min,
   step,
+  disabled = false,
 }) => {
   return (
     <div>
@@ -1085,25 +1304,36 @@ const InputField = ({
 
       </label>
 
+
       <div className="relative">
 
         {icon && (
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+
             {icon}
+
           </span>
         )}
+
 
         <input
           type={type}
           name={name}
-          value={value ?? ""}
+          value={
+            value ?? ""
+          }
           onChange={onChange}
-          placeholder={placeholder}
+          placeholder={
+            placeholder
+          }
           required={required}
           min={min}
           step={step}
-          className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 ${
-            icon ? "pl-9" : ""
+          disabled={disabled}
+          className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-600 ${
+            icon
+              ? "pl-9"
+              : ""
           }`}
         />
 
@@ -1128,8 +1358,11 @@ const SelectField = ({
     <div>
 
       <label className="mb-1.5 block text-xs font-medium text-slate-700">
+
         {label}
+
       </label>
+
 
       <select
         value={value}

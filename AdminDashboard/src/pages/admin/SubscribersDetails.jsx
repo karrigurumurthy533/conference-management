@@ -889,28 +889,7 @@ const SubscribersDetails = () => {
           BACK BUTTON
       ================================================= */}
 
-      <div className="flex justify-start">
-
-        <motion.button
-          type="button"
-          whileHover={{
-            x: -2,
-          }}
-          whileTap={{
-            scale: 0.98,
-          }}
-          onClick={() =>
-            navigate(
-              "/admin/subscribers"
-            )
-          }
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[11px] font-semibold text-gray-600 shadow-sm transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600"
-        >
-          <ArrowLeft size={14} />
-          Back to Subscribers
-        </motion.button>
-
-      </div>
+   
 
     </motion.div>
   );

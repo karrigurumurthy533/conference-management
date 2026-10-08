@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+
 import {
   CalendarDays,
   CheckCircle2,
@@ -194,7 +194,7 @@ function Dashboard() {
         <UserPlus
           size={16}
           strokeWidth={2}
-          className="text-[#7C3AED]"
+          className="text-[#8138A2]"
         />
       );
     }
@@ -204,7 +204,7 @@ function Dashboard() {
         <UserRound
           size={16}
           strokeWidth={2}
-          className="text-[#7C3AED]"
+          className="text-[#8138A2]"
         />
       );
     }
@@ -214,7 +214,7 @@ function Dashboard() {
         <FileText
           size={16}
           strokeWidth={2}
-          className="text-[#7C3AED]"
+          className="text-[#8138A2]"
         />
       );
     }
@@ -224,7 +224,7 @@ function Dashboard() {
         <FileText
           size={16}
           strokeWidth={2}
-          className="text-[#7C3AED]"
+          className="text-[#8138A2]"
         />
       );
     }
@@ -233,7 +233,7 @@ function Dashboard() {
       <CalendarDays
         size={16}
         strokeWidth={2}
-        className="text-[#7C3AED]"
+        className="text-[#8138A2]"
       />
     );
   };
@@ -267,6 +267,7 @@ function Dashboard() {
           <div className="mt-5 animate-pulse rounded-xl border border-gray-100 bg-white">
             <div className="border-b border-gray-100 px-4 py-4">
               <div className="h-4 w-32 rounded bg-gray-200" />
+
               <div className="mt-2 h-3 w-64 rounded bg-gray-200" />
             </div>
 
@@ -279,6 +280,7 @@ function Dashboard() {
 
                 <div className="flex-1">
                   <div className="h-3 w-48 rounded bg-gray-200" />
+
                   <div className="mt-2 h-3 w-72 rounded bg-gray-200" />
                 </div>
               </div>
@@ -309,7 +311,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={fetchDashboard}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#7C3AED] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#6D28D9]"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#8138A2] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#8138A2]"
             >
               <RefreshCw size={14} />
               Try Again
@@ -376,7 +378,7 @@ function Dashboard() {
                     <Icon
                       size={18}
                       strokeWidth={2}
-                      className="text-[#7C3AED]"
+                      className="text-[#8138A2]"
                     />
                   </div>
                 </div>
@@ -445,7 +447,7 @@ function Dashboard() {
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
                 <CalendarDays
                   size={18}
-                  className="text-[#7C3AED]"
+                  className="text-[#8138A2]"
                 />
               </div>
 
@@ -513,7 +515,7 @@ function Dashboard() {
                             py-0.5
                             text-[9px]
                             font-medium
-                            text-[#7C3AED]
+                            text-[#8138A2]
                           "
                         >
                           {type}

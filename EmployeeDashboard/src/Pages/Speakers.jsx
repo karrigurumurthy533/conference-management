@@ -282,137 +282,217 @@ const cardVariants = {
 // SPEAKER CARD
 // ======================================================
 
+// ======================================================
+// SIMPLE SPEAKER CARD
+// ======================================================
+
 function SpeakerCard({ speaker, onViewProfile }) {
   return (
     <motion.div
       variants={cardVariants}
       whileHover={{
-        y: -6,
+        y: -4,
         transition: {
-          duration: 0.25,
+          duration: 0.2,
         },
       }}
-      className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-xl"
+      className="
+        group
+        rounded-2xl
+        border
+        border-gray-100
+        bg-white
+        px-4
+        py-5
+        text-center
+        shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+        transition-all
+        duration-300
+        hover:border-[#8138A2]/20
+        hover:shadow-[0_6px_20px_rgba(129,56,162,0.10)]
+      "
     >
-      {/* IMAGE */}
+      {/* ==================================================
+          PROFILE IMAGE
+      ================================================== */}
 
-      <div className="relative h-64 overflow-hidden bg-gradient-to-br from-violet-100 via-purple-50 to-white">
-        {speaker.image ? (
-          <img
-            src={speaker.image}
-            alt={speaker.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-
-              const fallback =
-                event.currentTarget.parentElement.querySelector(
-                  ".speaker-fallback"
-                );
-
-              if (fallback) {
-                fallback.classList.remove("hidden");
-              }
-            }}
-          />
-        ) : null}
-
+      <div className="flex justify-center">
         <div
-          className={`speaker-fallback flex h-full w-full items-center justify-center ${
-            speaker.image ? "hidden" : ""
-          }`}
+          className="
+            relative
+            h-24
+            w-24
+            overflow-hidden
+            rounded-full
+            border-4
+            border-purple-50
+            bg-purple-50
+            shadow-sm
+          "
         >
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-violet-600 text-3xl font-bold text-white shadow-lg">
+          {speaker.image ? (
+            <img
+              src={speaker.image}
+              alt={speaker.name}
+              className="
+                h-full
+                w-full
+                object-cover
+                transition-transform
+                duration-500
+                group-hover:scale-105
+              "
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+
+                const fallback =
+                  event.currentTarget.parentElement.querySelector(
+                    ".speaker-fallback"
+                  );
+
+                if (fallback) {
+                  fallback.classList.remove("hidden");
+                }
+              }}
+            />
+          ) : null}
+
+          {/* FALLBACK */}
+
+          <div
+            className={`
+              speaker-fallback
+              flex
+              h-full
+              w-full
+              items-center
+              justify-center
+              bg-[#8138A2]
+              text-xl
+              font-bold
+              text-white
+              ${speaker.image ? "hidden" : ""}
+            `}
+          >
             {getInitials(speaker.name)}
           </div>
         </div>
-
-        {/* CATEGORY */}
-
-        {speaker.category && (
-          <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm backdrop-blur">
-            {speaker.category}
-          </div>
-        )}
       </div>
 
-      {/* CONTENT */}
+      {/* ==================================================
+          SPEAKER DETAILS
+      ================================================== */}
 
-      <div className="p-5">
-        <h3 className="line-clamp-1 text-lg font-bold text-gray-900">
+      <div className="mt-4">
+        <h3
+          className="
+            truncate
+            text-[15px]
+            font-semibold
+            text-gray-900
+          "
+          title={speaker.name}
+        >
           {speaker.name}
         </h3>
 
         {speaker.designation && (
-          <p className="mt-1 line-clamp-2 text-sm font-medium text-violet-600">
+          <p
+            className="
+              mt-1
+              truncate
+              text-[12px]
+              font-medium
+              text-[#8138A2]
+            "
+            title={speaker.designation}
+          >
             {speaker.designation}
           </p>
         )}
 
         {speaker.organization && (
-          <div className="mt-3 flex items-start gap-2 text-sm text-gray-600">
-            <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+          <div
+            className="
+              mt-2
+              flex
+              items-center
+              justify-center
+              gap-1.5
+              text-[11px]
+              text-gray-500
+            "
+            title={speaker.organization}
+          >
+            <Building2
+              size={13}
+              className="shrink-0 text-gray-400"
+            />
 
-            <span className="line-clamp-2">
+            <span className="truncate">
               {speaker.organization}
             </span>
           </div>
         )}
 
         {(speaker.city || speaker.country) && (
-          <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-            <MapPin className="h-4 w-4 shrink-0 text-violet-500" />
+          <div
+            className="
+              mt-1.5
+              flex
+              items-center
+              justify-center
+              gap-1.5
+              text-[11px]
+              text-gray-400
+            "
+          >
+            <MapPin
+              size={12}
+              className="shrink-0"
+            />
 
-            <span className="line-clamp-1">
+            <span className="truncate">
               {[speaker.city, speaker.country]
                 .filter(Boolean)
                 .join(", ")}
             </span>
           </div>
         )}
+      </div>
 
-        {/* ACTIONS */}
+      {/* ==================================================
+          ACTION
+      ================================================== */}
 
-        <div className="mt-5 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onViewProfile(speaker)}
-            className="flex-1 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
-          >
-            View Profile
-          </button>
-
-          {speaker.email && (
-            <a
-              href={`mailto:${speaker.email}`}
-              title="Email speaker"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
-            >
-              <Mail className="h-4 w-4" />
-            </a>
-          )}
-
-          {speaker.linkedin && (
-            <a
-              href={speaker.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="LinkedIn"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white transition hover:border-violet-200 hover:bg-violet-50"
-            >
-              <img
-                src="/linkedin.svg"
-                alt="LinkedIn"
-                className="h-5 w-5 object-contain"
-              />
-            </a>
-          )}
-        </div>
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={() => onViewProfile(speaker)}
+          className="
+            inline-flex
+            h-8
+            items-center
+            justify-center
+            rounded-lg
+            border
+            border-[#8138A2]/20
+            bg-purple-50
+            px-4
+            text-[11px]
+            font-semibold
+            text-[#8138A2]
+            transition
+            hover:bg-[#8138A2]
+            hover:text-white
+          "
+        >
+          View Profile
+        </button>
       </div>
     </motion.div>
   );
 }
-
 // ======================================================
 // PROFILE MODAL
 // ======================================================
@@ -803,191 +883,7 @@ function Speakers() {
 
   return (
     <div className="min-h-screen bg-[#f7f7fb]">
-      {/* ==================================================
-          SEARCH / FILTER
-      ================================================== */}
-
-      <div className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-[1400px] px-6 py-5">
-          <div className="flex flex-col gap-3 lg:flex-row">
-            {/* SEARCH */}
-
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-              <input
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Search speakers by name, organization, country..."
-                className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
-              />
-            </div>
-
-            {/* FILTER BUTTON */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowFilters(
-                  (previous) => !previous
-                )
-              }
-              className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-5 text-sm font-semibold transition ${
-                showFilters
-                  ? "border-violet-200 bg-violet-50 text-violet-700"
-                  : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-
-              Filters
-
-              {(categoryFilter !== "All" ||
-                countryFilter !== "All") && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
-                  {
-                    [
-                      categoryFilter !== "All",
-                      countryFilter !== "All",
-                    ].filter(Boolean).length
-                  }
-                </span>
-              )}
-
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  showFilters
-                    ? "rotate-180"
-                    : ""
-                }`}
-              />
-            </button>
-
-            {/* REFRESH */}
-
-            <button
-              type="button"
-              onClick={fetchSpeakers}
-              disabled={loading}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${
-                  loading
-                    ? "animate-spin"
-                    : ""
-                }`}
-              />
-
-              Refresh
-            </button>
-          </div>
-
-          {/* FILTERS */}
-
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  height: 0,
-                  y: -10,
-                }}
-                animate={{
-                  opacity: 1,
-                  height: "auto",
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  height: 0,
-                  y: -10,
-                }}
-                transition={{
-                  duration: 0.25,
-                }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-2">
-                  {/* CATEGORY */}
-
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Category
-                    </label>
-
-                    <select
-                      value={categoryFilter}
-                      onChange={(event) =>
-                        setCategoryFilter(
-                          event.target.value
-                        )
-                      }
-                      className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                    >
-                      {categories.map(
-                        (category) => (
-                          <option
-                            key={category}
-                            value={category}
-                          >
-                            {category}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-
-                  {/* COUNTRY */}
-
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Country
-                    </label>
-
-                    <select
-                      value={countryFilter}
-                      onChange={(event) =>
-                        setCountryFilter(
-                          event.target.value
-                        )
-                      }
-                      className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                    >
-                      {countries.map(
-                        (country) => (
-                          <option
-                            key={country}
-                            value={country}
-                          >
-                            {country}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-                </div>
-
-                {hasFilters && (
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-700"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear filters
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+  
 
       {/* ==================================================
           CONTENT

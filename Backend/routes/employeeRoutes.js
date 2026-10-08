@@ -1,6 +1,8 @@
 const express = require("express");
 
 const employeeController = require("../controllers/EmployeeController");
+
+const employeeAttendanceController = require("../controllers/employeeAttendanceController");
 const employeeAuthMiddleware = require("../middlewares/employeeAuthMiddleware");
 
 
@@ -68,5 +70,57 @@ router.get(
     employeeAuthMiddleware,
     employeeController.getEmployeeDashboard
 );
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Employee Attendance Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * Clock In
+ * POST /api/employee-attendance/clock-in
+ */
+router.post(
+  "/clock-in",
+  employeeAuthMiddleware,
+  employeeAttendanceController.clockIn
+);
+
+/*
+ * Clock Out
+ * POST /api/employee-attendance/clock-out
+ */
+router.post(
+  "/clock-out",
+  employeeAuthMiddleware,
+  employeeAttendanceController.clockOut
+);
+
+/*
+ * Get Today's Attendance
+ * GET /api/employee-attendance/today
+ */
+router.get(
+  "/today",
+  employeeAuthMiddleware,
+  employeeAttendanceController.getTodayAttendance
+);
+
+/*
+ * Get Monthly Attendance
+ * GET /api/employee-attendance/monthly?month=10&year=2026
+ */
+router.get(
+  "/monthly",
+  employeeAuthMiddleware,
+  employeeAttendanceController.getMonthlyAttendance
+);
+
+
 
 module.exports = router;

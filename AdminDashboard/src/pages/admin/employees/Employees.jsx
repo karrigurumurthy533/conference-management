@@ -1,4 +1,3 @@
-
 import React, {
   useEffect,
   useMemo,
@@ -19,6 +18,7 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 
 import { createPortal } from "react-dom";
@@ -64,6 +64,10 @@ const Employees = () => {
       top: 0,
       left: 0,
     });
+
+  // Delete confirmation modal
+  const [deleteEmployeeData, setDeleteEmployeeData] =
+    useState(null);
 
   const actionButtonRef = useRef(null);
   const actionMenuRef = useRef(null);
@@ -377,6 +381,10 @@ const Employees = () => {
   ) => {
     event.stopPropagation();
 
+    if (!employeeId) {
+      return;
+    }
+
     if (openActionId === employeeId) {
       setOpenActionId(null);
       return;
@@ -401,11 +409,7 @@ const Employees = () => {
     let top =
       rect.bottom + spacing;
 
-    // Keep popup inside viewport horizontally
-    if (
-      left <
-      8
-    ) {
+    if (left < 8) {
       left = 8;
     }
 
@@ -419,7 +423,6 @@ const Employees = () => {
         8;
     }
 
-    // If not enough space below, show above
     if (
       top + menuHeight >
       window.innerHeight - 8
@@ -472,10 +475,7 @@ const Employees = () => {
       let top =
         rect.bottom + spacing;
 
-      if (
-        left <
-        8
-      ) {
+      if (left < 8) {
         left = 8;
       }
 
@@ -633,32 +633,44 @@ const Employees = () => {
   };
 
   // ============================================================
-  // DELETE EMPLOYEE
+  // OPEN DELETE CONFIRMATION
   // ============================================================
 
-  const handleDelete = async (employee) => {
+  const handleDelete = (employee) => {
     closeActionMenu();
 
     const employeeId =
       employee?._id;
 
     if (!employeeId) {
-      window.alert(
-        "Employee ID not found."
-      );
-
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete ${
-          employee?.fullName ||
-          "this employee"
-        }?`
-      );
+    setDeleteEmployeeData(employee);
+  };
 
-    if (!confirmed) {
+  // ============================================================
+  // CLOSE DELETE CONFIRMATION
+  // ============================================================
+
+  const handleCancelDelete = () => {
+    if (deleteLoading) {
+      return;
+    }
+
+    setDeleteEmployeeData(null);
+  };
+
+  // ============================================================
+  // CONFIRM DELETE
+  // ============================================================
+
+  const handleConfirmDelete = async () => {
+    const employeeId =
+      deleteEmployeeData?._id;
+
+    if (!employeeId) {
+      setDeleteEmployeeData(null);
       return;
     }
 
@@ -666,6 +678,8 @@ const Employees = () => {
       await dispatch(
         deleteEmployee(employeeId)
       ).unwrap();
+
+      setDeleteEmployeeData(null);
 
       dispatch(getEmployees());
     } catch (deleteError) {
@@ -675,6 +689,40 @@ const Employees = () => {
       );
     }
   };
+
+  // ============================================================
+  // CLOSE DELETE MODAL WITH ESC
+  // ============================================================
+
+  useEffect(() => {
+    if (!deleteEmployeeData) {
+      return;
+    }
+
+    const handleKeyDown = (event) => {
+      if (
+        event.key === "Escape" &&
+        !deleteLoading
+      ) {
+        setDeleteEmployeeData(null);
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [
+    deleteEmployeeData,
+    deleteLoading,
+  ]);
 
   // ============================================================
   // STATUS STYLE
@@ -1010,43 +1058,29 @@ const Employees = () => {
 
                 <tr className="border-b border-gray-100 bg-gray-50/80">
 
-                  {/* 21% */}
-
                   <th className="w-[21%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Employee Name
                   </th>
-
-                  {/* 12% */}
 
                   <th className="w-[12%] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Phone
                   </th>
 
-                  {/* 23% */}
-
                   <th className="w-[23%] pl-1 pr-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Conference Name
                   </th>
-
-                  {/* 15% */}
 
                   <th className="w-[15%] px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Last Login
                   </th>
 
-                  {/* 15% */}
-
                   <th className="w-[15%] px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Last Logout
                   </th>
 
-                  {/* 8% */}
-
                   <th className="w-[8%] px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Status
                   </th>
-
-                  {/* 6% */}
 
                   <th className="w-[6%] px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Actions
@@ -1154,9 +1188,7 @@ const Employees = () => {
                           className="animate-[fadeUp_0.35s_ease-out_both] border-b border-gray-100 last:border-0 transition duration-200 hover:bg-violet-50/30"
                         >
 
-                          {/* ==================================================
-                              EMPLOYEE
-                          ================================================== */}
+                          {/* EMPLOYEE */}
 
                           <td className="px-4 py-3 align-top">
 
@@ -1200,9 +1232,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              PHONE
-                          ================================================== */}
+                          {/* PHONE */}
 
                           <td className="px-3 py-3 align-top">
 
@@ -1213,9 +1243,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              CONFERENCE
-                          ================================================== */}
+                          {/* CONFERENCE */}
 
                           <td className="pl-1 pr-3 py-3 align-top">
 
@@ -1232,9 +1260,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              LAST LOGIN
-                          ================================================== */}
+                          {/* LAST LOGIN */}
 
                           <td className="px-2 py-3 align-top">
 
@@ -1248,9 +1274,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              LAST LOGOUT
-                          ================================================== */}
+                          {/* LAST LOGOUT */}
 
                           <td className="px-2 py-3 align-top">
 
@@ -1264,9 +1288,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              STATUS
-                          ================================================== */}
+                          {/* STATUS */}
 
                           <td className="px-2 py-3 align-top text-center">
 
@@ -1280,9 +1302,7 @@ const Employees = () => {
 
                           </td>
 
-                          {/* ==================================================
-                              ACTIONS
-                          ================================================== */}
+                          {/* ACTIONS */}
 
                           <td className="px-2 py-3 align-top">
 
@@ -1298,10 +1318,12 @@ const Employees = () => {
                                 }
                                 className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-semibold text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
                               >
+
                                 <MoreVertical
                                   size={15}
                                   strokeWidth={2}
                                 />
+
                               </button>
 
                             </div>
@@ -1362,8 +1384,6 @@ const Employees = () => {
 
             <div className="flex items-center gap-1">
 
-              {/* PREVIOUS */}
-
               <button
                 type="button"
                 disabled={
@@ -1388,8 +1408,6 @@ const Employees = () => {
                   size={15}
                 />
               </button>
-
-              {/* PAGE NUMBERS */}
 
               {Array.from(
                 {
@@ -1420,8 +1438,6 @@ const Employees = () => {
                   {page}
                 </button>
               ))}
-
-              {/* NEXT */}
 
               <button
                 type="button"
@@ -1459,7 +1475,6 @@ const Employees = () => {
 
       {/* ========================================================
           ACTION POPUP - PORTAL
-          This will appear above table/overflow
       ======================================================== */}
 
       {openActionId &&
@@ -1544,9 +1559,7 @@ const Employees = () => {
                 size={15}
               />
 
-              {deleteLoading
-                ? "Deleting..."
-                : "Delete"}
+              Delete
 
             </button>
 
@@ -1556,7 +1569,173 @@ const Employees = () => {
         )}
 
       {/* ========================================================
-          ANIMATIONS + SCROLLBAR HIDE
+          DELETE CONFIRMATION MODAL
+      ======================================================== */}
+
+      {deleteEmployeeData &&
+        typeof document !==
+          "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]"
+            onMouseDown={(event) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                handleCancelDelete();
+              }
+            }}
+          >
+
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-employee-title"
+              className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_25px_70px_rgba(15,23,42,0.25)] animate-[modalIn_0.2s_ease-out]"
+              onMouseDown={(event) =>
+                event.stopPropagation()
+              }
+            >
+
+              {/* MODAL HEADER */}
+
+              <div className="px-5 pt-5">
+
+                <div className="flex items-start gap-3">
+
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
+
+                    <AlertTriangle
+                      size={20}
+                      strokeWidth={2.2}
+                      className="text-red-500"
+                    />
+
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <h2
+                      id="delete-employee-title"
+                      className="text-[15px] font-bold text-gray-900"
+                    >
+                      Delete Employee
+                    </h2>
+
+                    <p className="mt-1 text-[11px] leading-5 text-gray-500">
+                      Are you sure you want to delete this employee? This action cannot be undone.
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      handleCancelDelete
+                    }
+                    disabled={
+                      deleteLoading
+                    }
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <X size={15} />
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* EMPLOYEE INFO */}
+
+              <div className="mx-5 mt-4 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[11px] font-bold text-violet-600">
+
+                    {getInitials(
+                      deleteEmployeeData?.fullName
+                    )}
+
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p className="truncate text-[12px] font-semibold text-gray-800">
+                      {deleteEmployeeData?.fullName ||
+                        "Unnamed Employee"}
+                    </p>
+
+                    <p className="mt-0.5 truncate text-[10px] text-gray-400">
+                      {deleteEmployeeData?.email ||
+                        "-"}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="flex items-center justify-end gap-2 px-5 py-4">
+
+                <button
+                  type="button"
+                  onClick={
+                    handleCancelDelete
+                  }
+                  disabled={
+                    deleteLoading
+                  }
+                  className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleConfirmDelete
+                  }
+                  disabled={
+                    deleteLoading
+                  }
+                  className="inline-flex h-9 min-w-[105px] items-center justify-center gap-2 rounded-lg bg-red-500 px-4 text-[11px] font-semibold text-white shadow-sm transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+
+                  {deleteLoading ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2
+                        size={14}
+                        strokeWidth={2.2}
+                      />
+
+                      Delete
+                    </>
+                  )}
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>,
+
+          document.body
+        )}
+
+      {/* ========================================================
+          ANIMATIONS + SCROLLBAR
       ======================================================== */}
 
       <style>{`
@@ -1583,7 +1762,18 @@ const Employees = () => {
           }
         }
 
-        /* Hide horizontal scrollbar */
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;

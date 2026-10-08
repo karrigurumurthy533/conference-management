@@ -1,52 +1,70 @@
 const mongoose = require("mongoose");
 
+const attendanceDaySchema = new mongoose.Schema(
+  {
+    date: {
+      type: Date,
+      required: true,
+    },
+
+    checkIn: {
+      type: Date,
+      default: null,
+    },
+
+    checkOut: {
+      type: Date,
+      default: null,
+    },
+
+    status: {
+      type: String,
+      enum: ["Present", "Absent", "Leave", "Half Day"],
+      default: "Present",
+    },
+
+    workingHours: {
+      type: Number,
+      default: 0,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const attendanceSchema = new mongoose.Schema(
   {
-    conferenceId: {
+    employee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: true,
+      index: true,
+    },
+
+    conference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Conference",
-      required: true,
-    },
-
-    registrationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Registration",
-      required: true,
-    },
-
-    attendeeName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    email: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-    },
-
-    checkInTime: {
-      type: Date,
       default: null,
     },
 
-    checkOutTime: {
-      type: Date,
-      default: null,
+    year: {
+      type: Number,
+      required: true,
+      index: true,
     },
 
-    attendanceStatus: {
-      type: String,
-      enum: ["Present", "Absent"],
-      default: "Absent",
+    month: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 12,
+      index: true,
     },
 
-    checkInMethod: {
-      type: String,
-      enum: ["QR", "Manual"],
-      default: "Manual",
+    days: {
+      type: [attendanceDaySchema],
+      default: [],
     },
   },
   {
@@ -54,10 +72,12 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
+// One employee can have only one document for one month
 attendanceSchema.index(
   {
-    conferenceId: 1,
-    registrationId: 1,
+    employee: 1,
+    year: 1,
+    month: 1,
   },
   {
     unique: true,

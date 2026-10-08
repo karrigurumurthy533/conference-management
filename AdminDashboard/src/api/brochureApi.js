@@ -1,6 +1,4 @@
-
 import axiosInstance from "../redux/axiosInstance";
-
 
 /* =========================================================
    UPLOAD BROCHURE
@@ -71,6 +69,7 @@ export const updateBrochureApi = async (
 
 /* =========================================================
    DELETE BROCHURE
+   Deletes uploaded brochure document
 ========================================================= */
 
 export const deleteBrochureApi = async (id) => {
@@ -116,6 +115,26 @@ export const getBrochureDownloadRequestByIdApi =
 
     return response.data;
   };
+
+
+/* =========================================================
+   DELETE DOWNLOAD BROCHURE REQUEST
+   Deletes record from downloadbrochures collection
+========================================================= */
+
+export const deleteDownloadBrochureApi = async (id) => {
+  if (!id) {
+    throw new Error(
+      "Download brochure ID is required"
+    );
+  }
+
+  const response = await axiosInstance.delete(
+    `/admin/brochures/download-requests/${id}`
+  );
+
+  return response.data;
+};
 
 
 /* =========================================================

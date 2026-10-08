@@ -38,6 +38,7 @@ import Subscribers from "./pages/admin/Subscribers";
 import SubscribersDetails from "./pages/admin/SubscribersDetails";
 import CreateInvoice from "./pages/admin/createInvoice";
 import InvoiceDetails from "./pages/admin/InvoiceDetails";
+import EmployeeAttendance from "./pages/admin/EmployeeAttendance";
 
 function App() {
   return (
@@ -73,6 +74,11 @@ function App() {
         <Route
           path="/admin/employees/:employeeId"
           element={<EmployeeDetailsPage />}
+        />
+
+        <Route
+          path="/admin/employee-attendance"
+          element={<EmployeeAttendance />}
         />
 
         <Route path="/admin/registrations" element={<Registrations />} />
@@ -114,6 +120,7 @@ function App() {
         />
 
         <Route path="/admin/speakers/add" element={<AddSpeakersPage />} />
+        <Route path="/admin/speakers/add/:id" element={<AddSpeakersPage />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
         <Route path="/admin/reviews/add" element={<AddReview />} />
         <Route path="/admin/reviews/add/:id" element={<AddReview />} />

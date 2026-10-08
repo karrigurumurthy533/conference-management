@@ -1,7 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { deleteAbstractApi, getAbstractByIdApi, getAbstractsApi } from "../api/abstarctsApi";
 
-
+import {
+  deleteAbstractApi,
+  getAbstractByIdApi,
+  getAbstractsApi,
+  downloadAbstractApi,
+} from "../api/abstarctsApi";
 
 /* =========================================================
    GET ALL ABSTRACTS
@@ -52,6 +56,30 @@ export const fetchAbstractById = createAsyncThunk(
 );
 
 /* =========================================================
+   DOWNLOAD ABSTRACT
+========================================================= */
+
+export const downloadAbstract = createAsyncThunk(
+  "abstracts/downloadAbstract",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response =
+        await downloadAbstractApi(id);
+
+      return (
+        response?.data?.data ||
+        response?.data
+      );
+    } catch (error) {
+      return rejectWithValue(
+        error?.response?.data?.message ||
+          "Failed to download abstract"
+      );
+    }
+  }
+);
+
+/* =========================================================
    DELETE ABSTRACT
 ========================================================= */
 
@@ -81,10 +109,12 @@ const initialState = {
 
   loading: false,
   detailsLoading: false,
+  downloadLoading: false,
   deleteLoading: false,
 
   error: "",
   detailsError: "",
+  downloadError: "",
   deleteError: "",
 };
 
@@ -109,6 +139,14 @@ const abstractsSlice = createSlice({
 
     clearAbstractDetailsError: (state) => {
       state.detailsError = "";
+    },
+
+    clearAbstractDownloadError: (state) => {
+      state.downloadError = "";
+    },
+
+    clearAbstractDeleteError: (state) => {
+      state.deleteError = "";
     },
   },
 
@@ -168,6 +206,7 @@ const abstractsSlice = createSlice({
         fetchAbstractById.fulfilled,
         (state, action) => {
           state.detailsLoading = false;
+
           state.selectedAbstract =
             action.payload;
         }
@@ -181,6 +220,38 @@ const abstractsSlice = createSlice({
           state.detailsError =
             action.payload ||
             "Failed to fetch abstract";
+        }
+      );
+
+    /* =====================================================
+       DOWNLOAD ABSTRACT
+    ===================================================== */
+
+    builder
+      .addCase(
+        downloadAbstract.pending,
+        (state) => {
+          state.downloadLoading = true;
+          state.downloadError = "";
+        }
+      )
+
+      .addCase(
+        downloadAbstract.fulfilled,
+        (state) => {
+          state.downloadLoading = false;
+          state.downloadError = "";
+        }
+      )
+
+      .addCase(
+        downloadAbstract.rejected,
+        (state, action) => {
+          state.downloadLoading = false;
+
+          state.downloadError =
+            action.payload ||
+            "Failed to download abstract";
         }
       );
 
@@ -230,10 +301,20 @@ const abstractsSlice = createSlice({
   },
 });
 
+/* =========================================================
+   ACTIONS
+========================================================= */
+
 export const {
   clearSelectedAbstract,
   clearAbstractError,
   clearAbstractDetailsError,
+  clearAbstractDownloadError,
+  clearAbstractDeleteError,
 } = abstractsSlice.actions;
+
+/* =========================================================
+   REDUCER
+========================================================= */
 
 export default abstractsSlice.reducer;

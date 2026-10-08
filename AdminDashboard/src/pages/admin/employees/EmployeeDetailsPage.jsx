@@ -203,16 +203,6 @@ const EmployeeDetailsPage = () => {
             {error}
           </p>
 
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/admin/employees")
-            }
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition hover:bg-red-100"
-          >
-            <ArrowLeft size={15} />
-            Back to Employees
-          </button>
         </div>
       </div>
     );
@@ -617,18 +607,6 @@ const EmployeeDetailsPage = () => {
           BOTTOM BACK BUTTON
       ===================================================== */}
 
-      <div className="mt-5">
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/admin/employees")
-          }
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-purple-200 hover:bg-purple-50 hover:text-[#7C3AED]"
-        >
-          <ArrowLeft size={15} />
-          Back to Employees
-        </button>
-      </div>
     </div>
   );
 };

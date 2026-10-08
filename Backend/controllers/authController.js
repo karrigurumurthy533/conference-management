@@ -518,7 +518,6 @@ exports.employeeLogin = catchAsync(async (req, res, next) => {
     });
 });
 
-
 exports.employeeLogout = catchAsync(async (req, res, next) => {
     // Employee ID can come from authenticated user
     const employeeId =

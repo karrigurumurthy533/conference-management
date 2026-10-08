@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -17,6 +18,7 @@ import {
   X,
   UploadCloud,
   Loader2,
+  Pencil,
 } from "lucide-react";
 
 import {
@@ -25,11 +27,46 @@ import {
   clearSpeakerSuccess,
 } from "../../redux/speakersSlice";
 
+import {
+  getSpeakerByIdApi,
+  updateSpeakerApi,
+} from "../../api/speakerApis";
+
 import { getConferences } from "../../redux/conferenceSlice";
+
+const EMPTY_FORM = {
+  conferenceId: "",
+  fullName: "",
+  designation: "",
+  speakerType: "Invited Speaker",
+  organization: "",
+  country: "",
+  bio: "",
+  email: "",
+  linkedin: "https://www.linkedin.com/in/",
+  website: "",
+  status: "Active",
+  displayOrder: 0,
+};
 
 const AddSpeakersPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const dispatch = useDispatch();
+
+  /*
+   * If id exists:
+   * /admin/speakers/add/:id
+   *
+   * Then this page is EDIT mode.
+   *
+   * Otherwise:
+   * /admin/speakers/add
+   *
+   * This page is CREATE mode.
+   */
+  const isEditMode = Boolean(id);
 
   const {
     createLoading,
@@ -42,50 +79,200 @@ const AddSpeakersPage = () => {
     loading: conferencesLoading,
   } = useSelector((state) => state.conference);
 
-  const [formData, setFormData] = useState({
-    conferenceId: "",
-    fullName: "",
-    designation: "",
-    speakerType: "Invited Speaker",
-    organization: "",
-    country: "",
-    bio: "",
-    email: "",
-    linkedin: "https://www.linkedin.com/in/",
-    website: "",
-    status: "Active",
-    displayOrder: 0,
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   const [imageFile, setImageFile] = useState(null);
+
   const [imagePreview, setImagePreview] = useState("");
 
   const [errors, setErrors] = useState({});
+
   const [dragActive, setDragActive] = useState(false);
 
+  const [pageLoading, setPageLoading] = useState(false);
+
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  /*
+   * Load conferences
+   */
   useEffect(() => {
     dispatch(getConferences());
   }, [dispatch]);
 
+  /*
+   * Clear redux errors when page changes
+   */
   useEffect(() => {
-    if (speakerError) {
-      console.error("Speaker API Error:", speakerError);
-    }
-  }, [speakerError]);
+    dispatch(clearSpeakerError());
+    dispatch(clearSpeakerSuccess());
+  }, [dispatch, id]);
 
+  /*
+   * Load speaker when EDIT mode
+   */
   useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        dispatch(clearSpeakerSuccess());
-      }, 3000);
-
-      return () => clearTimeout(timer);
+    if (!isEditMode) {
+      setFormData(EMPTY_FORM);
+      setImageFile(null);
+      setImagePreview("");
+      return;
     }
-  }, [success, dispatch]);
 
+    const fetchSpeaker = async () => {
+      try {
+        setPageLoading(true);
+
+        dispatch(clearSpeakerError());
+
+        const response = await getSpeakerByIdApi(id);
+
+        console.log(
+          "GET SPEAKER BY ID RESPONSE:",
+          response
+        );
+
+        const responseData = response?.data;
+
+        const speaker =
+          responseData?.data ||
+          responseData?.speaker ||
+          responseData;
+
+        if (!speaker) {
+          throw new Error(
+            "Speaker details not found"
+          );
+        }
+
+        /*
+         * conferenceId can be:
+         *
+         * "665..."
+         *
+         * OR
+         *
+         * {
+         *   _id: "665...",
+         *   title: "..."
+         * }
+         */
+        let conferenceId = "";
+
+        if (
+          speaker?.conferenceId &&
+          typeof speaker.conferenceId === "object"
+        ) {
+          conferenceId =
+            speaker.conferenceId?._id ||
+            speaker.conferenceId?.id ||
+            "";
+        } else {
+          conferenceId =
+            speaker?.conferenceId || "";
+        }
+
+        /*
+         * Populate every form field
+         */
+        setFormData({
+          conferenceId,
+
+          fullName:
+            speaker?.fullName || "",
+
+          designation:
+            speaker?.designation || "",
+
+          speakerType:
+            speaker?.speakerType ||
+            "Invited Speaker",
+
+          organization:
+            speaker?.organization || "",
+
+          country:
+            speaker?.country || "",
+
+          bio:
+            speaker?.bio || "",
+
+          email:
+            speaker?.email || "",
+
+          linkedin:
+            speaker?.linkedin ||
+            "https://www.linkedin.com/in/",
+
+          website:
+            speaker?.website || "",
+
+          status:
+            speaker?.status || "Active",
+
+          displayOrder:
+            speaker?.displayOrder ?? 0,
+        });
+
+        /*
+         * Existing Cloudinary image
+         *
+         * Your speaker list/details use imageUrl.
+         */
+        const existingImage =
+          speaker?.imageUrl ||
+          speaker?.image ||
+          speaker?.photoUrl ||
+          "";
+
+        if (existingImage) {
+          setImagePreview(existingImage);
+        } else {
+          setImagePreview("");
+        }
+
+        /*
+         * No local file when editing.
+         * Existing Cloudinary image is kept until
+         * user selects a new image.
+         */
+        setImageFile(null);
+
+      } catch (error) {
+        console.error(
+          "Fetch speaker for edit error:",
+          error
+        );
+
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load speaker details";
+
+        setErrors((prev) => ({
+          ...prev,
+          general: message,
+        }));
+
+        alert(message);
+
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    fetchSpeaker();
+  }, [id, isEditMode, dispatch]);
+
+  /*
+   * Clear image object URL only when it is a local blob.
+   */
   useEffect(() => {
     return () => {
-      if (imagePreview) {
+      if (
+        imagePreview &&
+        imagePreview.startsWith("blob:")
+      ) {
         URL.revokeObjectURL(imagePreview);
       }
     };
@@ -104,8 +291,16 @@ const AddSpeakersPage = () => {
     "Workshop Speaker",
   ];
 
+  /*
+   * =========================================
+   * FORM CHANGE
+   * =========================================
+   */
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
@@ -119,11 +314,23 @@ const AddSpeakersPage = () => {
       }));
     }
 
+    if (errors.general) {
+      setErrors((prev) => ({
+        ...prev,
+        general: "",
+      }));
+    }
+
     if (speakerError) {
       dispatch(clearSpeakerError());
     }
   };
 
+  /*
+   * =========================================
+   * IMAGE PROCESS
+   * =========================================
+   */
   const processImageFile = (file) => {
     if (!file) {
       return;
@@ -132,7 +339,8 @@ const AddSpeakersPage = () => {
     if (!file.type.startsWith("image/")) {
       setErrors((prev) => ({
         ...prev,
-        image: "Please upload a valid image file",
+        image:
+          "Please upload a valid image file",
       }));
 
       return;
@@ -141,19 +349,28 @@ const AddSpeakersPage = () => {
     if (file.size > 10 * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
-        image: "Image size must be less than 10MB",
+        image:
+          "Image size must be less than 10MB",
       }));
 
       return;
     }
 
-    if (imagePreview) {
+    /*
+     * Revoke previous local blob URL
+     */
+    if (
+      imagePreview &&
+      imagePreview.startsWith("blob:")
+    ) {
       URL.revokeObjectURL(imagePreview);
     }
 
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl =
+      URL.createObjectURL(file);
 
     setImageFile(file);
+
     setImagePreview(previewUrl);
 
     setErrors((prev) => ({
@@ -166,63 +383,89 @@ const AddSpeakersPage = () => {
     }
   };
 
+  /*
+   * =========================================
+   * IMAGE DROP
+   * =========================================
+   */
   const handleImageDrop = (e) => {
     e.preventDefault();
 
     setDragActive(false);
 
-    const file = e.dataTransfer.files?.[0];
+    const file =
+      e.dataTransfer.files?.[0];
 
     processImageFile(file);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
+
     setDragActive(true);
   };
 
   const handleDragLeave = (e) => {
     e.preventDefault();
+
     setDragActive(false);
   };
 
+  /*
+   * =========================================
+   * IMAGE SELECT
+   * =========================================
+   */
   const handleImageSelect = (e) => {
-    const file = e.target.files?.[0];
+    const file =
+      e.target.files?.[0];
 
     processImageFile(file);
 
     e.target.value = "";
   };
 
+  /*
+   * =========================================
+   * VALIDATION
+   * =========================================
+   */
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.conferenceId) {
-      newErrors.conferenceId = "Please select a conference";
+      newErrors.conferenceId =
+        "Please select a conference";
     }
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+      newErrors.fullName =
+        "Full name is required";
     }
 
     if (!formData.designation.trim()) {
-      newErrors.designation = "Designation is required";
+      newErrors.designation =
+        "Designation is required";
     }
 
     if (!formData.organization.trim()) {
-      newErrors.organization = "Organization is required";
+      newErrors.organization =
+        "Organization is required";
     }
 
     if (!formData.country.trim()) {
-      newErrors.country = "Country is required";
+      newErrors.country =
+        "Country is required";
     }
 
     if (!formData.bio.trim()) {
-      newErrors.bio = "Bio is required";
+      newErrors.bio =
+        "Bio is required";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email =
+        "Email is required";
     } else if (
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
         formData.email
@@ -239,9 +482,106 @@ const AddSpeakersPage = () => {
 
     setErrors(newErrors);
 
-    return Object.keys(newErrors).length === 0;
+    return (
+      Object.keys(newErrors).length === 0
+    );
   };
 
+  /*
+   * =========================================
+   * BUILD FORMDATA
+   * =========================================
+   */
+  const buildPayload = () => {
+    const payload =
+      new FormData();
+
+    payload.append(
+      "conferenceId",
+      formData.conferenceId
+    );
+
+    payload.append(
+      "fullName",
+      formData.fullName.trim()
+    );
+
+    payload.append(
+      "designation",
+      formData.designation.trim()
+    );
+
+    payload.append(
+      "speakerType",
+      formData.speakerType
+    );
+
+    payload.append(
+      "organization",
+      formData.organization.trim()
+    );
+
+    payload.append(
+      "country",
+      formData.country.trim()
+    );
+
+    payload.append(
+      "bio",
+      formData.bio.trim()
+    );
+
+    payload.append(
+      "email",
+      formData.email
+        .trim()
+        .toLowerCase()
+    );
+
+    payload.append(
+      "linkedin",
+      formData.linkedin.trim()
+    );
+
+    payload.append(
+      "website",
+      formData.website.trim()
+    );
+
+    payload.append(
+      "status",
+      formData.status
+    );
+
+    payload.append(
+      "displayOrder",
+      String(
+        Number(formData.displayOrder) || 0
+      )
+    );
+
+    /*
+     * Only send image if user selected
+     * a NEW image.
+     *
+     * If editing and no new image is selected,
+     * backend should preserve existing image.
+     */
+    if (imageFile) {
+      payload.append(
+        "image",
+        imageFile
+      );
+    }
+
+    return payload;
+  };
+
+  /*
+   * =========================================
+   * CREATE / UPDATE
+   * =========================================
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -250,106 +590,127 @@ const AddSpeakersPage = () => {
     }
 
     try {
-      const payload = new FormData();
+      setSubmitLoading(true);
 
-      payload.append(
-        "conferenceId",
-        formData.conferenceId
+      dispatch(clearSpeakerError());
+
+      const payload =
+        buildPayload();
+
+      console.log(
+        isEditMode
+          ? "Updating speaker..."
+          : "Creating speaker..."
       );
 
-      payload.append(
-        "fullName",
-        formData.fullName.trim()
+      console.log(
+        "Speaker ID:",
+        id
       );
 
-      payload.append(
-        "designation",
-        formData.designation.trim()
+      console.log(
+        "Image file:",
+        imageFile
       );
 
-      payload.append(
-        "speakerType",
-        formData.speakerType
-      );
+      if (isEditMode) {
+        /*
+         * UPDATE
+         */
+        await updateSpeakerApi(
+          id,
+          payload
+        );
 
-      payload.append(
-        "organization",
-        formData.organization.trim()
-      );
+        alert(
+          "Speaker updated successfully"
+        );
+      } else {
+        /*
+         * CREATE
+         */
+        await dispatch(
+          createSpeaker(payload)
+        ).unwrap();
 
-      payload.append(
-        "country",
-        formData.country.trim()
-      );
-
-      payload.append(
-        "bio",
-        formData.bio.trim()
-      );
-
-      payload.append(
-        "email",
-        formData.email.trim().toLowerCase()
-      );
-
-      payload.append(
-        "linkedin",
-        formData.linkedin.trim()
-      );
-
-      payload.append(
-        "website",
-        formData.website.trim()
-      );
-
-      payload.append(
-        "status",
-        formData.status
-      );
-
-      payload.append(
-        "displayOrder",
-        String(
-          Number(formData.displayOrder) || 0
-        )
-      );
-
-      if (imageFile) {
-        payload.append("image", imageFile);
+        alert(
+          "Speaker added successfully"
+        );
       }
 
-      console.log("Creating speaker...");
-      console.log("Image file:", imageFile);
-
-      await dispatch(
-        createSpeaker(payload)
-      ).unwrap();
-
-      alert("Speaker added successfully");
-
       navigate("/admin/speakers");
+
     } catch (error) {
       console.error(
-        "Create speaker error:",
+        isEditMode
+          ? "Update speaker error:"
+          : "Create speaker error:",
         error
       );
 
-      alert(
+      const message =
+        error?.response?.data?.message ||
         error?.message ||
-          error ||
-          "Failed to add speaker"
-      );
+        (isEditMode
+          ? "Failed to update speaker"
+          : "Failed to add speaker");
+
+      alert(message);
+
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
+  /*
+   * =========================================
+   * CANCEL
+   * =========================================
+   */
   const handleCancel = () => {
     navigate("/admin/speakers");
   };
 
+  /*
+   * =========================================
+   * LOADING EDIT DATA
+   * =========================================
+   */
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center">
+
+        <div className="flex flex-col items-center gap-2">
+
+          <Loader2
+            size={28}
+            className="animate-spin text-violet-600"
+          />
+
+          <p className="text-sm font-medium text-gray-600">
+            Loading speaker details...
+          </p>
+
+          <p className="text-xs text-gray-400">
+            Please wait
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-full w-full bg-gray-50 p-3 sm:p-4 lg:p-5">
+
+      {/* =========================================
+          HEADER
+      ========================================== */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
         <div className="flex items-center gap-3">
+
           <button
             type="button"
             onClick={() =>
@@ -361,40 +722,80 @@ const AddSpeakersPage = () => {
           </button>
 
           <div>
+
             <div className="flex items-center gap-2">
-              <UserPlus
-                size={19}
-                className="text-violet-600"
-              />
+
+              {isEditMode ? (
+                <Pencil
+                  size={19}
+                  className="text-violet-600"
+                />
+              ) : (
+                <UserPlus
+                  size={19}
+                  className="text-violet-600"
+                />
+              )}
 
               <h1 className="text-[18px] font-bold text-gray-900">
-                Add Speaker
+
+                {isEditMode
+                  ? "Edit Speaker"
+                  : "Add Speaker"}
+
               </h1>
+
             </div>
 
             <p className="mt-0.5 text-[11px] text-gray-500">
-              Add a new speaker to a conference
+
+              {isEditMode
+                ? "Update speaker details"
+                : "Add a new speaker to a conference"}
+
             </p>
+
           </div>
+
         </div>
+
       </div>
 
-      {speakerError && (
+      {/* =========================================
+          ERROR
+      ========================================== */}
+      {(speakerError ||
+        errors.general) && (
         <div className="mb-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+
           <p className="text-[11px] font-semibold text-red-600">
-            {speakerError}
+
+            {speakerError ||
+              errors.general}
+
           </p>
+
         </div>
       )}
 
+      {/* =========================================
+          FORM
+      ========================================== */}
       <form
         id="speaker-form"
         onSubmit={handleSubmit}
         className="space-y-4"
       >
+
+        {/* =========================================
+            BASIC INFORMATION
+        ========================================== */}
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+
           <div className="border-b border-gray-100 px-4 py-3">
+
             <div className="flex items-center gap-2">
+
               <User
                 size={16}
                 className="text-violet-600"
@@ -403,15 +804,20 @@ const AddSpeakersPage = () => {
               <h2 className="text-[13px] font-bold text-gray-800">
                 Basic Information
               </h2>
+
             </div>
 
             <p className="mt-0.5 text-[10px] text-gray-400">
               Enter the speaker's basic details.
             </p>
+
           </div>
 
           <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
+
+            {/* CONFERENCE */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Conference
                 <span className="ml-1 text-red-500">
@@ -430,6 +836,7 @@ const AddSpeakersPage = () => {
                     : "border-gray-200"
                 }`}
               >
+
                 <option value="">
                   {conferencesLoading
                     ? "Loading conferences..."
@@ -438,6 +845,7 @@ const AddSpeakersPage = () => {
 
                 {conferenceList.map(
                   (conference) => {
+
                     const conferenceId =
                       conference?._id;
 
@@ -466,6 +874,7 @@ const AddSpeakersPage = () => {
                     );
                   }
                 )}
+
               </select>
 
               {errors.conferenceId && (
@@ -473,9 +882,12 @@ const AddSpeakersPage = () => {
                   {errors.conferenceId}
                 </p>
               )}
+
             </div>
 
+            {/* FULL NAME */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Full Name
                 <span className="ml-1 text-red-500">
@@ -484,6 +896,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <User
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -501,6 +914,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.fullName && (
@@ -508,9 +922,12 @@ const AddSpeakersPage = () => {
                   {errors.fullName}
                 </p>
               )}
+
             </div>
 
+            {/* DESIGNATION */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Designation
                 <span className="ml-1 text-red-500">
@@ -519,6 +936,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <BriefcaseBusiness
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -536,6 +954,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.designation && (
@@ -543,9 +962,12 @@ const AddSpeakersPage = () => {
                   {errors.designation}
                 </p>
               )}
+
             </div>
 
+            {/* SPEAKER TYPE */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Speaker Type
                 <span className="ml-1 text-red-500">
@@ -559,6 +981,7 @@ const AddSpeakersPage = () => {
                 onChange={handleChange}
                 className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               >
+
                 {speakerTypes.map(
                   (type) => (
                     <option
@@ -569,10 +992,14 @@ const AddSpeakersPage = () => {
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
+            {/* ORGANIZATION */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Organization
                 <span className="ml-1 text-red-500">
@@ -581,6 +1008,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <Building2
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -598,6 +1026,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.organization && (
@@ -605,9 +1034,12 @@ const AddSpeakersPage = () => {
                   {errors.organization}
                 </p>
               )}
+
             </div>
 
+            {/* COUNTRY */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Country
                 <span className="ml-1 text-red-500">
@@ -616,6 +1048,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <Globe2
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -633,6 +1066,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.country && (
@@ -640,13 +1074,22 @@ const AddSpeakersPage = () => {
                   {errors.country}
                 </p>
               )}
+
             </div>
+
           </div>
+
         </div>
 
+        {/* =========================================
+            BIO
+        ========================================== */}
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+
           <div className="border-b border-gray-100 px-4 py-3">
+
             <div className="flex items-center gap-2">
+
               <FileText
                 size={16}
                 className="text-violet-600"
@@ -655,14 +1098,17 @@ const AddSpeakersPage = () => {
               <h2 className="text-[13px] font-bold text-gray-800">
                 Speaker Biography
               </h2>
+
             </div>
 
             <p className="mt-0.5 text-[10px] text-gray-400">
               Add a short professional biography.
             </p>
+
           </div>
 
           <div className="p-4">
+
             <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
               Bio
               <span className="ml-1 text-red-500">
@@ -684,6 +1130,7 @@ const AddSpeakersPage = () => {
             />
 
             <div className="mt-1 flex justify-between">
+
               {errors.bio ? (
                 <p className="text-[10px] text-red-500">
                   {errors.bio}
@@ -695,13 +1142,22 @@ const AddSpeakersPage = () => {
               <span className="text-[10px] text-gray-400">
                 {formData.bio.length} characters
               </span>
+
             </div>
+
           </div>
+
         </div>
 
+        {/* =========================================
+            CONTACT
+        ========================================== */}
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+
           <div className="border-b border-gray-100 px-4 py-3">
+
             <div className="flex items-center gap-2">
+
               <LinkIcon
                 size={16}
                 className="text-violet-600"
@@ -710,15 +1166,20 @@ const AddSpeakersPage = () => {
               <h2 className="text-[13px] font-bold text-gray-800">
                 Contact & Social Links
               </h2>
+
             </div>
 
             <p className="mt-0.5 text-[10px] text-gray-400">
               Website is optional. Other fields are required.
             </p>
+
           </div>
 
           <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
+
+            {/* EMAIL */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Email
                 <span className="ml-1 text-red-500">
@@ -727,6 +1188,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <Mail
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -744,6 +1206,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.email && (
@@ -751,9 +1214,12 @@ const AddSpeakersPage = () => {
                   {errors.email}
                 </p>
               )}
+
             </div>
 
+            {/* LINKEDIN */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 LinkedIn URL
                 <span className="ml-1 text-red-500">
@@ -762,6 +1228,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <img
                   src="/linkedin.svg"
                   alt="LinkedIn"
@@ -780,6 +1247,7 @@ const AddSpeakersPage = () => {
                       : "border-gray-200"
                   }`}
                 />
+
               </div>
 
               {errors.linkedin && (
@@ -787,9 +1255,12 @@ const AddSpeakersPage = () => {
                   {errors.linkedin}
                 </p>
               )}
+
             </div>
 
+            {/* WEBSITE */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Website
                 <span className="ml-1 text-[10px] font-normal text-gray-400">
@@ -798,6 +1269,7 @@ const AddSpeakersPage = () => {
               </label>
 
               <div className="relative">
+
                 <LinkIcon
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500"
@@ -811,10 +1283,14 @@ const AddSpeakersPage = () => {
                   placeholder="https://example.com"
                   className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                 />
+
               </div>
+
             </div>
 
+            {/* STATUS */}
             <div>
+
               <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
                 Status
                 <span className="ml-1 text-red-500">
@@ -828,6 +1304,7 @@ const AddSpeakersPage = () => {
                 onChange={handleChange}
                 className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               >
+
                 <option value="Active">
                   Active
                 </option>
@@ -835,14 +1312,42 @@ const AddSpeakersPage = () => {
                 <option value="Inactive">
                   Inactive
                 </option>
+
               </select>
+
             </div>
+
+            {/* DISPLAY ORDER */}
+            <div>
+
+              <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
+                Display Order
+              </label>
+
+              <input
+                type="number"
+                name="displayOrder"
+                value={formData.displayOrder}
+                onChange={handleChange}
+                min="0"
+                className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[12px] text-gray-700 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+
+            </div>
+
           </div>
+
         </div>
 
+        {/* =========================================
+            IMAGE
+        ========================================== */}
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+
           <div className="border-b border-gray-100 px-4 py-3">
+
             <div className="flex items-center gap-2">
+
               <Image
                 size={16}
                 className="text-violet-600"
@@ -851,14 +1356,21 @@ const AddSpeakersPage = () => {
               <h2 className="text-[13px] font-bold text-gray-800">
                 Profile Image
               </h2>
+
             </div>
 
             <p className="mt-0.5 text-[10px] text-gray-400">
-              Upload the speaker profile image to Cloudinary.
+
+              {isEditMode
+                ? "Current image is shown below. Select a new image only if you want to replace it."
+                : "Upload the speaker profile image to Cloudinary."}
+
             </p>
+
           </div>
 
           <div className="p-4">
+
             <label className="mb-1.5 block text-[11px] font-semibold text-gray-700">
               Profile Image
               <span className="ml-1 text-[10px] font-normal text-gray-400">
@@ -878,6 +1390,7 @@ const AddSpeakersPage = () => {
                     : "border-gray-200 hover:border-violet-300 hover:bg-violet-50"
               }`}
             >
+
               {imagePreview ? (
                 <img
                   src={imagePreview}
@@ -886,6 +1399,7 @@ const AddSpeakersPage = () => {
                 />
               ) : (
                 <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center px-4 text-center">
+
                   <UploadCloud
                     size={26}
                     className="mb-2 text-violet-500"
@@ -905,15 +1419,20 @@ const AddSpeakersPage = () => {
                     onChange={handleImageSelect}
                     className="hidden"
                   />
+
                 </label>
               )}
+
             </div>
 
             {imagePreview && (
               <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-[10px] font-semibold text-violet-600 hover:text-violet-700">
+
                 <UploadCloud size={12} />
 
-                Change Image
+                {isEditMode
+                  ? "Replace Image"
+                  : "Change Image"}
 
                 <input
                   type="file"
@@ -921,6 +1440,7 @@ const AddSpeakersPage = () => {
                   onChange={handleImageSelect}
                   className="hidden"
                 />
+
               </label>
             )}
 
@@ -933,47 +1453,65 @@ const AddSpeakersPage = () => {
             <p className="mt-2 text-[10px] text-gray-400">
               Maximum file size: 10MB
             </p>
+
           </div>
+
         </div>
 
+        {/* =========================================
+            BUTTONS
+        ========================================== */}
         <div className="flex items-center justify-end gap-2 pb-2">
+
           <button
             type="button"
             onClick={handleCancel}
-            disabled={createLoading}
+            disabled={submitLoading}
             className="flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
+
             <X size={14} />
+
             Cancel
+
           </button>
 
           <button
             type="submit"
             disabled={
-              createLoading ||
+              submitLoading ||
               conferencesLoading
             }
             className="flex h-10 items-center gap-1.5 rounded-lg bg-violet-600 px-5 text-[11px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {createLoading ? (
+
+            {submitLoading ? (
               <>
                 <Loader2
                   size={14}
                   className="animate-spin"
                 />
 
-                Saving...
+                {isEditMode
+                  ? "Updating..."
+                  : "Saving..."}
               </>
             ) : (
               <>
                 <Save size={14} />
 
-                Save Speaker
+                {isEditMode
+                  ? "Update Speaker"
+                  : "Save Speaker"}
               </>
             )}
+
           </button>
+
         </div>
+
       </form>
+
     </div>
   );
 };
