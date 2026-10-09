@@ -1154,10 +1154,10 @@ exports.getAllEmployees = async (req, res) => {
   try {
     const employees = await Employee.find()
       .select("-password")
-      .populate(
-        "assignedConferences",
-        "basicInformation conferenceDates venueInformation"
-      )
+      .populate({
+        path: "assignedConferences",
+        select: "title basicInformation conferenceDates venueInformation",
+      })
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -1175,7 +1175,6 @@ exports.getAllEmployees = async (req, res) => {
     });
   }
 };
-
 
 exports.getEmployeeById = async (req, res) => {
   try {

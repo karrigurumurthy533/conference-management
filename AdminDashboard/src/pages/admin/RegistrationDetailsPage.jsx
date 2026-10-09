@@ -1,6 +1,6 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-
 import {
   ArrowLeft,
   CalendarDays,
@@ -12,159 +12,89 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-
 import { useDispatch, useSelector } from "react-redux";
-
-import {
-  getRegistrationsByConferenceId,
-} from "../../redux/registrationsSlice";
+import { getRegistrationsByConferenceId } from "../../redux/registrationsSlice";
 
 const RegistrationDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const { registrationId } = useParams();
-
   const dispatch = useDispatch();
 
   const [currentPage, setCurrentPage] = useState(1);
-
   const usersPerPage = 10;
 
-  /* ============================================================
-     REDUX
-  ============================================================ */
-
+  // Redux state
   const {
-    registrations: reduxRegistrations,
-    loading,
-    error,
+    conferenceRegisteredUsers = [],
+    conferenceRegisteredLoading = false,
+    conferenceRegisteredError = null,
   } = useSelector((state) => state.registrations || {});
 
-  /* ============================================================
-     NORMALIZE REGISTRATIONS
-  ============================================================ */
+  const passedConference = location.state?.conference || {};
 
-  const registrations = useMemo(() => {
-    if (Array.isArray(reduxRegistrations)) {
-      return reduxRegistrations;
-    }
-
-    if (Array.isArray(reduxRegistrations?.data)) {
-      return reduxRegistrations.data;
-    }
-
-    if (Array.isArray(reduxRegistrations?.registrations)) {
-      return reduxRegistrations.registrations;
-    }
-
-    return [];
-  }, [reduxRegistrations]);
-
-  /* ============================================================
-     EXTRACT ID
-  ============================================================ */
-
+  // Extract ID safely
   const extractId = (value) => {
-    if (!value) {
-      return "";
-    }
+    if (!value) return "";
 
-    if (typeof value === "string") {
-      return value;
-    }
-
-    if (typeof value === "number") {
+    if (typeof value === "string" || typeof value === "number") {
       return String(value);
     }
 
-    if (value?._id) {
-      return String(value._id);
-    }
-
-    if (value?.id) {
-      return String(value.id);
+    if (typeof value === "object") {
+      return String(value._id || value.id || "");
     }
 
     return "";
   };
 
-  /* ============================================================
-     GET CONFERENCE ID
-  ============================================================ */
+  const selectedConferenceId =
+    extractId(passedConference.id) ||
+    extractId(passedConference._id) ||
+    extractId(passedConference.conferenceId) ||
+    extractId(passedConference.conferenceId?._id) ||
+    extractId(registrationId);
 
-  const getConferenceIdFromRegistration = (registration) => {
-    const possibleIds = [
-      registration?.conference?.conferenceId?._id,
-      registration?.conference?.conferenceId?.id,
-      registration?.conference?.conferenceId,
-      registration?.conference?._id,
-      registration?.conference?.id,
-      registration?.conferenceId?._id,
-      registration?.conferenceId?.id,
-      registration?.conferenceId,
-      registration?.conferenceID,
-      registration?.conference_id,
-    ];
+  // Fetch conference registrations
+  useEffect(() => {
+    if (selectedConferenceId) {
+      dispatch(getRegistrationsByConferenceId(selectedConferenceId));
+    }
+  }, [dispatch, selectedConferenceId]);
 
-    for (const value of possibleIds) {
-      const id = extractId(value);
+  // Reset pagination when conference changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedConferenceId]);
 
-      if (id) {
-        return id;
+  // Normalize API response
+  const registrations = useMemo(() => {
+    let value = conferenceRegisteredUsers;
+
+    for (let i = 0; i < 4; i += 1) {
+      if (Array.isArray(value)) {
+        return value;
       }
+
+      if (value && Array.isArray(value.data)) {
+        value = value.data;
+        continue;
+      }
+
+      if (value && Array.isArray(value.registrations)) {
+        value = value.registrations;
+        continue;
+      }
+
+      break;
     }
 
-    return "";
-  };
+    return Array.isArray(value) ? value : [];
+  }, [conferenceRegisteredUsers]);
 
-  /* ============================================================
-     GET CONFERENCE INFO
-  ============================================================ */
-
-  const getConferenceInfo = (registration) => {
-    return {
-      id: getConferenceIdFromRegistration(registration),
-
-      title:
-        registration?.conference?.title ||
-        registration?.conference?.conferenceId?.title ||
-        registration?.conferenceTitle ||
-        "Conference",
-
-      date:
-        registration?.conference?.date ||
-        registration?.conference?.conferenceId?.date ||
-        registration?.conference?.conferenceDates ||
-        registration?.conference?.conferenceId?.conferenceDates ||
-        "",
-
-      location:
-        registration?.conference?.location ||
-        registration?.conference?.conferenceId?.location ||
-        "",
-
-      conferenceIdObject:
-        registration?.conference?.conferenceId || null,
-    };
-  };
-
-  /* ============================================================
-     DATE FORMAT
-     
-     2027-04-06T00:00:00.000Z
-     ->
-     April 06, 2027
-     
-     2027-04-06T00:00:00.000Z - 2027-04-07T00:00:00.000Z
-     ->
-     April 06, 2027 - April 07, 2027
-  ============================================================ */
-
+  // Format individual date
   const formatSingleDate = (value) => {
-    if (!value) {
-      return "";
-    }
+    if (!value) return "";
 
     const date = new Date(value);
 
@@ -180,449 +110,244 @@ const RegistrationDetailsPage = () => {
     });
   };
 
+  // Format conference date range
   const formatConferenceDate = (value) => {
-    if (!value) {
-      return "";
-    }
+    if (!value) return "";
 
-    /* If date is an object */
-    if (
-      typeof value === "object" &&
-      !Array.isArray(value)
-    ) {
-      const startDate =
-        value?.startDate ||
-        value?.start ||
-        value?.from ||
-        value?.date;
+    if (typeof value === "object" && !Array.isArray(value)) {
+      const start =
+        value.startDate || value.start || value.from || value.date;
+      const end = value.endDate || value.end || value.to;
 
-      const endDate =
-        value?.endDate ||
-        value?.end ||
-        value?.to;
-
-      if (startDate && endDate) {
-        return `${formatSingleDate(startDate)} - ${formatSingleDate(
-          endDate
-        )}`;
+      if (start && end) {
+        return `${formatSingleDate(start)} - ${formatSingleDate(end)}`;
       }
 
-      if (startDate) {
-        return formatSingleDate(startDate);
-      }
-
-      return "";
+      return start ? formatSingleDate(start) : "";
     }
 
-    /* If date is an array */
     if (Array.isArray(value)) {
       return value
-        .map((item) => formatConferenceDate(item))
+        .map(formatConferenceDate)
         .filter(Boolean)
         .join(" - ");
     }
 
-    /* If date is already a string */
-    const stringValue = String(value).trim();
-
-    /*
-      Handle:
-
-      2027-04-06T00:00:00.000Z - 2027-04-07T00:00:00.000Z
-    */
+    const stringValue = String(value);
 
     if (stringValue.includes(" - ")) {
-      const [startDate, endDate] =
-        stringValue.split(" - ");
+      const [start, end] = stringValue.split(" - ");
 
-      return `${formatSingleDate(
-        startDate.trim()
-      )} - ${formatSingleDate(
-        endDate.trim()
+      return `${formatSingleDate(start.trim())} - ${formatSingleDate(
+        end.trim()
       )}`;
     }
-
-    /*
-      Handle:
-
-      2027-04-06T00:00:00.000Z
-    */
 
     return formatSingleDate(stringValue);
   };
 
-  /* ============================================================
-     SELECTED CONFERENCE FROM PREVIOUS PAGE
-  ============================================================ */
-
-  const passedConference =
-    location.state?.conference || {};
-
-  /* ============================================================
-     CONFERENCE ID FROM STATE
-  ============================================================ */
-
-  const stateConferenceId =
-    extractId(passedConference?.id) ||
-    extractId(passedConference?._id) ||
-    extractId(passedConference?.conferenceId) ||
-    extractId(
-      passedConference?.conferenceId?._id
-    ) ||
-    extractId(
-      passedConference?.conferenceId?.id
-    );
-
-  /* ============================================================
-     ROUTE PARAM AS CONFERENCE ID
-  ============================================================ */
-
-  const routeConferenceId =
-    extractId(registrationId);
-
-  /* ============================================================
-     SELECTED CONFERENCE ID
-  ============================================================ */
-
-  const selectedConferenceId =
-    stateConferenceId ||
-    routeConferenceId ||
-    "";
-
-  /* ============================================================
-     FETCH REGISTRATIONS
-  ============================================================ */
-
-  useEffect(() => {
-    if (!selectedConferenceId) {
-      return;
-    }
-
-    dispatch(
-      getRegistrationsByConferenceId(
-        selectedConferenceId
-      )
-    );
-  }, [
-    dispatch,
-    selectedConferenceId,
-  ]);
-
-  /* ============================================================
-     CONFERENCE REGISTRATIONS
-  ============================================================ */
-
-  const conferenceRegistrations = useMemo(() => {
-    return registrations;
-  }, [registrations]);
-
-  /* ============================================================
-     CONFERENCE INFORMATION
-  ============================================================ */
-
+  // Conference information from API
   const conference = useMemo(() => {
-    const firstRegistration =
-      conferenceRegistrations[0];
-
-    if (firstRegistration) {
-      const apiConference =
-        getConferenceInfo(
-          firstRegistration
-        );
-
-      return {
-        id:
-          apiConference.id ||
-          selectedConferenceId,
-
-        conference:
-          apiConference.title ||
-          passedConference?.conference ||
-          passedConference?.title ||
-          "Conference",
-
-        date:
-          apiConference.date ||
-          passedConference?.date ||
-          "Date not available",
-
-        location:
-          apiConference.location ||
-          passedConference?.location ||
-          "",
-
-        status:
-          passedConference?.status ||
-          "Upcoming",
-      };
-    }
+    const first = registrations[0];
+    const apiConference = first?.conference || {};
+    const conferenceObject = apiConference.conferenceId || {};
 
     return {
       id:
-        selectedConferenceId ||
-        passedConference?.id ||
-        passedConference?._id ||
-        "",
-
-      conference:
-        passedConference?.conference ||
-        passedConference?.title ||
+        extractId(conferenceObject) ||
+        extractId(apiConference.conferenceId) ||
+        selectedConferenceId,
+      title:
+        apiConference.title ||
+        conferenceObject.title ||
+        passedConference.conference ||
+        passedConference.title ||
         "Conference",
-
       date:
-        passedConference?.date ||
-        "Date not available",
-
-      location:
-        passedConference?.location ||
+        apiConference.date ||
+        conferenceObject.date ||
+        passedConference.date ||
         "",
-
-      status:
-        passedConference?.status ||
-        "Upcoming",
+      location:
+        apiConference.location ||
+        conferenceObject.location ||
+        passedConference.location ||
+        "",
+      status: passedConference.status || "Upcoming",
     };
-  }, [
-    conferenceRegistrations,
-    selectedConferenceId,
-    passedConference,
-  ]);
+  }, [registrations, selectedConferenceId, passedConference]);
 
-  /* ============================================================
-     RESET PAGINATION
-  ============================================================ */
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedConferenceId]);
-
-  /* ============================================================
-     NORMALIZE USERS
-  ============================================================ */
-
+  // Map API registration fields
   const registeredUsers = useMemo(() => {
-    return conferenceRegistrations.map(
-      (registration, index) => {
-        /* NAME */
+    return registrations.map((item, index) => {
+      const firstName =
+        item.firstName ||
+        item.user?.firstName ||
+        item.personalDetails?.firstName ||
+        "";
 
-        const firstName =
-          registration?.firstName ||
-          registration?.user?.firstName ||
-          registration?.personalDetails?.firstName ||
-          registration?.personalInfo?.firstName ||
-          "";
+      const lastName =
+        item.lastName ||
+        item.user?.lastName ||
+        item.personalDetails?.lastName ||
+        "";
 
-        const lastName =
-          registration?.lastName ||
-          registration?.user?.lastName ||
-          registration?.personalDetails?.lastName ||
-          registration?.personalInfo?.lastName ||
-          "";
+      const fullName =
+        item.fullName ||
+        item.user?.fullName ||
+        `${firstName} ${lastName}`.trim() ||
+        "Unknown User";
 
-        const fullName =
-          registration?.fullName ||
-          registration?.name ||
-          registration?.user?.fullName ||
-          registration?.user?.name ||
-          `${firstName} ${lastName}`.trim() ||
-          "Unknown User";
+      const registration = item.registration || {};
+      const address = item.location || {};
 
-        /* EMAIL */
+      const rawPaymentStatus = String(
+        item.paymentStatus ||
+          item.payment?.status ||
+          item.status ||
+          "Pending"
+      )
+        .trim()
+        .toLowerCase();
 
-        const email =
-          registration?.email ||
-          registration?.user?.email ||
-          registration?.personalDetails?.email ||
-          registration?.personalInfo?.email ||
-          "N/A";
+      let paymentStatus = "Pending";
 
-        /* PHONE */
-
-        const phone =
-          registration?.phone ||
-          registration?.phoneNumber ||
-          registration?.user?.phone ||
-          registration?.personalDetails?.phone ||
-          registration?.personalInfo?.phone ||
-          "N/A";
-
-        /* PAYMENT STATUS */
-
-        const rawPaymentStatus =
-          registration?.paymentStatus ||
-          registration?.payment?.status ||
-          registration?.razorpayPayment?.status ||
-          registration?.razorpay?.status ||
-          registration?.status ||
-          "Pending";
-
-        const status = String(
+      if (
+        ["paid", "success", "successful", "completed"].includes(
           rawPaymentStatus
         )
-          .trim()
-          .toLowerCase();
-
-        let paymentStatus = "Pending";
-
-        if (
-          status === "paid" ||
-          status === "success" ||
-          status === "successful" ||
-          status === "completed"
-        ) {
-          paymentStatus = "Paid";
-        } else if (
-          status === "failed" ||
-          status === "cancelled" ||
-          status === "canceled"
-        ) {
-          paymentStatus = "Failed";
-        } else if (
-          status === "unpaid"
-        ) {
-          paymentStatus = "Unpaid";
-        } else if (
-          status === "pending"
-        ) {
-          paymentStatus = "Pending";
-        }
-
-        return {
-          id:
-            registration?._id ||
-            registration?.id ||
-            index,
-
-          fullName,
-
-          email,
-
-          phone,
-
-          paymentStatus,
-
-          registrationId:
-            registration?.registrationId ||
-            registration?.registrationNumber ||
-            registration?._id ||
-            `REG-${index + 1}`,
-
-          originalData:
-            registration,
-        };
+      ) {
+        paymentStatus = "Paid";
+      } else if (
+        ["failed", "cancelled", "canceled"].includes(rawPaymentStatus)
+      ) {
+        paymentStatus = "Failed";
+      } else if (rawPaymentStatus === "unpaid") {
+        paymentStatus = "Unpaid";
       }
-    );
-  }, [conferenceRegistrations]);
 
-  /* ============================================================
-     COUNTS
-  ============================================================ */
+      return {
+        id: item._id || item.id || `registration-${index}`,
+        title: item.title || "",
+        fullName,
+        email: item.email || item.user?.email || "N/A",
+        phone:
+          item.phone ||
+          item.phoneNumber ||
+          item.user?.phone ||
+          "N/A",
 
-  const totalRegisteredUsers =
-    registeredUsers.length;
+        category: registration.category || "N/A",
+        option: registration.option || "N/A",
+        price: registration.price ?? null,
+        currency: registration.currency || "",
 
-  const paidRegistrations =
-    registeredUsers.filter(
-      (user) =>
-        user.paymentStatus === "Paid"
-    ).length;
+        city: address.city || "",
+        state: address.state || "",
+        postalCode: address.postalCode || "",
+        country: address.country || "",
+        address: address.address || "",
 
-  const pendingRegistrations =
-    registeredUsers.filter(
-      (user) =>
-        user.paymentStatus === "Pending"
-    ).length;
+        paymentStatus,
+        registrationStatus: item.status || "Pending",
+        paymentOrderId: item.paymentOrderId || "",
+        paymentId: item.paymentId || "",
+        paymentSignature: item.paymentSignature || "",
+        createdAt: item.createdAt || "",
+        updatedAt: item.updatedAt || "",
+        originalData: item,
+      };
+    });
+  }, [registrations]);
 
-  const unpaidRegistrations =
-    registeredUsers.filter(
-      (user) =>
-        user.paymentStatus === "Unpaid" ||
-        user.paymentStatus === "Failed"
-    ).length;
+  // Summary statistics
+  const totalRegisteredUsers = registeredUsers.length;
 
-  /* ============================================================
-     PAGINATION
-  ============================================================ */
+  const paidRegistrations = registeredUsers.filter(
+    (user) => user.paymentStatus === "Paid"
+  ).length;
 
+  const pendingRegistrations = registeredUsers.filter(
+    (user) => user.paymentStatus === "Pending"
+  ).length;
+
+  const unpaidRegistrations = registeredUsers.filter((user) =>
+    ["Unpaid", "Failed"].includes(user.paymentStatus)
+  ).length;
+
+  // Pagination
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      totalRegisteredUsers /
-        usersPerPage
-    )
+    Math.ceil(totalRegisteredUsers / usersPerPage)
   );
 
   const currentUsers = useMemo(() => {
-    const start =
-      (currentPage - 1) *
-      usersPerPage;
-
-    return registeredUsers.slice(
-      start,
-      start + usersPerPage
-    );
-  }, [
-    currentPage,
-    registeredUsers,
-  ]);
-
-  /* ============================================================
-     KEEP PAGE VALID
-  ============================================================ */
+    const start = (currentPage - 1) * usersPerPage;
+    return registeredUsers.slice(start, start + usersPerPage);
+  }, [currentPage, registeredUsers]);
 
   useEffect(() => {
-    if (
-      currentPage >
-      totalPages
-    ) {
+    if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [
-    currentPage,
-    totalPages,
-  ]);
+  }, [currentPage, totalPages]);
 
-  /* ============================================================
-     USER CLICK
-  ============================================================ */
-
+  // Navigate to full registration details
   const handleUserClick = (user) => {
-    navigate(
-      `/admin/registrations/${conference.id}/user/${user.id}`,
+    navigate(`/admin/registrations/${conference.id}/user/${user.id}`, {
+      state: {
+        user,
+        conference,
+        registration: user.originalData,
+      },
+    });
+  };
+
+  // Status badge styling
+  const getStatusClass = (status) => {
+    if (status === "Paid") {
+      return "bg-green-50 text-green-700";
+    }
+
+    if (status === "Pending") {
+      return "bg-amber-50 text-amber-700";
+    }
+
+    if (status === "Unpaid") {
+      return "bg-orange-50 text-orange-700";
+    }
+
+    return "bg-red-50 text-red-600";
+  };
+
+  // Display amount with API currency
+  const formatAmount = (price, currency) => {
+    if (price === null || price === undefined || price === "") {
+      return "N/A";
+    }
+
+    const amount = Number(price);
+
+    if (Number.isNaN(amount)) {
+      return "N/A";
+    }
+
+    return `${currency ? `${currency} ` : ""}${amount.toLocaleString(
+      "en-US",
       {
-        state: {
-          user,
-
-          conference,
-
-          registration:
-            user.originalData,
-        },
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
       }
-    );
+    )}`;
   };
 
-  /* ============================================================
-     BACK
-  ============================================================ */
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  /* ============================================================
-     LOADING
-  ============================================================ */
-
-  if (
-    loading &&
-    registrations.length === 0
-  ) {
+  // Loading state
+  if (conferenceRegisteredLoading && registrations.length === 0) {
     return (
-      <div className="flex min-h-[400px] w-full items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-violet-600" />
-
-          <p className="mt-3 text-[12px] text-gray-500">
+          <p className="mt-3 text-sm text-gray-500">
             Loading registrations...
           </p>
         </div>
@@ -630,497 +355,307 @@ const RegistrationDetailsPage = () => {
     );
   }
 
-  /* ============================================================
-     UI
-  ============================================================ */
-
   return (
-    <div className="w-full">
-
-      {/* BACK */}
-
+    <div className="w-full min-w-0 space-y-5">
+      {/* Back button */}
       <button
         type="button"
-        onClick={handleBack}
-        className="mb-4 flex items-center gap-1.5 text-[12px] font-medium text-gray-500 transition hover:text-violet-600"
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-violet-600"
       >
-        <ArrowLeft size={15} />
-
+        <ArrowLeft size={16} />
         Back to Registrations
       </button>
 
-      {/* ERROR */}
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
-          <p className="text-[12px] font-medium text-red-600">
-            {typeof error === "string"
-              ? error
-              : "Failed to load registrations."}
-          </p>
+      {/* Error message */}
+      {conferenceRegisteredError && (
+        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {typeof conferenceRegisteredError === "string"
+            ? conferenceRegisteredError
+            : conferenceRegisteredError.message ||
+              "Failed to load registrations."}
         </div>
       )}
 
-      {/* ========================================================
-          STAT CARDS
-      ======================================================== */}
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: "Total Registrations",
+            value: totalRegisteredUsers,
+            Icon: Users,
+          },
+          {
+            label: "Paid Registrations",
+            value: paidRegistrations,
+            Icon: CreditCard,
+          },
+          {
+            label: "Pending Payments",
+            value: pendingRegistrations,
+            Icon: WalletCards,
+          },
+          {
+            label: "Unpaid / Failed",
+            value: unpaidRegistrations,
+            Icon: UserCheck,
+          },
+        ].map(({ label, value, Icon }) => (
+          <div
+            key={label}
+            className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500">
+                  {label}
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-gray-900">
+                  {value}
+                </h2>
+              </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-        {/* TOTAL */}
-
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-
-            <div>
-              <p className="text-[11px] font-medium text-gray-500">
-                Total Registrations
-              </p>
-
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
-                {totalRegisteredUsers}
-              </h2>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50">
+                <Icon size={19} className="text-violet-600" />
+              </div>
             </div>
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-              <Users
-                size={17}
-                className="text-violet-600"
-              />
-            </div>
-
           </div>
-        </div>
-
-        {/* PAID */}
-
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-
-            <div>
-              <p className="text-[11px] font-medium text-gray-500">
-                Paid Registrations
-              </p>
-
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
-                {paidRegistrations}
-              </h2>
-            </div>
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-              <CreditCard
-                size={17}
-                className="text-violet-600"
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* PENDING */}
-
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-
-            <div>
-              <p className="text-[11px] font-medium text-gray-500">
-                Pending Payments
-              </p>
-
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
-                {pendingRegistrations}
-              </h2>
-            </div>
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-              <WalletCards
-                size={17}
-                className="text-violet-600"
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* USERS */}
-
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-
-            <div>
-              <p className="text-[11px] font-medium text-gray-500">
-                Registered Users
-              </p>
-
-              <h2 className="mt-1 text-[22px] font-bold text-gray-900">
-                {totalRegisteredUsers}
-              </h2>
-            </div>
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-              <UserCheck
-                size={17}
-                className="text-violet-600"
-              />
-            </div>
-
-          </div>
-        </div>
-
+        ))}
       </div>
 
-      {/* ========================================================
-          CONFERENCE CARD
-      ======================================================== */}
-
-      <div className="mb-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-          <div className="flex min-w-0 items-center gap-3">
-
+      {/* Conference information */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div className="flex min-w-0 gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50">
-              <CalendarDays
-                size={20}
-                className="text-violet-600"
-              />
+              <CalendarDays size={21} className="text-violet-600" />
             </div>
 
             <div className="min-w-0">
-
-              <h1 className="text-[16px] font-bold text-gray-900">
-                {conference.conference}
+              <h1 className="break-words text-base font-bold text-gray-900">
+                {conference.title}
               </h1>
 
-              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-
-                {/* DATE - ONLY THIS IS CHANGED */}
-
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-500">
                 {conference.date && (
-                  <p className="flex items-center gap-1 text-[11px] text-gray-500">
+                  <p className="flex items-center gap-1.5">
                     <CalendarDays
-                      size={11}
-                      className="text-violet-500"
+                      size={13}
+                      className="shrink-0 text-violet-500"
                     />
-
-                    {formatConferenceDate(
-                      conference.date
-                    )}
+                    {formatConferenceDate(conference.date)}
                   </p>
                 )}
 
-                {/* LOCATION */}
-
                 {conference.location && (
-                  <p className="flex items-center gap-1 text-[11px] text-gray-500">
-                    <MapPin size={11} />
-
+                  <p className="flex items-center gap-1.5">
+                    <MapPin
+                      size={13}
+                      className="shrink-0 text-violet-500"
+                    />
                     {conference.location}
                   </p>
                 )}
-
               </div>
-
             </div>
-
           </div>
 
-          <span className="w-fit rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-semibold text-violet-600">
+          <span className="w-fit shrink-0 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-600">
             {conference.status}
           </span>
-
         </div>
-
       </div>
 
-      {/* ========================================================
-          REGISTERED USERS TABLE
-      ======================================================== */}
-
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-
-        {/* HEADER */}
-
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-
+      {/* Registered users table */}
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="flex flex-col justify-between gap-2 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
           <div>
-            <h2 className="text-[14px] font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-gray-900">
               Registered Users
             </h2>
-
-            <p className="mt-0.5 text-[11px] text-gray-500">
+            <p className="mt-1 text-xs text-gray-500">
               Click a user to view complete registration details.
             </p>
           </div>
 
-          <div className="rounded-lg bg-violet-50 px-2.5 py-1.5">
-            <span className="text-[11px] font-semibold text-violet-600">
-              {totalRegisteredUsers} Users
-            </span>
-          </div>
-
+          <span className="w-fit rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-600">
+            {totalRegisteredUsers} Users
+          </span>
         </div>
 
-        {/* TABLE */}
-
-        <div className="w-full overflow-x-auto">
-
-          <table className="w-full min-w-[700px] table-fixed">
-
+        {/* No horizontal scrollbar */}
+        <div className="w-full min-w-0">
+          <table className="w-full table-fixed">
             <thead>
-
-              <tr className="border-b border-gray-100 bg-gray-50/70">
-
-                <th className="w-[28%] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  Full Name
+              <tr className="border-b border-gray-100 bg-gray-50 text-left">
+                <th className="w-[20%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
+                  Name
                 </th>
-
-                <th className="w-[30%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  Email
-                </th>
-
-                <th className="w-[22%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                <th className="w-[16%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
                   Phone
                 </th>
-
-                <th className="w-[20%] px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  Payment Status
+                <th className="w-[24%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
+                  Email
                 </th>
-
+                <th className="w-[14%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
+                  Category
+                </th>
+                <th className="w-[12%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
+                  Amount
+                </th>
+                <th className="w-[14%] px-2 py-3 text-xs font-semibold text-gray-500 sm:px-4">
+                  Status
+                </th>
               </tr>
-
             </thead>
 
             <tbody>
-
               {currentUsers.length > 0 ? (
-
                 currentUsers.map((user) => (
-
                   <tr
                     key={user.id}
-                    onClick={() =>
-                      handleUserClick(user)
-                    }
-                    className="cursor-pointer border-b border-gray-100 last:border-0 hover:bg-violet-50/30"
+                    onClick={() => handleUserClick(user)}
+                    className="cursor-pointer border-b border-gray-100 last:border-0 hover:bg-violet-50/40"
                   >
-
-                    {/* NAME */}
-
-                    <td className="px-4 py-3">
-
-                      <div className="flex min-w-0 items-center gap-2.5">
-
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[10px] font-bold text-violet-600">
-
+                    {/* Name — ID removed */}
+                    <td className="px-2 py-4 sm:px-4">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-600">
                           {user.fullName
                             .split(" ")
                             .filter(Boolean)
-                            .map(
-                              (name) =>
-                                name[0]
-                            )
+                            .map((part) => part[0])
                             .join("")
                             .slice(0, 2)
                             .toUpperCase()}
-
                         </div>
 
-                        <p className="truncate text-[12px] font-semibold text-gray-800">
-                          {user.fullName}
+                        <p
+                          className="min-w-0 break-words text-xs font-semibold text-gray-800 sm:text-sm"
+                          title={`${user.title} ${user.fullName}`}
+                        >
+                          {user.title} {user.fullName}
                         </p>
-
                       </div>
-
                     </td>
 
-                    {/* EMAIL */}
-
-                    <td className="truncate px-3 py-3 text-[11px] text-gray-500">
-                      {user.email}
+                    {/* Phone */}
+                    <td className="break-words px-2 py-4 text-xs text-gray-600 sm:px-4 sm:text-sm">
+                      {user.phone || "N/A"}
                     </td>
 
-                    {/* PHONE */}
-
-                    <td className="px-3 py-3 text-[11px] text-gray-500">
-                      {user.phone}
+                    {/* Email */}
+                    <td className="break-all px-2 py-4 text-xs text-gray-600 sm:px-4 sm:text-sm">
+                      {user.email || "N/A"}
                     </td>
 
-                    {/* STATUS */}
+                    {/* Category */}
+                    <td className="px-2 py-4 sm:px-4">
+                      <span className="inline-block max-w-full break-words rounded-full bg-blue-50 px-2 py-1 text-xs font-medium capitalize text-blue-700">
+                        {user.category}
+                      </span>
+                    </td>
 
-                    <td className="px-3 py-3">
+                    {/* Amount */}
+                    <td className="break-words px-2 py-4 text-xs font-semibold text-gray-800 sm:px-4 sm:text-sm">
+                      {formatAmount(user.price, user.currency)}
+                    </td>
 
+                    {/* Payment status */}
+                    <td className="px-2 py-4 sm:px-4">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-semibold ${
-                          user.paymentStatus ===
-                          "Paid"
-                            ? "bg-green-50 text-green-600"
-                            : user.paymentStatus ===
-                              "Pending"
-                            ? "bg-yellow-50 text-yellow-600"
-                            : "bg-red-50 text-red-500"
-                        }`}
+                        className={`inline-block max-w-full break-words rounded-full px-2 py-1 text-xs font-semibold ${getStatusClass(
+                          user.paymentStatus
+                        )}`}
                       >
                         {user.paymentStatus}
                       </span>
-
                     </td>
-
                   </tr>
-
                 ))
-
               ) : (
-
                 <tr>
+                  <td colSpan={6} className="px-4 py-14 text-center">
+                    <Users
+                      size={28}
+                      className="mx-auto text-violet-400"
+                    />
 
-                  <td
-                    colSpan={4}
-                    className="px-4 py-14 text-center"
-                  >
+                    <p className="mt-3 text-sm font-semibold text-gray-700">
+                      No registrations found
+                    </p>
 
-                    <div className="flex flex-col items-center justify-center">
-
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-50">
-                        <Users
-                          size={19}
-                          className="text-violet-500"
-                        />
-                      </div>
-
-                      <p className="mt-3 text-[12px] font-semibold text-gray-700">
-                        No registrations found
-                      </p>
-
-                      <p className="mt-1 text-[10px] text-gray-400">
-                        No users have registered for this conference yet.
-                      </p>
-
-                    </div>
-
+                    <p className="mt-1 text-xs text-gray-400">
+                      No users have registered for this conference yet.
+                    </p>
                   </td>
-
                 </tr>
-
               )}
-
             </tbody>
-
           </table>
-
         </div>
 
-        {/* ========================================================
-            PAGINATION
-        ======================================================== */}
-
+        {/* Pagination */}
         {totalRegisteredUsers > 0 && (
-
-          <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-
-            <p className="text-[10px] text-gray-500">
-
+          <div className="flex flex-col justify-between gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:px-5">
+            <p className="text-xs text-gray-500">
               Showing{" "}
-
               <span className="font-semibold text-gray-700">
-                {(currentPage - 1) *
-                  usersPerPage +
-                  1}
+                {(currentPage - 1) * usersPerPage + 1}
               </span>
-
               {" - "}
-
               <span className="font-semibold text-gray-700">
                 {Math.min(
-                  currentPage *
-                    usersPerPage,
+                  currentPage * usersPerPage,
                   totalRegisteredUsers
                 )}
               </span>
-
               {" of "}
-
               <span className="font-semibold text-gray-700">
                 {totalRegisteredUsers}
               </span>
-
             </p>
 
             <div className="flex items-center gap-1">
-
-              {/* PREVIOUS */}
-
               <button
                 type="button"
-                disabled={
-                  currentPage === 1
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (prev) =>
-                      prev - 1
-                  )
-                }
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((page) => page - 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={16} />
               </button>
 
-              {/* PAGE NUMBERS */}
-
               {Array.from(
-                {
-                  length: totalPages,
-                },
-                (_, index) =>
-                  index + 1
+                { length: totalPages },
+                (_, index) => index + 1
               ).map((page) => (
-
                 <button
                   key={page}
                   type="button"
-                  onClick={() =>
-                    setCurrentPage(page)
-                  }
-                  className={`flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-[10px] font-semibold transition ${
-                    currentPage ===
-                    page
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-8 min-w-8 rounded-lg px-2 text-xs font-semibold ${
+                    currentPage === page
                       ? "bg-violet-600 text-white"
-                      : "border border-gray-200 bg-white text-gray-500 hover:border-violet-200 hover:text-violet-600"
+                      : "border border-gray-200 text-gray-600 hover:border-violet-300"
                   }`}
                 >
                   {page}
                 </button>
-
               ))}
-
-              {/* NEXT */}
 
               <button
                 type="button"
-                disabled={
-                  currentPage ===
-                  totalPages
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (prev) =>
-                      prev + 1
-                  )
-                }
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 transition hover:border-violet-200 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((page) => page + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={16} />
               </button>
-
             </div>
-
           </div>
-
         )}
-
       </div>
-
     </div>
   );
 };

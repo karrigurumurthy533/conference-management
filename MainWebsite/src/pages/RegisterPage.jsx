@@ -106,7 +106,7 @@ const RegisterPage = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const { registrationLoading, registrationError } = useSelector(
-    (state) => state.user
+    (state) => state.user,
   );
 
   const colors = {
@@ -306,7 +306,7 @@ const RegisterPage = () => {
   const selectedRegistration = useMemo(() => {
     for (const group of registrationGroups) {
       const found = group.options.find(
-        (option) => option.id === formData.registrationType
+        (option) => option.id === formData.registrationType,
       );
 
       if (found) {
@@ -327,10 +327,7 @@ const RegisterPage = () => {
 
         const response = await getConferenceByIdApi(id);
 
-        const apiData =
-          response?.data?.data ||
-          response?.data ||
-          null;
+        const apiData = response?.data?.data || response?.data || null;
 
         if (!apiData) {
           setConference(null);
@@ -350,36 +347,21 @@ const RegisterPage = () => {
           apiData?.dates?.endDate ||
           "";
 
-        const rawDate =
-          apiData?.date ||
-          apiData?.conferenceDates?.date ||
-          "";
+        const rawDate = apiData?.date || apiData?.conferenceDates?.date || "";
 
         const formattedDate =
-          startDate && endDate
-            ? `${startDate} - ${endDate}`
-            : rawDate;
+          startDate && endDate ? `${startDate} - ${endDate}` : rawDate;
 
         const normalizedConference = {
-          id:
-            apiData?._id ||
-            apiData?.id ||
-            id,
+          id: apiData?._id || apiData?.id || id,
 
-          title:
-            apiData?.basicInformation?.title ||
-            apiData?.title ||
-            "",
+          title: apiData?.basicInformation?.title || apiData?.title || "",
 
           category:
-            apiData?.basicInformation?.category ||
-            apiData?.category ||
-            "",
+            apiData?.basicInformation?.category || apiData?.category || "",
 
           subtitle:
-            apiData?.basicInformation?.subtitle ||
-            apiData?.subtitle ||
-            "",
+            apiData?.basicInformation?.subtitle || apiData?.subtitle || "",
 
           description:
             apiData?.basicInformation?.description ||
@@ -392,26 +374,27 @@ const RegisterPage = () => {
 
           endDate,
 
-          time:
-            apiData?.conferenceDates?.time ||
-            apiData?.time ||
-            "",
+          time: apiData?.conferenceDates?.time || apiData?.time || "",
 
           location:
-            apiData?.venueInformation?.city ||
-            apiData?.location ||
-            apiData?.venue ||
-            "",
+            [
+              apiData?.venueInformation?.venueName,
+              apiData?.venueInformation?.city,
+              apiData?.venueInformation?.state,
+              apiData?.venueInformation?.country,
+            ]
+              .filter((value) => typeof value === "string" && value.trim())
+              .join(", ") ||
+            (typeof apiData?.location === "string"
+              ? apiData.location
+              : typeof apiData?.venue === "string"
+                ? apiData.venue
+                : ""),
 
-          mode:
-            apiData?.venueInformation?.mode ||
-            apiData?.mode ||
-            "",
+          mode: apiData?.venueInformation?.mode || apiData?.mode || "",
 
           participants:
-            apiData?.participants ||
-            apiData?.expectedParticipants ||
-            "",
+            apiData?.participants || apiData?.expectedParticipants || "",
 
           image:
             apiData?.media?.bannerImage ||
@@ -427,16 +410,12 @@ const RegisterPage = () => {
           conference: normalizedConference.id,
         }));
       } catch (error) {
-        console.error(
-          "Fetch Conference Details Error:",
-          error
-        );
+        console.error("Fetch Conference Details Error:", error);
 
         setConference(null);
 
         setConferenceError(
-          error?.response?.data?.message ||
-            "Failed to load conference details"
+          error?.response?.data?.message || "Failed to load conference details",
         );
       } finally {
         setConferenceLoading(false);
@@ -472,10 +451,7 @@ const RegisterPage = () => {
     }
 
     if (!conference.date) {
-      console.error(
-        "Conference date is missing:",
-        conference
-      );
+      console.error("Conference date is missing:", conference);
       return;
     }
 
@@ -483,12 +459,9 @@ const RegisterPage = () => {
       return;
     }
 
-    const registrationCategory =
-      selectedRegistration.id.split("-")[0];
+    const registrationCategory = selectedRegistration.id.split("-")[0];
 
-    const convertedPrice = Number(
-      convertPrice(total).toFixed(2)
-    );
+    const convertedPrice = Number(convertPrice(total).toFixed(2));
 
     const payload = {
       title: formData.title,
@@ -522,55 +495,35 @@ const RegisterPage = () => {
       },
     };
 
-    console.log(
-      "Registration Payload:",
-      payload
-    );
+    console.log("Registration Payload:", payload);
 
     try {
-      const result = await dispatch(
-        createRegistration(payload)
-      ).unwrap();
+      const result = await dispatch(createRegistration(payload)).unwrap();
 
-      console.log(
-        "Registration API Success:",
-        result
-      );
+      console.log("Registration API Success:", result);
 
-      const registrationData =
-        result?.data || result;
+      const registrationData = result?.data || result;
 
-      const registrationId =
-        registrationData?._id ||
-        registrationData?.id;
+      const registrationId = registrationData?._id || registrationData?.id;
 
       if (!registrationId) {
-        console.error(
-          "Registration ID not found in API response:",
-          result
-        );
+        console.error("Registration ID not found in API response:", result);
         return;
       }
 
       setIsRedirecting(true);
 
       setTimeout(() => {
-        navigate(
-          `/payment/${registrationId}`,
-          {
-            state: {
-              registration: registrationData,
-              conferenceId: conference.id,
-              conferenceName: conference.title,
-            },
-          }
-        );
+        navigate(`/payment/${registrationId}`, {
+          state: {
+            registration: registrationData,
+            conferenceId: conference.id,
+            conferenceName: conference.title,
+          },
+        });
       }, 250);
     } catch (error) {
-      console.error(
-        "Registration failed:",
-        error
-      );
+      console.error("Registration failed:", error);
     }
   };
 
@@ -620,14 +573,10 @@ const RegisterPage = () => {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            {conferenceError ||
-              "The requested conference could not be found."}
+            {conferenceError || "The requested conference could not be found."}
           </p>
 
-          <motion.div
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
             <Link
               to="/conferences"
               className="mt-5 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white"
@@ -674,8 +623,7 @@ const RegisterPage = () => {
           style={{
             backgroundColor: colors.cardBg,
             border: `1px solid ${colors.border}`,
-            boxShadow:
-              "0 20px 60px rgba(0,0,0,0.12)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
           }}
         >
           <motion.div
@@ -693,8 +641,7 @@ const RegisterPage = () => {
             }}
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
             style={{
-              backgroundColor:
-                colors.primarySoft,
+              backgroundColor: colors.primarySoft,
               color: colors.primary,
             }}
           >
@@ -721,14 +668,11 @@ const RegisterPage = () => {
           <div
             className="mt-4 rounded-xl p-4 text-left"
             style={{
-              backgroundColor:
-                colors.primarySoft,
+              backgroundColor: colors.primarySoft,
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                Registration
-              </span>
+              <span className="text-xs text-gray-500">Registration</span>
 
               <span
                 className="text-sm font-bold"
@@ -741,17 +685,13 @@ const RegisterPage = () => {
               </span>
             </div>
 
-            <p className="mt-2 text-xs text-gray-500">
-              Email
-            </p>
+            <p className="mt-2 text-xs text-gray-500">Email</p>
 
             <p className="mt-1 text-sm font-semibold text-gray-900">
               {formData.email}
             </p>
 
-            <p className="mt-2 text-xs text-gray-500">
-              Registration Type
-            </p>
+            <p className="mt-2 text-xs text-gray-500">Registration Type</p>
 
             <p className="mt-1 text-sm font-semibold text-gray-900">
               {selectedRegistration?.label}
@@ -762,10 +702,7 @@ const RegisterPage = () => {
             </p>
           </div>
 
-          <motion.div
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
+          <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
             <Link
               to={`/conferences/${conference.id}`}
               className="mt-5 inline-flex items-center justify-center rounded-lg px-6 py-2.5 text-sm font-bold text-white"
@@ -800,16 +737,14 @@ const RegisterPage = () => {
         <div
           className="absolute -right-16 -top-16 h-40 w-40 rounded-full"
           style={{
-            border:
-              "1px solid rgba(192,132,252,0.20)",
+            border: "1px solid rgba(192,132,252,0.20)",
           }}
         />
 
         <div
           className="absolute -bottom-16 left-[8%] h-32 w-32 rounded-full"
           style={{
-            border:
-              "1px solid rgba(192,132,252,0.12)",
+            border: "1px solid rgba(192,132,252,0.12)",
           }}
         />
 
@@ -858,10 +793,8 @@ const RegisterPage = () => {
                 }}
                 className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em]"
                 style={{
-                  border:
-                    "1px solid rgba(192,132,252,0.22)",
-                  backgroundColor:
-                    "rgba(168,85,247,0.12)",
+                  border: "1px solid rgba(192,132,252,0.22)",
+                  backgroundColor: "rgba(168,85,247,0.12)",
                   color: colors.heroAccent,
                 }}
               >
@@ -882,9 +815,8 @@ const RegisterPage = () => {
               </h1>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
-                Complete your registration details below
-                and select the participation category that
-                suits you best.
+                Complete your registration details below and select the
+                participation category that suits you best.
               </p>
             </motion.div>
 
@@ -894,29 +826,21 @@ const RegisterPage = () => {
               animate="visible"
               className="hidden min-w-[250px] rounded-xl p-4 backdrop-blur-md lg:block"
               style={{
-                border:
-                  "1px solid rgba(192,132,252,0.18)",
-                backgroundColor:
-                  "rgba(13,7,28,0.72)",
+                border: "1px solid rgba(192,132,252,0.18)",
+                backgroundColor: "rgba(13,7,28,0.72)",
               }}
             >
               <InfoItem
                 icon={<CalendarDays size={16} />}
                 label="Date"
-                value={
-                  conference.date ||
-                  "Not available"
-                }
+                value={conference.date || "Not available"}
               />
 
               <div className="mt-4">
                 <InfoItem
                   icon={<MapPin size={16} />}
                   label="Location"
-                  value={
-                    conference.location ||
-                    "Not available"
-                  }
+                  value={conference.location || "Not available"}
                 />
               </div>
 
@@ -958,8 +882,7 @@ const RegisterPage = () => {
               animate="visible"
               className="px-5 py-5 md:px-7"
               style={{
-                borderBottom:
-                  `1px solid ${colors.border}`,
+                borderBottom: `1px solid ${colors.border}`,
               }}
             >
               <p
@@ -994,16 +917,14 @@ const RegisterPage = () => {
                       }}
                       transition={{
                         duration: 0.3,
-                        delay:
-                          0.25 + index * 0.08,
+                        delay: 0.25 + index * 0.08,
                       }}
                       className="flex flex-shrink-0 items-center gap-2"
                     >
                       <span
                         className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold"
                         style={{
-                          backgroundColor:
-                            colors.primary,
+                          backgroundColor: colors.primary,
                           color: "#FFFFFF",
                         }}
                       >
@@ -1024,8 +945,7 @@ const RegisterPage = () => {
                       <div
                         className="h-px min-w-6 flex-1"
                         style={{
-                          backgroundColor:
-                            colors.border,
+                          backgroundColor: colors.border,
                         }}
                       />
                     )}
@@ -1057,13 +977,7 @@ const RegisterPage = () => {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    options={[
-                      "Mr.",
-                      "Mrs.",
-                      "Ms.",
-                      "Dr.",
-                      "Prof.",
-                    ]}
+                    options={["Mr.", "Mrs.", "Ms.", "Dr.", "Prof."]}
                     placeholder="Select Title"
                   />
                 </InputAnimated>
@@ -1129,8 +1043,7 @@ const RegisterPage = () => {
               }}
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop:
-                  `1px solid ${colors.divider}`,
+                borderTop: `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -1154,17 +1067,14 @@ const RegisterPage = () => {
                 }}
                 className="mt-4 flex items-center gap-3 rounded-xl p-3.5"
                 style={{
-                  backgroundColor:
-                    colors.primarySoft,
-                  border:
-                    `1px solid ${colors.borderStrong}`,
+                  backgroundColor: colors.primarySoft,
+                  border: `1px solid ${colors.borderStrong}`,
                 }}
               >
                 <div
                   className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg"
                   style={{
-                    backgroundColor:
-                      colors.primary,
+                    backgroundColor: colors.primary,
                     color: "#FFFFFF",
                   }}
                 >
@@ -1186,17 +1096,12 @@ const RegisterPage = () => {
                   </p>
 
                   <p className="mt-0.5 text-xs text-gray-500">
-                    {conference.date} ·{" "}
-                    {conference.location}
+                    {conference.date} · {conference.location}
                   </p>
                 </div>
               </motion.div>
 
-              <input
-                type="hidden"
-                name="conference"
-                value={conference.id}
-              />
+              <input type="hidden" name="conference" value={conference.id} />
             </motion.div>
 
             <motion.div
@@ -1208,8 +1113,7 @@ const RegisterPage = () => {
               }}
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop:
-                  `1px solid ${colors.divider}`,
+                borderTop: `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -1282,9 +1186,7 @@ const RegisterPage = () => {
               >
                 <label className="mb-1.5 block text-sm font-bold text-gray-700">
                   Full Address
-                  <span className="ml-1 text-violet-600">
-                    *
-                  </span>
+                  <span className="ml-1 text-violet-600">*</span>
                 </label>
 
                 <textarea
@@ -1296,10 +1198,8 @@ const RegisterPage = () => {
                   placeholder="Enter your complete address"
                   className="w-full resize-none rounded-xl px-3.5 py-3 text-sm outline-none transition"
                   style={{
-                    backgroundColor:
-                      colors.inputBg,
-                    border:
-                      `1px solid ${colors.inputBorder}`,
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.inputBorder}`,
                     color: colors.inputText,
                   }}
                 />
@@ -1315,8 +1215,7 @@ const RegisterPage = () => {
               }}
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop:
-                  `1px solid ${colors.divider}`,
+                borderTop: `1px solid ${colors.divider}`,
               }}
             >
               <FormTitle
@@ -1344,88 +1243,71 @@ const RegisterPage = () => {
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-5">
-                  {Object.entries(
-                    currencyConfig
-                  ).map(([code, config], index) => (
-                    <motion.label
-                      key={code}
-                      initial={{
-                        opacity: 0,
-                        y: 8,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.3,
-                        delay:
-                          index * 0.06,
-                      }}
-                      whileHover={{
-                        y: -1,
-                      }}
-                      className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-700"
-                    >
-                      <input
-                        type="radio"
-                        name="currency"
-                        value={code}
-                        checked={
-                          currency === code
-                        }
-                        onChange={(e) =>
-                          setCurrency(
-                            e.target.value
-                          )
-                        }
-                        className="accent-violet-600"
-                      />
+                  {Object.entries(currencyConfig).map(
+                    ([code, config], index) => (
+                      <motion.label
+                        key={code}
+                        initial={{
+                          opacity: 0,
+                          y: 8,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        transition={{
+                          duration: 0.3,
+                          delay: index * 0.06,
+                        }}
+                        whileHover={{
+                          y: -1,
+                        }}
+                        className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-700"
+                      >
+                        <input
+                          type="radio"
+                          name="currency"
+                          value={code}
+                          checked={currency === code}
+                          onChange={(e) => setCurrency(e.target.value)}
+                          className="accent-violet-600"
+                        />
 
-                      {config.label}
-                    </motion.label>
-                  ))}
+                        {config.label}
+                      </motion.label>
+                    ),
+                  )}
                 </div>
               </motion.div>
 
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {registrationGroups.map(
-                  (group, index) => (
-                    <motion.div
-                      key={group.title}
-                      initial={{
-                        opacity: 0,
-                        y: 20,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.4,
-                        delay:
-                          0.05 +
-                          index * 0.08,
-                        ease: "easeOut",
-                      }}
-                    >
-                      <RegistrationGroup
-                        group={group}
-                        formData={formData}
-                        handleChange={
-                          handleChange
-                        }
-                        colors={colors}
-                        selectedCurrency={
-                          selectedCurrency
-                        }
-                        convertPrice={
-                          convertPrice
-                        }
-                      />
-                    </motion.div>
-                  )
-                )}
+                {registrationGroups.map((group, index) => (
+                  <motion.div
+                    key={group.title}
+                    initial={{
+                      opacity: 0,
+                      y: 20,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      delay: 0.05 + index * 0.08,
+                      ease: "easeOut",
+                    }}
+                  >
+                    <RegistrationGroup
+                      group={group}
+                      formData={formData}
+                      handleChange={handleChange}
+                      colors={colors}
+                      selectedCurrency={selectedCurrency}
+                      convertPrice={convertPrice}
+                    />
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
 
@@ -1438,8 +1320,7 @@ const RegisterPage = () => {
               }}
               className="px-5 py-6 md:px-7"
               style={{
-                borderTop:
-                  `1px solid ${colors.divider}`,
+                borderTop: `1px solid ${colors.divider}`,
                 backgroundColor: "#FCFAFF",
               }}
             >
@@ -1476,8 +1357,7 @@ const RegisterPage = () => {
                   </motion.div>
                 ) : (
                   <p className="mt-2 text-sm text-gray-500">
-                    Please select a registration
-                    category.
+                    Please select a registration category.
                   </p>
                 )}
               </div>
@@ -1512,8 +1392,7 @@ const RegisterPage = () => {
                 </p>
 
                 <p className="mt-1 text-xs text-gray-400">
-                  Currency:{" "}
-                  {selectedCurrency.label}
+                  Currency: {selectedCurrency.label}
                 </p>
               </motion.div>
 
@@ -1564,20 +1443,15 @@ const RegisterPage = () => {
                   }
                   className="flex h-12 min-w-[220px] items-center justify-center gap-2 rounded-xl px-8 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
-                    backgroundColor:
-                      colors.primary,
-                    boxShadow:
-                      "0 8px 20px rgba(124,58,237,0.18)",
+                    backgroundColor: colors.primary,
+                    boxShadow: "0 8px 20px rgba(124,58,237,0.18)",
                   }}
                 >
-                  {registrationLoading ||
-                  isRedirecting ? (
+                  {registrationLoading || isRedirecting ? (
                     <>
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
 
-                      {isRedirecting
-                        ? "REDIRECTING..."
-                        : "PROCESSING..."}
+                      {isRedirecting ? "REDIRECTING..." : "PROCESSING..."}
                     </>
                   ) : (
                     <>
@@ -1589,8 +1463,8 @@ const RegisterPage = () => {
               </div>
 
               <p className="mt-3 text-center text-[11px] text-gray-400">
-                You will be redirected to the secure
-                payment process after continuing.
+                You will be redirected to the secure payment process after
+                continuing.
               </p>
             </motion.div>
           </div>
@@ -1610,18 +1484,15 @@ const RegisterPage = () => {
           }}
           className="mt-5 rounded-xl px-4 py-4"
           style={{
-            border:
-              `1px solid ${colors.border}`,
-            backgroundColor:
-              colors.supportBg,
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.supportBg,
           }}
         >
           <div className="flex items-center gap-3">
             <div
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
               style={{
-                backgroundColor:
-                  colors.primarySoft,
+                backgroundColor: colors.primarySoft,
                 color: colors.primary,
               }}
             >
@@ -1634,8 +1505,7 @@ const RegisterPage = () => {
               </p>
 
               <p className="mt-0.5 text-[11px] text-gray-500">
-                Contact the GlobalScion team for
-                registration support.
+                Contact the GlobalScion team for registration support.
               </p>
             </div>
           </div>
@@ -1645,10 +1515,7 @@ const RegisterPage = () => {
   );
 };
 
-const InputAnimated = ({
-  children,
-  delay = 0,
-}) => {
+const InputAnimated = ({ children, delay = 0 }) => {
   return (
     <motion.div
       initial={{
@@ -1669,11 +1536,7 @@ const InputAnimated = ({
   );
 };
 
-const FormTitle = ({
-  number,
-  title,
-  description,
-}) => {
+const FormTitle = ({ number, title, description }) => {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -1688,23 +1551,15 @@ const FormTitle = ({
       </div>
 
       <div>
-        <h3 className="text-base font-bold text-gray-900">
-          {title}
-        </h3>
+        <h3 className="text-base font-bold text-gray-900">{title}</h3>
 
-        <p className="mt-0.5 text-xs text-gray-500">
-          {description}
-        </p>
+        <p className="mt-0.5 text-xs text-gray-500">{description}</p>
       </div>
     </div>
   );
 };
 
-const InfoItem = ({
-  icon,
-  label,
-  value,
-}) => {
+const InfoItem = ({ icon, label, value }) => {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -1712,8 +1567,7 @@ const InfoItem = ({
         style={{
           backgroundColor: "#F5F3FF",
           color: "#C084FC",
-          border:
-            "1px solid rgba(192,132,252,0.18)",
+          border: "1px solid rgba(192,132,252,0.18)",
         }}
       >
         {icon}
@@ -1744,8 +1598,7 @@ const RegistrationGroup = ({
     <div
       className="overflow-hidden rounded-xl"
       style={{
-        border:
-          `1px solid ${colors.border}`,
+        border: `1px solid ${colors.border}`,
         backgroundColor: "#FFFFFF",
       }}
     >
@@ -1755,93 +1608,71 @@ const RegistrationGroup = ({
           backgroundColor: group.color,
         }}
       >
-        <h3 className="text-lg font-bold text-white">
-          {group.title}
-        </h3>
+        <h3 className="text-lg font-bold text-white">{group.title}</h3>
       </div>
 
       <div className="px-3">
-        {group.options.map(
-          (option, index) => {
-            const selected =
-              formData.registrationType ===
-              option.id;
+        {group.options.map((option, index) => {
+          const selected = formData.registrationType === option.id;
 
-            const isLast =
-              index ===
-              group.options.length - 1;
+          const isLast = index === group.options.length - 1;
 
-            return (
-              <motion.label
-                key={option.id}
-                whileHover={{
-                  x: 2,
-                }}
-                transition={{
-                  duration: 0.15,
-                }}
-                className="flex cursor-pointer items-center justify-between gap-2 py-2.5 transition hover:bg-gray-50"
-                style={{
-                  borderBottom: isLast
-                    ? "none"
-                    : `1px solid ${colors.border}`,
-                }}
-              >
-                <div className="flex min-w-0 items-start gap-2">
-                  <input
-                    type="radio"
-                    name="registrationType"
-                    value={option.id}
-                    checked={selected}
-                    onChange={handleChange}
-                    className="mt-1 flex-shrink-0 accent-violet-600"
-                  />
+          return (
+            <motion.label
+              key={option.id}
+              whileHover={{
+                x: 2,
+              }}
+              transition={{
+                duration: 0.15,
+              }}
+              className="flex cursor-pointer items-center justify-between gap-2 py-2.5 transition hover:bg-gray-50"
+              style={{
+                borderBottom: isLast ? "none" : `1px solid ${colors.border}`,
+              }}
+            >
+              <div className="flex min-w-0 items-start gap-2">
+                <input
+                  type="radio"
+                  name="registrationType"
+                  value={option.id}
+                  checked={selected}
+                  onChange={handleChange}
+                  className="mt-1 flex-shrink-0 accent-violet-600"
+                />
 
-                  <span
-                    className="text-xs leading-4"
-                    style={{
-                      color: selected
-                        ? colors.primary
-                        : colors.body,
-                      fontWeight: selected
-                        ? 700
-                        : 500,
-                    }}
-                  >
-                    {option.label}
-                  </span>
-                </div>
-
-                <motion.span
-                  animate={{
-                    scale: selected
-                      ? 1.04
-                      : 1,
-                  }}
-                  className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
+                <span
+                  className="text-xs leading-4"
                   style={{
-                    backgroundColor: selected
-                      ? colors.primary
-                      : colors.primarySoft,
-                    color: selected
-                      ? "#FFFFFF"
-                      : colors.primary,
-                    border: `1px solid ${
-                      selected
-                        ? colors.primary
-                        : colors.borderStrong
-                    }`,
+                    color: selected ? colors.primary : colors.body,
+                    fontWeight: selected ? 700 : 500,
                   }}
                 >
-                  {selectedCurrency.symbol}
-                  {convertPrice(
-                    option.price
-                  ).toFixed(2)}
-                </motion.span>
-              </motion.label>
-            );
-          }
-        )}
+                  {option.label}
+                </span>
+              </div>
+
+              <motion.span
+                animate={{
+                  scale: selected ? 1.04 : 1,
+                }}
+                className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
+                style={{
+                  backgroundColor: selected
+                    ? colors.primary
+                    : colors.primarySoft,
+                  color: selected ? "#FFFFFF" : colors.primary,
+                  border: `1px solid ${
+                    selected ? colors.primary : colors.borderStrong
+                  }`,
+                }}
+              >
+                {selectedCurrency.symbol}
+                {convertPrice(option.price).toFixed(2)}
+              </motion.span>
+            </motion.label>
+          );
+        })}
       </div>
     </div>
   );
@@ -1862,11 +1693,7 @@ const InputField = ({
       <label className="mb-1.5 block text-sm font-bold text-gray-700">
         {label}
 
-        {required && (
-          <span className="ml-1 text-violet-600">
-            *
-          </span>
-        )}
+        {required && <span className="ml-1 text-violet-600">*</span>}
       </label>
 
       <div className="relative">
@@ -1888,8 +1715,7 @@ const InputField = ({
           }`}
           style={{
             backgroundColor: "#FFFFFF",
-            border:
-              "1px solid #E5E7EB",
+            border: "1px solid #E5E7EB",
             color: "#111827",
           }}
         />
@@ -1912,11 +1738,7 @@ const SelectField = ({
       <label className="mb-1.5 block text-sm font-bold text-gray-700">
         {label}
 
-        {required && (
-          <span className="ml-1 text-violet-600">
-            *
-          </span>
-        )}
+        {required && <span className="ml-1 text-violet-600">*</span>}
       </label>
 
       <div className="relative">
@@ -1928,20 +1750,14 @@ const SelectField = ({
           className="h-11 w-full appearance-none rounded-xl px-3 pr-8 text-sm outline-none transition"
           style={{
             backgroundColor: "#FFFFFF",
-            border:
-              "1px solid #E5E7EB",
+            border: "1px solid #E5E7EB",
             color: "#111827",
           }}
         >
-          <option value="">
-            {placeholder}
-          </option>
+          <option value="">{placeholder}</option>
 
           {options.map((option) => (
-            <option
-              key={option}
-              value={option}
-            >
+            <option key={option} value={option}>
               {option}
             </option>
           ))}

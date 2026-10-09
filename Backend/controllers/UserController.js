@@ -79,6 +79,19 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
       )
     );
   }
+  const conferenceLocation =
+    typeof conference.location === "string"
+      ? conference.location.trim()
+      : "";
+
+  if (!conferenceLocation) {
+    return next(
+      new AppError(
+        "Conference location is missing",
+        400
+      )
+    );
+  }
 
   const newRegistration = await Registration.create({
     title,
@@ -91,9 +104,8 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
       conferenceId: conference.conferenceId,
       title: conference.title,
       date: conference.date,
-      location: conference.location,
+      location: conferenceLocation,
     },
-
     location: {
       city: location.city,
       state: location.state,
@@ -648,9 +660,8 @@ exports.downloadAbstract = catchAsync(async (req, res, next) => {
   }
 
   // Full name
-  const fullName = `${abstract.presenter?.firstName || ""} ${
-    abstract.presenter?.lastName || ""
-  }`.trim();
+  const fullName = `${abstract.presenter?.firstName || ""} ${abstract.presenter?.lastName || ""
+    }`.trim();
 
   // Response
   return res.status(200).json({
@@ -675,17 +686,17 @@ exports.downloadAbstract = catchAsync(async (req, res, next) => {
 
         conference: abstract.abstractDetails?.conferenceId
           ? {
-              id: abstract.abstractDetails.conferenceId._id,
-              title:
-                abstract.abstractDetails.conferenceId.title ||
-                "",
-              dates:
-                abstract.abstractDetails.conferenceId.dates ||
-                null,
-              location:
-                abstract.abstractDetails.conferenceId.location ||
-                null,
-            }
+            id: abstract.abstractDetails.conferenceId._id,
+            title:
+              abstract.abstractDetails.conferenceId.title ||
+              "",
+            dates:
+              abstract.abstractDetails.conferenceId.dates ||
+              null,
+            location:
+              abstract.abstractDetails.conferenceId.location ||
+              null,
+          }
           : null,
       },
 

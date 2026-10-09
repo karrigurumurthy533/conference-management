@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
@@ -11,10 +12,7 @@ const Footer = () => {
   const textColor = "#f2eef7";
 
   const fadeUp = {
-    hidden: {
-      opacity: 0,
-      y: 15,
-    },
+    hidden: { opacity: 0, y: 15 },
     visible: {
       opacity: 1,
       y: 0,
@@ -43,12 +41,8 @@ const Footer = () => {
   };
 
   const linkHover = {
-    whileHover: {
-      x: 3,
-    },
-    transition: {
-      duration: 0.15,
-    },
+    whileHover: { x: 3 },
+    transition: { duration: 0.15 },
   };
 
   const quickLinks = [
@@ -99,6 +93,35 @@ const Footer = () => {
     ],
   ];
 
+  const linkStyle = {
+    color: textColor,
+  };
+
+  const hoverLinkProps = {
+    onMouseEnter: (e) => {
+      e.currentTarget.style.color = violet;
+    },
+    onMouseLeave: (e) => {
+      e.currentTarget.style.color = textColor;
+    },
+  };
+
+  const renderLinks = (links) =>
+    links.map(([label, href]) => (
+      <li key={label}>
+        <motion.div {...linkHover}>
+          <Link
+            to={href}
+            className="inline-block transition-colors"
+            style={linkStyle}
+            {...hoverLinkProps}
+          >
+            {label}
+          </Link>
+        </motion.div>
+      </li>
+    ));
+
   return (
     <footer
       className="w-full transition-colors duration-500"
@@ -107,10 +130,7 @@ const Footer = () => {
         color: violet,
       }}
     >
-      {/* =========================================================
-          STATS SECTION
-      ========================================================= */}
-
+      {/* STATS SECTION */}
       <div
         className="border-b"
         style={{
@@ -124,272 +144,104 @@ const Footer = () => {
           variants={{
             hidden: {},
             visible: {
-              transition: {
-                staggerChildren: 0.08,
-              },
+              transition: { staggerChildren: 0.08 },
             },
           }}
-          className="
-            mx-auto grid max-w-7xl
-            grid-cols-2
-            gap-x-6 gap-y-4
-            px-5 py-4
-            md:grid-cols-4
-            md:gap-5
-            md:px-6
-          "
+          className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-4 px-4 py-4 sm:px-5 md:grid-cols-4 md:gap-5 md:px-6"
         >
-          {/* STAT 1 */}
-
-          <motion.div
-            variants={statAnimation}
-            className="flex items-center gap-3"
-          >
+          {[
+            {
+              image: "earth-globe.svg",
+              alt: "Global Attendees",
+              value: "4,800+",
+              label: "Global Attendees",
+            },
+            {
+              image: "countries.svg",
+              alt: "Countries",
+              value: "60+",
+              label: "Countries",
+            },
+            {
+              image: "conferences.svg",
+              alt: "Conferences",
+              value: "25+",
+              label: "Conferences",
+            },
+            {
+              image: "peoples.svg",
+              alt: "Speakers",
+              value: "300+",
+              label: "Speakers",
+            },
+          ].map((stat) => (
             <motion.div
-              whileHover={{
-                scale: 1.05,
-                rotate: 3,
-              }}
-              transition={{
-                duration: 0.2,
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "#DDD6FE",
-              }}
+              key={stat.label}
+              variants={statAnimation}
+              className="flex min-w-0 items-center gap-2.5 sm:gap-3"
             >
-              <img
-                src="/svgs/earth-globe.svg"
-                alt="Global Attendees"
-                className="h-6 w-6 object-contain"
-                style={{
-                  filter: violetFilter,
-                }}
-              />
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: 3 }}
+                transition={{ duration: 0.2 }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
+                style={{ backgroundColor: "#DDD6FE" }}
+              >
+                <img
+                  src={`/svgs/${stat.image}`}
+                  alt={stat.alt}
+                  className="h-5 w-5 object-contain sm:h-6 sm:w-6"
+                  style={{ filter: violetFilter }}
+                />
+              </motion.div>
+
+              <div className="min-w-0">
+                <h3
+                  className="text-[18px] font-bold leading-none sm:text-[21px]"
+                  style={{ color: violet }}
+                >
+                  {stat.value}
+                </h3>
+
+                <p
+                  className="mt-1 text-[11px] sm:text-[12px]"
+                  style={{ color: textColor }}
+                >
+                  {stat.label}
+                </p>
+              </div>
             </motion.div>
-
-            <div>
-              <h3
-                className="text-[21px] font-bold leading-none"
-                style={{
-                  color: violet,
-                }}
-              >
-                4,800+
-              </h3>
-
-              <p
-                className="mt-1 text-[12px]"
-                style={{
-                  color: textColor,
-                }}
-              >
-                Global Attendees
-              </p>
-            </div>
-          </motion.div>
-
-          {/* STAT 2 */}
-
-          <motion.div
-            variants={statAnimation}
-            className="flex items-center gap-3"
-          >
-            <motion.div
-              whileHover={{
-                scale: 1.05,
-                rotate: 3,
-              }}
-              transition={{
-                duration: 0.2,
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "#DDD6FE",
-              }}
-            >
-              <img
-                src="/svgs/countries.svg"
-                alt="Countries"
-                className="h-6 w-6 object-contain"
-                style={{
-                  filter: violetFilter,
-                }}
-              />
-            </motion.div>
-
-            <div>
-              <h3
-                className="text-[21px] font-bold leading-none"
-                style={{
-                  color: violet,
-                }}
-              >
-                60+
-              </h3>
-
-              <p
-                className="mt-1 text-[12px]"
-                style={{
-                  color: textColor,
-                }}
-              >
-                Countries
-              </p>
-            </div>
-          </motion.div>
-
-          {/* STAT 3 */}
-
-          <motion.div
-            variants={statAnimation}
-            className="flex items-center gap-3"
-          >
-            <motion.div
-              whileHover={{
-                scale: 1.05,
-                rotate: 3,
-              }}
-              transition={{
-                duration: 0.2,
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "#DDD6FE",
-              }}
-            >
-              <img
-                src="/svgs/conferences.svg"
-                alt="Conferences"
-                className="h-6 w-6 object-contain"
-                style={{
-                  filter: violetFilter,
-                }}
-              />
-            </motion.div>
-
-            <div>
-              <h3
-                className="text-[21px] font-bold leading-none"
-                style={{
-                  color: violet,
-                }}
-              >
-                25+
-              </h3>
-
-              <p
-                className="mt-1 text-[12px]"
-                style={{
-                  color: textColor,
-                }}
-              >
-                Conferences
-              </p>
-            </div>
-          </motion.div>
-
-          {/* STAT 4 */}
-
-          <motion.div
-            variants={statAnimation}
-            className="flex items-center gap-3"
-          >
-            <motion.div
-              whileHover={{
-                scale: 1.05,
-                rotate: 3,
-              }}
-              transition={{
-                duration: 0.2,
-              }}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "#DDD6FE",
-              }}
-            >
-              <img
-                src="/svgs/peoples.svg"
-                alt="Speakers"
-                className="h-6 w-6 object-contain"
-                style={{
-                  filter: violetFilter,
-                }}
-              />
-            </motion.div>
-
-            <div>
-              <h3
-                className="text-[21px] font-bold leading-none"
-                style={{
-                  color: violet,
-                }}
-              >
-                300+
-              </h3>
-
-              <p
-                className="mt-1 text-[12px]"
-                style={{
-                  color: textColor,
-                }}
-              >
-                Speakers
-              </p>
-            </div>
-          </motion.div>
+          ))}
         </motion.div>
       </div>
 
-      {/* =========================================================
-          MAIN FOOTER
-      ========================================================= */}
-
-      <div className="mx-auto max-w-7xl px-5 py-7 md:px-6 md:py-8">
+      {/* MAIN FOOTER */}
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:px-6 md:py-8">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={{
             hidden: {},
             visible: {
-              transition: {
-                staggerChildren: 0.08,
-              },
+              transition: { staggerChildren: 0.08 },
             },
           }}
-          className="
-            grid gap-6
-            sm:grid-cols-2
-            lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.25fr]
-            lg:gap-7
-          "
+          className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 sm:gap-6 lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.25fr] lg:gap-7"
         >
-          {/* BRAND */}
-
-          <motion.div variants={fadeUp}>
-            <motion.div
-              {...linkHover}
-              className="mb-3 inline-flex"
-            >
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2.5"
-              >
+          {/* BRAND — full width on mobile */}
+          <motion.div
+            variants={fadeUp}
+            className="col-span-2 min-w-0 sm:col-span-1"
+          >
+            <motion.div {...linkHover} className="mb-3 inline-flex">
+              <Link to="/" className="inline-flex items-center gap-2.5">
                 <motion.div
-                  whileHover={{
-                    scale: 1.06,
-                    rotate: 4,
-                  }}
+                  whileHover={{ scale: 1.06, rotate: 4 }}
                   className="flex h-9 w-9 items-center justify-center rounded-full"
-                  style={{
-                    backgroundColor: "#DDD6FE",
-                  }}
+                  style={{ backgroundColor: "#DDD6FE" }}
                 >
                   <span
                     className="text-lg font-bold"
-                    style={{
-                      color: violet,
-                    }}
+                    style={{ color: violet }}
                   >
                     G
                   </span>
@@ -398,18 +250,13 @@ const Footer = () => {
                 <div>
                   <h2
                     className="text-[16px] font-bold leading-tight"
-                    style={{
-                      color: violet,
-                    }}
+                    style={{ color: violet }}
                   >
                     GlobalScion
                   </h2>
-
                   <p
                     className="text-[11px]"
-                    style={{
-                      color: textColor,
-                    }}
+                    style={{ color: textColor }}
                   >
                     Conferences
                   </p>
@@ -419,219 +266,115 @@ const Footer = () => {
 
             <p
               className="max-w-xs text-[12px] leading-5"
-              style={{
-                color: textColor,
-              }}
+              style={{ color: textColor }}
             >
               Bringing people, ideas and innovation together for a better
               tomorrow.
             </p>
 
             <div className="mt-4 flex items-center gap-2.5">
-              {socialLinks.map(
-                ([icon, label, href]) => (
-                  <motion.a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{
-                      y: -3,
-                      scale: 1.04,
-                    }}
-                    whileTap={{
-                      scale: 0.94,
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border"
-                    style={{
-                      borderColor: "#C4B5FD",
-                      backgroundColor: "#EDE9FE",
-                    }}
-                  >
-                    <img
-                      src={`/svgs/${icon}`}
-                      alt={label}
-                      className="h-4 w-4 object-contain"
-                      style={{
-                        filter: violetFilter,
-                      }}
-                    />
-                  </motion.a>
-                )
-              )}
+              {socialLinks.map(([icon, label, href]) => (
+                <motion.a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -3, scale: 1.04 }}
+                  whileTap={{ scale: 0.94 }}
+                  className="flex h-8 w-8 items-center justify-center rounded-md border"
+                  style={{
+                    borderColor: "#C4B5FD",
+                    backgroundColor: "#EDE9FE",
+                  }}
+                >
+                  <img
+                    src={`/svgs/${icon}`}
+                    alt={label}
+                    className="h-4 w-4 object-contain"
+                    style={{ filter: violetFilter }}
+                  />
+                </motion.a>
+              ))}
             </div>
           </motion.div>
 
           {/* QUICK LINKS */}
-
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="min-w-0">
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
-              style={{
-                color: violet,
-              }}
+              style={{ color: violet }}
             >
               Quick Links
             </h3>
 
             <ul
-              className="space-y-1.5 text-[12px]"
-              style={{
-                color: textColor,
-              }}
+              className="space-y-2 text-[12px]"
+              style={{ color: textColor }}
             >
-              {quickLinks.map(
-                ([label, href]) => (
-                  <li key={label}>
-                    <motion.div {...linkHover}>
-                      <Link
-                        to={href}
-                        className="inline-block transition-colors"
-                        style={{
-                          color: textColor,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color =
-                            violet;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color =
-                            textColor;
-                        }}
-                      >
-                        {label}
-                      </Link>
-                    </motion.div>
-                  </li>
-                )
-              )}
+              {renderLinks(quickLinks)}
             </ul>
           </motion.div>
 
           {/* CONFERENCES */}
-
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="min-w-0">
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
-              style={{
-                color: violet,
-              }}
+              style={{ color: violet }}
             >
               Conferences
             </h3>
 
             <ul
-              className="space-y-1.5 text-[12px]"
-              style={{
-                color: textColor,
-              }}
+              className="space-y-2 text-[12px]"
+              style={{ color: textColor }}
             >
-              {conferenceLinks.map(
-                ([label, href]) => (
-                  <li key={label}>
-                    <motion.div {...linkHover}>
-                      <Link
-                        to={href}
-                        className="inline-block transition-colors"
-                        style={{
-                          color: textColor,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color =
-                            violet;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color =
-                            textColor;
-                        }}
-                      >
-                        {label}
-                      </Link>
-                    </motion.div>
-                  </li>
-                )
-              )}
+              {renderLinks(conferenceLinks)}
             </ul>
           </motion.div>
 
           {/* RESOURCES */}
-
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="min-w-0">
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
-              style={{
-                color: violet,
-              }}
+              style={{ color: violet }}
             >
               Resources
             </h3>
 
             <ul
-              className="space-y-1.5 text-[12px]"
-              style={{
-                color: textColor,
-              }}
+              className="space-y-2 text-[12px]"
+              style={{ color: textColor }}
             >
-              {resourceLinks.map(
-                ([label, href]) => (
-                  <li key={label}>
-                    <motion.div {...linkHover}>
-                      <Link
-                        to={href}
-                        className="inline-block transition-colors"
-                        style={{
-                          color: textColor,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color =
-                            violet;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color =
-                            textColor;
-                        }}
-                      >
-                        {label}
-                      </Link>
-                    </motion.div>
-                  </li>
-                )
-              )}
+              {renderLinks(resourceLinks)}
             </ul>
           </motion.div>
 
-          {/* CONTACT */}
-
-          <motion.div variants={fadeUp}>
+          {/* CONTACT — full width on mobile */}
+          <motion.div
+            variants={fadeUp}
+            className="col-span-2 min-w-0 sm:col-span-1"
+          >
             <h3
               className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
-              style={{
-                color: violet,
-              }}
+              style={{ color: violet }}
             >
               Contact Us
             </h3>
 
             <div
               className="space-y-2.5 text-[12px]"
-              style={{
-                color: textColor,
-              }}
+              style={{ color: textColor }}
             >
               <motion.div
-                whileHover={{
-                  x: 3,
-                }}
+                whileHover={{ x: 3 }}
                 className="flex items-start gap-2.5"
               >
                 <MapPin
                   size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
-                  style={{
-                    color: violet,
-                  }}
+                  style={{ color: violet }}
                 />
 
                 <div className="leading-5">
@@ -644,18 +387,14 @@ const Footer = () => {
               </motion.div>
 
               <motion.div
-                whileHover={{
-                  x: 3,
-                }}
+                whileHover={{ x: 3 }}
                 className="flex items-start gap-2.5"
               >
                 <Phone
                   size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
-                  style={{
-                    color: violet,
-                  }}
+                  style={{ color: violet }}
                 />
 
                 <a
@@ -663,51 +402,29 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors"
-                  style={{
-                    color: textColor,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color =
-                      violet;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color =
-                      textColor;
-                  }}
+                  style={linkStyle}
+                  {...hoverLinkProps}
                 >
                   +44 330 808 8650
                 </a>
               </motion.div>
 
               <motion.div
-                whileHover={{
-                  x: 3,
-                }}
+                whileHover={{ x: 3 }}
                 className="flex items-start gap-2.5"
               >
                 <Mail
                   size={17}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
-                  style={{
-                    color: violet,
-                  }}
+                  style={{ color: violet }}
                 />
 
                 <a
                   href="mailto:info@globalscion.com"
                   className="break-all transition-colors"
-                  style={{
-                    color: textColor,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color =
-                      violet;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color =
-                      textColor;
-                  }}
+                  style={linkStyle}
+                  {...hoverLinkProps}
                 >
                   info@globalscion.com
                 </a>
@@ -715,16 +432,10 @@ const Footer = () => {
             </div>
 
             {/* NEWSLETTER */}
-
-            <motion.div
-              variants={fadeUp}
-              className="mt-4"
-            >
+            <motion.div variants={fadeUp} className="mt-4">
               <h4
                 className="mb-2 text-[12px] font-semibold"
-                style={{
-                  color: violet,
-                }}
+                style={{ color: violet }}
               >
                 Subscribe to Our Newsletter
               </h4>
@@ -739,30 +450,20 @@ const Footer = () => {
                 <input
                   type="email"
                   placeholder="Enter your email address"
+                  aria-label="Email address"
                   className="min-w-0 flex-1 bg-transparent px-3 text-[11px] outline-none"
-                  style={{
-                    color: "#333333",
-                  }}
+                  style={{ color: "#333333" }}
                 />
 
                 <motion.button
                   type="button"
                   aria-label="Subscribe"
-                  whileHover={{
-                    scale: 1.03,
-                  }}
-                  whileTap={{
-                    scale: 0.96,
-                  }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
                   className="flex w-10 shrink-0 items-center justify-center text-white"
-                  style={{
-                    backgroundColor: violet,
-                  }}
+                  style={{ backgroundColor: violet }}
                 >
-                  <Send
-                    size={16}
-                    strokeWidth={1.8}
-                  />
+                  <Send size={16} strokeWidth={1.8} />
                 </motion.button>
               </div>
             </motion.div>
@@ -771,104 +472,53 @@ const Footer = () => {
       </div>
 
       {/* COPYRIGHT */}
-
       <motion.div
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        transition={{
-          duration: 0.5,
-        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
         className="border-t"
-        style={{
-          borderColor: "#DDD6FE",
-        }}
+        style={{ borderColor: "#DDD6FE" }}
       >
         <div
-          className="
-            mx-auto flex max-w-7xl
-            flex-col gap-2
-            px-5 py-3
-            text-[10px]
-            md:flex-row md:items-center md:justify-between
-            md:px-6
-          "
-          style={{
-            color: textColor,
-          }}
+          className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 text-[10px] sm:px-5 md:flex-row md:items-center md:justify-between md:px-6"
+          style={{ color: textColor }}
         >
-          <p>
-            © GlobalScion Conferences. All rights reserved.
-          </p>
+          <p>© GlobalScion Conferences. All rights reserved.</p>
 
           <div className="flex flex-wrap items-center gap-3.5">
             <Link
               to="/terms"
               className="transition-colors"
-              style={{
-                color: textColor,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color =
-                  violet;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color =
-                  textColor;
-              }}
+              style={linkStyle}
+              {...hoverLinkProps}
             >
-              Terms & Conditions
+              Terms &amp; Conditions
             </Link>
 
             <span
               className="h-3 w-px"
-              style={{
-                backgroundColor: "#C4B5FD",
-              }}
+              style={{ backgroundColor: "#C4B5FD" }}
             />
 
             <Link
               to="/privacy"
               className="transition-colors"
-              style={{
-                color: textColor,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color =
-                  violet;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color =
-                  textColor;
-              }}
+              style={linkStyle}
+              {...hoverLinkProps}
             >
               Privacy Policy
             </Link>
 
             <span
               className="h-3 w-px"
-              style={{
-                backgroundColor: "#C4B5FD",
-              }}
+              style={{ backgroundColor: "#C4B5FD" }}
             />
 
             <Link
               to="/help-center"
               className="transition-colors"
-              style={{
-                color: textColor,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color =
-                  violet;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color =
-                  textColor;
-              }}
+              style={linkStyle}
+              {...hoverLinkProps}
             >
               Help Center
             </Link>
