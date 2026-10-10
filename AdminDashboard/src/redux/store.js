@@ -11,6 +11,7 @@ import notificationReducer from "./notificationSlice";
 import abstractsReducer from "./abstractsSlice";
 import subscriberReducer from "./subscribeSlice";
 import invoiceReducer from "./invoiceSlice";
+import paymentReducer from "./paymentSlice";
 
 
 
@@ -29,6 +30,7 @@ export const store = configureStore({
     subscriber: subscriberReducer,
     notifications: notificationReducer,
     invoice: invoiceReducer,
+    payment: paymentReducer,
   
 
 

@@ -66,7 +66,6 @@ router.post(
 // Get All Speakers
 router.get(
     "/speakers",
-    authMiddleware("admin"),
     adminController.getAllSpeakers
 );
 

@@ -22,9 +22,9 @@ export const getAbstractByIdApi = (id) => {
 // DOWNLOAD ABSTRACT
 // ======================================================
 export const downloadAbstractApi = (id) => {
-  return axiosInstance.get(
-    `/admin/abstracts/${id}/download`
-  );
+  return axiosInstance.get(`/user/abstracts/${id}/download`, {
+    responseType: "blob",
+  });
 };
 
 // ======================================================

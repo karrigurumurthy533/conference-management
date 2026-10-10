@@ -1,4 +1,4 @@
-
+const axios = require("axios");
 const Abstract = require("../models/Abstract");
 const DownloadBrochure = require("../models/DownloadBrochure");
 const Conference = require("../models/conference");
@@ -379,9 +379,8 @@ exports.deleteDownloadBrochure = catchAsync(async (req, res, next) => {
   });
 });
 
+
 exports.createAbstract = catchAsync(async (req, res, next) => {
-
-
   const {
     title,
     firstName,
@@ -424,23 +423,21 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     );
   }
 
-  const existingAbstract = await Abstract.findOne({
-    "presenter.email": email.toLowerCase(),
-    "abstractDetails.conferenceId": conferenceData._id,
-  });
-
-  if (existingAbstract) {
-    return next(
-      new AppError(
-        "Abstract already submitted for this conference",
-        409
-      )
-    );
-  }
-
   if (!req.file) {
     return next(
       new AppError("Abstract file is required", 400)
+    );
+  }
+
+  if (
+    !Buffer.isBuffer(req.file.buffer) ||
+    req.file.buffer.length === 0
+  ) {
+    return next(
+      new AppError(
+        "Uploaded file buffer is empty. Please upload the file again.",
+        400
+      )
     );
   }
 
@@ -466,22 +463,73 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     );
   }
 
+  if (req.file.size > 10 * 1024 * 1024) {
+    return next(
+      new AppError("File size must not exceed 10 MB", 400)
+    );
+  }
+
+  if (fileType === "pdf") {
+    const headerArea = req.file.buffer
+      .subarray(0, Math.min(req.file.buffer.length, 1024))
+      .toString("latin1");
+
+    if (!headerArea.includes("%PDF-")) {
+      return next(
+        new AppError(
+          "The uploaded file does not appear to be a valid PDF. Please select the original PDF file.",
+          400
+        )
+      );
+    }
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existingAbstract = await Abstract.findOne({
+    "presenter.email": normalizedEmail,
+    "abstractDetails.conferenceId": conferenceData._id,
+  });
+
+  if (existingAbstract) {
+    return next(
+      new AppError(
+        "Abstract already submitted for this conference",
+        409
+      )
+    );
+  }
+
   let cloudinaryResult;
 
   try {
+    const resourceType = req.file.mimetype.startsWith("image/")
+      ? "image"
+      : "raw";
+
     cloudinaryResult = await uploadToCloudinary(
       req.file,
-      "globalscion/abstracts"
+      "globalscion/abstracts",
+      resourceType
     );
-  } catch (error) {
-    console.error("========== CLOUDINARY ERROR ==========");
-    console.error("Message:", error.message);
-    console.error("Error:", error);
-    console.error("======================================");
 
+    if (
+      !cloudinaryResult ||
+      !cloudinaryResult.secure_url ||
+      !cloudinaryResult.public_id
+    ) {
+      throw new Error(
+        "Cloudinary did not return the expected upload details"
+      );
+    }
+
+    if (cloudinaryResult.resource_type !== resourceType) {
+      throw new Error("Unexpected Cloudinary resource type");
+    }
+  } catch (error) {
     return next(
       new AppError(
-        error.message || "Failed to upload abstract file",
+        "Failed to upload abstract file to Cloudinary",
         500
       )
     );
@@ -494,37 +542,53 @@ exports.createAbstract = catchAsync(async (req, res, next) => {
     fileSize: req.file.size,
   };
 
-  const abstract = await Abstract.create({
-    presenter: {
-      title,
-      firstName,
-      lastName,
-      email: email.toLowerCase(),
-      phone,
-    },
+  let abstract;
 
-    abstractDetails: {
-      category,
-      conferenceId: conferenceData._id,
-    },
+  try {
+    abstract = await Abstract.create({
+      presenter: {
+        title: title.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: normalizedEmail,
+        phone: phone.trim(),
+      },
 
-    location: {
-      country,
-      fullPostalAddress,
-    },
+      abstractDetails: {
+        category,
+        conferenceId: conferenceData._id,
+      },
 
-    abstractFile,
+      location: {
+        country: country.trim(),
+        fullPostalAddress: fullPostalAddress.trim(),
+      },
 
-    status: "Submitted",
-    reviewStatus: "Pending",
-  });
+      abstractFile,
+      status: "Submitted",
+      reviewStatus: "Pending",
+    });
+  } catch (error) {
+    try {
+      await deleteFromCloudinary(
+        cloudinaryResult.secure_url,
+        cloudinaryResult.resource_type
+      );
+    } catch (deleteError) {
+      // Cleanup failure does not replace the original database error.
+    }
 
-  res.status(201).json({
+    throw error;
+  }
+
+  return res.status(201).json({
     success: true,
     message: "Abstract submitted successfully",
     data: abstract,
   });
 });
+
+
 
 exports.getAllAbstracts = catchAsync(async (req, res, next) => {
   const page = Math.max(parseInt(req.query.page) || 1, 1);
@@ -602,107 +666,108 @@ exports.deleteAbstract = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.downloadAbstract = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
 
-  // Validate MongoDB ObjectId
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new AppError("Invalid abstract ID", 400));
-  }
+exports.downloadAbstract = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  // Find abstract
-  const abstract = await Abstract.findById(id)
-    .populate(
-      "abstractDetails.conferenceId",
-      "title dates location"
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Abstract ID is required.",
+      });
+    }
+
+    const abstract = await Abstract.findById(id);
+
+    if (!abstract) {
+      return res.status(404).json({
+        success: false,
+        message: "Abstract not found.",
+      });
+    }
+
+    const fileUrl = abstract.abstractFile?.fileUrl;
+    const originalName =
+      abstract.abstractFile?.originalFileName || "abstract.pdf";
+
+    if (!fileUrl) {
+      return res.status(404).json({
+        success: false,
+        message: "Abstract file URL not found.",
+      });
+    }
+
+    const response = await axios.get(fileUrl, {
+      responseType: "arraybuffer",
+      timeout: 30000,
+      maxContentLength: 20 * 1024 * 1024,
+      validateStatus: (status) =>
+        status >= 200 && status < 300,
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    if (!buffer.length) {
+      return res.status(502).json({
+        success: false,
+        message: "The downloaded file is empty.",
+      });
+    }
+
+    const isPdf =
+      buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+
+    if (!isPdf) {
+      return res.status(502).json({
+        success: false,
+        message:
+          "Stored file is not a valid PDF. Please upload the original PDF again.",
+      });
+    }
+
+    let safeName = String(originalName)
+      .replace(/[\/\\]/g, "_")
+      .replace(/[\r\n"]/g, "_")
+      .trim();
+
+    if (!safeName) {
+      safeName = "abstract.pdf";
+    }
+
+    if (!safeName.toLowerCase().endsWith(".pdf")) {
+      safeName += ".pdf";
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`
     );
 
-  if (!abstract) {
-    return next(new AppError("Abstract not found", 404));
+    res.setHeader("Content-Length", buffer.length);
+    res.setHeader("Cache-Control", "no-store");
+
+    return res.status(200).end(buffer);
+  } catch (error) {
+    if (res.headersSent) {
+      return;
+    }
+
+    if (error.response) {
+      return res.status(502).json({
+        success: false,
+        message: "Failed to retrieve the PDF from storage.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to download abstract.",
+    });
   }
-
-  // Check abstract file
-  if (!abstract.abstractFile) {
-    return next(
-      new AppError("Abstract file not found", 404)
-    );
-  }
-
-  // Get Cloudinary URL
-  const fileUrl =
-    abstract.abstractFile.fileUrl ||
-    abstract.abstractFile.url ||
-    abstract.abstractFile.secure_url;
-
-  if (!fileUrl) {
-    return next(
-      new AppError("Abstract file URL not found", 404)
-    );
-  }
-
-  // Full name
-  const fullName = `${abstract.presenter?.firstName || ""} ${abstract.presenter?.lastName || ""
-    }`.trim();
-
-  // Response
-  return res.status(200).json({
-    success: true,
-    message: "Abstract download URL generated successfully",
-
-    data: {
-      abstractId: abstract._id,
-
-      presenter: {
-        title: abstract.presenter?.title || "",
-        firstName: abstract.presenter?.firstName || "",
-        lastName: abstract.presenter?.lastName || "",
-        fullName,
-        email: abstract.presenter?.email || "",
-        phone: abstract.presenter?.phone || "",
-      },
-
-      abstractDetails: {
-        category:
-          abstract.abstractDetails?.category || "",
-
-        conference: abstract.abstractDetails?.conferenceId
-          ? {
-            id: abstract.abstractDetails.conferenceId._id,
-            title:
-              abstract.abstractDetails.conferenceId.title ||
-              "",
-            dates:
-              abstract.abstractDetails.conferenceId.dates ||
-              null,
-            location:
-              abstract.abstractDetails.conferenceId.location ||
-              null,
-          }
-          : null,
-      },
-
-      location: {
-        country: abstract.location?.country || "",
-        fullPostalAddress:
-          abstract.location?.fullPostalAddress || "",
-      },
-
-      file: {
-        fileName:
-          abstract.abstractFile.originalFileName || "abstract",
-        fileType:
-          abstract.abstractFile.fileType || "",
-        fileSize:
-          abstract.abstractFile.fileSize || 0,
-        fileUrl,
-      },
-
-      status: abstract.status,
-      reviewStatus: abstract.reviewStatus,
-      submittedAt: abstract.submittedAt,
-    },
-  });
-});
+};
 
 
 

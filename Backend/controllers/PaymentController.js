@@ -1,844 +1,689 @@
+
 const crypto = require("crypto");
+const Razorpay = require("razorpay");
+const mongoose = require("mongoose");
 
-const razorpay = require("../config/razorpay");
-
-const Registration = require("../models/Registration");
 const Payment = require("../models/Payment");
+const Registration = require("../models/Registration");
 
-const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
+
+const validObjectId = (id) =>
+  mongoose.Types.ObjectId.isValid(id);
 
 /*
-|--------------------------------------------------------------------------
-| CREATE PAYMENT ORDER
-|--------------------------------------------------------------------------
-*/
-
-exports.createPaymentOrder = catchAsync(
-  async (req, res, next) => {
-    const { registrationId } = req.body;
-
-    // ------------------------------------------------
-    // 1. Validate registration ID
-    // ------------------------------------------------
-
-    if (!registrationId) {
-      return next(
-        new AppError(
-          "Registration ID is required",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 2. Find registration
-    // ------------------------------------------------
-
-    const registration =
-      await Registration.findById(registrationId);
-
-    if (!registration) {
-      return next(
-        new AppError(
-          "Registration not found",
-          404
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 3. Already paid check
-    // ------------------------------------------------
-
-    if (
-      registration.paymentStatus === "Paid"
-    ) {
-      return next(
-        new AppError(
-          "Registration is already paid",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 4. Get original registration price
-    // ------------------------------------------------
-
-    const price = Number(
-      registration.registration?.price
-    );
-
-    const currency =
-      registration.registration?.currency
-        ?.toString()
-        .trim()
-        .toUpperCase();
-
-    console.log(
-      "========================================"
-    );
-
-    console.log(
-      "CREATE PAYMENT ORDER"
-    );
-
-    console.log(
-      "Registration ID:",
-      registration._id.toString()
-    );
-
-    console.log(
-      "Registration Price:",
-      registration.registration?.price
-    );
-
-    console.log(
-      "Registration Currency:",
-      registration.registration?.currency
-    );
-
-    console.log(
-      "Normalized Price:",
-      price
-    );
-
-    console.log(
-      "Normalized Currency:",
-      currency
-    );
-
-    console.log(
-      "========================================"
-    );
-
-    // ------------------------------------------------
-    // 5. Validate price
-    // ------------------------------------------------
-
-    if (!price || price <= 0) {
-      return next(
-        new AppError(
-          "Invalid registration amount",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 6. Validate currency
-    // ------------------------------------------------
-
-    const supportedCurrencies = [
-      "GBP",
-      "USD",
-      "EUR",
-    ];
-
-    if (
-      !currency ||
-      !supportedCurrencies.includes(currency)
-    ) {
-      return next(
-        new AppError(
-          `Unsupported payment currency: ${currency}`,
-          400
-        )
-      );
-    }
-
-    const paymentCurrency = currency;
-
-    // ------------------------------------------------
-    // 7. Convert to smallest currency unit
-    //
-    // GBP 100 -> 10000 pence
-    // USD 100 -> 10000 cents
-    // EUR 100 -> 10000 cents
-    //
-    // IMPORTANT:
-    // NO INR CONVERSION
-    // ------------------------------------------------
-
-    const razorpayAmount = Math.round(
-      price * 100
-    );
-
-    if (razorpayAmount <= 0) {
-      return next(
-        new AppError(
-          "Invalid Razorpay payment amount",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 8. Razorpay order options
-    // ------------------------------------------------
-
-    const options = {
-      amount: razorpayAmount,
-
-      // IMPORTANT:
-      // Original currency only.
-      // Never change this to INR.
-      currency: paymentCurrency,
-
-      receipt: `REG_${registration._id}`,
-    };
-
-    console.log(
-      "========================================"
-    );
-
-    console.log(
-      "RAZORPAY ORDER OPTIONS"
-    );
-
-    console.log(
-      "Amount:",
-      options.amount
-    );
-
-    console.log(
-      "Currency:",
-      options.currency
-    );
-
-    console.log(
-      "Receipt:",
-      options.receipt
-    );
-
-    console.log(
-      "========================================"
-    );
-
-    // ------------------------------------------------
-    // 9. Create Razorpay order
-    // ------------------------------------------------
-
-    let order;
-
-    try {
-      order =
-        await razorpay.orders.create(
-          options
-        );
-    } catch (error) {
-      console.error(
-        "========================================"
-      );
-
-      console.error(
-        "RAZORPAY ORDER CREATION ERROR"
-      );
-
-      console.error(
-        error
-      );
-
-      console.error(
-        "========================================"
-      );
-
-      return next(
-        new AppError(
-          error?.error?.description ||
-            error?.description ||
-            "Unable to create Razorpay payment order",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 10. Log Razorpay response
-    // ------------------------------------------------
-
-    console.log(
-      "========================================"
-    );
-
-    console.log(
-      "RAZORPAY ORDER CREATED"
-    );
-
-    console.log(
-      "Order ID:",
-      order.id
-    );
-
-    console.log(
-      "Order Amount:",
-      order.amount
-    );
-
-    console.log(
-      "Order Currency:",
-      order.currency
-    );
-
-    console.log(
-      "========================================"
-    );
-
-    // ------------------------------------------------
-    // 11. Safety check
-    //
-    // Make sure Razorpay did not return
-    // a different currency.
-    // ------------------------------------------------
-
-    if (
-      order.currency !== paymentCurrency
-    ) {
-      return next(
-        new AppError(
-          `Razorpay currency mismatch. Expected ${paymentCurrency}, received ${order.currency}`,
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 12. Save Razorpay order ID
-    // ------------------------------------------------
-
-    registration.paymentOrderId =
-      order.id;
-
-    registration.paymentStatus =
-      "Pending";
-
-    await registration.save();
-
-    // ------------------------------------------------
-    // 13. Send response
-    // ------------------------------------------------
-
-    return res.status(200).json({
-      success: true,
-
-      message:
-        "Payment order created successfully",
-
-      data: {
-        orderId:
-          order.id,
-
-        // Razorpay smallest unit
-        amount:
-          order.amount,
-
-        // GBP / USD / EUR
-        currency:
-          order.currency,
-
-        keyId:
-          process.env.RAZORPAY_KEY_ID,
-
-        registrationId:
-          registration._id,
-
-        // Original amount for UI
-        displayAmount:
-          price,
-
-        // Original currency for UI
-        displayCurrency:
-          paymentCurrency,
-      },
+ * CREATE RAZORPAY ORDER
+ * POST /api/v1/payments/order
+ *
+ * The amount and conference details are loaded from
+ * the registration record, not trusted from the client.
+ */
+exports.createPaymentOrder = asyncHandler(async (req, res) => {
+  const { registrationId } = req.body;
+
+  if (!registrationId || !validObjectId(registrationId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid registrationId is required",
     });
   }
-);
 
+  const registration = await Registration.findById(registrationId);
+
+  if (!registration) {
+    return res.status(404).json({
+      success: false,
+      message: "Registration not found",
+    });
+  }
+
+  /*
+   * ADAPT THESE MAPPINGS to your actual Registration model.
+   * Never accept the payable amount directly from the client.
+   */
+  const payerName =
+    registration.fullName ||
+    registration.name ||
+    registration.user?.name;
+
+  const payerEmail =
+    registration.email ||
+    registration.user?.email;
+
+  const payerPhone =
+    registration.phone ||
+    registration.phoneNumber ||
+    registration.user?.phone;
+
+  const conferenceId =
+    registration.conference?.conferenceId ||
+    registration.conferenceId;
+
+  const conferenceTitle =
+    registration.conference?.title ||
+    registration.conferenceTitle;
+
+  const amount =
+    Number(
+      registration.amount ??
+      registration.registrationFee ??
+      registration.price
+    );
+
+  const currency = String(
+    registration.currency || "INR"
+  ).toUpperCase();
+
+  if (
+    !payerName ||
+    !payerEmail ||
+    !payerPhone ||
+    !conferenceId ||
+    !conferenceTitle ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Registration is missing required payer, conference, or amount details",
+    });
+  }
+
+  if (currency !== "INR") {
+    return res.status(400).json({
+      success: false,
+      message:
+        "This Razorpay order endpoint currently supports INR only",
+    });
+  }
+
+  const existingPaidPayment = await Payment.findOne({
+    registrationId,
+    paymentStatus: "Paid",
+  });
+
+  if (existingPaidPayment) {
+    return res.status(409).json({
+      success: false,
+      message: "This registration is already paid",
+    });
+  }
+
+  const order = await razorpay.orders.create({
+    amount: Math.round(amount * 100),
+    currency,
+    receipt: `reg_${registration._id}`,
+    notes: {
+      registrationId: String(registration._id),
+      conferenceId: String(conferenceId),
+    },
+  });
+
+  const payment = await Payment.create({
+    registrationId: registration._id,
+    conferenceId,
+    conferenceTitle,
+    payer: {
+      name: payerName,
+      email: payerEmail,
+      phone: payerPhone,
+    },
+    amount,
+    currency,
+    razorpay: {
+      orderId: order.id,
+    },
+    paymentStatus: "Pending",
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Payment order created successfully",
+    data: {
+      paymentId: payment._id,
+      registrationId: payment.registrationId,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY_ID,
+    },
+  });
+});
 
 /*
-|--------------------------------------------------------------------------
-| VERIFY PAYMENT
-|--------------------------------------------------------------------------
-*/
+ * VERIFY RAZORPAY PAYMENT
+ * POST /api/v1/payments/verify
+ */
+exports.verifyPayment = asyncHandler(async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  } = req.body;
 
-exports.verifyPayment = catchAsync(
-  async (req, res, next) => {
-    const {
-      registrationId,
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    } = req.body;
+  if (
+    !razorpay_order_id ||
+    !razorpay_payment_id ||
+    !razorpay_signature
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Razorpay verification fields are required",
+    });
+  }
 
-    // ------------------------------------------------
-    // 1. Validate request
-    // ------------------------------------------------
+  const payment = await Payment.findOne({
+    "razorpay.orderId": razorpay_order_id,
+  });
 
+  if (!payment) {
+    return res.status(404).json({
+      success: false,
+      message: "Payment order not found",
+    });
+  }
+
+  if (payment.paymentStatus === "Paid") {
     if (
-      !registrationId ||
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature
+      payment.razorpay.paymentId === razorpay_payment_id
     ) {
-      return next(
-        new AppError(
-          "Payment details are required",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 2. Find registration
-    // ------------------------------------------------
-
-    const registration =
-      await Registration.findById(
-        registrationId
-      );
-
-    if (!registration) {
-      return next(
-        new AppError(
-          "Registration not found",
-          404
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 3. Verify Razorpay order ID
-    // ------------------------------------------------
-
-    if (
-      registration.paymentOrderId !==
-      razorpay_order_id
-    ) {
-      return next(
-        new AppError(
-          "Invalid payment order",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 4. Generate Razorpay signature
-    // ------------------------------------------------
-
-    const generatedSignature =
-      crypto
-        .createHmac(
-          "sha256",
-          process.env.RAZORPAY_KEY_SECRET
-        )
-        .update(
-          `${razorpay_order_id}|${razorpay_payment_id}`
-        )
-        .digest("hex");
-
-    // ------------------------------------------------
-    // 5. Verify signature
-    // ------------------------------------------------
-
-    if (
-      generatedSignature !==
-      razorpay_signature
-    ) {
-      registration.paymentStatus =
-        "Failed";
-
-      await registration.save();
-
-      return next(
-        new AppError(
-          "Payment verification failed",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 6. Check duplicate payment
-    // ------------------------------------------------
-
-    const existingPayment =
-      await Payment.findOne({
-        "razorpay.paymentId":
-          razorpay_payment_id,
-      });
-
-    if (existingPayment) {
-      return res.status(200).json({
+      return res.json({
         success: true,
-
-        message:
-          "Payment already verified",
-
-        data: {
-          payment:
-            existingPayment,
-        },
+        message: "Payment was already verified",
+        data: payment,
       });
     }
 
-    // ------------------------------------------------
-    // 7. Fetch payment from Razorpay
-    // ------------------------------------------------
-
-    let razorpayPayment;
-
-    try {
-      razorpayPayment =
-        await razorpay.payments.fetch(
-          razorpay_payment_id
-        );
-    } catch (error) {
-      console.error(
-        "Razorpay payment fetch error:",
-        error
-      );
-
-      return next(
-        new AppError(
-          "Unable to fetch Razorpay payment details",
-          500
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 8. Verify order ID
-    // ------------------------------------------------
-
-    if (
-      razorpayPayment.order_id !==
-      razorpay_order_id
-    ) {
-      return next(
-        new AppError(
-          "Payment does not belong to this order",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 9. Verify payment status
-    // ------------------------------------------------
-
-    if (
-      razorpayPayment.status !==
-      "captured"
-    ) {
-      registration.paymentStatus =
-        "Failed";
-
-      await registration.save();
-
-      return next(
-        new AppError(
-          `Payment is not captured. Current status: ${razorpayPayment.status}`,
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 10. Get expected price
-    // ------------------------------------------------
-
-    const expectedPrice =
-      Number(
-        registration.registration?.price
-      );
-
-    // ------------------------------------------------
-    // 11. Get expected currency
-    // ------------------------------------------------
-
-    const expectedCurrency =
-      registration.registration?.currency
-        ?.toString()
-        .trim()
-        .toUpperCase();
-
-    // ------------------------------------------------
-    // 12. Validate expected price
-    // ------------------------------------------------
-
-    if (
-      !expectedPrice ||
-      expectedPrice <= 0
-    ) {
-      return next(
-        new AppError(
-          "Invalid registration amount",
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 13. Validate expected currency
-    // ------------------------------------------------
-
-    const supportedCurrencies = [
-      "GBP",
-      "USD",
-      "EUR",
-    ];
-
-    if (
-      !supportedCurrencies.includes(
-        expectedCurrency
-      )
-    ) {
-      return next(
-        new AppError(
-          `Unsupported payment currency: ${expectedCurrency}`,
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 14. Calculate expected Razorpay amount
-    // ------------------------------------------------
-
-    const expectedAmount =
-      Math.round(
-        expectedPrice * 100
-      );
-
-    // ------------------------------------------------
-    // 15. Verify payment amount
-    // ------------------------------------------------
-
-    if (
-      Number(
-        razorpayPayment.amount
-      ) !== expectedAmount
-    ) {
-      console.error(
-        "Payment amount mismatch:",
-        {
-          expected:
-            expectedAmount,
-
-          received:
-            razorpayPayment.amount,
-        }
-      );
-
-      return next(
-        new AppError(
-          `Payment amount mismatch. Expected ${expectedAmount}, received ${razorpayPayment.amount}`,
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 16. Verify payment currency
-    // ------------------------------------------------
-
-    const razorpayCurrency =
-      razorpayPayment.currency
-        ?.toString()
-        .trim()
-        .toUpperCase();
-
-    if (
-      razorpayCurrency !==
-      expectedCurrency
-    ) {
-      console.error(
-        "Payment currency mismatch:",
-        {
-          expected:
-            expectedCurrency,
-
-          received:
-            razorpayCurrency,
-        }
-      );
-
-      return next(
-        new AppError(
-          `Payment currency mismatch. Expected ${expectedCurrency}, received ${razorpayCurrency}`,
-          400
-        )
-      );
-    }
-
-    // ------------------------------------------------
-    // 17. Build payer name
-    // ------------------------------------------------
-
-    const payerName = [
-      registration.title,
-      registration.firstName,
-      registration.lastName,
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    // ------------------------------------------------
-    // 18. Conference information
-    // ------------------------------------------------
-
-    const conferenceId =
-      registration.conference
-        ?.conferenceId ||
-      registration.conference?._id;
-
-    const conferenceTitle =
-      registration.conference
-        ?.conferenceTitle ||
-      registration.conference?.title ||
-      "Conference";
-
-    // ------------------------------------------------
-    // 19. Update Registration
-    // ------------------------------------------------
-
-    registration.paymentId =
-      razorpay_payment_id;
-
-    registration.paymentSignature =
-      razorpay_signature;
-
-    registration.paymentStatus =
-      "Paid";
-
-    registration.status =
-      "Confirmed";
-
-    await registration.save();
-
-    // ------------------------------------------------
-    // 20. Create Payment record
-    // ------------------------------------------------
-
-    const payment =
-      await Payment.create({
-        registrationId:
-          registration._id,
-
-        conferenceId:
-          conferenceId,
-
-        conferenceTitle:
-          conferenceTitle,
-
-        // --------------------------------------------
-        // Payer
-        // --------------------------------------------
-
-        payer: {
-          name:
-            payerName,
-
-          email:
-            registration.email,
-
-          phone:
-            registration.phone,
-        },
-
-        // --------------------------------------------
-        // Amount
-        // --------------------------------------------
-
-        amount:
-          expectedPrice,
-
-        currency:
-          expectedCurrency,
-
-        // --------------------------------------------
-        // Original amount
-        //
-        // No conversion was performed.
-        // --------------------------------------------
-
-        originalAmount:
-          expectedPrice,
-
-        originalCurrency:
-          expectedCurrency,
-
-        // --------------------------------------------
-        // Razorpay details
-        // --------------------------------------------
-
-        razorpay: {
-          orderId:
-            razorpay_order_id,
-
-          paymentId:
-            razorpay_payment_id,
-
-          signature:
-            razorpay_signature,
-        },
-
-        // --------------------------------------------
-        // Payment method
-        // --------------------------------------------
-
-        paymentMethod:
-          razorpayPayment.method ||
-          null,
-
-        // --------------------------------------------
-        // Payment status
-        // --------------------------------------------
-
-        paymentStatus:
-          "Paid",
-
-        // --------------------------------------------
-        // Transaction ID
-        // --------------------------------------------
-
-        transactionId:
-          razorpay_payment_id,
-
-        // --------------------------------------------
-        // Paid time
-        // --------------------------------------------
-
-        paidAt:
-          new Date(),
-
-        // --------------------------------------------
-        // Full Razorpay payment data
-        // --------------------------------------------
-
-        razorpayData:
-          razorpayPayment,
-      });
-
-    // ------------------------------------------------
-    // 21. Final response
-    // ------------------------------------------------
-
-    return res.status(200).json({
-      success: true,
-
+    return res.status(409).json({
+      success: false,
+      message: "Order has already been paid with another payment",
+    });
+  }
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  const supplied = Buffer.from(razorpay_signature, "hex");
+  const expected = Buffer.from(expectedSignature, "hex");
+
+  const signatureValid =
+    supplied.length === expected.length &&
+    crypto.timingSafeEqual(supplied, expected);
+
+  if (!signatureValid) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid payment signature",
+    });
+  }
+
+  /*
+   * Fetch the payment from Razorpay.
+   * Do not mark the transaction Paid based on signature alone.
+   */
+  const razorpayPayment = await razorpay.payments.fetch(
+    razorpay_payment_id
+  );
+
+  if (razorpayPayment.order_id !== razorpay_order_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Payment does not belong to this order",
+    });
+  }
+
+  if (
+    razorpayPayment.status !== "captured" ||
+    razorpayPayment.amount !== Math.round(payment.amount * 100) ||
+    razorpayPayment.currency !== payment.currency
+  ) {
+    return res.status(409).json({
+      success: false,
       message:
-        "Payment verified and transaction saved successfully",
-
+        "Payment is not captured or its amount/currency does not match",
       data: {
-        registration:
-          registration,
-
-        payment:
-          payment,
+        razorpayStatus: razorpayPayment.status,
       },
     });
   }
-);
+
+  payment.razorpay.paymentId = razorpay_payment_id;
+  payment.razorpay.signature = razorpay_signature;
+  payment.paymentMethod = razorpayPayment.method || null;
+  payment.paymentStatus = "Paid";
+  payment.transactionId = razorpay_payment_id;
+  payment.paidAt = new Date();
+  payment.razorpayData = razorpayPayment;
+
+  await payment.save();
+
+  return res.json({
+    success: true,
+    message: "Payment verified successfully",
+    data: payment,
+  });
+});
+
+/*
+ * ADMIN DASHBOARD SUMMARY
+ * GET /api/v1/payments/admin/summary
+ */
+exports.getPaymentSummary = asyncHandler(async (req, res) => {
+  const summary = await Payment.aggregate([
+    {
+      $group: {
+        _id: null,
+
+        totalRevenue: {
+          $sum: {
+            $cond: [
+              { $eq: ["$paymentStatus", "Paid"] },
+              "$amount",
+              0,
+            ],
+          },
+        },
+
+        successfulPayments: {
+          $sum: {
+            $cond: [
+              { $eq: ["$paymentStatus", "Paid"] },
+              1,
+              0,
+            ],
+          },
+        },
+
+        pendingPayments: {
+          $sum: {
+            $cond: [
+              {
+                $in: [
+                  "$paymentStatus",
+                  ["Created", "Pending"],
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+
+        failedPayments: {
+          $sum: {
+            $cond: [
+              { $eq: ["$paymentStatus", "Failed"] },
+              1,
+              0,
+            ],
+          },
+        },
+
+        refundedPayments: {
+          $sum: {
+            $cond: [
+              { $eq: ["$paymentStatus", "Refunded"] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  return res.json({
+    success: true,
+    data: summary[0] || {
+      totalRevenue: 0,
+      successfulPayments: 0,
+      pendingPayments: 0,
+      failedPayments: 0,
+      refundedPayments: 0,
+    },
+  });
+});
+
+/*
+ * ADMIN PAYMENT LIST
+ * GET /api/v1/payments/admin?page=1&limit=10&search=rahul&status=Paid
+ */
+exports.getPayments = asyncHandler(async (req, res) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(req.query.limit) || 10)
+  );
+
+  const { search, status, conferenceId, method } = req.query;
+
+  const filter = {};
+
+  if (status) {
+    const allowedStatuses = [
+      "Created",
+      "Pending",
+      "Paid",
+      "Failed",
+      "Refunded",
+      "Partially Refunded",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment status",
+      });
+    }
+
+    filter.paymentStatus = status;
+  }
+
+  if (conferenceId) {
+    if (!validObjectId(conferenceId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid conferenceId",
+      });
+    }
+
+    filter.conferenceId = conferenceId;
+  }
+
+  if (method) {
+    filter.paymentMethod = {
+      $regex: `^${method.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      $options: "i",
+    };
+  }
+
+  if (search?.trim()) {
+    const escapedSearch = search.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
+
+    const regex = new RegExp(escapedSearch, "i");
+
+    const searchConditions = [
+      { conferenceTitle: regex },
+      { "payer.name": regex },
+      { "payer.email": regex },
+      { "razorpay.paymentId": regex },
+      { "razorpay.orderId": regex },
+      { transactionId: regex },
+    ];
+
+    if (validObjectId(search.trim())) {
+      searchConditions.push({
+        _id: new mongoose.Types.ObjectId(search.trim()),
+      });
+    }
+
+    filter.$or = searchConditions;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [payments, total] = await Promise.all([
+    Payment.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    Payment.countDocuments(filter),
+  ]);
+
+  return res.json({
+    success: true,
+    count: payments.length,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    data: payments,
+  });
+});
+
+/*
+ * PAYMENT DETAILS
+ * GET /api/v1/payments/admin/:id
+ */
+exports.getPaymentById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!validObjectId(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid payment ID",
+    });
+  }
+
+  const payment = await Payment.findById(id).lean();
+
+  if (!payment) {
+    return res.status(404).json({
+      success: false,
+      message: "Payment not found",
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: payment,
+  });
+});
+
+/*
+ * SYNC PAYMENT STATUS FROM RAZORPAY
+ * GET /api/v1/payments/admin/:id/sync
+ */
+exports.syncPaymentStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!validObjectId(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid payment ID",
+    });
+  }
+
+  const payment = await Payment.findById(id);
+
+  if (!payment) {
+    return res.status(404).json({
+      success: false,
+      message: "Payment not found",
+    });
+  }
+
+  const order = await razorpay.orders.fetch(
+    payment.razorpay.orderId
+  );
+
+  const razorpayPayments = await razorpay.orders.fetchPayments(
+    payment.razorpay.orderId
+  );
+
+  const items = razorpayPayments.items || [];
+
+  const captured = items.find(
+    (item) =>
+      item.status === "captured" &&
+      item.amount === Math.round(payment.amount * 100) &&
+      item.currency === payment.currency
+  );
+
+  if (captured) {
+    payment.razorpay.paymentId = captured.id;
+    payment.paymentMethod = captured.method || null;
+    payment.paymentStatus = "Paid";
+    payment.transactionId = captured.id;
+    payment.paidAt = captured.created_at
+      ? new Date(captured.created_at * 1000)
+      : new Date();
+    payment.razorpayData = captured;
+  } else if (
+    order.status === "paid" &&
+    payment.paymentStatus !== "Paid"
+  ) {
+    return res.status(409).json({
+      success: false,
+      message:
+        "Razorpay order is paid, but a matching captured payment was not found. Reconcile this transaction before updating it.",
+    });
+  } else if (
+    items.some((item) => item.status === "failed")
+  ) {
+    payment.paymentStatus = "Failed";
+  } else if (
+    order.status === "created"
+  ) {
+    payment.paymentStatus = "Pending";
+  }
+
+  await payment.save();
+
+  return res.json({
+    success: true,
+    message: "Payment status synchronized",
+    data: payment,
+  });
+});
+
+/*
+ * REFUND PAYMENT
+ * POST /api/v1/payments/admin/:id/refund
+ *
+ * Body: { amount: 50 }
+ * Omit amount to refund the remaining amount.
+ */
+exports.refundPayment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const requestedAmount =
+    req.body.amount === undefined
+      ? null
+      : Number(req.body.amount);
+
+  if (!validObjectId(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid payment ID",
+    });
+  }
+
+  const payment = await Payment.findById(id);
+
+  if (!payment) {
+    return res.status(404).json({
+      success: false,
+      message: "Payment not found",
+    });
+  }
+
+  if (
+    payment.paymentStatus !== "Paid" &&
+    payment.paymentStatus !== "Partially Refunded"
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Only paid payments can be refunded",
+    });
+  }
+
+  if (!payment.razorpay.paymentId) {
+    return res.status(400).json({
+      success: false,
+      message: "Razorpay payment ID is missing",
+    });
+  }
+
+  if (
+    requestedAmount !== null &&
+    (!Number.isFinite(requestedAmount) ||
+      requestedAmount <= 0)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Refund amount must be greater than zero",
+    });
+  }
+
+  const existingRefunds = await razorpay.payments.fetchMultipleRefund(
+    payment.razorpay.paymentId
+  );
+
+  const refundItems = existingRefunds.items || [];
+
+  const refundedPaise = refundItems
+    .filter((refund) => refund.status !== "failed")
+    .reduce((total, refund) => total + refund.amount, 0);
+
+  const totalPaise = Math.round(payment.amount * 100);
+  const remainingPaise = totalPaise - refundedPaise;
+
+  if (remainingPaise <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "This payment has already been fully refunded",
+    });
+  }
+
+  const refundPaise =
+    requestedAmount === null
+      ? remainingPaise
+      : Math.round(requestedAmount * 100);
+
+  if (refundPaise > remainingPaise) {
+    return res.status(400).json({
+      success: false,
+      message: "Refund amount exceeds the remaining refundable amount",
+    });
+  }
+
+  const refund = await razorpay.payments.refund(
+    payment.razorpay.paymentId,
+    {
+      amount: refundPaise,
+      notes: {
+        internalPaymentId: String(payment._id),
+      },
+    }
+  );
+
+  const updatedRefundedPaise =
+    refundedPaise +
+    (refund.status === "failed" ? 0 : refund.amount);
+
+  if (updatedRefundedPaise >= totalPaise) {
+    payment.paymentStatus = "Refunded";
+  } else if (updatedRefundedPaise > 0) {
+    payment.paymentStatus = "Partially Refunded";
+  }
+
+  payment.razorpayData = {
+    ...(payment.razorpayData || {}),
+    latestRefund: refund,
+  };
+
+  await payment.save();
+
+  return res.json({
+    success: true,
+    message: "Refund request submitted to Razorpay",
+    data: {
+      payment,
+      refund,
+    },
+  });
+});

@@ -83,16 +83,37 @@ export const downloadBrochureApi = async (
   return response;
 };
 
-export const createAbstractApi = async (
-  data
-) => {
+
+export const createAbstractApi = async (data) => {
+  if (!(data instanceof FormData)) {
+    throw new Error("Abstract submission must use FormData.");
+  }
+
+  const file = data.get("file");
+
+  if (!(file instanceof File)) {
+    throw new Error("Please select a valid file.");
+  }
+
+  console.log("File before API request:", {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+  });
+
   const response = await axiosInstance.post(
     "/user/abstract",
-    data
+    data,
+    {
+      // Keep FormData intact; do not JSON.stringify it.
+      // Axios/browser should generate the multipart boundary.
+      transformRequest: [(formData) => formData],
+    }
   );
 
   return response.data;
 };
+
 
 export const createPaymentOrderApi = (
   registrationId
@@ -130,3 +151,16 @@ export const subscribeApi = async (subscriberData) => {
 
   return response.data;
 };
+
+
+export const getAllReviewsApi = async (params = {}) => {
+  const response = await axiosInstance.get(
+    "/admin/reviews",
+    {
+      params,
+    }
+  );
+
+  return response.data;
+};
+
