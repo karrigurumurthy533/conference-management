@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -14,18 +15,22 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  Mail,
+  LoaderCircle,
 } from "lucide-react";
 
 import { createPortal } from "react-dom";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import {
   getEmployees,
   getEmployeeById,
   deleteEmployee,
   clearEmployeeError,
+  sendEmployeeEmail,
 } from "../../../redux/employeeSlice";
 
 const Employees = () => {
@@ -52,13 +57,13 @@ const Employees = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [openActionId, setOpenActionId] = useState(null);
+  const [sendingEmailId, setSendingEmailId] = useState(null);
 
   const [actionMenuPosition, setActionMenuPosition] = useState({
     top: 0,
     left: 0,
   });
 
-  // Delete confirmation modal
   const [deleteEmployeeData, setDeleteEmployeeData] = useState(null);
 
   const actionButtonRef = useRef(null);
@@ -94,7 +99,6 @@ const Employees = () => {
 
   const handleCreateEmployee = () => {
     setOpenActionId(null);
-
     navigate("/admin/employees/create");
   };
 
@@ -103,9 +107,7 @@ const Employees = () => {
   // ============================================================
 
   const getConferenceTitle = (conference) => {
-    if (!conference) {
-      return "";
-    }
+    if (!conference) return "";
 
     if (typeof conference === "string") {
       return conference;
@@ -155,22 +157,12 @@ const Employees = () => {
     if (employee?.status) {
       const status = String(employee.status).toLowerCase();
 
-      if (status === "active") {
-        return "Active";
-      }
-
-      if (status === "inactive") {
-        return "Inactive";
-      }
+      if (status === "active") return "Active";
+      if (status === "inactive") return "Inactive";
     }
 
-    if (employee?.isActive === true) {
-      return "Active";
-    }
-
-    if (employee?.isActive === false) {
-      return "Inactive";
-    }
+    if (employee?.isActive === true) return "Active";
+    if (employee?.isActive === false) return "Inactive";
 
     return "Active";
   };
@@ -184,11 +176,8 @@ const Employees = () => {
 
     return employees.filter((employee) => {
       const fullName = String(employee?.fullName || "").toLowerCase();
-
       const email = String(employee?.email || "").toLowerCase();
-
       const phoneNumber = String(employee?.phoneNumber || "").toLowerCase();
-
       const conferenceName = getConferenceName(employee).toLowerCase();
 
       const matchesSearch =
@@ -214,7 +203,6 @@ const Employees = () => {
   const employeeData = useMemo(() => {
     return [...filteredEmployees].sort((a, b) => {
       const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
-
       const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
 
       return dateB - dateA;
@@ -229,18 +217,14 @@ const Employees = () => {
     const total = employees.length;
 
     const active = employees.filter(
-      (employee) => getEmployeeStatus(employee) === "Active",
+      (employee) => getEmployeeStatus(employee) === "Active"
     ).length;
 
     const inactive = employees.filter(
-      (employee) => getEmployeeStatus(employee) === "Inactive",
+      (employee) => getEmployeeStatus(employee) === "Inactive"
     ).length;
 
-    return {
-      total,
-      active,
-      inactive,
-    };
+    return { total, active, inactive };
   }, [employees]);
 
   // ============================================================
@@ -249,19 +233,15 @@ const Employees = () => {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(employeeData.length / employeesPerPage),
+    Math.ceil(employeeData.length / employeesPerPage)
   );
 
   const startIndex = (currentPage - 1) * employeesPerPage;
 
   const currentEmployees = employeeData.slice(
     startIndex,
-    startIndex + employeesPerPage,
+    startIndex + employeesPerPage
   );
-
-  // ============================================================
-  // RESET PAGE
-  // ============================================================
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -294,9 +274,7 @@ const Employees = () => {
   // ============================================================
 
   const getInitials = (name) => {
-    if (!name) {
-      return "EM";
-    }
+    if (!name) return "EM";
 
     return String(name)
       .split(" ")
@@ -322,9 +300,7 @@ const Employees = () => {
   const handleActionMenu = (event, employeeId) => {
     event.stopPropagation();
 
-    if (!employeeId) {
-      return;
-    }
+    if (!employeeId) return;
 
     if (openActionId === employeeId) {
       setOpenActionId(null);
@@ -332,22 +308,17 @@ const Employees = () => {
     }
 
     const button = event.currentTarget;
-
     actionButtonRef.current = button;
 
     const rect = button.getBoundingClientRect();
-
     const menuWidth = 170;
-    const menuHeight = 150;
+    const menuHeight = 190;
     const spacing = 6;
 
     let left = rect.right - menuWidth;
-
     let top = rect.bottom + spacing;
 
-    if (left < 8) {
-      left = 8;
-    }
+    if (left < 8) left = 8;
 
     if (left + menuWidth > window.innerWidth - 8) {
       left = window.innerWidth - menuWidth - 8;
@@ -357,15 +328,9 @@ const Employees = () => {
       top = rect.top - menuHeight - spacing;
     }
 
-    if (top < 8) {
-      top = 8;
-    }
+    if (top < 8) top = 8;
 
-    setActionMenuPosition({
-      top,
-      left,
-    });
-
+    setActionMenuPosition({ top, left });
     setOpenActionId(employeeId);
   };
 
@@ -374,30 +339,22 @@ const Employees = () => {
   // ============================================================
 
   useEffect(() => {
-    if (!openActionId) {
-      return;
-    }
+    if (!openActionId) return;
 
     const updatePosition = () => {
       const button = actionButtonRef.current;
 
-      if (!button) {
-        return;
-      }
+      if (!button) return;
 
       const rect = button.getBoundingClientRect();
-
       const menuWidth = 170;
-      const menuHeight = 150;
+      const menuHeight = 190;
       const spacing = 6;
 
       let left = rect.right - menuWidth;
-
       let top = rect.bottom + spacing;
 
-      if (left < 8) {
-        left = 8;
-      }
+      if (left < 8) left = 8;
 
       if (left + menuWidth > window.innerWidth - 8) {
         left = window.innerWidth - menuWidth - 8;
@@ -407,23 +364,16 @@ const Employees = () => {
         top = rect.top - menuHeight - spacing;
       }
 
-      if (top < 8) {
-        top = 8;
-      }
+      if (top < 8) top = 8;
 
-      setActionMenuPosition({
-        top,
-        left,
-      });
+      setActionMenuPosition({ top, left });
     };
 
     window.addEventListener("resize", updatePosition);
-
     window.addEventListener("scroll", updatePosition, true);
 
     return () => {
       window.removeEventListener("resize", updatePosition);
-
       window.removeEventListener("scroll", updatePosition, true);
     };
   }, [openActionId]);
@@ -433,13 +383,10 @@ const Employees = () => {
   // ============================================================
 
   useEffect(() => {
-    if (!openActionId) {
-      return;
-    }
+    if (!openActionId) return;
 
     const handleOutsideClick = (event) => {
       const clickedButton = actionButtonRef.current?.contains(event.target);
-
       const clickedMenu = actionMenuRef.current?.contains(event.target);
 
       if (!clickedButton && !clickedMenu) {
@@ -463,16 +410,68 @@ const Employees = () => {
 
     const employeeId = employee?._id;
 
-    if (!employeeId) {
-      return;
-    }
+    if (!employeeId) return;
 
     try {
       await dispatch(getEmployeeById(employeeId)).unwrap();
-
       navigate(`/admin/employees/${employeeId}`);
     } catch (viewError) {
+      toast.error(
+        typeof viewError === "string"
+          ? viewError
+          : "Failed to fetch employee"
+      );
       console.error("Failed to fetch employee:", viewError);
+    }
+  };
+
+  // ============================================================
+  // SEND EMPLOYEE EMAIL
+  // ============================================================
+
+  const handleSendEmployeeEmail = async (employee) => {
+    const employeeId = employee?._id;
+
+    if (!employeeId) {
+      toast.error("Employee ID not found");
+      return;
+    }
+
+    if (!employee?.email) {
+      toast.error("Employee email address not found");
+      return;
+    }
+
+    if (sendingEmailId) return;
+
+    closeActionMenu();
+    setSendingEmailId(employeeId);
+
+    const toastId = toast.loading(
+      `Sending email to ${employee.email}...`
+    );
+
+    try {
+      const response = await dispatch(
+        sendEmployeeEmail(employeeId)
+      ).unwrap();
+
+      toast.success(
+        response?.message ||
+          `Email sent successfully to ${employee.email}`,
+        { id: toastId, duration: 3500 }
+      );
+    } catch (emailError) {
+      console.error("Send employee email failed:", emailError);
+
+      toast.error(
+        typeof emailError === "string"
+          ? emailError
+          : "Failed to send email. Please try again.",
+        { id: toastId, duration: 4000 }
+      );
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -485,9 +484,7 @@ const Employees = () => {
 
     const employeeId = employee?._id;
 
-    if (!employeeId) {
-      return;
-    }
+    if (!employeeId) return;
 
     navigate("/admin/employees/create", {
       state: {
@@ -504,11 +501,7 @@ const Employees = () => {
   const handleDelete = (employee) => {
     closeActionMenu();
 
-    const employeeId = employee?._id;
-
-    if (!employeeId) {
-      return;
-    }
+    if (!employee?._id) return;
 
     setDeleteEmployeeData(employee);
   };
@@ -518,9 +511,7 @@ const Employees = () => {
   // ============================================================
 
   const handleCancelDelete = () => {
-    if (deleteLoading) {
-      return;
-    }
+    if (deleteLoading) return;
 
     setDeleteEmployeeData(null);
   };
@@ -537,14 +528,24 @@ const Employees = () => {
       return;
     }
 
+    const toastId = toast.loading("Deleting employee...");
+
     try {
       await dispatch(deleteEmployee(employeeId)).unwrap();
 
-      setDeleteEmployeeData(null);
+      toast.success("Employee deleted successfully", {
+        id: toastId,
+      });
 
+      setDeleteEmployeeData(null);
       dispatch(getEmployees());
     } catch (deleteError) {
-      console.error("Failed to delete employee:", deleteError);
+      toast.error(
+        typeof deleteError === "string"
+          ? deleteError
+          : "Failed to delete employee",
+        { id: toastId }
+      );
     }
   };
 
@@ -553,9 +554,7 @@ const Employees = () => {
   // ============================================================
 
   useEffect(() => {
-    if (!deleteEmployeeData) {
-      return;
-    }
+    if (!deleteEmployeeData) return;
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape" && !deleteLoading) {
@@ -587,9 +586,7 @@ const Employees = () => {
   // ============================================================
 
   const formatDateTime = (date) => {
-    if (!date) {
-      return "-";
-    }
+    if (!date) return "-";
 
     const formattedDate = new Date(date);
 
@@ -607,30 +604,20 @@ const Employees = () => {
   };
 
   // ============================================================
-  // GET LOGIN VALUE
+  // LAST LOGIN / LOGOUT
   // ============================================================
 
-  const getLastLogin = (employee) => {
-    return (
-      employee?.lastLogin ||
-      employee?.lastLoginAt ||
-      employee?.last_login ||
-      null
-    );
-  };
+  const getLastLogin = (employee) =>
+    employee?.lastLogin ||
+    employee?.lastLoginAt ||
+    employee?.last_login ||
+    null;
 
-  // ============================================================
-  // GET LOGOUT VALUE
-  // ============================================================
-
-  const getLastLogout = (employee) => {
-    return (
-      employee?.lastLogout ||
-      employee?.lastLogoutAt ||
-      employee?.last_logout ||
-      null
-    );
-  };
+  const getLastLogout = (employee) =>
+    employee?.lastLogout ||
+    employee?.lastLogoutAt ||
+    employee?.last_logout ||
+    null;
 
   // ============================================================
   // STAT CARDS
@@ -662,7 +649,7 @@ const Employees = () => {
   // ============================================================
 
   const activeEmployee = currentEmployees.find(
-    (employee) => employee?._id === openActionId,
+    (employee) => employee?._id === openActionId
   );
 
   // ============================================================
@@ -672,13 +659,14 @@ const Employees = () => {
   return (
     <div className="relative w-full min-w-0 overflow-x-hidden">
       <div className="animate-[fadeIn_0.35s_ease-out]">
-        {/* ====================================================
-            HEADER
-        ==================================================== */}
+
+        {/* HEADER */}
 
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Employees</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              Employees
+            </h1>
 
             <p className="mt-1 text-xs text-gray-500">
               Manage and view all employees
@@ -687,42 +675,33 @@ const Employees = () => {
 
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              handleCreateEmployee();
-            }}
+            onClick={handleCreateEmployee}
             className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-200 active:scale-[0.98]"
           >
-            <UserPlus size={16} strokeWidth={2.3} />
+            <UserPlus size={16} />
             New Employee
           </button>
         </div>
 
-        {/* ====================================================
-            ERROR
-        ==================================================== */}
+        {/* ERROR */}
 
         {error && (
           <div className="mb-4 flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
-            <p className="text-[11px] font-medium text-red-600">{error}</p>
+            <p className="text-[11px] font-medium text-red-600">
+              {error}
+            </p>
 
             <button
               type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-
-                dispatch(clearEmployeeError());
-              }}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-red-400 transition hover:bg-red-100 hover:text-red-600"
+              onClick={() => dispatch(clearEmployeeError())}
+              className="flex h-6 w-6 items-center justify-center rounded-md text-red-400 hover:bg-red-100 hover:text-red-600"
             >
               <X size={14} />
             </button>
           </div>
         )}
 
-        {/* ====================================================
-            STAT CARDS
-        ==================================================== */}
+        {/* STAT CARDS */}
 
         <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {statCards.map((card, index) => {
@@ -731,10 +710,8 @@ const Employees = () => {
             return (
               <div
                 key={card.title}
-                style={{
-                  animationDelay: `${index * 60}ms`,
-                }}
-                className="animate-[fadeUp_0.4s_ease-out_both] rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_5px_18px_rgba(15,23,42,0.06)]"
+                style={{ animationDelay: `${index * 60}ms` }}
+                className="animate-[fadeUp_0.4s_ease-out_both] rounded-xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -742,7 +719,7 @@ const Employees = () => {
                       {card.title}
                     </p>
 
-                    <p className="mt-1 text-[22px] font-bold leading-none text-gray-900">
+                    <p className="mt-1 text-[22px] font-bold text-gray-900">
                       {card.value}
                     </p>
 
@@ -752,11 +729,7 @@ const Employees = () => {
                   </div>
 
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50">
-                    <Icon
-                      size={17}
-                      strokeWidth={2}
-                      className="text-violet-600"
-                    />
+                    <Icon size={17} className="text-violet-600" />
                   </div>
                 </div>
               </div>
@@ -764,19 +737,14 @@ const Employees = () => {
           })}
         </div>
 
-        {/* ====================================================
-            TABLE CARD
-        ==================================================== */}
+        {/* TABLE CARD */}
 
-        <div className="relative w-full rounded-xl border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          {/* ==================================================
-              FILTERS
-          ================================================== */}
+        <div className="relative w-full rounded-xl border border-gray-200 bg-white shadow-sm">
+
+          {/* FILTERS */}
 
           <div className="border-b border-gray-100 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              {/* SEARCH */}
-
               <div className="relative w-full lg:max-w-md">
                 <Search
                   size={15}
@@ -787,7 +755,6 @@ const Employees = () => {
                   type="text"
                   value={search}
                   onChange={handleSearchChange}
-                  onClick={(event) => event.stopPropagation()}
                   placeholder="Search employee, phone or conference..."
                   className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-9 text-xs text-gray-700 outline-none transition focus:border-violet-500 focus:bg-white focus:ring-1 focus:ring-violet-100"
                 />
@@ -795,9 +762,7 @@ const Employees = () => {
                 {search && (
                   <button
                     type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-
+                    onClick={() => {
                       setSearch("");
                       setCurrentPage(1);
                     }}
@@ -808,8 +773,6 @@ const Employees = () => {
                 )}
               </div>
 
-              {/* STATUS */}
-
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-medium text-gray-500">
                   Status:
@@ -818,22 +781,17 @@ const Employees = () => {
                 <select
                   value={statusFilter}
                   onChange={handleStatusChange}
-                  onClick={(event) => event.stopPropagation()}
                   className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-600 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-100"
                 >
                   <option value="All">All</option>
-
                   <option value="Active">Active</option>
-
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* ==================================================
-              TABLE
-          ================================================== */}
+          {/* TABLE */}
 
           <div className="overflow-x-auto scrollbar-hide rounded-xl">
             <table className="w-full min-w-[980px] table-fixed">
@@ -847,7 +805,7 @@ const Employees = () => {
                     Phone
                   </th>
 
-                  <th className="w-[23%] pl-1 pr-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="w-[23%] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     Conference Name
                   </th>
 
@@ -873,10 +831,10 @@ const Employees = () => {
                 {loading && currentEmployees.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-14 text-center">
-                      <div className="flex flex-col items-center justify-center">
+                      <div className="flex flex-col items-center">
                         <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-100 border-t-violet-600" />
 
-                        <p className="mt-3 text-[13px] font-medium text-gray-500">
+                        <p className="mt-3 text-[13px] text-gray-500">
                           Loading employee data...
                         </p>
                       </div>
@@ -885,39 +843,32 @@ const Employees = () => {
                 ) : currentEmployees.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-14 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <Users size={28} className="text-gray-300" />
+                      <Users size={28} className="mx-auto text-gray-300" />
 
-                        <p className="mt-3 text-[13px] font-semibold text-gray-600">
-                          {search || statusFilter !== "All"
-                            ? "No employees found"
-                            : "No employees available"}
-                        </p>
+                      <p className="mt-3 text-[13px] font-semibold text-gray-600">
+                        {search || statusFilter !== "All"
+                          ? "No employees found"
+                          : "No employees available"}
+                      </p>
 
-                        <p className="mt-1 text-[11px] text-gray-400">
-                          {search || statusFilter !== "All"
-                            ? "Try changing your search or filter."
-                            : "Create an employee to see them here."}
-                        </p>
-                      </div>
+                      <p className="mt-1 text-[11px] text-gray-400">
+                        {search || statusFilter !== "All"
+                          ? "Try changing your search or filter."
+                          : "Create an employee to see them here."}
+                      </p>
                     </td>
                   </tr>
                 ) : (
                   currentEmployees.map((employee, index) => {
                     const employeeId = employee?._id;
-
                     const status = getEmployeeStatus(employee);
-
                     const conferenceName = getConferenceName(employee);
 
                     return (
                       <tr
                         key={employeeId || index}
-                        onClick={() => handleEmployeeRowClick(employee)}
-                        style={{
-                          animationDelay: `${index * 45}ms`,
-                        }}
-                        className="animate-[fadeUp_0.35s_ease-out_both] cursor-pointer border-b border-gray-100 last:border-0 transition duration-200 hover:bg-violet-50/30"
+                        style={{ animationDelay: `${index * 45}ms` }}
+                        className="animate-[fadeUp_0.35s_ease-out_both] border-b border-gray-100 last:border-0 transition hover:bg-violet-50/30"
                       >
                         {/* EMPLOYEE */}
 
@@ -955,10 +906,10 @@ const Employees = () => {
 
                         {/* CONFERENCE */}
 
-                        <td className="pl-1 pr-3 py-3 align-top">
+                        <td className="px-3 py-3 align-top">
                           <p
                             title={conferenceName}
-                            className="whitespace-normal break-words text-[12px] font-medium leading-5 text-gray-700"
+                            className="break-words text-[12px] font-medium leading-5 text-gray-700"
                           >
                             {conferenceName}
                           </p>
@@ -982,11 +933,9 @@ const Employees = () => {
 
                         {/* STATUS */}
 
-                        <td className="px-2 py-3 align-top text-center">
+                        <td className="px-2 py-3 text-center align-top">
                           <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(
-                              status,
-                            )}`}
+                            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${getStatusStyle(status)}`}
                           >
                             {status}
                           </span>
@@ -1001,9 +950,9 @@ const Employees = () => {
                               onClick={(event) =>
                                 handleActionMenu(event, employeeId)
                               }
-                              className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-semibold text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
+                              className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-gray-600 transition hover:bg-violet-50 hover:text-violet-600"
                             >
-                              <MoreVertical size={15} strokeWidth={2} />
+                              <MoreVertical size={15} />
                             </button>
                           </div>
                         </td>
@@ -1015,9 +964,7 @@ const Employees = () => {
             </table>
           </div>
 
-          {/* ==================================================
-              PAGINATION
-          ================================================== */}
+          {/* PAGINATION */}
 
           <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[11px] text-gray-500">
@@ -1042,48 +989,40 @@ const Employees = () => {
                 disabled={currentPage === 1}
                 onClick={() => {
                   setOpenActionId(null);
-
-                  setCurrentPage((previousPage) =>
-                    Math.max(previousPage - 1, 1),
-                  );
+                  setCurrentPage((page) => Math.max(page - 1, 1));
                 }}
                 className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft size={15} />
               </button>
 
-              {Array.from(
-                {
-                  length: totalPages,
-                },
-                (_, index) => index + 1,
-              ).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => {
-                    setOpenActionId(null);
-
-                    setCurrentPage(page);
-                  }}
-                  className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[11px] font-semibold transition ${
-                    currentPage === page
-                      ? "bg-violet-600 text-white"
-                      : "border border-gray-200 text-gray-500 hover:bg-violet-50 hover:text-violet-600"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => {
+                      setOpenActionId(null);
+                      setCurrentPage(page);
+                    }}
+                    className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[11px] font-semibold transition ${
+                      currentPage === page
+                        ? "bg-violet-600 text-white"
+                        : "border border-gray-200 text-gray-500 hover:bg-violet-50 hover:text-violet-600"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
 
               <button
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => {
                   setOpenActionId(null);
-
-                  setCurrentPage((previousPage) =>
-                    Math.min(previousPage + 1, totalPages),
+                  setCurrentPage((page) =>
+                    Math.min(page + 1, totalPages)
                   );
                 }}
                 className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-500 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1095,9 +1034,7 @@ const Employees = () => {
         </div>
       </div>
 
-      {/* ========================================================
-          ACTION POPUP - PORTAL
-      ======================================================== */}
+      {/* ACTION MENU PORTAL */}
 
       {openActionId &&
         activeEmployee &&
@@ -1121,10 +1058,29 @@ const Employees = () => {
               type="button"
               onClick={() => handleView(activeEmployee)}
               disabled={loading}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50"
             >
               <Eye size={15} />
               View
+            </button>
+
+            {/* SEND EMAIL */}
+
+            <button
+              type="button"
+              onClick={() => handleSendEmployeeEmail(activeEmployee)}
+              disabled={sendingEmailId !== null}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-gray-600 transition hover:bg-violet-50 hover:text-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {sendingEmailId === activeEmployee._id ? (
+                <LoaderCircle size={15} className="animate-spin" />
+              ) : (
+                <Mail size={15} />
+              )}
+
+              {sendingEmailId === activeEmployee._id
+                ? "Sending..."
+                : "Send Email"}
             </button>
 
             {/* UPDATE */}
@@ -1146,19 +1102,16 @@ const Employees = () => {
               type="button"
               onClick={() => handleDelete(activeEmployee)}
               disabled={deleteLoading}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-red-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] font-medium text-red-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
             >
               <Trash2 size={15} />
               Delete
             </button>
           </div>,
-
-          document.body,
+          document.body
         )}
 
-      {/* ========================================================
-          DELETE CONFIRMATION MODAL
-      ======================================================== */}
+      {/* DELETE CONFIRMATION MODAL */}
 
       {deleteEmployeeData &&
         typeof document !== "undefined" &&
@@ -1178,14 +1131,11 @@ const Employees = () => {
               className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_25px_70px_rgba(15,23,42,0.25)] animate-[modalIn_0.2s_ease-out]"
               onMouseDown={(event) => event.stopPropagation()}
             >
-              {/* MODAL HEADER */}
-
               <div className="px-5 pt-5">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
                     <AlertTriangle
                       size={20}
-                      strokeWidth={2.2}
                       className="text-red-500"
                     />
                   </div>
@@ -1199,8 +1149,8 @@ const Employees = () => {
                     </h2>
 
                     <p className="mt-1 text-[11px] leading-5 text-gray-500">
-                      Are you sure you want to delete this employee? This action
-                      cannot be undone.
+                      Are you sure you want to delete this employee? This
+                      action cannot be undone.
                     </p>
                   </div>
 
@@ -1208,14 +1158,12 @@ const Employees = () => {
                     type="button"
                     onClick={handleCancelDelete}
                     disabled={deleteLoading}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
                   >
                     <X size={15} />
                   </button>
                 </div>
               </div>
-
-              {/* EMPLOYEE INFO */}
 
               <div className="mx-5 mt-4 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
                 <div className="flex items-center gap-3">
@@ -1235,14 +1183,12 @@ const Employees = () => {
                 </div>
               </div>
 
-              {/* ACTIONS */}
-
               <div className="flex items-center justify-end gap-2 px-5 py-4">
                 <button
                   type="button"
                   onClick={handleCancelDelete}
                   disabled={deleteLoading}
-                  className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -1251,7 +1197,7 @@ const Employees = () => {
                   type="button"
                   onClick={handleConfirmDelete}
                   disabled={deleteLoading}
-                  className="inline-flex h-9 min-w-[105px] items-center justify-center gap-2 rounded-lg bg-red-500 px-4 text-[11px] font-semibold text-white shadow-sm transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-9 min-w-[105px] items-center justify-center gap-2 rounded-lg bg-red-500 px-4 text-[11px] font-semibold text-white shadow-sm transition hover:bg-red-600 disabled:opacity-60"
                 >
                   {deleteLoading ? (
                     <>
@@ -1260,7 +1206,7 @@ const Employees = () => {
                     </>
                   ) : (
                     <>
-                      <Trash2 size={14} strokeWidth={2.2} />
+                      <Trash2 size={14} />
                       Delete
                     </>
                   )}
@@ -1268,24 +1214,15 @@ const Employees = () => {
               </div>
             </div>
           </div>,
-
-          document.body,
+          document.body
         )}
 
-      {/* ========================================================
-          ANIMATIONS + SCROLLBAR
-      ======================================================== */}
+      {/* ANIMATIONS + SCROLLBAR */}
 
       <style>{`
-
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         @keyframes fadeUp {
@@ -1293,7 +1230,6 @@ const Employees = () => {
             opacity: 0;
             transform: translateY(6px);
           }
-
           to {
             opacity: 1;
             transform: translateY(0);
@@ -1305,7 +1241,6 @@ const Employees = () => {
             opacity: 0;
             transform: translateY(8px) scale(0.98);
           }
-
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -1320,7 +1255,6 @@ const Employees = () => {
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
-
       `}</style>
     </div>
   );

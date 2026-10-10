@@ -20,9 +20,7 @@ import { getConferences } from "../../../redux/conferenceSlice";
 const CreateEmployee = () => {
   const dispatch = useDispatch();
 
-  // =========================================================
-  // REDUX STATE
-  // =========================================================
+  
 
   const {
     createLoading,

@@ -5,6 +5,7 @@ const Abstract = require("../models/Abstract");
 const Registration = require("../models/Registration");
 const Conference = require("../models/conference");
 const DownloadBrochure = require("../models/DownloadBrochure");
+const { sendEmployeeCredentials } = require("../utils/emailService");
 
 
 
@@ -428,4 +429,54 @@ exports.getEmployeeDashboard = async (req, res) => {
                 "Failed to fetch employee dashboard",
         });
     }
+};
+
+
+
+exports.sendEmployeeEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const employee = await Employee.findById(id).select(
+      "fullName email employeeType"
+    );
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found.",
+      });
+    }
+
+    if (!employee.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee email not found.",
+      });
+    }
+
+    // Password ni database nunchi retrieve cheyyakunda,
+    // secure password-setup flow use cheyyandi.
+    const loginUrl = process.env.EMPLOYEE_LOGIN_URL;
+
+    await sendEmployeeCredentials({
+      name: employee.fullName,
+      email: employee.email,
+      employeeType: employee.employeeType,
+      password: "Please use the secure password setup link.",
+      loginUrl,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Email sent successfully to ${employee.email}`,
+    });
+  } catch (error) {
+    console.error("Send Email API Error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Email sending failed. Please try again.",
+    });
+  }
 };

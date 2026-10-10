@@ -1,3 +1,4 @@
+
 import {
   Mail,
   Phone,
@@ -7,66 +8,44 @@ import {
   User,
   Building2,
   MessageSquare,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
-
 import { useEffect, useState } from "react";
-
 import { useDispatch, useSelector } from "react-redux";
+import { toast, Toaster } from "react-hot-toast";
 
 import {
   sendContact,
   clearContact,
 } from "../redux/userSlice";
 
+const INITIAL_FORM = {
+  name: "",
+  email: "",
+  organization: "",
+  phone: "",
+  subject: "",
+  message: "",
+};
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ContactPage = () => {
-  /* =====================================================
-     REDUX
-  ====================================================== */
-
   const dispatch = useDispatch();
 
   const {
     contactLoading,
     contactError,
-    contactSuccess,
   } = useSelector((state) => state.user);
 
+  const [formData, setFormData] = useState(INITIAL_FORM);
 
-  /* =====================================================
-     FORM STATE
-  ====================================================== */
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    organization: "",
-    phone: "",
-    subject: "",
-    message: "",
-  });
-
-
-  /* =====================================================
-     VALIDATION ERROR
-  ====================================================== */
-
-  const [validationError, setValidationError] =
-    useState("");
-
-
-  /* =====================================================
-     COLORS
-  ====================================================== */
+  const [validationError, setValidationError] = useState("");
 
   const colors = {
     pageBg: "#FFFFFF",
     sectionBg: "#FFFFFF",
-    heading: "#7C3AED",
     primary: "#7C3AED",
     primaryLight: "#8B5CF6",
     bodyText: "#4B5563",
@@ -78,83 +57,39 @@ const ContactPage = () => {
     inputText: "#111827",
     buttonBg: "#7C3AED",
     buttonHover: "#6D28D9",
-    formShadow:
-      "0 10px 30px rgba(124,58,237,0.08)",
+    formShadow: "0 10px 30px rgba(124,58,237,0.08)",
   };
 
-
-  /* =====================================================
-     BANNER IMAGE
-  ====================================================== */
-
-  const bannerImage =
-    "/images/contact_banner.png";
-
-
-  /* =====================================================
-     ANIMATIONS
-  ====================================================== */
+  const bannerImage = "/images/contact_banner.png";
 
   const fadeUp = {
-    hidden: {
-      opacity: 0,
-      y: 25,
-    },
-
+    hidden: { opacity: 0, y: 25 },
     visible: {
       opacity: 1,
       y: 0,
-
-      transition: {
-        duration: 0.7,
-        ease: "easeOut",
-      },
+      transition: { duration: 0.7, ease: "easeOut" },
     },
   };
-
 
   const cardAnimation = {
-    hidden: {
-      opacity: 0,
-      y: 15,
-    },
-
+    hidden: { opacity: 0, y: 15 },
     visible: {
       opacity: 1,
       y: 0,
-
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-      },
+      transition: { duration: 0.5, ease: "easeOut" },
     },
   };
 
-
-  /* =====================================================
-     INPUT FOCUS
-  ====================================================== */
-
   const inputFocus = (e) => {
-    e.currentTarget.style.borderColor =
-      colors.primary;
-
+    e.currentTarget.style.borderColor = colors.primary;
     e.currentTarget.style.boxShadow =
       `0 0 0 1px ${colors.primary}`;
   };
 
-
   const inputBlur = (e) => {
-    e.currentTarget.style.borderColor =
-      colors.inputBorder;
-
+    e.currentTarget.style.borderColor = colors.inputBorder;
     e.currentTarget.style.boxShadow = "none";
   };
-
-
-  /* =====================================================
-     HANDLE INPUT CHANGE
-  ====================================================== */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -171,91 +106,96 @@ const ContactPage = () => {
     }
   };
 
-
-  /* =====================================================
-     HANDLE FORM SUBMIT
-  ====================================================== */
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (contactLoading) return;
 
     setValidationError("");
 
-    /* -----------------------------------------------
-       BASIC VALIDATION
-    ----------------------------------------------- */
+    const {
+      name,
+      email,
+      organization,
+      phone,
+      subject,
+      message,
+    } = formData;
 
-    if (!formData.name.trim()) {
-      setValidationError(
-        "Please enter your full name."
-      );
+    // Required fields validation
+    if (!name.trim()) {
+      toast.error("Please enter your full name.");
       return;
     }
 
-    if (!formData.email.trim()) {
-      setValidationError(
-        "Please enter your email address."
-      );
+    if (!email.trim()) {
+      toast.error("Please enter your email address.");
       return;
     }
 
-    if (!formData.subject.trim()) {
-      setValidationError(
-        "Please enter a subject."
-      );
+    if (!subject.trim()) {
+      toast.error("Please enter a subject.");
       return;
     }
 
-    if (!formData.message.trim()) {
-      setValidationError(
-        "Please enter your message."
-      );
+    if (!message.trim()) {
+      toast.error("Please enter your message.");
       return;
     }
 
-    /* -----------------------------------------------
-       EMAIL VALIDATION
-    ----------------------------------------------- */
+    // Email validation
+    const cleanEmail = email.trim().toLowerCase();
 
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(formData.email)) {
-      setValidationError(
-        "Please enter a valid email address."
-      );
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
-    /* -----------------------------------------------
-       SEND TO BACKEND
-    ----------------------------------------------- */
+    // Input length validation
+    if (
+      name.trim().length > 100 ||
+      cleanEmail.length > 254 ||
+      (organization || "").trim().length > 200 ||
+      (phone || "").trim().length > 30 ||
+      subject.trim().length > 200 ||
+      message.trim().length > 5000
+    ) {
+      toast.error("One or more fields exceed the allowed length.");
+      return;
+    }
 
-    dispatch(sendContact(formData));
-  };
+    const payload = {
+      name: name.trim(),
+      email: cleanEmail,
+      organization: (organization || "").trim(),
+      phone: (phone || "").trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+    };
 
+    try {
+      // Redux createAsyncThunk should return a fulfilled/rejected action.
+      await dispatch(sendContact(payload)).unwrap();
 
-  /* =====================================================
-     SUCCESS EFFECT
-  ====================================================== */
+      toast.success("Your message has been sent successfully!", {
+        duration: 4000,
+      });
 
-  useEffect(() => {
-    if (contactSuccess) {
-      setFormData({
-        name: "",
-        email: "",
-        organization: "",
-        phone: "",
-        subject: "",
-        message: "",
+      setFormData({ ...INITIAL_FORM });
+      setValidationError("");
+    } catch (error) {
+      const errorMessage =
+        typeof error === "string"
+          ? error
+          : error?.message ||
+            contactError ||
+            "Failed to send your message. Please try again.";
+
+      toast.error(errorMessage, {
+        duration: 5000,
       });
     }
-  }, [contactSuccess]);
-
-
-  /* =====================================================
-     CLEANUP
-  ====================================================== */
+  };
 
   useEffect(() => {
     return () => {
@@ -263,1381 +203,460 @@ const ContactPage = () => {
     };
   }, [dispatch]);
 
+  const contactCards = [
+    {
+      title: "Email Us",
+      value: "info@globalscion.com",
+      Icon: Mail,
+      href: "mailto:info@globalscion.com",
+    },
+    {
+      title: "Call Us",
+      value: "+91 98765 43210",
+      Icon: Phone,
+      href: "tel:+919876543210",
+    },
+    {
+      title: "Our Office",
+      value: "Hyderabad, Telangana, India",
+      Icon: MapPin,
+    },
+    {
+      title: "Working Hours",
+      value: "Mon - Fri, 9:00 AM - 6:00 PM",
+      Icon: Clock,
+    },
+  ];
+
+  const renderInput = ({
+    label,
+    name,
+    placeholder,
+    Icon,
+    type = "text",
+  }) => (
+    <div>
+      <label
+        htmlFor={name}
+        className="block text-xs font-semibold mb-1.5 text-gray-700"
+      >
+        {label}
+      </label>
+
+      <div className="relative">
+        <Icon
+          size={15}
+          className="absolute left-3 top-1/2 -translate-y-1/2"
+          style={{ color: colors.primary }}
+        />
+
+        <input
+          id={name}
+          type={type}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          disabled={contactLoading}
+          maxLength={
+            name === "name"
+              ? 100
+              : name === "email"
+                ? 254
+                : name === "organization"
+                  ? 200
+                  : name === "phone"
+                    ? 30
+                    : 200
+          }
+          autoComplete={
+            name === "name"
+              ? "name"
+              : name === "email"
+                ? "email"
+                : name === "phone"
+                  ? "tel"
+                  : "off"
+          }
+          className="
+            w-full h-10 pl-9 pr-3 rounded-md border text-xs
+            outline-none transition-all
+            disabled:bg-gray-50 disabled:cursor-not-allowed
+          "
+          style={{
+            backgroundColor: colors.inputBg,
+            borderColor: colors.inputBorder,
+            color: colors.inputText,
+          }}
+          onFocus={inputFocus}
+          onBlur={inputBlur}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div
       className="min-h-screen"
-      style={{
-        backgroundColor: colors.pageBg,
-      }}
+      style={{ backgroundColor: colors.pageBg }}
     >
+      {/* Toast notifications */}
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        gutter={10}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#FFFFFF",
+            color: "#374151",
+            border: "1px solid #DDD6FE",
+            borderRadius: "12px",
+            padding: "14px 18px",
+            fontSize: "14px",
+            boxShadow: "0 8px 25px rgba(124,58,237,0.12)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#5938d1",
+              secondary: "#FFFFFF",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#DC2626",
+              secondary: "#FFFFFF",
+            },
+          },
+        }}
+      />
 
-      {/* =====================================================
-          CONTACT HERO BANNER
-      ====================================================== */}
-
+      {/* Hero banner */}
       <motion.section
         className="relative w-full overflow-hidden"
-        style={{
-          backgroundColor: colors.pageBg,
-        }}
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        transition={{
-          duration: 0.8,
-        }}
+        style={{ backgroundColor: colors.pageBg }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
       >
-
         <motion.img
           src={bannerImage}
           alt="GlobalScion Contact"
-          initial={{
-            scale: 1.03,
-          }}
-          animate={{
-            scale: 1,
-          }}
+          initial={{ scale: 1.03 }}
+          animate={{ scale: 1 }}
           transition={{
             duration: 1.2,
             ease: [0.22, 1, 0.36, 1],
           }}
           className="
-            w-full
-            h-[190px]
-            sm:h-[220px]
-            md:h-[250px]
-            lg:h-[270px]
-            object-cover
-            object-center
+            w-full h-[190px] sm:h-[220px] md:h-[250px]
+            lg:h-[270px] object-cover object-center
           "
         />
-
-
-        {/* Light Gradient Overlay */}
 
         <div
           className="absolute inset-0"
           style={{
-            background: `
-              linear-gradient(
-                90deg,
-                rgba(255,255,255,0.95) 0%,
-                rgba(255,255,255,0.70) 45%,
-                rgba(255,255,255,0) 100%
-              )
-            `,
+            background:
+              "linear-gradient(90deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.70) 45%, rgba(255,255,255,0) 100%)",
           }}
         />
 
-
-        {/* Banner Content */}
-
         <div className="absolute inset-0 flex items-center">
-
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-
             <motion.div
               className="max-w-lg"
-              initial={{
-                opacity: 0,
-                x: -35,
-              }}
-              animate={{
-                opacity: 1,
-                x: 0,
-              }}
+              initial={{ opacity: 0, x: -35 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{
                 duration: 0.8,
                 delay: 0.2,
                 ease: "easeOut",
               }}
             >
-
-              {/* Small Heading */}
-
-              <motion.div
-                className="mb-2 flex items-center gap-2"
-                initial={{
-                  opacity: 0,
-                  y: -10,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.5,
-                  delay: 0.3,
-                }}
-              >
-
+              <div className="mb-2 flex items-center gap-2">
                 <span
                   className="w-7 h-[2px]"
-                  style={{
-                    backgroundColor:
-                      colors.primary,
-                  }}
+                  style={{ backgroundColor: colors.primary }}
                 />
 
                 <span
-                  className="
-                    text-[10px]
-                    sm:text-xs
-                    font-semibold
-                    tracking-[0.2em]
-                  "
-                  style={{
-                    color: colors.primary,
-                  }}
+                  className="text-[10px] sm:text-xs font-semibold tracking-[0.2em]"
+                  style={{ color: colors.primary }}
                 >
                   GET IN TOUCH
                 </span>
-
-              </motion.div>
-
-
-              {/* Main Heading */}
+              </div>
 
               <motion.h1
-                className="
-                  text-2xl
-                  sm:text-3xl
-                  md:text-4xl
-                  font-bold
-                  leading-tight
-                "
-                style={{
-                  color: colors.primary,
-                }}
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.7,
-                  delay: 0.4,
-                }}
+                className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight"
+                style={{ color: colors.primary }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.4 }}
               >
                 Let's Connect
               </motion.h1>
 
-
-              {/* Description */}
-
               <motion.p
-                className="
-                  mt-2
-                  max-w-md
-                  text-xs
-                  sm:text-sm
-                  md:text-base
-                  leading-relaxed
-                "
-                style={{
-                  color: colors.bodyText,
-                }}
-                initial={{
-                  opacity: 0,
-                  y: 15,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.6,
-                  delay: 0.55,
-                }}
+                className="mt-2 max-w-md text-xs sm:text-sm md:text-base leading-relaxed"
+                style={{ color: colors.bodyText }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.55 }}
               >
                 Have questions about our conferences,
                 registrations, or partnerships? Our team
                 is here to help you.
               </motion.p>
-
             </motion.div>
-
           </div>
-
         </div>
-
       </motion.section>
 
-
-      {/* =====================================================
-          MAIN CONTACT SECTION
-      ====================================================== */}
-
+      {/* Main contact section */}
       <section
         className="py-10 px-6"
-        style={{
-          backgroundColor:
-            colors.sectionBg,
-        }}
+        style={{ backgroundColor: colors.sectionBg }}
       >
-
         <div
           className="
-            max-w-7xl
-            mx-auto
-            grid
-            grid-cols-1
-            lg:grid-cols-3
-            gap-6
+            max-w-7xl mx-auto grid grid-cols-1
+            lg:grid-cols-3 gap-6
           "
         >
-
-          {/* =================================================
-              LEFT SIDE - CONTACT INFORMATION
-          ================================================= */}
-
+          {/* Contact information */}
           <motion.div
             className="lg:col-span-1"
             initial="hidden"
             whileInView="visible"
-            viewport={{
-              once: true,
-              amount: 0.2,
-            }}
+            viewport={{ once: true, amount: 0.2 }}
             variants={fadeUp}
           >
-
             <h2
               className="text-xl font-bold mb-2"
-              style={{
-                color: colors.primary,
-              }}
+              style={{ color: colors.primary }}
             >
               Let's Connect
             </h2>
 
-
             <p
               className="text-xs leading-5 mb-5"
-              style={{
-                color: colors.bodyText,
-              }}
+              style={{ color: colors.bodyText }}
             >
-              We would love to hear from you.
-              Reach out to us for conference
-              information, registration support,
-              sponsorship opportunities, and
+              We would love to hear from you. Reach out to
+              us for conference information, registration
+              support, sponsorship opportunities, and
               general enquiries.
             </p>
 
-
             <div className="space-y-3">
+              {contactCards.map(({ title, value, Icon, href }) => {
+                const CardContent = (
+                  <>
+                    <motion.div
+                      whileHover={{ rotate: 8, scale: 1.1 }}
+                      className="
+                        w-9 h-9 rounded-full flex items-center
+                        justify-center flex-shrink-0
+                      "
+                      style={{ backgroundColor: colors.primary }}
+                    >
+                      <Icon className="text-white" size={16} />
+                    </motion.div>
 
-              {/* EMAIL */}
+                    <div className="min-w-0">
+                      <p
+                        className="text-[10px]"
+                        style={{ color: colors.mutedText }}
+                      >
+                        {title}
+                      </p>
 
-              <motion.div
-                variants={cardAnimation}
-                whileHover={{
-                  x: 5,
-                  scale: 1.02,
-                  boxShadow:
-                    "0px 8px 20px rgba(124,58,237,0.10)",
-                }}
-                transition={{
-                  duration: 0.25,
-                }}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  p-3
-                  rounded-lg
-                  border
-                  cursor-pointer
-                "
-                style={{
-                  backgroundColor:
-                    colors.cardBg,
-                  borderColor:
-                    colors.cardBorder,
-                }}
-              >
+                      <p
+                        className="text-xs font-semibold break-words"
+                        style={{ color: colors.primaryLight }}
+                      >
+                        {value}
+                      </p>
+                    </div>
+                  </>
+                );
 
-                <motion.div
-                  whileHover={{
-                    rotate: 10,
-                    scale: 1.1,
-                  }}
-                  className="
-                    w-8
-                    h-8
-                    rounded-full
-                    flex
-                    items-center
-                    justify-center
-                    flex-shrink-0
-                  "
-                  style={{
-                    backgroundColor:
-                      colors.primary,
-                  }}
-                >
-                  <Mail
-                    className="text-white"
-                    size={15}
-                  />
-                </motion.div>
-
-
-                <div>
-
-                  <p
-                    className="text-[10px]"
+                return (
+                  <motion.div
+                    key={title}
+                    variants={cardAnimation}
+                    whileHover={{
+                      x: 5,
+                      boxShadow:
+                        "0 8px 20px rgba(124,58,237,0.10)",
+                    }}
+                    transition={{ duration: 0.25 }}
+                    className="
+                      flex items-center gap-3 p-3 rounded-lg
+                      border
+                    "
                     style={{
-                      color:
-                        colors.mutedText,
+                      backgroundColor: colors.cardBg,
+                      borderColor: colors.cardBorder,
                     }}
                   >
-                    Email Us
-                  </p>
-
-                  <p
-                    className="text-xs font-semibold"
-                    style={{
-                      color:
-                        colors.primaryLight,
-                    }}
-                  >
-                    info@globalscion.com
-                  </p>
-
-                </div>
-
-              </motion.div>
-
-
-              {/* PHONE */}
-
-              <motion.div
-                variants={cardAnimation}
-                whileHover={{
-                  x: 5,
-                  scale: 1.02,
-                  boxShadow:
-                    "0px 8px 20px rgba(124,58,237,0.10)",
-                }}
-                transition={{
-                  duration: 0.25,
-                }}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  p-3
-                  rounded-lg
-                  border
-                  cursor-pointer
-                "
-                style={{
-                  backgroundColor:
-                    colors.cardBg,
-                  borderColor:
-                    colors.cardBorder,
-                }}
-              >
-
-                <motion.div
-                  whileHover={{
-                    rotate: -10,
-                    scale: 1.1,
-                  }}
-                  className="
-                    w-8
-                    h-8
-                    rounded-full
-                    flex
-                    items-center
-                    justify-center
-                    flex-shrink-0
-                  "
-                  style={{
-                    backgroundColor:
-                      colors.primary,
-                  }}
-                >
-                  <Phone
-                    className="text-white"
-                    size={15}
-                  />
-                </motion.div>
-
-
-                <div>
-
-                  <p
-                    className="text-[10px]"
-                    style={{
-                      color:
-                        colors.mutedText,
-                    }}
-                  >
-                    Call Us
-                  </p>
-
-                  <p
-                    className="text-xs font-semibold"
-                    style={{
-                      color:
-                        colors.primaryLight,
-                    }}
-                  >
-                    +91 98765 43210
-                  </p>
-
-                </div>
-
-              </motion.div>
-
-
-              {/* LOCATION */}
-
-              <motion.div
-                variants={cardAnimation}
-                whileHover={{
-                  x: 5,
-                  scale: 1.02,
-                  boxShadow:
-                    "0px 8px 20px rgba(124,58,237,0.10)",
-                }}
-                transition={{
-                  duration: 0.25,
-                }}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  p-3
-                  rounded-lg
-                  border
-                  cursor-pointer
-                "
-                style={{
-                  backgroundColor:
-                    colors.cardBg,
-                  borderColor:
-                    colors.cardBorder,
-                }}
-              >
-
-                <motion.div
-                  whileHover={{
-                    y: -4,
-                    scale: 1.1,
-                  }}
-                  className="
-                    w-8
-                    h-8
-                    rounded-full
-                    flex
-                    items-center
-                    justify-center
-                    flex-shrink-0
-                  "
-                  style={{
-                    backgroundColor:
-                      colors.primary,
-                  }}
-                >
-                  <MapPin
-                    className="text-white"
-                    size={15}
-                  />
-                </motion.div>
-
-
-                <div>
-
-                  <p
-                    className="text-[10px]"
-                    style={{
-                      color:
-                        colors.mutedText,
-                    }}
-                  >
-                    Our Office
-                  </p>
-
-                  <p
-                    className="text-xs font-semibold"
-                    style={{
-                      color:
-                        colors.primaryLight,
-                    }}
-                  >
-                    Hyderabad, Telangana, India
-                  </p>
-
-                </div>
-
-              </motion.div>
-
-
-              {/* WORKING HOURS */}
-
-              <motion.div
-                variants={cardAnimation}
-                whileHover={{
-                  x: 5,
-                  scale: 1.02,
-                  boxShadow:
-                    "0px 8px 20px rgba(124,58,237,0.10)",
-                }}
-                transition={{
-                  duration: 0.25,
-                }}
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  p-3
-                  rounded-lg
-                  border
-                  cursor-pointer
-                "
-                style={{
-                  backgroundColor:
-                    colors.cardBg,
-                  borderColor:
-                    colors.cardBorder,
-                }}
-              >
-
-                <motion.div
-                  whileHover={{
-                    rotate: 10,
-                    scale: 1.1,
-                  }}
-                  className="
-                    w-8
-                    h-8
-                    rounded-full
-                    flex
-                    items-center
-                    justify-center
-                    flex-shrink-0
-                  "
-                  style={{
-                    backgroundColor:
-                      colors.primary,
-                  }}
-                >
-                  <Clock
-                    className="text-white"
-                    size={15}
-                  />
-                </motion.div>
-
-
-                <div>
-
-                  <p
-                    className="text-[10px]"
-                    style={{
-                      color:
-                        colors.mutedText,
-                    }}
-                  >
-                    Working Hours
-                  </p>
-
-                  <p
-                    className="text-xs font-semibold"
-                    style={{
-                      color:
-                        colors.primaryLight,
-                    }}
-                  >
-                    Mon - Fri, 9:00 AM - 6:00 PM
-                  </p>
-
-                </div>
-
-              </motion.div>
-
+                    {href ? (
+                      <a
+                        href={href}
+                        className="flex items-center gap-3 w-full"
+                      >
+                        {CardContent}
+                      </a>
+                    ) : (
+                      CardContent
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
-
           </motion.div>
 
-
-          {/* =================================================
-              RIGHT SIDE - CONTACT FORM
-          ================================================= */}
-
+          {/* Contact form */}
           <motion.div
             className="lg:col-span-2"
-            initial={{
-              opacity: 0,
-              x: 35,
-            }}
-            whileInView={{
-              opacity: 1,
-              x: 0,
-            }}
-            viewport={{
-              once: true,
-              amount: 0.2,
-            }}
-            transition={{
-              duration: 0.7,
-              ease: "easeOut",
-            }}
+            initial={{ opacity: 0, x: 35 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
           >
-
             <motion.div
-              className="
-                border
-                rounded-xl
-                p-5
-                md:p-6
-              "
+              className="border rounded-xl p-5 md:p-6"
               style={{
-                backgroundColor:
-                  colors.inputBg,
-                borderColor:
-                  colors.cardBorder,
-                boxShadow:
-                  colors.formShadow,
+                backgroundColor: colors.inputBg,
+                borderColor: colors.cardBorder,
+                boxShadow: colors.formShadow,
               }}
               whileHover={{
                 boxShadow:
-                  "0px 15px 35px rgba(124,58,237,0.10)",
+                  "0 15px 35px rgba(124,58,237,0.10)",
               }}
-              transition={{
-                duration: 0.3,
-              }}
+              transition={{ duration: 0.3 }}
             >
-
-              {/* Form Heading */}
-
               <h2
                 className="text-xl font-bold mb-1"
-                style={{
-                  color: colors.primary,
-                }}
+                style={{ color: colors.primary }}
               >
                 Send Us a Message
               </h2>
 
-
               <p
                 className="text-xs mb-5"
-                style={{
-                  color:
-                    colors.mutedText,
-                }}
+                style={{ color: colors.mutedText }}
               >
-                Fill out the form below and our
-                team will get back to you.
+                Fill out the form below and our team will
+                get back to you.
               </p>
 
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Name and email */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {renderInput({
+                    label: "Full Name",
+                    name: "name",
+                    placeholder: "Enter your name",
+                    Icon: User,
+                  })}
 
-              {/* =================================================
-                  SUCCESS MESSAGE
-              ================================================== */}
-
-              {contactSuccess && (
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: -10,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  className="
-                    mb-5
-                    flex
-                    items-center
-                    gap-3
-                    rounded-lg
-                    border
-                    border-green-200
-                    bg-green-50
-                    px-4
-                    py-3
-                  "
-                >
-
-                  <CheckCircle2
-                    size={20}
-                    className="text-green-600 flex-shrink-0"
-                  />
-
-                  <div>
-                    <p className="text-sm font-semibold text-green-700">
-                      Message Sent Successfully
-                    </p>
-
-                    <p className="text-xs text-green-600 mt-0.5">
-                      Thank you for contacting GlobalScion.
-                      Our team will get back to you soon.
-                    </p>
-                  </div>
-
-                </motion.div>
-              )}
-
-
-              {/* =================================================
-                  ERROR MESSAGE
-              ================================================== */}
-
-              {(validationError ||
-                contactError) && (
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: -10,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  className="
-                    mb-5
-                    flex
-                    items-center
-                    gap-3
-                    rounded-lg
-                    border
-                    border-red-200
-                    bg-red-50
-                    px-4
-                    py-3
-                  "
-                >
-
-                  <AlertCircle
-                    size={20}
-                    className="
-                      text-red-600
-                      flex-shrink-0
-                    "
-                  />
-
-                  <p className="text-xs font-medium text-red-700">
-                    {validationError ||
-                      contactError}
-                  </p>
-
-                </motion.div>
-              )}
-
-
-              {/* =================================================
-                  CONTACT FORM
-              ================================================== */}
-
-              <form
-                className="space-y-4"
-                onSubmit={handleSubmit}
-              >
-
-                {/* NAME + EMAIL */}
-
-                <div
-                  className="
-                    grid
-                    grid-cols-1
-                    md:grid-cols-2
-                    gap-4
-                  "
-                >
-
-                  {/* NAME */}
-
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: 0.1,
-                    }}
-                  >
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-semibold
-                        mb-1.5
-                      "
-                      style={{
-                        color: "#374151",
-                      }}
-                    >
-                      Full Name
-                    </label>
-
-
-                    <div className="relative">
-
-                      <User
-                        size={15}
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                        "
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
-
-
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Enter your name"
-                        disabled={contactLoading}
-                        className="
-                          w-full
-                          h-10
-                          pl-9
-                          pr-3
-                          rounded-md
-                          border
-                          text-xs
-                          outline-none
-                          transition-all
-                          disabled:bg-gray-50
-                          disabled:cursor-not-allowed
-                        "
-                        style={{
-                          backgroundColor:
-                            colors.inputBg,
-                          borderColor:
-                            colors.inputBorder,
-                          color:
-                            colors.inputText,
-                        }}
-                        onFocus={inputFocus}
-                        onBlur={inputBlur}
-                      />
-
-                    </div>
-
-                  </motion.div>
-
-
-                  {/* EMAIL */}
-
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: 0.2,
-                    }}
-                  >
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-semibold
-                        mb-1.5
-                      "
-                      style={{
-                        color: "#374151",
-                      }}
-                    >
-                      Email Address
-                    </label>
-
-
-                    <div className="relative">
-
-                      <Mail
-                        size={15}
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                        "
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
-
-
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Enter your email"
-                        disabled={contactLoading}
-                        className="
-                          w-full
-                          h-10
-                          pl-9
-                          pr-3
-                          rounded-md
-                          border
-                          text-xs
-                          outline-none
-                          transition-all
-                          disabled:bg-gray-50
-                          disabled:cursor-not-allowed
-                        "
-                        style={{
-                          backgroundColor:
-                            colors.inputBg,
-                          borderColor:
-                            colors.inputBorder,
-                          color:
-                            colors.inputText,
-                        }}
-                        onFocus={inputFocus}
-                        onBlur={inputBlur}
-                      />
-
-                    </div>
-
-                  </motion.div>
-
+                  {renderInput({
+                    label: "Email Address",
+                    name: "email",
+                    placeholder: "Enter your email",
+                    Icon: Mail,
+                    type: "email",
+                  })}
                 </div>
 
+                {/* Organization and phone */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {renderInput({
+                    label: "Organization",
+                    name: "organization",
+                    placeholder: "Organization name",
+                    Icon: Building2,
+                  })}
 
-                {/* ORGANIZATION + PHONE */}
-
-                <div
-                  className="
-                    grid
-                    grid-cols-1
-                    md:grid-cols-2
-                    gap-4
-                  "
-                >
-
-                  {/* ORGANIZATION */}
-
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: 0.25,
-                    }}
-                  >
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-semibold
-                        mb-1.5
-                      "
-                      style={{
-                        color: "#374151",
-                      }}
-                    >
-                      Organization
-                    </label>
-
-
-                    <div className="relative">
-
-                      <Building2
-                        size={15}
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                        "
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
-
-
-                      <input
-                        type="text"
-                        name="organization"
-                        value={
-                          formData.organization
-                        }
-                        onChange={handleChange}
-                        placeholder="Organization name"
-                        disabled={contactLoading}
-                        className="
-                          w-full
-                          h-10
-                          pl-9
-                          pr-3
-                          rounded-md
-                          border
-                          text-xs
-                          outline-none
-                          transition-all
-                          disabled:bg-gray-50
-                          disabled:cursor-not-allowed
-                        "
-                        style={{
-                          backgroundColor:
-                            colors.inputBg,
-                          borderColor:
-                            colors.inputBorder,
-                          color:
-                            colors.inputText,
-                        }}
-                        onFocus={inputFocus}
-                        onBlur={inputBlur}
-                      />
-
-                    </div>
-
-                  </motion.div>
-
-
-                  {/* PHONE */}
-
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: 0.3,
-                    }}
-                  >
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-semibold
-                        mb-1.5
-                      "
-                      style={{
-                        color: "#374151",
-                      }}
-                    >
-                      Phone Number
-                    </label>
-
-
-                    <div className="relative">
-
-                      <Phone
-                        size={15}
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                        "
-                        style={{
-                          color:
-                            colors.primary,
-                        }}
-                      />
-
-
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="Enter phone number"
-                        disabled={contactLoading}
-                        className="
-                          w-full
-                          h-10
-                          pl-9
-                          pr-3
-                          rounded-md
-                          border
-                          text-xs
-                          outline-none
-                          transition-all
-                          disabled:bg-gray-50
-                          disabled:cursor-not-allowed
-                        "
-                        style={{
-                          backgroundColor:
-                            colors.inputBg,
-                          borderColor:
-                            colors.inputBorder,
-                          color:
-                            colors.inputText,
-                        }}
-                        onFocus={inputFocus}
-                        onBlur={inputBlur}
-                      />
-
-                    </div>
-
-                  </motion.div>
-
+                  {renderInput({
+                    label: "Phone Number",
+                    name: "phone",
+                    placeholder: "Enter phone number",
+                    Icon: Phone,
+                    type: "tel",
+                  })}
                 </div>
 
+                {/* Subject */}
+                {renderInput({
+                  label: "Subject",
+                  name: "subject",
+                  placeholder: "What would you like to know?",
+                  Icon: MessageSquare,
+                })}
 
-                {/* SUBJECT */}
-
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: 0.35,
-                  }}
-                >
-
+                {/* Message */}
+                <div>
                   <label
-                    className="
-                      block
-                      text-xs
-                      font-semibold
-                      mb-1.5
-                    "
-                    style={{
-                      color: "#374151",
-                    }}
-                  >
-                    Subject
-                  </label>
-
-
-                  <div className="relative">
-
-                    <MessageSquare
-                      size={15}
-                      className="
-                        absolute
-                        left-3
-                        top-1/2
-                        -translate-y-1/2
-                      "
-                      style={{
-                        color:
-                          colors.primary,
-                      }}
-                    />
-
-
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="What would you like to know?"
-                      disabled={contactLoading}
-                      className="
-                        w-full
-                        h-10
-                        pl-9
-                        pr-3
-                        rounded-md
-                        border
-                        text-xs
-                        outline-none
-                        transition-all
-                        disabled:bg-gray-50
-                        disabled:cursor-not-allowed
-                      "
-                      style={{
-                        backgroundColor:
-                          colors.inputBg,
-                        borderColor:
-                          colors.inputBorder,
-                        color:
-                          colors.inputText,
-                      }}
-                      onFocus={inputFocus}
-                      onBlur={inputBlur}
-                    />
-
-                  </div>
-
-                </motion.div>
-
-
-                {/* MESSAGE */}
-
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: 0.4,
-                  }}
-                >
-
-                  <label
-                    className="
-                      block
-                      text-xs
-                      font-semibold
-                      mb-1.5
-                    "
-                    style={{
-                      color: "#374151",
-                    }}
+                    htmlFor="message"
+                    className="block text-xs font-semibold mb-1.5 text-gray-700"
                   >
                     Message
                   </label>
 
-
                   <textarea
-                    rows="4"
+                    id="message"
+                    rows={4}
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Write your message..."
                     disabled={contactLoading}
+                    maxLength={5000}
                     className="
-                      w-full
-                      px-3
-                      py-2.5
-                      rounded-md
-                      border
-                      text-xs
-                      outline-none
-                      resize-none
-                      transition-all
-                      disabled:bg-gray-50
-                      disabled:cursor-not-allowed
+                      w-full px-3 py-2.5 rounded-md border
+                      text-xs outline-none resize-y transition-all
+                      disabled:bg-gray-50 disabled:cursor-not-allowed
                     "
                     style={{
-                      backgroundColor:
-                        colors.inputBg,
-                      borderColor:
-                        colors.inputBorder,
-                      color:
-                        colors.inputText,
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.inputBorder,
+                      color: colors.inputText,
                     }}
                     onFocus={inputFocus}
                     onBlur={inputBlur}
                   />
 
-                </motion.div>
+                  <p className="mt-1 text-right text-[10px] text-gray-400">
+                    {formData.message.length}/5000
+                  </p>
+                </div>
 
-
-                {/* SEND BUTTON */}
-
+                {/* Submit button */}
                 <motion.button
                   type="submit"
                   disabled={contactLoading}
-                  initial={{
-                    opacity: 0,
-                    y: 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: 0.45,
-                  }}
                   whileHover={
                     !contactLoading
                       ? {
-                          scale: 1.04,
+                          scale: 1.02,
                           boxShadow:
                             "0 8px 20px rgba(124,58,237,0.20)",
                         }
                       : {}
                   }
-                  whileTap={
-                    !contactLoading
-                      ? {
-                          scale: 0.96,
-                        }
-                      : {}
-                  }
+                  whileTap={!contactLoading ? { scale: 0.97 } : {}}
                   className="
-                    inline-flex
-                    items-center
-                    justify-center
-                    gap-2
-                    px-6
-                    h-10
-                    rounded-md
-                    text-white
-                    text-xs
-                    font-semibold
-                    transition-all
-                    duration-200
-                    disabled:opacity-60
-                    disabled:cursor-not-allowed
+                    inline-flex items-center justify-center gap-2
+                    px-6 h-10 rounded-md text-white text-xs
+                    font-semibold transition-all duration-200
+                    disabled:opacity-60 disabled:cursor-not-allowed
                   "
-                  style={{
-                    backgroundColor:
-                      colors.buttonBg,
-                  }}
+                  style={{ backgroundColor: colors.buttonBg }}
                   onMouseEnter={(e) => {
                     if (!contactLoading) {
                       e.currentTarget.style.backgroundColor =
@@ -1649,137 +668,67 @@ const ContactPage = () => {
                       colors.buttonBg;
                   }}
                 >
-
                   {contactLoading ? (
                     <>
-                      {/* Loading Spinner */}
-
                       <span
                         className="
-                          w-4
-                          h-4
-                          border-2
-                          border-white/40
-                          border-t-white
-                          rounded-full
-                          animate-spin
+                          w-4 h-4 border-2 border-white/40
+                          border-t-white rounded-full animate-spin
                         "
                       />
-
                       Sending...
-
                     </>
                   ) : (
                     <>
                       Send Message
-
-                      <motion.span
-                        whileHover={{
-                          x: 4,
-                        }}
-                      >
-                        <Send size={14} />
-                      </motion.span>
+                      <Send size={14} />
                     </>
                   )}
-
                 </motion.button>
-
               </form>
-
             </motion.div>
-
           </motion.div>
-
         </div>
-
       </section>
 
-
-      {/* =====================================================
-          BOTTOM CTA
-      ====================================================== */}
-
+      {/* Bottom CTA */}
       <motion.section
         className="px-6 pb-10"
-        initial={{
-          opacity: 0,
-          y: 25,
-        }}
-        whileInView={{
-          opacity: 1,
-          y: 0,
-        }}
-        viewport={{
-          once: true,
-          amount: 0.3,
-        }}
-        transition={{
-          duration: 0.7,
-        }}
+        initial={{ opacity: 0, y: 25 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.7 }}
       >
-
         <div
           className="
-            max-w-7xl
-            mx-auto
-            rounded-xl
-            border
-            py-6
-            px-5
+            max-w-7xl mx-auto rounded-xl border py-6 px-5
             text-center
           "
           style={{
-            backgroundColor:
-              colors.cardBg,
-            borderColor:
-              colors.cardBorder,
+            backgroundColor: colors.cardBg,
+            borderColor: colors.cardBorder,
           }}
         >
-
           <motion.h3
-            className="
-              text-lg
-              md:text-xl
-              font-bold
-            "
-            style={{
-              color: colors.primary,
-            }}
-            initial={{
-              opacity: 0,
-              scale: 0.95,
-            }}
-            whileInView={{
-              opacity: 1,
-              scale: 1,
-            }}
-            viewport={{
-              once: true,
-            }}
-            transition={{
-              duration: 0.5,
-            }}
+            className="text-lg md:text-xl font-bold"
+            style={{ color: colors.primary }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
           >
             We Are Here to Help
           </motion.h3>
 
-
           <p
             className="text-xs mt-1.5"
-            style={{
-              color:
-                colors.mutedText,
-            }}
+            style={{ color: colors.mutedText }}
           >
-            Connect with our team and discover
-            how we can support your next conference.
+            Connect with our team and discover how we can
+            support your next conference.
           </p>
-
         </div>
-
       </motion.section>
-
     </div>
   );
 };

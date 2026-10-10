@@ -63,22 +63,6 @@ exports.createRegistration = catchAsync(async (req, res, next) => {
       new AppError("Conference not found", 404)
     );
   }
-
-  const existingRegistration =
-    await Registration.findOne({
-      email: email.toLowerCase(),
-      "conference.conferenceId":
-        conference.conferenceId,
-    });
-
-  if (existingRegistration) {
-    return next(
-      new AppError(
-        "You have already registered for this conference",
-        409
-      )
-    );
-  }
   const conferenceLocation =
     typeof conference.location === "string"
       ? conference.location.trim()

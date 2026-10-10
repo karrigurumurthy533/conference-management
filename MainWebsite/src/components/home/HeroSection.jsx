@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Award } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -64,10 +63,7 @@ const HeroSection = () => {
           >
             <motion.div variants={fadeUp} className="mb-4 inline-flex">
               <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-950/60 backdrop-blur-md px-4 py-2 text-xs font-semibold tracking-wider text-violet-200 uppercase shadow-lg shadow-violet-950/40">
-                <Sparkles
-                  size={15}
-                  className="text-violet-400 animate-pulse"
-                />
+                <Sparkles size={15} className="text-violet-400 animate-pulse" />
                 LEARN / SHARE / GROW
               </span>
             </motion.div>
@@ -76,10 +72,10 @@ const HeroSection = () => {
               variants={fadeUp}
               className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] drop-shadow-md"
             >
-              Global Conferences.
+              Where Global Minds Meet,
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-pink-300">
-                Global Connections.
+                Innovation Begins.
               </span>
             </motion.h1>
 
@@ -87,9 +83,10 @@ const HeroSection = () => {
               variants={fadeUp}
               className="mt-5 text-base sm:text-lg text-violet-100/90 leading-relaxed max-w-2xl drop-shadow-sm"
             >
-              Join world-class international conferences, meet leading
-              researchers, share pioneering breakthroughs, and collaborate
-              with a global community shaping a better tomorrow.
+              Connect with world-leading researchers, exchange groundbreaking
+              ideas, and discover new opportunities through international
+              conferences that inspire collaboration and shape the future of
+              science and innovation.
             </motion.p>
 
             <motion.div

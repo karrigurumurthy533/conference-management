@@ -4,6 +4,7 @@ const employeeController = require("../controllers/EmployeeController");
 
 const employeeAttendanceController = require("../controllers/employeeAttendanceController");
 const employeeAuthMiddleware = require("../middlewares/employeeAuthMiddleware");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 
 const router = express.Router();
@@ -121,6 +122,11 @@ router.get(
   employeeAttendanceController.getMonthlyAttendance
 );
 
+router.post(
+  "/:id/send-email",
+  authMiddleware("admin"),
+  employeeController.sendEmployeeEmail
+);
 
 
 module.exports = router;

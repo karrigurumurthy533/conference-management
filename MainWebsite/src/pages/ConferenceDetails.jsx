@@ -13,19 +13,42 @@ import {
   CheckCircle2,
   Plus,
   Minus,
+  ChevronDown,
+  ChevronUp,
   Brain,
   Globe2,
-  Lightbulb,
   HeartHandshake,
   FileText,
   UserPlus,
   BookOpen,
-  Clock3,
   Presentation,
   Award,
 } from "lucide-react";
 
 import { getConferenceByIdApi } from "../api/api";
+
+const C = {
+  primary: "#7C3AED",
+  primaryHover: "#6D28D9",
+  dark: "#12091F",
+  title: "#2E1065",
+  text: "#4B5563",
+  soft: "#F8F7FF",
+  softer: "#F0EAFE",
+  border: "#E9E3FB",
+};
+
+const fmt = (d) =>
+  new Date(d).toLocaleDateString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+  });
+
+const pick = (item, keys) =>
+  typeof item === "string"
+    ? item
+    : keys.map((k) => item?.[k]).find(Boolean) || "";
 
 const ConferenceDetails = () => {
   const { id } = useParams();
@@ -35,8 +58,16 @@ const ConferenceDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openTrack, setOpenTrack] = useState(null);
-  const [openSection, setOpenSection] = useState(null);
+  const [activeTab, setActiveTab] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
+  // ---------------- FETCH ----------------
   useEffect(() => {
     let mounted = true;
 
@@ -47,182 +78,107 @@ const ConferenceDetails = () => {
         setConference(null);
 
         const response = await getConferenceByIdApi(id);
+        if (!mounted) return;
 
-        if (!mounted) {
-          return;
-        }
-
-        const apiData = response?.data?.data || response?.data || null;
-
-        if (!apiData) {
-          setConference(null);
+        const api = response?.data?.data || response?.data || null;
+        if (!api) {
           setError("Conference not found.");
           return;
         }
 
         const startDate =
-          apiData?.conferenceDates?.startDate || apiData?.startDate || "";
+          api?.conferenceDates?.startDate || api?.startDate || "";
+        const endDate = api?.conferenceDates?.endDate || api?.endDate || "";
 
-        const endDate =
-          apiData?.conferenceDates?.endDate || apiData?.endDate || "";
-
-        const formattedDate =
-          startDate && endDate
-            ? `${new Date(startDate).toLocaleDateString("en-US", {
-                month: "long",
-                day: "2-digit",
-                year: "numeric",
-              })} - ${new Date(endDate).toLocaleDateString("en-US", {
-                month: "long",
-                day: "2-digit",
-                year: "numeric",
-              })}`
-            : apiData?.date || "";
-
-        const speakers = Array.isArray(apiData?.speakers)
-          ? apiData.speakers.map((speaker) => ({
-              ...speaker,
-              name: speaker?.fullName || speaker?.name || "",
-              image: speaker?.imageUrl || speaker?.image || "",
-              organization: speaker?.organization || "",
-              role: speaker?.designation || speaker?.role || "",
-              specialty: speaker?.speakerType || speaker?.specialty || "",
-              linkedin: speaker?.linkedin || "",
-            }))
-          : [];
-
-        const topics = Array.isArray(apiData?.topics)
-          ? apiData.topics.map((topic) =>
-              typeof topic === "string"
-                ? topic
-                : topic?.title || topic?.name || topic?.topic || "",
-            )
-          : [];
-
-        const whoShouldAttend = Array.isArray(apiData?.whoShouldAttend)
-          ? apiData.whoShouldAttend.map((item) =>
-              typeof item === "string"
-                ? item
-                : item?.title || item?.name || item?.text || "",
-            )
-          : [];
-
-        const sponsors = Array.isArray(apiData?.sponsors)
-          ? apiData.sponsors.map((sponsor) =>
-              typeof sponsor === "string"
-                ? sponsor
-                : sponsor?.logoUrl || sponsor?.imageUrl || sponsor?.logo || "",
-            )
-          : [];
-
-        const welcomeMessage = {
-          paragraphs: Array.isArray(apiData?.welcomeMessage?.paragraphs)
-            ? apiData.welcomeMessage.paragraphs
-            : apiData?.welcomeMessage?.paragraph
-              ? [apiData.welcomeMessage.paragraph]
-              : [],
-          signature: apiData?.welcomeMessage?.signature || "",
-        };
-
-        const normalizedConference = {
-          ...apiData,
-
-          id: apiData?._id || apiData?.id || id,
-
-          title: apiData?.basicInformation?.title || apiData?.title || "",
-
-          category:
-            apiData?.basicInformation?.category || apiData?.category || "",
-
-          subtitle:
-            apiData?.basicInformation?.subtitle || apiData?.subtitle || "",
-
+        setConference({
+          ...api,
+          id: api?._id || api?.id || id,
+          title: api?.basicInformation?.title || api?.title || "",
+          category: api?.basicInformation?.category || api?.category || "",
+          subtitle: api?.basicInformation?.subtitle || api?.subtitle || "",
           description:
-            apiData?.basicInformation?.description ||
-            apiData?.description ||
-            "",
-
-          date: formattedDate,
-
+            api?.basicInformation?.description || api?.description || "",
+          date:
+            startDate && endDate
+              ? `${fmt(startDate)} - ${fmt(endDate)}`
+              : api?.date || "",
           startDate,
-
           endDate,
-
-          time: apiData?.conferenceDates?.time || apiData?.time || "",
-
-          venue: apiData?.venueInformation || apiData?.venue || {},
-
+          time: api?.conferenceDates?.time || api?.time || "",
+          venue: api?.venueInformation || api?.venue || {},
           location:
-            apiData?.venueInformation?.city ||
-            apiData?.venueInformation?.location ||
-            apiData?.venueInformation?.venueName ||
-            apiData?.location ||
+            api?.venueInformation?.city ||
+            api?.venueInformation?.location ||
+            api?.venueInformation?.venueName ||
+            api?.location ||
             "",
-
           mode:
-            apiData?.venueInformation?.mode ||
-            apiData?.mode ||
-            apiData?.conferenceMode ||
+            api?.venueInformation?.mode ||
+            api?.mode ||
+            api?.conferenceMode ||
             "",
-
           participants:
-            apiData?.registrationInformation?.expectedParticipants ||
-            apiData?.participants ||
+            api?.registrationInformation?.expectedParticipants ||
+            api?.participants ||
             "",
-
           image:
-            apiData?.media?.bannerImage ||
-            apiData?.media?.conferenceBanner ||
-            apiData?.bannerImage ||
-            apiData?.imageUrl ||
-            apiData?.image ||
+            api?.media?.bannerImage ||
+            api?.media?.conferenceBanner ||
+            api?.bannerImage ||
+            api?.imageUrl ||
+            api?.image ||
             "",
-
-          speakers,
-
-          topics,
-
-          tracks: Array.isArray(apiData?.tracks) ? apiData.tracks : [],
-
-          sponsors,
-
-          keyHighlights: Array.isArray(apiData?.keyHighlights)
-            ? apiData.keyHighlights
+          speakers: Array.isArray(api?.speakers)
+            ? api.speakers.map((s) => ({
+                ...s,
+                name: s?.fullName || s?.name || "",
+                image: s?.imageUrl || s?.image || "",
+                organization: s?.organization || "",
+                role: s?.designation || s?.role || "",
+                specialty: s?.speakerType || s?.specialty || "",
+                linkedin: s?.linkedin || "",
+              }))
             : [],
-
-          whoShouldAttend,
-
-          whoShouldAttendDescription: apiData?.whoShouldAttendDescription || "",
-
-          welcomeMessage,
-
-          otherData: apiData?.otherData || {},
-        };
-
-        setConference(normalizedConference);
-      } catch (error) {
-        console.error("Fetch Conference Details Error:", error);
-
-        if (!mounted) {
-          return;
-        }
-
+          topics: Array.isArray(api?.topics)
+            ? api.topics.map((t) => pick(t, ["title", "name", "topic"]))
+            : [],
+          tracks: Array.isArray(api?.tracks) ? api.tracks : [],
+          sponsors: Array.isArray(api?.sponsors)
+            ? api.sponsors.map((s) =>
+                pick(s, ["logoUrl", "imageUrl", "logo"]),
+              )
+            : [],
+          keyHighlights: Array.isArray(api?.keyHighlights)
+            ? api.keyHighlights
+            : [],
+          whoShouldAttend: Array.isArray(api?.whoShouldAttend)
+            ? api.whoShouldAttend.map((i) => pick(i, ["title", "name", "text"]))
+            : [],
+          whoShouldAttendDescription: api?.whoShouldAttendDescription || "",
+          welcomeMessage: {
+            paragraphs: Array.isArray(api?.welcomeMessage?.paragraphs)
+              ? api.welcomeMessage.paragraphs
+              : api?.welcomeMessage?.paragraph
+                ? [api.welcomeMessage.paragraph]
+                : [],
+            signature: api?.welcomeMessage?.signature || "",
+          },
+          otherData: api?.otherData || {},
+        });
+      } catch (err) {
+        console.error("Fetch Conference Details Error:", err);
+        if (!mounted) return;
         setConference(null);
-
         setError(
-          error?.response?.data?.message || "Failed to load conference details",
+          err?.response?.data?.message || "Failed to load conference details",
         );
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
     };
 
-    if (id) {
-      fetchConference();
-    } else {
-      setConference(null);
+    if (id) fetchConference();
+    else {
       setLoading(false);
       setError("Conference ID is missing.");
     }
@@ -232,185 +188,49 @@ const ConferenceDetails = () => {
     };
   }, [id]);
 
-  const colors = {
-    pageBg: "#FFFFFF",
-    text: "#111827",
-    heroBg: "#12091F",
-    link: "#C084FC",
-    linkHover: "#FFFFFF",
-    categoryBg: "rgba(124,58,237,0.24)",
-    categoryText: "#E9D5FF",
-    heading: "#FFFFFF",
-    headingAccent: "#7C3AED",
-    subtitle: "#F5F3FF",
-    description: "#DDD6FE",
-    infoIconBg: "rgba(255,255,255,0.14)",
-    infoIcon: "#D8B4FE",
-    infoTitle: "#FFFFFF",
-    muted: "rgba(255,255,255,0.68)",
-    countdownIconBg: "#7C3AED",
-    countdownHeading: "#FFFFFF",
-    countdownCardBg: "rgba(20,10,35,0.78)",
-    countdownCardBorder: "rgba(216,180,254,0.30)",
-    countdownCardShadow: "0 10px 28px rgba(0,0,0,0.20)",
-    countdownBoxBg: "rgba(255,255,255,0.07)",
-    countdownBoxBorder: "rgba(255,255,255,0.14)",
-    countdownBoxHoverBorder: "#A855F7",
-    countdownNumber: "#FFFFFF",
-    countdownLabel: "#D8B4FE",
-    primary: "#7C3AED",
-    primaryHover: "#6D28D9",
-    actionBorder: "rgba(255,255,255,0.18)",
-    actionBg: "rgba(255,255,255,0.08)",
-    actionText: "#FFFFFF",
-    actionIconBg: "rgba(168,85,247,0.22)",
-    actionIcon: "#D8B4FE",
-    actionDescription: "rgba(255,255,255,0.60)",
-    featuredBg: "#FFFFFF",
-    sectionBorder: "#EDE9FE",
-    speakerRing: "#D8B4FE",
-    speakerName: "#2E1065",
-    speakerOrg: "#6B7280",
-    speakerSpecialty: "#7C3AED",
-    aboutBg: "#F8F7FF",
-    aboutBody: "#4B5563",
-    miniBorder: "#DDD6FE",
-    miniTitle: "#4C1D95",
-    quoteBg: "#F0EAFE",
-    quoteMark: "#7C3AED",
-    quoteText: "#4C1D95",
-    quoteDivider: "#C4B5FD",
-    topicsBg: "#FFFFFF",
-    topicBorder: "#EDE9FE",
-    topicText: "#405E58",
-    whyBg: "#F0EAFE",
-    whyDecor1: "#DDD6FE",
-    whyDecor2: "#E9D5FF",
-    whyText: "#4B5563",
-    benefitBorder: "#C4B5FD",
-    sessionsBg: "#F8F7FF",
-    accordionBg: "#FFFFFF",
-    accordionBorder: "#DDD6FE",
-    rowBorder: "#E8E5F2",
-    rowHover: "#FAF8FF",
-    closedNumberBg: "#F0EAFE",
-    trackTitle: "#8352df",
-    trackDesc: "#4B5563",
-    finalBg: "#4C1D95",
-    finalIcon: "#DDD6FE",
-  };
-
-  const calculateTimeLeft = () => {
-    if (!conference?.startDate) {
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-      };
-    }
-
-    const targetTime = new Date(conference.startDate).getTime();
-
-    if (Number.isNaN(targetTime)) {
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-      };
-    }
-
-    const difference = targetTime - Date.now();
-
-    if (difference <= 0) {
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-      };
-    }
-
-    return {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / (1000 * 60)) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
-  };
-
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
+  // ---------------- COUNTDOWN ----------------
   useEffect(() => {
-    if (!conference?.startDate) {
-      return;
-    }
+    if (!conference?.startDate) return;
 
-    setTimeLeft(calculateTimeLeft());
+    const calc = () => {
+      const diff = new Date(conference.startDate).getTime() - Date.now();
+      if (Number.isNaN(diff) || diff <= 0)
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      return {
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff / 3600000) % 24),
+        minutes: Math.floor((diff / 60000) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      };
+    };
 
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
+    setTimeLeft(calc());
+    const timer = setInterval(() => setTimeLeft(calc()), 1000);
     return () => clearInterval(timer);
   }, [conference?.startDate]);
 
-  if (loading) {
-    return (
-      <div
-        className="min-h-screen"
-        style={{
-          backgroundColor: colors.pageBg,
-        }}
-      />
-    );
-  }
+  if (loading) return <div className="min-h-screen bg-white" />;
 
   if (!conference) {
     return (
-      <div
-        className="flex min-h-[60vh] items-center justify-center px-6"
-        style={{
-          backgroundColor: colors.pageBg,
-          color: colors.text,
-        }}
-      >
+      <div className="flex min-h-[60vh] items-center justify-center bg-white px-6">
         <div className="text-center">
           <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: "#F0EAFE",
-              color: colors.primary,
-            }}
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ backgroundColor: C.softer, color: C.primary }}
           >
-            <Brain size={30} />
+            <Brain size={26} />
           </div>
-
-          <h1
-            className="mt-5 text-2xl font-bold"
-            style={{
-              color: "#2E1065",
-            }}
-          >
+          <h1 className="mt-4 text-xl font-bold" style={{ color: C.title }}>
             Conference Details
           </h1>
-
-          <p
-            className="mt-3 text-sm md:text-base"
-            style={{
-              color: "#6B7280",
-            }}
-          >
+          <p className="mt-2 text-sm text-gray-500">
             {error || "Please select a conference from the conferences page."}
           </p>
-
           <Link
             to="/conferences"
-            className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5"
-            style={{
-              backgroundColor: colors.primary,
-            }}
+            className="mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-white"
+            style={{ backgroundColor: C.primary }}
           >
             <ArrowLeft size={16} />
             Back to Conferences
@@ -420,99 +240,48 @@ const ConferenceDetails = () => {
     );
   }
 
-  // ======================================================
-  // SEO / EVENT SCHEMA
-  // ======================================================
-
+  // ---------------- SEO ----------------
   const conferenceUrl = `https://www.globalscion.com/conferences/${conference.id}`;
 
-  const getEventAttendanceMode = (mode) => {
-    switch (mode) {
-      case "Webinar":
-      case "Online":
-        return "https://schema.org/OnlineEventAttendanceMode";
-
-      case "Physical":
-        return "https://schema.org/OfflineEventAttendanceMode";
-
-      case "Hybrid":
-        return "https://schema.org/MixedEventAttendanceMode";
-
-      default:
-        return null;
-    }
-  };
+  const attendanceMode = {
+    Webinar: "https://schema.org/OnlineEventAttendanceMode",
+    Online: "https://schema.org/OnlineEventAttendanceMode",
+    Physical: "https://schema.org/OfflineEventAttendanceMode",
+    Hybrid: "https://schema.org/MixedEventAttendanceMode",
+  }[conference.mode];
 
   const getEventLocation = () => {
-    const venue = conference?.venue || {};
-    const mode = conference?.mode;
-
-    const physicalLocation = {
+    const v = conference.venue || {};
+    const physical = {
       "@type": "Place",
-
-      name:
-        venue?.venueName ||
-        conference?.location ||
-        "GlobalScion Conference Venue",
-
+      name: v.venueName || conference.location || "GlobalScion Conference Venue",
       address: {
         "@type": "PostalAddress",
-
-        ...(venue?.address
-          ? {
-              streetAddress: venue.address,
-            }
+        ...(v.address ? { streetAddress: v.address } : {}),
+        ...(v.city || conference.location
+          ? { addressLocality: v.city || conference.location }
           : {}),
-
-        ...(venue?.city || conference?.location
-          ? {
-              addressLocality: venue?.city || conference?.location,
-            }
-          : {}),
-
-        ...(venue?.state
-          ? {
-              addressRegion: venue.state,
-            }
-          : {}),
-
-        ...(venue?.country
-          ? {
-              addressCountry: venue.country,
-            }
-          : {}),
+        ...(v.state ? { addressRegion: v.state } : {}),
+        ...(v.country ? { addressCountry: v.country } : {}),
       },
     };
-
-    const virtualLocation = {
+    const virtual = {
       "@type": "VirtualLocation",
-      url: venue?.onlineLink || conferenceUrl,
+      url: v.onlineLink || conferenceUrl,
     };
-
-    if (mode === "Webinar" || mode === "Online") {
-      return virtualLocation;
-    }
-
-    if (mode === "Hybrid") {
-      return [physicalLocation, virtualLocation];
-    }
-
-    return physicalLocation;
+    if (conference.mode === "Webinar" || conference.mode === "Online")
+      return virtual;
+    if (conference.mode === "Hybrid") return [physical, virtual];
+    return physical;
   };
-
-  const eventAttendanceMode = getEventAttendanceMode(conference.mode);
 
   const eventSchema = {
     "@context": "https://schema.org",
     "@type": "Event",
-
     name: conference.title,
-
     description:
       conference.description || `${conference.title} - GlobalScion Conferences`,
-
     url: conferenceUrl,
-
     ...(conference.image
       ? {
           image: [
@@ -522,29 +291,15 @@ const ConferenceDetails = () => {
           ],
         }
       : {}),
-
     ...(conference.startDate
-      ? {
-          startDate: new Date(conference.startDate).toISOString(),
-        }
+      ? { startDate: new Date(conference.startDate).toISOString() }
       : {}),
-
     ...(conference.endDate
-      ? {
-          endDate: new Date(conference.endDate).toISOString(),
-        }
+      ? { endDate: new Date(conference.endDate).toISOString() }
       : {}),
-
     eventStatus: "https://schema.org/EventScheduled",
-
-    ...(eventAttendanceMode
-      ? {
-          eventAttendanceMode,
-        }
-      : {}),
-
+    ...(attendanceMode ? { eventAttendanceMode: attendanceMode } : {}),
     location: getEventLocation(),
-
     organizer: {
       "@type": "Organization",
       name: "GlobalScion Conferences",
@@ -552,14 +307,9 @@ const ConferenceDetails = () => {
     },
   };
 
-  // ======================================================
-  // BREADCRUMB SCHEMA
-  // ======================================================
-
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-
     itemListElement: [
       {
         "@type": "ListItem",
@@ -582,31 +332,193 @@ const ConferenceDetails = () => {
     ],
   };
 
-  const whyToAttend = conference.otherData?.whyToAttend || [];
+  // ---------------- TAB DATA ----------------
+  const o = conference.otherData;
+  const sampleAgenda = o?.sampleAgenda || [];
+  const whyToAttend = o?.whyToAttend || [];
+  const benefits = o?.benefitsOfAttending || [];
+  const delegates = o?.delegates || [];
+  const posterLive = o?.posterPresentersLive || [];
+  const ePoster = o?.ePosterPresenters || {};
+  const market = o?.marketAnalysis || {};
 
-  const sampleAgenda = conference.otherData?.sampleAgenda || [];
+  const tabs = [
+    sampleAgenda.length > 0 && {
+      id: "agenda",
+      label: "Agenda",
+      icon: <CalendarDays size={13} />,
+      content: (
+        <div className="grid gap-2 md:grid-cols-2">
+          {sampleAgenda.map((day, i) => (
+            <div
+              key={day?.day || i}
+              className="overflow-hidden rounded-md border bg-white"
+              style={{ borderColor: C.border }}
+            >
+              <div
+                className="px-3 py-1.5 text-xs font-bold"
+                style={{ backgroundColor: C.softer, color: C.title }}
+              >
+                {day?.day}
+              </div>
+              <div className="divide-y" style={{ borderColor: C.border }}>
+                {day?.schedule?.map((it, j) => (
+                  <div
+                    key={`${it?.time}-${j}`}
+                    className="flex gap-3 px-3 py-1.5 text-xs"
+                    style={{ borderColor: C.border }}
+                  >
+                    <span
+                      className="w-20 flex-shrink-0 text-[11px] font-bold"
+                      style={{ color: C.primary }}
+                    >
+                      {it?.time}
+                    </span>
+                    <span style={{ color: C.text }}>{it?.session}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    whyToAttend.length > 0 && {
+      id: "why",
+      label: "Why Attend",
+      icon: <HeartHandshake size={13} />,
+      content: <MiniGrid items={whyToAttend} />,
+    },
+    benefits.length > 0 && {
+      id: "benefits",
+      label: "Benefits",
+      icon: <Award size={13} />,
+      content: <MiniGrid items={benefits} />,
+    },
+    delegates.length > 0 && {
+      id: "delegates",
+      label: "Delegates",
+      icon: <Users size={13} />,
+      content: <MiniGrid items={delegates} />,
+    },
+    posterLive.length > 0 && {
+      id: "poster",
+      label: "Posters",
+      icon: <Presentation size={13} />,
+      content: (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-1.5 text-xs font-bold" style={{ color: C.title }}>
+              Live Poster Presenters
+            </h3>
+            <Bullets items={posterLive} />
+          </div>
+          <div>
+            <h3 className="mb-1.5 text-xs font-bold" style={{ color: C.title }}>
+              E-Poster Presenters
+            </h3>
+            <Bullets items={ePoster.benefits} />
+          </div>
+        </div>
+      ),
+    },
+    ePoster.specifications && {
+      id: "guidelines",
+      label: "E-Poster Guidelines",
+      icon: <FileText size={13} />,
+      content: (
+        <div>
+          {ePoster.guidelinesIntro && (
+            <p className="mb-2 text-xs leading-5" style={{ color: C.text }}>
+              {ePoster.guidelinesIntro}
+            </p>
+          )}
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            <Box title="Specifications">
+              <div className="space-y-1">
+                {Object.entries(ePoster.specifications).map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex justify-between gap-3 border-b pb-1 text-xs"
+                    style={{ borderColor: C.border }}
+                  >
+                    <span className="font-semibold" style={{ color: C.text }}>
+                      {k}
+                    </span>
+                    <span
+                      className="text-right font-bold"
+                      style={{ color: C.primary }}
+                    >
+                      {v}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Box>
+            <Box title="Poster Content">
+              <Bullets items={ePoster.posterContent} />
+            </Box>
+            <Box title="Design Requirements">
+              <Bullets items={ePoster.designRequirements} />
+            </Box>
+            <Box title="Submission Guidelines">
+              <Bullets items={ePoster.submissionGuidelines} />
+            </Box>
+            <Box title="Review & Acceptance">
+              <Bullets items={ePoster.reviewAndAcceptance} />
+            </Box>
+            <Box title="Presentation & Certificate">
+              <Bullets
+                items={[
+                  ...(ePoster.presentation || []),
+                  ...(ePoster.certificate || []),
+                ]}
+              />
+            </Box>
+          </div>
+        </div>
+      ),
+    },
+    market?.paragraphs?.length > 0 && {
+      id: "market",
+      label: "Market Analysis",
+      icon: <Globe2 size={13} />,
+      content: (
+        <div
+          className={`grid gap-4 ${market.image ? "lg:grid-cols-[1fr_300px]" : ""}`}
+        >
+          <div className="space-y-2">
+            {market.heading && (
+              <h3 className="text-sm font-bold" style={{ color: C.title }}>
+                {market.heading}
+              </h3>
+            )}
+            {market.paragraphs.map((p, i) => (
+              <p key={i} className="text-xs leading-5" style={{ color: C.text }}>
+                {p}
+              </p>
+            ))}
+          </div>
+          {market.image && (
+            <img
+              src={market.image}
+              alt="Market Analysis"
+              className="h-52 w-full rounded-lg object-cover"
+            />
+          )}
+        </div>
+      ),
+    },
+  ].filter(Boolean);
 
-  const benefitsOfAttending = conference.otherData?.benefitsOfAttending || [];
-
-  const delegates = conference.otherData?.delegates || [];
-
-  const posterPresentersLive = conference.otherData?.posterPresentersLive || [];
-
-  const ePosterPresenters = conference.otherData?.ePosterPresenters || {};
-
-  const marketAnalysis = conference.otherData?.marketAnalysis || {};
-
-  const toggleSection = (section) => {
-    setOpenSection((current) => (current === section ? null : section));
-  };
+  const currentTab = tabs.find((t) => t.id === activeTab) || tabs[0];
 
   return (
     <>
       <SEO
         title={conference.title}
         description={
-          conference.description ||
-          `${conference.title} - GlobalScion Conferences`
+          conference.description || `${conference.title} - GlobalScion Conferences`
         }
         keywords={[
           conference.title,
@@ -624,849 +536,359 @@ const ConferenceDetails = () => {
         structuredData={[eventSchema, breadcrumbSchema]}
       />
 
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: 8,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.5,
-          ease: "easeOut",
-        }}
-        className="min-h-screen transition-colors duration-500"
-        style={{
-          backgroundColor: colors.pageBg,
-          color: colors.text,
-        }}
-      >
-        {/* =====================================================
-            HERO
-        ===================================================== */}
-
-        <section
-          className="relative overflow-hidden"
-          style={{
-            backgroundColor: colors.heroBg,
-          }}
-        >
-          <div className="absolute inset-0">
-            {conference.image && (
-              <img
-                src={conference.image}
-                alt={conference.title}
-                className="h-full w-full object-cover object-center"
-                style={{
-                  filter: "brightness(0.52) saturate(1.05)",
-                }}
-              />
-            )}
-
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(15,5,28,0.95) 0%, rgba(35,13,55,0.82) 42%, rgba(76,29,149,0.45) 100%)",
-              }}
+      <div className="min-h-screen bg-white text-gray-900">
+        {/* ================= HERO ================= */}
+        <section className="relative overflow-hidden" style={{ backgroundColor: C.dark }}>
+          {conference.image && (
+            <img
+              src={conference.image}
+              alt={conference.title}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ filter: "brightness(0.5)" }}
             />
-
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(7,2,15,0.72) 0%, rgba(7,2,15,0.05) 55%, rgba(7,2,15,0.18) 100%)",
-              }}
-            />
-          </div>
-
+          )}
           <div
-            className="absolute right-[8%] top-10 h-14 w-14 rounded-full border"
+            className="absolute inset-0"
             style={{
-              borderColor: "rgba(216,180,254,0.16)",
+              background:
+                "linear-gradient(90deg, rgba(15,5,28,0.95) 0%, rgba(35,13,55,0.8) 50%, rgba(76,29,149,0.45) 100%)",
             }}
           />
 
-          <div
-            className="absolute bottom-10 right-[15%] h-7 w-7 rounded-full"
-            style={{
-              backgroundColor: "rgba(168,85,247,0.12)",
-            }}
-          />
-
-          <div
-            className="absolute left-[48%] top-12 h-5 w-5 rounded-full"
-            style={{
-              backgroundColor: "rgba(216,180,254,0.10)",
-            }}
-          />
-
-          <div
-            className="absolute left-[54%] top-[18%] h-3 w-3 rounded-full"
-            style={{
-              backgroundColor: "rgba(216,180,254,0.10)",
-            }}
-          />
-
-          <div className="relative z-10 mx-auto max-w-7xl px-6 py-4 lg:px-10 lg:py-5">
+          <div className="relative z-10 mx-auto max-w-7xl px-5 py-3 lg:px-10">
             <Link
               to="/conferences"
-              className="inline-flex items-center gap-1.5 text-[10px] font-semibold transition-all hover:translate-x-0.5"
-              style={{
-                color: colors.link,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = colors.linkHover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = colors.link;
-              }}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-300 hover:text-white"
             >
-              <ArrowLeft size={13} />
+              <ArrowLeft size={12} />
               Back to Conferences
             </Link>
 
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 15,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                duration: 0.6,
-              }}
-              className="mt-3 max-w-4xl"
-            >
-              <span
-                className="inline-flex rounded-full border px-2.5 py-1 text-[9px] font-bold backdrop-blur-md"
-                style={{
-                  backgroundColor: colors.categoryBg,
-                  borderColor: "rgba(216,180,254,0.25)",
-                  color: colors.categoryText,
-                }}
-              >
-                {conference.category}
-              </span>
-
-              <motion.h1
-                className="mt-3 max-w-3xl text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-4xl xl:text-5xl"
-                style={{
-                  color: colors.heading,
-                  textShadow: "0 4px 20px rgba(0,0,0,0.45)",
-                }}
-              >
-                {conference.title}
-              </motion.h1>
-
-              <motion.p
-                className="mt-3 max-w-3xl text-sm font-semibold leading-6 sm:text-base"
-                style={{
-                  color: colors.subtitle,
-                }}
-              >
-                {conference.subtitle}
-              </motion.p>
-
-              <motion.p
-                className="mt-2 max-w-3xl text-sm leading-6 sm:text-base"
-                style={{
-                  color: colors.description,
-                }}
-              >
-                {conference.description}
-              </motion.p>
-
-              <motion.div className="mt-4 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-                <InfoItem
-                  icon={<CalendarDays size={16} />}
-                  title={conference.date}
-                  subtitle={conference.time}
-                  colors={colors}
-                />
-
-                <InfoItem
-                  icon={<MapPin size={16} />}
-                  title={conference.location}
-                  subtitle={conference.mode}
-                  colors={colors}
-                />
-
-                <InfoItem
-                  icon={<Users size={16} />}
-                  title={conference.participants}
-                  subtitle="Expected Participants"
-                  colors={colors}
-                />
-              </motion.div>
-
-              <motion.div className="mt-4 max-w-xl">
-                <div className="mb-2 flex items-center gap-2">
-                  <div
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-white"
-                    style={{
-                      backgroundColor: colors.countdownIconBg,
-                    }}
-                  >
-                    <Clock3 size={13} />
-                  </div>
-
-                  <p
-                    className="text-[9px] font-bold uppercase tracking-[0.15em]"
-                    style={{
-                      color: colors.countdownHeading,
-                    }}
-                  >
-                    Conference Starts In
-                  </p>
-                </div>
-
-                <div
-                  className="relative overflow-hidden rounded-lg border p-2 backdrop-blur-xl"
-                  style={{
-                    borderColor: colors.countdownCardBorder,
-                    backgroundColor: colors.countdownCardBg,
-                    boxShadow: colors.countdownCardShadow,
-                  }}
-                >
-                  <div className="relative grid grid-cols-4 gap-2">
-                    <PremiumCountdownBox
-                      value={timeLeft.days}
-                      label="Days"
-                      colors={colors}
-                    />
-
-                    <PremiumCountdownBox
-                      value={timeLeft.hours}
-                      label="Hours"
-                      colors={colors}
-                    />
-
-                    <PremiumCountdownBox
-                      value={timeLeft.minutes}
-                      label="Minutes"
-                      colors={colors}
-                    />
-
-                    <PremiumCountdownBox
-                      value={timeLeft.seconds}
-                      label="Seconds"
-                      colors={colors}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div className="mt-4 max-w-2xl">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white">
-                    Conference Actions
-                  </p>
-                </div>
-
-                <div className="grid max-w-lg grid-cols-1 gap-2 sm:grid-cols-2">
-                  <PremiumActionButton
-                    icon={<Download size={14} />}
-                    text="Download Brochure"
-                    description="Conference details"
-                    colors={colors}
-                    onClick={() =>
-                      navigate(`/conferences/${conference.id}/brochure`, {
-                        state: {
-                          conference,
-                        },
-                      })
-                    }
-                  />
-
-                  <PremiumActionButton
-                    icon={<FileText size={14} />}
-                    text="Abstract Submission"
-                    description="Submit your research"
-                    colors={colors}
-                    onClick={() =>
-                      navigate(
-                        `/conferences/${conference.id}/abstract-submission`,
-                      )
-                    }
-                  />
-
-                  <PremiumActionButton
-                    icon={<UserPlus size={14} />}
-                    text="Register Now"
-                    description="Reserve your seat"
-                    colors={colors}
-                    primary
-                    onClick={() => {
-                      const conferenceId = conference?.id
-
-                      navigate(`/conferences/${conferenceId}/register`);
-                    }}
-                  />
-
-                  <PremiumActionButton
-                    icon={<BookOpen size={14} />}
-                    text="Scientific Program"
-                    description="View full program"
-                    colors={colors}
-                    onClick={() =>
-                      navigate(
-                        `/conferences/${conference.id}/scientific-program`,
-                      )
-                    }
-                  />
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* FEATURED SPEAKERS */}
-
-        <section
-          className="border-b px-6 py-12 lg:px-10 lg:py-14"
-          style={{
-            borderColor: colors.sectionBorder,
-            backgroundColor: colors.featuredBg,
-          }}
-        >
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              label="Renowned Speakers"
-              action="View All Speakers"
-              colors={colors}
-            />
-
-            <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-              {conference.speakers?.map((speaker, index) => (
-                <motion.div
-                  key={speaker.name || index}
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.05,
-                  }}
-                  className="group text-center"
-                >
-                  <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28">
-                    <div
-                      className="absolute -inset-1 rounded-full border-2 transition-all duration-300 group-hover:scale-105"
-                      style={{
-                        borderColor: colors.speakerRing,
-                      }}
-                    />
-
-                    {speaker.image && (
-                      <img
-                        src={speaker.image}
-                        alt={speaker.name}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    )}
-
-                    <a
-                      href={speaker.linkedin || "https://www.linkedin.com/"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`${speaker.name || "Speaker"} LinkedIn`}
-                      className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 shadow-md"
-                      style={{
-                        borderColor: colors.featuredBg,
-                        backgroundColor: colors.primary,
-                      }}
-                    >
-                      <img
-                        src="/svgs/linkedin.svg"
-                        alt="LinkedIn"
-                        className="h-3.5 w-3.5"
-                      />
-                    </a>
-                  </div>
-
-                  <h3
-                    className="mt-3 text-xs font-bold leading-5 sm:text-sm"
-                    style={{
-                      color: colors.speakerName,
-                    }}
-                  >
-                    {speaker.name}
-                  </h3>
-
-                  <p
-                    className="mt-1 text-[10px] leading-4 sm:text-xs"
-                    style={{
-                      color: colors.speakerOrg,
-                    }}
-                  >
-                    {speaker.organization || speaker.role}
-                  </p>
-
-                  <p
-                    className="mt-1 text-[10px] font-medium leading-4"
-                    style={{
-                      color: colors.speakerSpecialty,
-                    }}
-                  >
-                    {speaker.specialty || ""}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* WELCOME MESSAGE */}
-
-        <section className="relative bg-white px-6 py-20 md:py-24">
-          <div className="mx-auto max-w-7xl lg:px-10">
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 30,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              viewport={{
-                once: true,
-              }}
-              transition={{
-                duration: 0.7,
-              }}
-              className="mb-10"
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <span className="h-[2px] w-12 bg-violet-600" />
-
-                <span className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
-                  Welcome Message
+            <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_280px] lg:items-center">
+              {/* LEFT */}
+              <div>
+                <span className="inline-flex rounded-full border border-purple-300/25 bg-purple-600/25 px-2.5 py-0.5 text-[10px] font-bold text-purple-100">
+                  {conference.category}
                 </span>
-              </div>
 
-              <h2 className="text-3xl font-bold leading-tight text-gray-900 md:text-4xl lg:text-5xl">
-                Welcome to the{" "}
-                <span className="text-violet-600">
-                  Autism Research Conference
-                </span>
-              </h2>
-            </motion.div>
+                <h1 className="mt-1.5 text-xl font-extrabold leading-tight text-white sm:text-2xl lg:text-3xl">
+                  {conference.title}
+                </h1>
 
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 25,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              viewport={{
-                once: true,
-              }}
-              transition={{
-                duration: 0.8,
-              }}
-              className="w-full"
-            >
-              <div className="max-w-6xl">
-                {conference?.welcomeMessage?.paragraphs?.map(
-                  (paragraph, index) => (
-                    <motion.p
-                      key={index}
-                      initial={{
-                        opacity: 0,
-                        x: -15,
-                      }}
-                      whileInView={{
-                        opacity: 1,
-                        x: 0,
-                      }}
-                      viewport={{
-                        once: true,
-                      }}
-                      transition={{
-                        duration: 0.6,
-                        delay: index * 0.08,
-                      }}
-                      className="mb-6 text-base leading-8 text-gray-700 md:text-lg lg:text-[18px]"
-                    >
-                      {paragraph}
-                    </motion.p>
-                  ),
+                {conference.subtitle && (
+                  <p className="mt-1 text-xs font-semibold text-violet-100 sm:text-sm">
+                    {conference.subtitle}
+                  </p>
                 )}
 
-                {conference?.welcomeMessage?.signature && (
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      duration: 0.7,
-                      delay: 0.3,
-                    }}
-                    className="mt-8 pt-3"
-                  >
-                    <p className="text-lg font-semibold text-violet-700 md:text-xl">
-                      {conference.welcomeMessage.signature}
-                    </p>
-                  </motion.div>
+                {conference.description && (
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-violet-200">
+                    {conference.description}
+                  </p>
                 )}
+
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Pill icon={<CalendarDays size={13} />}>
+                    {conference.date}
+                    {conference.time ? ` · ${conference.time}` : ""}
+                  </Pill>
+                  <Pill icon={<MapPin size={13} />}>
+                    {conference.location}
+                    {conference.mode ? ` · ${conference.mode}` : ""}
+                  </Pill>
+                  {conference.participants && (
+                    <Pill icon={<Users size={13} />}>
+                      {conference.participants} Expected
+                    </Pill>
+                  )}
+                </div>
               </div>
-            </motion.div>
-          </div>
-        </section>
 
-        {/* WHO SHOULD ATTEND */}
-
-        {conference.whoShouldAttendDescription && (
-          <section
-            className="px-6 py-14 lg:px-10 lg:py-16"
-            style={{
-              backgroundColor: colors.featuredBg,
-            }}
-          >
-            <div className="mx-auto max-w-7xl">
-              <SectionHeading label="Who Should Attend" colors={colors} />
-
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 15,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                className="mt-7 rounded-2xl border p-7"
-                style={{
-                  borderColor: colors.sectionBorder,
-                  backgroundColor: "#FAF8FF",
-                }}
-              >
-                <p
-                  className="max-w-5xl text-sm leading-7 md:text-base md:leading-8"
-                  style={{
-                    color: colors.aboutBody,
-                  }}
-                >
-                  {conference.whoShouldAttendDescription}
+              {/* RIGHT: COUNTDOWN + ACTIONS */}
+              <div className="rounded-lg border border-white/15 bg-black/30 p-2 backdrop-blur-md">
+                <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white">
+                  Conference Starts In
                 </p>
 
-                <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                  {conference.whoShouldAttend?.map((item, index) => (
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    ["Days", timeLeft.days],
+                    ["Hrs", timeLeft.hours],
+                    ["Min", timeLeft.minutes],
+                    ["Sec", timeLeft.seconds],
+                  ].map(([label, value]) => (
                     <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2 rounded-lg border bg-white p-4"
-                      style={{
-                        borderColor: colors.topicBorder,
-                      }}
+                      key={label}
+                      className="rounded border border-white/15 bg-white/5 py-1 text-center"
                     >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-0.5 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <span
-                        className="text-xs font-semibold leading-5"
-                        style={{
-                          color: colors.topicText,
-                        }}
-                      >
-                        {item}
+                      <span className="block text-base font-extrabold leading-none text-white">
+                        {String(value).padStart(2, "0")}
+                      </span>
+                      <span className="block text-[8px] font-bold uppercase text-purple-300">
+                        {label}
                       </span>
                     </div>
                   ))}
                 </div>
-              </motion.div>
-            </div>
-          </section>
-        )}
 
-        {/* KEY HIGHLIGHTS */}
-
-        {conference.keyHighlights?.length > 0 && (
-          <section
-            className="px-6 py-14 lg:px-10 lg:py-16"
-            style={{
-              backgroundColor: colors.aboutBg,
-            }}
-          >
-            <div className="mx-auto max-w-7xl">
-              <SectionHeading label="Key Highlights" colors={colors} />
-
-              <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-                {conference.keyHighlights.map((highlight, index) => (
-                  <motion.div
-                    key={highlight?.title || index}
-                    initial={{
-                      opacity: 0,
-                      y: 15,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: index * 0.05,
-                    }}
-                    className="rounded-xl border bg-white p-6"
-                    style={{
-                      borderColor: colors.sectionBorder,
-                    }}
-                  >
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full"
-                      style={{
-                        backgroundColor: colors.quoteBg,
-                        color: colors.primary,
-                      }}
-                    >
-                      <Lightbulb size={19} />
-                    </div>
-
-                    <h3
-                      className="mt-4 text-sm font-bold"
-                      style={{
-                        color: colors.miniTitle,
-                      }}
-                    >
-                      {highlight?.title || ""}
-                    </h3>
-
-                    <p
-                      className="mt-3 text-sm leading-6"
-                      style={{
-                        color: colors.aboutBody,
-                      }}
-                    >
-                      {highlight?.description}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* KEY TOPICS */}
-
-        <section
-          className="px-6 py-14 lg:px-10 lg:py-16"
-          style={{
-            backgroundColor: colors.topicsBg,
-          }}
-        >
-          <div className="mx-auto max-w-7xl">
-            <SectionHeading
-              label="Key Topics"
-              action="Explore All Topics"
-              colors={colors}
-            />
-
-            <div className="mt-8 grid grid-cols-1 gap-x-14 md:grid-cols-2">
-              {conference.topics?.map((topic, index) => (
-                <motion.div
-                  key={`${topic}-${index}`}
-                  initial={{
-                    opacity: 0,
-                    x: index % 2 === 0 ? -12 : 12,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    delay: index * 0.03,
-                  }}
-                  className="flex items-start gap-3 border-b py-3"
-                  style={{
-                    borderColor: colors.topicBorder,
-                  }}
-                >
-                  <CheckCircle2
-                    size={18}
-                    className="mt-0.5 flex-shrink-0"
-                    style={{
-                      color: colors.primary,
-                    }}
+                <div className="mt-2 grid grid-cols-2 gap-1">
+                  <ActionBtn
+                    primary
+                    icon={<UserPlus size={13} />}
+                    text="Register Now"
+                    onClick={() => navigate(`/conferences/${conference.id}/register`)}
                   />
-
-                  <span
-                    className="text-sm leading-6 md:text-base"
-                    style={{
-                      color: colors.topicText,
-                    }}
-                  >
-                    {topic}
-                  </span>
-                </motion.div>
-              ))}
+                  <ActionBtn
+                    icon={<FileText size={13} />}
+                    text="Abstract"
+                    onClick={() =>
+                      navigate(`/conferences/${conference.id}/abstract-submission`)
+                    }
+                  />
+                  <ActionBtn
+                    icon={<Download size={13} />}
+                    text="Brochure"
+                    onClick={() =>
+                      navigate(`/conferences/${conference.id}/brochure`, {
+                        state: { conference },
+                      })
+                    }
+                  />
+                  <ActionBtn
+                    icon={<BookOpen size={13} />}
+                    text="Program"
+                    onClick={() =>
+                      navigate(`/conferences/${conference.id}/scientific-program`)
+                    }
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* SESSIONS & TRACKS */}
+        {/* ================= SPEAKERS ================= */}
+        {conference.speakers.length > 0 && (
+          <Section>
+            <Heading label="Renowned Speakers" />
+            <div className="mt-3 grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+              {conference.speakers.map((s, i) => (
+                <div key={s.name || i} className="text-center">
+                  <div className="relative mx-auto h-11 w-11 sm:h-12 sm:w-12">
+                    <div className="absolute -inset-0.5 rounded-full border-[1.5px] border-purple-300" />
+                    {s.image && (
+                      <img
+                        src={s.image}
+                        alt={s.name}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    )}
+                    <a
+                      href={s.linkedin || "https://www.linkedin.com/"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${s.name || "Speaker"} LinkedIn`}
+                      className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-white"
+                      style={{ backgroundColor: C.primary }}
+                    >
+                      <img src="/svgs/linkedin.svg" alt="LinkedIn" className="h-2 w-2" />
+                    </a>
+                  </div>
+                  <h3
+                    className="mt-1.5 text-[10px] font-bold leading-3.5"
+                    style={{ color: C.title }}
+                  >
+                    {s.name}
+                  </h3>
+                  <p className="line-clamp-2 text-[9px] leading-3 text-gray-500">
+                    {s.organization || s.role}
+                  </p>
+                  {s.specialty && (
+                    <p className="text-[9px] font-medium leading-3" style={{ color: C.primary }}>
+                      {s.specialty}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
 
-        <section
-          className="px-6 py-16 lg:px-10 lg:py-20"
-          style={{
-            backgroundColor: colors.sessionsBg,
-          }}
-        >
-          <div className="mx-auto max-w-5xl">
-            <div className="text-center">
-              <div className="flex justify-center">
-                <SectionLabel label="Conference Program" colors={colors} />
+        {/* ================= WELCOME (2-col, 4 lines + arrow) ================= */}
+        {conference.welcomeMessage.paragraphs.length > 0 && (
+          <Section bg={C.soft}>
+            <div className="grid gap-2 lg:grid-cols-[200px_1fr]">
+              <div>
+                <Heading label="Welcome Message" />
               </div>
 
-              <h2
-                className="mt-4 text-4xl font-bold tracking-tight md:text-4xl"
-                style={{
-                  color: colors.headingAccent,
-                }}
-              >
-                Sessions & Tracks
-              </h2>
+              <div>
+                {showWelcome ? (
+                  <div>
+                    {conference.welcomeMessage.paragraphs.map((p, i) => (
+                      <p key={i} className="mb-2 text-sm leading-6 text-gray-700">
+                        {p}
+                      </p>
+                    ))}
+                    {conference.welcomeMessage.signature && (
+                      <p className="text-sm font-semibold" style={{ color: C.primary }}>
+                        {conference.welcomeMessage.signature}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="line-clamp-4 text-sm leading-6 text-gray-700">
+                    {conference.welcomeMessage.paragraphs.join(" ")}
+                  </p>
+                )}
 
-              <p
-                className="mx-auto mt-4 max-w-3xl text-sm leading-7 md:text-base md:leading-8"
-                style={{
-                  color: colors.trackDesc,
-                }}
-              >
-                Explore the major scientific and professional themes covered
-                during the conference. Click any track to expand the detailed
-                content.
-              </p>
+                <button
+                  type="button"
+                  onClick={() => setShowWelcome((v) => !v)}
+                  aria-label={showWelcome ? "Show less" : "Show more"}
+                  aria-expanded={showWelcome}
+                  className="mt-1 inline-flex items-center gap-1 text-xs font-bold"
+                  style={{ color: C.primary }}
+                >
+                  {showWelcome ? "Show less" : "Show more"}
+                  {showWelcome ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                </button>
+              </div>
             </div>
+          </Section>
+        )}
 
-            <div
-              className="mt-10 overflow-hidden rounded-2xl border bg-white shadow-sm"
-              style={{
-                borderColor: colors.accordionBorder,
-              }}
-            >
-              {conference.tracks?.map((track, index) => {
-                const isOpen = openTrack === index;
+        {/* ================= WHO SHOULD ATTEND (paragraph + buttons) ================= */}
+        {conference.whoShouldAttendDescription && (
+          <Section>
+            <Heading label="Who Should Attend" />
+            <p className="mt-2 text-xs leading-6 sm:text-sm" style={{ color: C.text }}>
+              {conference.whoShouldAttendDescription}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {conference.whoShouldAttend.map((item, i) => (
+                <span
+                  key={`${item}-${i}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold"
+                  style={{ borderColor: C.border, backgroundColor: C.soft, color: C.title }}
+                >
+                  <CheckCircle2 size={12} style={{ color: C.primary }} />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </Section>
+        )}
 
+        {/* ================= KEY HIGHLIGHTS ================= */}
+        {conference.keyHighlights.length > 0 && (
+          <Section bg={C.soft}>
+            <Heading label="Key Highlights" />
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {conference.keyHighlights.map((h, i) => (
+                <div
+                  key={h?.title || i}
+                  className="rounded-md border bg-white p-2"
+                  style={{ borderColor: C.border }}
+                >
+                  <span
+                    className="text-sm font-extrabold leading-none"
+                    style={{ color: C.primary }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-1 text-xs font-bold" style={{ color: C.title }}>
+                    {h?.title}
+                  </h3>
+                  <p className="mt-0.5 text-[11px] leading-4" style={{ color: C.text }}>
+                    {h?.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ================= KEY TOPICS ================= */}
+        {conference.topics.length > 0 && (
+          <Section>
+            <Heading label="Key Topics" />
+            <div className="mt-2 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+              {conference.topics.map((topic, i) => (
+                <div
+                  key={`${topic}-${i}`}
+                  className="flex items-start gap-1.5 border-b py-1.5"
+                  style={{ borderColor: C.border }}
+                >
+                  <CheckCircle2
+                    size={13}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{ color: C.primary }}
+                  />
+                  <span className="text-xs leading-5 text-gray-700">{topic}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ================= SESSIONS & TRACKS ================= */}
+        {conference.tracks.length > 0 && (
+          <Section bg={C.soft}>
+            <Heading label="Sessions & Tracks" />
+            <div className="mt-3 grid items-start gap-1.5 md:grid-cols-2">
+              {conference.tracks.map((track, i) => {
+                const isOpen = openTrack === i;
                 return (
                   <div
-                    key={track?.title || index}
-                    className="border-b last:border-b-0"
-                    style={{
-                      borderColor: colors.rowBorder,
-                    }}
+                    key={track?.title || i}
+                    className="overflow-hidden rounded-lg border bg-white"
+                    style={{ borderColor: isOpen ? C.primary : C.border }}
                   >
                     <button
                       type="button"
-                      onClick={() => setOpenTrack(isOpen ? null : index)}
-                      className="flex w-full items-center justify-between gap-5 px-5 py-6 text-left transition-all duration-300 md:px-7 md:py-7"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.rowHover;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
+                      onClick={() => setOpenTrack(isOpen ? null : i)}
+                      className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left"
                     >
-                      <div className="flex min-w-0 items-center gap-5">
+                      <span className="flex min-w-0 items-center gap-2">
                         <span
-                          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
+                          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                           style={{
-                            backgroundColor: isOpen
-                              ? colors.primary
-                              : colors.closedNumberBg,
-                            color: isOpen ? "#FFFFFF" : colors.primary,
+                            backgroundColor: isOpen ? C.primary : C.softer,
+                            color: isOpen ? "#fff" : C.primary,
                           }}
                         >
-                          {String(index + 1).padStart(2, "0")}
+                          {String(i + 1).padStart(2, "0")}
                         </span>
-
                         <span
-                          className="text-base font-semibold leading-7 tracking-tight md:text-sm lg:text-xl"
-                          style={{
-                            color: colors.trackTitle,
-                          }}
+                          className="text-xs font-semibold leading-4"
+                          style={{ color: C.title }}
                         >
-                          {track?.title || ""}
+                          {track?.title}
                         </span>
-                      </div>
-
-                      <span
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300"
-                        style={{
-                          backgroundColor: isOpen
-                            ? colors.primary
-                            : colors.closedNumberBg,
-                          color: isOpen ? "#FFFFFF" : colors.primary,
-                        }}
-                      >
-                        {isOpen ? <Minus size={18} /> : <Plus size={18} />}
                       </span>
+                      {isOpen ? (
+                        <Minus size={14} style={{ color: C.primary }} />
+                      ) : (
+                        <Plus size={14} style={{ color: C.primary }} />
+                      )}
                     </button>
 
                     <AnimatePresence initial={false}>
                       {isOpen && (
                         <motion.div
-                          initial={{
-                            height: 0,
-                            opacity: 0,
-                          }}
-                          animate={{
-                            height: "auto",
-                            opacity: 1,
-                          }}
-                          exit={{
-                            height: 0,
-                            opacity: 0,
-                          }}
-                          transition={{
-                            duration: 0.35,
-                            ease: "easeInOut",
-                          }}
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25 }}
                           className="overflow-hidden"
                         >
-                          <div className="border-t bg-[#FCFAFF] px-5 pb-7 pt-6 pl-[84px] md:px-7 md:pl-[100px]">
-                            <p
-                              className="max-w-2xl text-sm leading-7 md:text-base md:leading-8"
-                              style={{
-                                color: colors.trackDesc,
-                              }}
-                            >
-                              {track?.description}
-                            </p>
-                          </div>
+                          <p
+                            className="border-t px-2.5 py-2 text-[11px] leading-5"
+                            style={{ borderColor: C.border, color: C.text }}
+                          >
+                            {track?.description}
+                          </p>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1474,1101 +896,178 @@ const ConferenceDetails = () => {
                 );
               })}
             </div>
-          </div>
-        </section>
-
-        {/* SAMPLE AGENDA */}
-
-        {sampleAgenda.length > 0 && (
-          <AccordionSection
-            id="agenda"
-            title="Sample Agenda"
-            label="Conference Schedule"
-            icon={<CalendarDays size={18} />}
-            open={openSection === "agenda"}
-            onToggle={() => toggleSection("agenda")}
-            colors={colors}
-          >
-            <div className="grid gap-5 md:grid-cols-2">
-              {sampleAgenda.map((day, index) => (
-                <motion.div
-                  key={day?.day || index}
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay: index * 0.08,
-                  }}
-                  className="overflow-hidden rounded-xl border"
-                  style={{
-                    borderColor: colors.accordionBorder,
-                  }}
-                >
-                  <div
-                    className="px-5 py-4"
-                    style={{
-                      backgroundColor: colors.quoteBg,
-                    }}
-                  >
-                    <h3
-                      className="text-sm font-bold md:text-base"
-                      style={{
-                        color: colors.miniTitle,
-                      }}
-                    >
-                      {day?.day || ""}
-                    </h3>
-                  </div>
-
-                  <div className="divide-y">
-                    {day?.schedule?.map((item, itemIndex) => (
-                      <div
-                        key={`${item?.time || ""}-${item?.session || ""}-${itemIndex}`}
-                        className="flex gap-4 px-5 py-4"
-                        style={{
-                          borderColor: colors.rowBorder,
-                        }}
-                      >
-                        <span
-                          className="w-20 flex-shrink-0 text-xs font-bold"
-                          style={{
-                            color: colors.primary,
-                          }}
-                        >
-                          {item?.time || ""}
-                        </span>
-
-                        <span
-                          className="text-sm leading-6"
-                          style={{
-                            color: colors.trackDesc,
-                          }}
-                        >
-                          {item?.session || ""}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </AccordionSection>
+          </Section>
         )}
 
-        {/* WHY ATTEND */}
-
-        {whyToAttend.length > 0 && (
-          <AccordionSection
-            id="why-attend"
-            title="Why Attend This Conference?"
-            label="Why Attend?"
-            icon={<HeartHandshake size={18} />}
-            open={openSection === "why-attend"}
-            onToggle={() => toggleSection("why-attend")}
-            colors={colors}
-          >
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {whyToAttend.map((item, index) => (
-                <motion.div
-                  key={item?.title || index}
-                  initial={{
-                    opacity: 0,
-                    y: 15,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay: index * 0.04,
-                  }}
-                  className="rounded-xl border p-6"
-                  style={{
-                    borderColor: colors.benefitBorder,
-                    backgroundColor: colors.whyBg,
-                  }}
-                >
-                  <CheckCircle2
-                    size={20}
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
-
-                  <h3
-                    className="mt-4 text-sm font-bold md:text-base"
-                    style={{
-                      color: colors.miniTitle,
-                    }}
-                  >
-                    {item?.title || ""}
-                  </h3>
-
-                  <p
-                    className="mt-3 text-sm leading-6"
-                    style={{
-                      color: colors.whyText,
-                    }}
-                  >
-                    {item?.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </AccordionSection>
-        )}
-
-        {/* BENEFITS */}
-
-        {benefitsOfAttending.length > 0 && (
-          <AccordionSection
-            id="benefits"
-            title="Benefits of Attending"
-            label="Participant Benefits"
-            icon={<Award size={18} />}
-            open={openSection === "benefits"}
-            onToggle={() => toggleSection("benefits")}
-            colors={colors}
-          >
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {benefitsOfAttending.map((item, index) => (
-                <motion.div
-                  key={item?.title || index}
-                  initial={{
-                    opacity: 0,
-                    scale: 0.96,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  transition={{
-                    delay: index * 0.04,
-                  }}
-                  className="rounded-xl border bg-white p-6"
-                  style={{
-                    borderColor: colors.sectionBorder,
-                  }}
-                >
-                  <Award
-                    size={21}
-                    style={{
-                      color: colors.primary,
-                    }}
-                  />
-
-                  <h3
-                    className="mt-4 text-sm font-bold md:text-base"
-                    style={{
-                      color: colors.miniTitle,
-                    }}
-                  >
-                    {item?.title || ""}
-                  </h3>
-
-                  <p
-                    className="mt-3 text-sm leading-6"
-                    style={{
-                      color: colors.aboutBody,
-                    }}
-                  >
-                    {item?.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </AccordionSection>
-        )}
-
-        {/* DELEGATES */}
-
-        {delegates.length > 0 && (
-          <AccordionSection
-            id="delegates"
-            title="Delegate Benefits"
-            label="For Delegates"
-            icon={<Users size={18} />}
-            open={openSection === "delegates"}
-            onToggle={() => toggleSection("delegates")}
-            colors={colors}
-          >
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {delegates.map((item, index) => (
-                <div
-                  key={item?.title || index}
-                  className="rounded-xl border p-5"
-                  style={{
-                    borderColor: colors.topicBorder,
-                  }}
-                >
-                  <div className="flex gap-3">
-                    <CheckCircle2
-                      size={18}
-                      className="mt-0.5 flex-shrink-0"
-                      style={{
-                        color: colors.primary,
-                      }}
-                    />
-
-                    <div>
-                      <h3
-                        className="text-sm font-bold md:text-base"
-                        style={{
-                          color: colors.miniTitle,
-                        }}
-                      >
-                        {item?.title || ""}
-                      </h3>
-
-                      <p
-                        className="mt-2 text-sm leading-6"
-                        style={{
-                          color: colors.aboutBody,
-                        }}
-                      >
-                        {item?.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AccordionSection>
-        )}
-
-        {/* POSTER PRESENTERS */}
-
-        {posterPresentersLive.length > 0 && (
-          <AccordionSection
-            id="poster"
-            title="Poster Presenters"
-            label="Poster Presentation"
-            icon={<Presentation size={18} />}
-            open={openSection === "poster"}
-            onToggle={() => toggleSection("poster")}
-            colors={colors}
-          >
-            <div className="grid gap-8 lg:grid-cols-2">
-              <div>
-                <h3
-                  className="text-xl font-bold"
-                  style={{
-                    color: colors.miniTitle,
-                  }}
-                >
-                  Live Poster Presenters
-                </h3>
-
-                <div className="mt-5 space-y-3">
-                  {posterPresentersLive.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 rounded-lg border bg-white p-4"
-                      style={{
-                        borderColor: colors.topicBorder,
-                      }}
-                    >
-                      <Presentation
-                        size={18}
-                        className="mt-0.5 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <p
-                        className="text-sm leading-6 md:text-base"
-                        style={{
-                          color: colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3
-                  className="text-xl font-bold"
-                  style={{
-                    color: colors.miniTitle,
-                  }}
-                >
-                  E-Poster Presenters
-                </h3>
-
-                <div className="mt-5 space-y-4">
-                  {ePosterPresenters.benefits?.map((item, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <CheckCircle2
-                        size={18}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <p
-                        className="text-sm leading-6 md:text-base"
-                        style={{
-                          color: colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </AccordionSection>
-        )}
-
-        {/* E-POSTER GUIDELINES */}
-
-        {ePosterPresenters.specifications && (
-          <AccordionSection
-            id="eposter-guidelines"
-            title="E-Poster Guidelines"
-            label="Submission Guidelines"
-            icon={<FileText size={18} />}
-            open={openSection === "eposter-guidelines"}
-            onToggle={() => toggleSection("eposter-guidelines")}
-            colors={colors}
-          >
-            <p
-              className="max-w-5xl text-sm leading-7 md:text-base md:leading-8"
-              style={{
-                color: colors.aboutBody,
-              }}
+        {/* ================= TABS ================= */}
+        {tabs.length > 0 && (
+          <Section>
+            <div
+              className="flex flex-wrap gap-1.5 border-b pb-2"
+              style={{ borderColor: C.border }}
             >
-              {ePosterPresenters.guidelinesIntro}
-            </p>
+              {tabs.map((t) => {
+                const active = currentTab?.id === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setActiveTab(t.id)}
+                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold transition-colors"
+                    style={{
+                      backgroundColor: active ? C.primary : C.softer,
+                      color: active ? "#fff" : C.primary,
+                    }}
+                  >
+                    {t.icon}
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
 
-            <div className="mt-8 grid gap-5 lg:grid-cols-3">
-              <div
-                className="rounded-xl border p-6"
-                style={{
-                  borderColor: colors.sectionBorder,
-                }}
-              >
-                <h3
-                  className="text-base font-bold"
-                  style={{
-                    color: colors.miniTitle,
-                  }}
+            <div className="pt-3">{currentTab?.content}</div>
+          </Section>
+        )}
+
+        {/* ================= SPONSORS (circles) ================= */}
+        {conference.sponsors.length > 0 && (
+          <Section bg={C.soft}>
+            <Heading label="Partners & Sponsors" />
+            <div className="mt-3 flex flex-wrap gap-3">
+              {conference.sponsors.map((logo, i) => (
+                <div
+                  key={`${logo}-${i}`}
+                  className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-white p-2.5 transition-transform hover:scale-105"
+                  style={{ borderColor: C.border }}
                 >
-                  Specifications
-                </h3>
-
-                <div className="mt-5 space-y-3">
-                  {Object.entries(ePosterPresenters.specifications).map(
-                    ([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex items-start justify-between gap-4 border-b pb-3"
-                        style={{
-                          borderColor: colors.rowBorder,
-                        }}
-                      >
-                        <span
-                          className="text-sm font-semibold"
-                          style={{
-                            color: colors.aboutBody,
-                          }}
-                        >
-                          {key}
-                        </span>
-
-                        <span
-                          className="text-right text-sm font-bold"
-                          style={{
-                            color: colors.primary,
-                          }}
-                        >
-                          {value}
-                        </span>
-                      </div>
-                    ),
+                  {logo && (
+                    <img
+                      src={logo}
+                      alt={`Sponsor ${i + 1}`}
+                      className="max-h-full max-w-full object-contain"
+                    />
                   )}
                 </div>
-              </div>
-
-              <div
-                className="rounded-xl border p-6"
-                style={{
-                  borderColor: colors.sectionBorder,
-                }}
-              >
-                <h3
-                  className="text-base font-bold"
-                  style={{
-                    color: colors.miniTitle,
-                  }}
-                >
-                  Poster Content
-                </h3>
-
-                <div className="mt-5 space-y-3">
-                  {ePosterPresenters.posterContent?.map((item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2"
-                    >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <span
-                        className="text-sm leading-6"
-                        style={{
-                          color: colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div
-                className="rounded-xl border p-6"
-                style={{
-                  borderColor: colors.sectionBorder,
-                }}
-              >
-                <h3
-                  className="text-base font-bold"
-                  style={{
-                    color: colors.miniTitle,
-                  }}
-                >
-                  Design Requirements
-                </h3>
-
-                <div className="mt-5 space-y-3">
-                  {ePosterPresenters.designRequirements?.map((item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-2"
-                    >
-                      <CheckCircle2
-                        size={16}
-                        className="mt-1 flex-shrink-0"
-                        style={{
-                          color: colors.primary,
-                        }}
-                      />
-
-                      <span
-                        className="text-sm leading-6"
-                        style={{
-                          color: colors.aboutBody,
-                        }}
-                      >
-                        {item}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
-
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <GuidelineList
-                title="Submission Guidelines"
-                items={ePosterPresenters.submissionGuidelines}
-                colors={colors}
-              />
-
-              <GuidelineList
-                title="Review & Acceptance"
-                items={ePosterPresenters.reviewAndAcceptance}
-                colors={colors}
-              />
-
-              <GuidelineList
-                title="Presentation"
-                items={ePosterPresenters.presentation}
-                colors={colors}
-              />
-
-              <GuidelineList
-                title="Certificate"
-                items={ePosterPresenters.certificate}
-                colors={colors}
-              />
-            </div>
-          </AccordionSection>
+          </Section>
         )}
-
-        {/* MARKET ANALYSIS */}
-
-        {marketAnalysis?.paragraphs?.length > 0 && (
-          <AccordionSection
-            id="market-analysis"
-            title={marketAnalysis.heading || "Market Analysis"}
-            label="Market Analysis"
-            icon={<Globe2 size={18} />}
-            open={openSection === "market-analysis"}
-            onToggle={() => toggleSection("market-analysis")}
-            colors={colors}
-          >
-            <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
-              <div>
-                <div className="space-y-5">
-                  {marketAnalysis.paragraphs.map((paragraph, index) => (
-                    <p
-                      key={index}
-                      className="text-sm leading-7 md:text-base md:leading-8"
-                      style={{
-                        color: colors.aboutBody,
-                      }}
-                    >
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              {marketAnalysis.image && (
-                <motion.div
-                  initial={{
-                    opacity: 0,
-                    x: 25,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                >
-                  <img
-                    src={marketAnalysis.image}
-                    alt="Market Analysis"
-                    className="h-[360px] w-full rounded-2xl object-cover shadow-xl"
-                  />
-                </motion.div>
-              )}
-            </div>
-          </AccordionSection>
-        )}
-
-        {/* SPONSORS */}
-
-        {conference.sponsors?.length > 0 && (
-          <section
-            className="border-t bg-white px-6 pb-24 pt-20 lg:px-10 lg:pb-28 lg:pt-24"
-            style={{
-              borderColor: "#E5E7EB",
-            }}
-          >
-            <div className="mx-auto max-w-7xl">
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 25,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  duration: 0.7,
-                }}
-                className="text-center"
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <span className="h-[2px] w-10 bg-violet-600" />
-
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">
-                    Partners & Sponsors
-                  </span>
-
-                  <span className="h-[2px] w-10 bg-violet-600" />
-                </div>
-
-                <h2 className="mt-4 text-2xl font-bold tracking-tight text-gray-900 md:text-3xl lg:text-4xl">
-                  Media Partners, Collaborators & Sponsors
-                </h2>
-
-                <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-500 md:text-base">
-                  We gratefully acknowledge our media partners, collaborators,
-                  and sponsors supporting this conference.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 25,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.15,
-                }}
-                className="mt-12 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
-              >
-                {conference.sponsors.map((logo, index) => (
-                  <motion.div
-                    key={`${logo}-${index}`}
-                    initial={{
-                      opacity: 0,
-                      scale: 0.95,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      scale: 1,
-                    }}
-                    viewport={{
-                      once: true,
-                    }}
-                    transition={{
-                      delay: index * 0.05,
-                    }}
-                    className="group flex h-28 items-center justify-center rounded-xl border border-gray-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-md"
-                  >
-                    {logo && (
-                      <img
-                        src={logo}
-                        alt={`Sponsor ${index + 1}`}
-                        className="max-h-20 max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                      />
-                    )}
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-          </section>
-        )}
-
-        <div className="h-10 bg-white md:h-14" />
-      </motion.div>
+      </div>
     </>
   );
 };
 
-const AccordionSection = ({
-  id,
-  title,
-  label,
-  icon,
-  open,
-  onToggle,
-  colors,
-  dark = false,
-  children,
-}) => {
-  return (
-    <section
-      className="border-t px-6 py-4 lg:px-10"
-      style={{
-        backgroundColor: dark ? colors.finalBg : colors.sessionsBg,
-        borderColor: dark ? "rgba(255,255,255,0.12)" : colors.sectionBorder,
-      }}
-    >
-      <div className="mx-auto max-w-7xl">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="group flex w-full items-center justify-between gap-5 rounded-xl px-3 py-5 text-left transition-all duration-300"
-          style={{
-            backgroundColor: open
-              ? dark
-                ? "rgba(255,255,255,0.08)"
-                : "#F3EEFF"
-              : "transparent",
-          }}
-        >
-          <div className="flex min-w-0 items-center gap-4">
-            <div
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl"
-              style={{
-                backgroundColor: dark
-                  ? "rgba(255,255,255,0.10)"
-                  : colors.quoteBg,
-                color: dark ? colors.finalIcon : colors.primary,
-              }}
-            >
-              {icon}
-            </div>
+// ================= SMALL HELPERS =================
 
-            <div className="min-w-0">
-              <p
-                className="text-[9px] font-bold uppercase tracking-[0.16em]"
-                style={{
-                  color: dark ? "#D8B4FE" : colors.primary,
-                }}
-              >
-                {label}
-              </p>
+const Section = ({ bg = "#FFFFFF", children }) => (
+  <section className="px-5 py-5 lg:px-10" style={{ backgroundColor: bg }}>
+    <div className="mx-auto max-w-7xl">{children}</div>
+  </section>
+);
 
-              <h2
-                className="mt-1 text-lg font-bold md:text-xl lg:text-2xl"
-                style={{
-                  color: dark ? "#FFFFFF" : colors.headingAccent,
-                }}
-              >
-                {title}
-              </h2>
-            </div>
-          </div>
+const Heading = ({ label }) => (
+  <div className="flex items-center gap-2.5">
+    <span className="h-[2px] w-7" style={{ backgroundColor: C.primary }} />
+    <h2 className="text-base font-bold md:text-lg" style={{ color: C.primary }}>
+      {label}
+    </h2>
+  </div>
+);
 
-          <div
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300"
-            style={{
-              backgroundColor: open
-                ? colors.primary
-                : dark
-                  ? "rgba(255,255,255,0.10)"
-                  : colors.quoteBg,
-              color: open ? "#FFFFFF" : dark ? "#D8B4FE" : colors.primary,
-            }}
-          >
-            {open ? <Minus size={18} /> : <Plus size={18} />}
-          </div>
-        </button>
+const Pill = ({ icon, children }) => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+    <span className="text-purple-300">{icon}</span>
+    {children}
+  </span>
+);
 
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              key={id}
-              initial={{
-                height: 0,
-                opacity: 0,
-              }}
-              animate={{
-                height: "auto",
-                opacity: 1,
-              }}
-              exit={{
-                height: 0,
-                opacity: 0,
-              }}
-              transition={{
-                duration: 0.35,
-                ease: "easeInOut",
-              }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 pb-8 pt-3">{children}</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </section>
-  );
-};
+const ActionBtn = ({ icon, text, onClick, primary = false }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group flex items-center justify-between gap-1 rounded border px-2 py-1.5 text-[11px] font-bold text-white transition-colors"
+    style={{
+      backgroundColor: primary ? C.primary : "rgba(255,255,255,0.08)",
+      borderColor: primary ? C.primary : "rgba(255,255,255,0.18)",
+    }}
+    onMouseEnter={(e) =>
+      (e.currentTarget.style.backgroundColor = primary
+        ? C.primaryHover
+        : "rgba(255,255,255,0.16)")
+    }
+    onMouseLeave={(e) =>
+      (e.currentTarget.style.backgroundColor = primary
+        ? C.primary
+        : "rgba(255,255,255,0.08)")
+    }
+  >
+    <span className="flex items-center gap-1">
+      {icon}
+      {text}
+    </span>
+    <ArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
+  </button>
+);
 
-const PremiumCountdownBox = ({ value, label, colors }) => {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <motion.div
-      whileHover={{
-        y: -2,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group relative overflow-hidden rounded-md border px-2 py-2 text-center transition-all duration-300"
-      style={{
-        borderColor: hovered
-          ? colors.countdownBoxHoverBorder
-          : colors.countdownBoxBorder,
-
-        backgroundColor: hovered
-          ? "rgba(255,255,255,0.11)"
-          : colors.countdownBoxBg,
-
-        boxShadow: hovered ? `0 5px 12px ${colors.primary}35` : "none",
-      }}
-    >
+const MiniGrid = ({ items }) => (
+  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    {items.map((item, i) => (
       <div
-        className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-b-full"
-        style={{
-          backgroundColor: colors.primary,
-        }}
-      />
-
-      <span
-        className="block text-xl font-extrabold leading-none tracking-tight"
-        style={{
-          color: colors.countdownNumber,
-        }}
+        key={item?.title || i}
+        className="rounded-md border bg-white p-2"
+        style={{ borderColor: C.border }}
       >
-        {String(value).padStart(2, "0")}
-      </span>
-
-      <span
-        className="mt-1 block text-[8px] font-bold uppercase tracking-[0.08em]"
-        style={{
-          color: colors.countdownLabel,
-        }}
-      >
-        {label}
-      </span>
-    </motion.div>
-  );
-};
-
-const PremiumActionButton = ({
-  icon,
-  text,
-  description,
-  onClick,
-  primary = false,
-  colors,
-}) => {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <motion.button
-      type="button"
-      whileHover={{
-        y: -1,
-      }}
-      whileTap={{
-        scale: 0.98,
-      }}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group relative flex min-h-[50px] max-w-[240px] items-center gap-2 overflow-hidden rounded-md border px-3 py-2.5 text-left backdrop-blur-md transition-all duration-300"
-      style={{
-        borderColor: primary
-          ? hovered
-            ? colors.primaryHover
-            : colors.primary
-          : hovered
-            ? colors.primary
-            : colors.actionBorder,
-
-        backgroundColor: primary
-          ? hovered
-            ? colors.primaryHover
-            : colors.primary
-          : hovered
-            ? "rgba(255,255,255,0.13)"
-            : colors.actionBg,
-
-        boxShadow: primary
-          ? `0 6px 16px ${colors.primary}35`
-          : hovered
-            ? `0 5px 12px ${colors.primary}20`
-            : "0 2px 5px rgba(0,0,0,0.08)",
-      }}
-    >
-      <div
-        className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md"
-        style={{
-          backgroundColor: primary
-            ? "rgba(255,255,255,0.15)"
-            : hovered
-              ? colors.primary
-              : colors.actionIconBg,
-
-          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.actionIcon,
-        }}
-      >
-        {icon}
-      </div>
-
-      <div className="relative z-10 min-w-0 flex-1">
-        <p
-          className="text-xs font-bold leading-4"
-          style={{
-            color: "#FFFFFF",
-          }}
-        >
-          {text}
-        </p>
-
-        <p
-          className="mt-0.5 text-[8px] leading-3"
-          style={{
-            color: primary
-              ? "rgba(255,255,255,0.72)"
-              : colors.actionDescription,
-          }}
-        >
-          {description}
-        </p>
-      </div>
-
-      <ArrowRight
-        size={13}
-        className="relative z-10 flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1"
-        style={{
-          color: primary ? "#FFFFFF" : hovered ? "#FFFFFF" : colors.primary,
-        }}
-      />
-    </motion.button>
-  );
-};
-
-const InfoItem = ({ icon, title, subtitle, colors }) => {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: colors.infoIconBg,
-          color: colors.infoIcon,
-        }}
-      >
-        {icon}
-      </div>
-
-      <div>
-        <p
-          className="text-xs font-bold"
-          style={{
-            color: colors.infoTitle,
-          }}
-        >
-          {title}
-        </p>
-
-        <p
-          className="mt-0.5 text-[9px]"
-          style={{
-            color: colors.muted,
-          }}
-        >
-          {subtitle}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const SectionLabel = ({ label, colors }) => {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span
-        className="h-[2px] w-8"
-        style={{
-          backgroundColor: colors.primary,
-        }}
-      />
-
-      <span
-        className="text-[10px] font-bold uppercase tracking-[0.14em]"
-        style={{
-          color: colors.primary,
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  );
-};
-
-const SectionHeading = ({ label, action, colors }) => {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2.5">
-        <span
-          className="h-[2px] w-8"
-          style={{
-            backgroundColor: colors.primary,
-          }}
-        />
-
-        <h2
-          className="text-xl font-bold md:text-2xl"
-          style={{
-            color: colors.headingAccent,
-          }}
-        >
-          {label}
-        </h2>
-      </div>
-
-      {action && (
-        <span
-          className="hidden items-center gap-1 text-xs font-semibold sm:flex"
-          style={{
-            color: colors.primary,
-          }}
-        >
-          {action}
-          <ArrowRight size={14} />
-        </span>
-      )}
-    </div>
-  );
-};
-
-const GuidelineList = ({ title, items, colors }) => {
-  if (!items?.length) {
-    return null;
-  }
-
-  return (
-    <div
-      className="rounded-xl border bg-white p-6"
-      style={{
-        borderColor: colors.sectionBorder,
-      }}
-    >
-      <h3
-        className="text-base font-bold"
-        style={{
-          color: colors.miniTitle,
-        }}
-      >
-        {title}
-      </h3>
-
-      <div className="mt-5 space-y-3">
-        {items.map((item, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <CheckCircle2
-              size={17}
-              className="mt-1 flex-shrink-0"
-              style={{
-                color: colors.primary,
-              }}
-            />
-
-            <p
-              className="text-sm leading-6"
-              style={{
-                color: colors.aboutBody,
-              }}
-            >
-              {item}
+        <div className="flex items-start gap-1.5">
+          <CheckCircle2
+            size={14}
+            className="mt-0.5 flex-shrink-0"
+            style={{ color: C.primary }}
+          />
+          <div>
+            <h3 className="text-xs font-bold" style={{ color: C.title }}>
+              {item?.title}
+            </h3>
+            <p className="mt-0.5 text-[11px] leading-4" style={{ color: C.text }}>
+              {item?.description}
             </p>
           </div>
-        ))}
+        </div>
       </div>
+    ))}
+  </div>
+);
+
+const Bullets = ({ items }) => {
+  if (!items?.length) return null;
+  return (
+    <div className="space-y-1">
+      {items.map((item, i) => (
+        <div key={`${item}-${i}`} className="flex items-start gap-1.5">
+          <CheckCircle2
+            size={13}
+            className="mt-0.5 flex-shrink-0"
+            style={{ color: C.primary }}
+          />
+          <span className="text-xs leading-5" style={{ color: C.text }}>
+            {item}
+          </span>
+        </div>
+      ))}
     </div>
   );
 };
+
+const Box = ({ title, children }) => (
+  <div
+    className="rounded-md border bg-white p-2.5"
+    style={{ borderColor: C.border }}
+  >
+    <h3 className="mb-1.5 text-xs font-bold" style={{ color: C.title }}>
+      {title}
+    </h3>
+    {children}
+  </div>
+);
 
 export default ConferenceDetails;

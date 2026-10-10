@@ -1,3 +1,4 @@
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import {
@@ -6,6 +7,7 @@ import {
   getEmployeeByIdApi,
   updateEmployeeApi,
   deleteEmployeeApi,
+  sendEmployeeEmailApi,
 } from "../api/employeeApis";
 
 // =====================================================
@@ -17,7 +19,6 @@ export const createEmployee = createAsyncThunk(
   async (employeeData, { rejectWithValue }) => {
     try {
       const response = await createEmployeeApi(employeeData);
-
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -36,7 +37,6 @@ export const getEmployees = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getEmployeesApi();
-
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -47,7 +47,7 @@ export const getEmployees = createAsyncThunk(
 );
 
 // =====================================================
-// GET EMPLOYEE BY MONGODB _id
+// GET EMPLOYEE BY ID
 // =====================================================
 
 export const getEmployeeById = createAsyncThunk(
@@ -55,7 +55,6 @@ export const getEmployeeById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await getEmployeeByIdApi(id);
-
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -110,6 +109,26 @@ export const deleteEmployee = createAsyncThunk(
 );
 
 // =====================================================
+// SEND EMPLOYEE EMAIL
+// =====================================================
+
+export const sendEmployeeEmail = createAsyncThunk(
+  "employee/sendEmployeeEmail",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await sendEmployeeEmailApi(id);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to send employee email"
+      );
+    }
+  }
+);
+
+// =====================================================
 // INITIAL STATE
 // =====================================================
 
@@ -122,6 +141,11 @@ const initialState = {
   updateLoading: false,
   deleteLoading: false,
 
+  sendingEmail: false,
+  emailSuccess: false,
+  emailError: null,
+  emailMessage: "",
+
   error: null,
   success: false,
   message: "",
@@ -133,7 +157,6 @@ const initialState = {
 
 const employeeSlice = createSlice({
   name: "employee",
-
   initialState,
 
   reducers: {
@@ -149,15 +172,18 @@ const employeeSlice = createSlice({
     clearSelectedEmployee: (state) => {
       state.selectedEmployee = null;
     },
+
+    clearEmailStatus: (state) => {
+      state.emailSuccess = false;
+      state.emailError = null;
+      state.emailMessage = "";
+    },
   },
 
   extraReducers: (builder) => {
     builder
 
-      // =====================================================
       // CREATE EMPLOYEE
-      // =====================================================
-
       .addCase(createEmployee.pending, (state) => {
         state.createLoading = true;
         state.error = null;
@@ -173,8 +199,7 @@ const employeeSlice = createSlice({
           "Employee created successfully";
 
         const employee =
-          action.payload?.data ||
-          action.payload;
+          action.payload?.data || action.payload;
 
         if (employee) {
           state.employees.unshift(employee);
@@ -183,16 +208,11 @@ const employeeSlice = createSlice({
 
       .addCase(createEmployee.rejected, (state, action) => {
         state.createLoading = false;
-
         state.error =
-          action.payload ||
-          "Failed to create employee";
+          action.payload || "Failed to create employee";
       })
 
-      // =====================================================
       // GET ALL EMPLOYEES
-      // =====================================================
-
       .addCase(getEmployees.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -200,23 +220,16 @@ const employeeSlice = createSlice({
 
       .addCase(getEmployees.fulfilled, (state, action) => {
         state.loading = false;
-
-        state.employees =
-          action.payload?.data || [];
+        state.employees = action.payload?.data || [];
       })
 
       .addCase(getEmployees.rejected, (state, action) => {
         state.loading = false;
-
         state.error =
-          action.payload ||
-          "Failed to fetch employees";
+          action.payload || "Failed to fetch employees";
       })
 
-      // =====================================================
-      // GET EMPLOYEE BY MONGODB _id
-      // =====================================================
-
+      // GET EMPLOYEE BY ID
       .addCase(getEmployeeById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -224,24 +237,17 @@ const employeeSlice = createSlice({
 
       .addCase(getEmployeeById.fulfilled, (state, action) => {
         state.loading = false;
-
         state.selectedEmployee =
-          action.payload?.data ||
-          action.payload;
+          action.payload?.data || action.payload;
       })
 
       .addCase(getEmployeeById.rejected, (state, action) => {
         state.loading = false;
-
         state.error =
-          action.payload ||
-          "Failed to fetch employee";
+          action.payload || "Failed to fetch employee";
       })
 
-      // =====================================================
       // UPDATE EMPLOYEE
-      // =====================================================
-
       .addCase(updateEmployee.pending, (state) => {
         state.updateLoading = true;
         state.error = null;
@@ -257,41 +263,28 @@ const employeeSlice = createSlice({
           "Employee updated successfully";
 
         const updatedEmployee =
-          action.payload?.data ||
-          action.payload;
+          action.payload?.data || action.payload;
 
-        if (!updatedEmployee) {
-          return;
-        }
+        if (!updatedEmployee) return;
 
-        const index =
-          state.employees.findIndex(
-            (item) =>
-              item._id ===
-              updatedEmployee._id
-          );
+        const index = state.employees.findIndex(
+          (item) => item._id === updatedEmployee._id
+        );
 
         if (index !== -1) {
-          state.employees[index] =
-            updatedEmployee;
+          state.employees[index] = updatedEmployee;
         }
 
-        state.selectedEmployee =
-          updatedEmployee;
+        state.selectedEmployee = updatedEmployee;
       })
 
       .addCase(updateEmployee.rejected, (state, action) => {
         state.updateLoading = false;
-
         state.error =
-          action.payload ||
-          "Failed to update employee";
+          action.payload || "Failed to update employee";
       })
 
-      // =====================================================
       // DELETE EMPLOYEE
-      // =====================================================
-
       .addCase(deleteEmployee.pending, (state) => {
         state.deleteLoading = true;
         state.error = null;
@@ -305,29 +298,46 @@ const employeeSlice = createSlice({
           action.payload?.response?.message ||
           "Employee deleted successfully";
 
-        const deletedId =
-          action.payload?.id;
+        const deletedId = action.payload?.id;
 
-        state.employees =
-          state.employees.filter(
-            (item) =>
-              item._id !== deletedId
-          );
+        state.employees = state.employees.filter(
+          (item) => item._id !== deletedId
+        );
 
-        if (
-          state.selectedEmployee?._id ===
-          deletedId
-        ) {
+        if (state.selectedEmployee?._id === deletedId) {
           state.selectedEmployee = null;
         }
       })
 
       .addCase(deleteEmployee.rejected, (state, action) => {
         state.deleteLoading = false;
-
         state.error =
-          action.payload ||
-          "Failed to delete employee";
+          action.payload || "Failed to delete employee";
+      })
+
+      // SEND EMPLOYEE EMAIL
+      .addCase(sendEmployeeEmail.pending, (state) => {
+        state.sendingEmail = true;
+        state.emailSuccess = false;
+        state.emailError = null;
+        state.emailMessage = "";
+      })
+
+      .addCase(sendEmployeeEmail.fulfilled, (state, action) => {
+        state.sendingEmail = false;
+        state.emailSuccess = true;
+
+        state.emailMessage =
+          action.payload?.message ||
+          "Email sent successfully";
+      })
+
+      .addCase(sendEmployeeEmail.rejected, (state, action) => {
+        state.sendingEmail = false;
+        state.emailSuccess = false;
+
+        state.emailError =
+          action.payload || "Failed to send email";
       });
   },
 });
@@ -340,6 +350,7 @@ export const {
   clearEmployeeError,
   clearEmployeeSuccess,
   clearSelectedEmployee,
+  clearEmailStatus,
 } = employeeSlice.actions;
 
 // =====================================================

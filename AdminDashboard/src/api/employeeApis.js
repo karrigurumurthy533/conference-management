@@ -41,3 +41,11 @@ export const deleteEmployeeApi = (id) => {
     `/admin/employee/${id}`
   );
 };
+
+// SEND EMPLOYEE EMAIL
+export const sendEmployeeEmailApi = (id) => {
+  return axiosInstance.post(
+    `/employee/${id}/send-email`,
+    {}
+  );
+};

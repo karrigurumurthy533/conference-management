@@ -778,11 +778,10 @@ exports.createEmployee = async (req, res) => {
       fullName,
       email,
       password,
-      role,
       employeeType,
       phoneNumber,
       assignedConferences = [],
-      status,
+      status = "active",
       department,
       designation,
       country,
@@ -792,16 +791,12 @@ exports.createEmployee = async (req, res) => {
       permissions = [],
     } = req.body;
 
-
-    // ==================================================
-    // REQUIRED FIELDS
-    // ==================================================
-
+    // Required field validation
     if (
-      !fullName ||
-      !email ||
-      !password ||
-      !employeeType
+      !fullName?.trim() ||
+      !email?.trim() ||
+      !password?.trim() ||
+      !employeeType?.trim()
     ) {
       return res.status(400).json({
         success: false,
@@ -810,32 +805,17 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-
-    // ==================================================
-    // PASSWORD VALIDATION
-    // ==================================================
-
     if (password.trim().length < 6) {
       return res.status(400).json({
         success: false,
-        message:
-          "Password must be at least 6 characters.",
+        message: "Password must be at least 6 characters.",
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmployeeType = employeeType.trim().toLowerCase();
 
-    // ==================================================
-    // NORMALIZE EMAIL
-    // ==================================================
-
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
-
-    // ==================================================
-    // EMPLOYEE TYPE
-    // ==================================================
-
+    // Validate employee type
     const allowedEmployeeTypes = [
       "event manager",
       "coordinator",
@@ -843,88 +823,54 @@ exports.createEmployee = async (req, res) => {
       "webiner",
     ];
 
-    const normalizedEmployeeType =
-      employeeType
-        .trim()
-        .toLowerCase();
-
-
-    if (
-      !allowedEmployeeTypes.includes(
-        normalizedEmployeeType
-      )
-    ) {
+    if (!allowedEmployeeTypes.includes(normalizedEmployeeType)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid employee type.",
+        message: "Invalid employee type.",
       });
     }
 
-
-    // ==================================================
-    // CHECK EXISTING EMPLOYEE
-    // ==================================================
-
-    const existingEmployee =
-      await Employee.findOne({
-        email: normalizedEmail,
-      });
-
+    // Check duplicate email
+    const existingEmployee = await Employee.exists({
+      email: normalizedEmail,
+    });
 
     if (existingEmployee) {
       return res.status(409).json({
         success: false,
-        message:
-          "Employee with this email already exists.",
+        message: "Employee with this email already exists.",
       });
     }
 
-
-    // ==================================================
-    // ASSIGNED CONFERENCES VALIDATION
-    // ==================================================
-
+    // Validate assigned conferences
     if (!Array.isArray(assignedConferences)) {
       return res.status(400).json({
         success: false,
-        message:
-          "assignedConferences must be an array.",
+        message: "assignedConferences must be an array.",
       });
     }
 
+    const conferenceIds = [
+      ...new Set(assignedConferences.map(String)),
+    ];
 
-    for (
-      const conferenceId of assignedConferences
-    ) {
-      if (
-        !mongoose.Types.ObjectId.isValid(
-          conferenceId
-        )
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            `Invalid conference ID: ${conferenceId}`,
-        });
-      }
+    const invalidConferenceId = conferenceIds.find(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
+
+    if (invalidConferenceId) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid conference ID: ${invalidConferenceId}`,
+      });
     }
 
+    if (conferenceIds.length > 0) {
+      const foundConferences = await Conference.countDocuments({
+        _id: { $in: conferenceIds },
+      });
 
-    if (assignedConferences.length > 0) {
-
-      const conferences =
-        await Conference.find({
-          _id: {
-            $in: assignedConferences,
-          },
-        }).select("_id");
-
-
-      if (
-        conferences.length !==
-        assignedConferences.length
-      ) {
+      if (foundConferences !== conferenceIds.length) {
         return res.status(404).json({
           success: false,
           message:
@@ -933,219 +879,84 @@ exports.createEmployee = async (req, res) => {
       }
     }
 
+    // Validate status
+    const employeeStatus =
+      typeof status === "string"
+        ? status.trim().toLowerCase()
+        : "";
 
-    // ==================================================
-    // STATUS VALIDATION
-    // ==================================================
-
-    const employeeStatus = status
-      ? status.trim().toLowerCase()
-      : "active";
-
-
-    if (
-      !["active", "inactive"].includes(
-        employeeStatus
-      )
-    ) {
+    if (!["active", "inactive"].includes(employeeStatus)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid employee status.",
+        message: "Invalid employee status.",
       });
     }
 
-
-    // ==================================================
-    // KEEP ORIGINAL PASSWORD FOR EMAIL
-    // ==================================================
-
-    // IMPORTANT:
-    // This is the plain password entered by admin.
-    // It is used ONLY to send the welcome email.
-    //
-    // Employee schema pre-save middleware will hash
-    // the password before storing it in MongoDB.
-
-    const temporaryPassword =
-      password.trim();
-
-
-    // ==================================================
-    // CREATE EMPLOYEE
-    // ==================================================
-
-    const employee =
-      await Employee.create({
-
-        fullName:
-          fullName.trim(),
-
-        email:
-          normalizedEmail,
-
-        // Main authentication role
-        role: "Employee",
-
-        // Employee job type
-        employeeType:
-          normalizedEmployeeType,
-
-        password:
-          temporaryPassword,
-
-        phoneNumber:
-          phoneNumber?.trim() || "",
-
-        assignedConferences,
-
-        status:
-          employeeStatus,
-
-        department:
-          department?.trim() || "",
-
-        designation:
-          designation?.trim() || "",
-
-        country:
-          country?.trim() || "",
-
-        location:
-          location?.trim() || "",
-
-        timezone:
-          timezone?.trim() ||
-          "Asia/Kolkata",
-
-        about:
-          about?.trim() || "",
-
-        permissions:
-          Array.isArray(permissions)
-            ? permissions
-            : [],
-
-        lastLogin:
-          null,
-
-        lastLogout:
-          null,
+    // Validate permissions
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({
+        success: false,
+        message: "Permissions must be an array.",
       });
-
-
-    // ==================================================
-    // GET CREATED EMPLOYEE
-    // ==================================================
-
-    const populatedEmployee =
-      await Employee.findById(
-        employee._id
-      )
-        .select("-password")
-        .populate(
-          "assignedConferences",
-          "basicInformation conferenceDates venueInformation"
-        );
-
-
-    // ==================================================
-    // SEND LOGIN EMAIL
-    // ==================================================
-
-    let emailSent = false;
-
-    try {
-
-      await sendEmployeeCredentials({
-
-        name:
-          employee.fullName,
-
-        email:
-          employee.email,
-
-        password:
-          temporaryPassword,
-
-        employeeType:
-          employee.employeeType,
-      });
-
-      emailSent = true;
-
-      console.log(
-        `✅ Employee credentials email sent to ${employee.email}`
-      );
-
-    } catch (emailError) {
-
-      // -----------------------------------------------
-      // IMPORTANT
-      // Employee is already created.
-      // Don't delete the employee just because email
-      // failed.
-      // -----------------------------------------------
-
-      console.error(
-        "❌ Employee created, but credential email failed:"
-      );
-
-      console.error(
-        emailError
-      );
     }
 
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    return res.status(201).json({
-
-      success: true,
-
-      message: emailSent
-        ? "Employee created successfully and login credentials sent to employee email."
-        : "Employee created successfully, but login credentials email could not be sent.",
-
-      emailSent,
-
-      data:
-        populatedEmployee,
+    // Create employee only; no email sending
+    const employee = await Employee.create({
+      fullName: fullName.trim(),
+      email: normalizedEmail,
+      password: password.trim(),
+      role: "Employee",
+      employeeType: normalizedEmployeeType,
+      phoneNumber:
+        typeof phoneNumber === "string" ? phoneNumber.trim() : "",
+      assignedConferences: conferenceIds,
+      status: employeeStatus,
+      department:
+        typeof department === "string" ? department.trim() : "",
+      designation:
+        typeof designation === "string" ? designation.trim() : "",
+      country: typeof country === "string" ? country.trim() : "",
+      location: typeof location === "string" ? location.trim() : "",
+      timezone:
+        typeof timezone === "string" && timezone.trim()
+          ? timezone.trim()
+          : "Asia/Kolkata",
+      about: typeof about === "string" ? about.trim() : "",
+      permissions,
+      lastLogin: null,
+      lastLogout: null,
     });
 
+    const populatedEmployee = await Employee.findById(employee._id)
+      .select("-password")
+      .populate(
+        "assignedConferences",
+        "basicInformation conferenceDates venueInformation"
+      )
+      .lean();
+
+    return res.status(201).json({
+      success: true,
+      message: "Employee created successfully.",
+      data: populatedEmployee,
+    });
   } catch (error) {
-
-    console.error(
-      "Create Employee Error:",
-      error
-    );
-
-
-    // ==================================================
-    // DUPLICATE KEY
-    // ==================================================
+    console.error("Create Employee Error:", error);
 
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message:
-          "Employee with this email already exists.",
+        message: "Employee with this email already exists.",
       });
     }
 
-
-    // ==================================================
-    // SERVER ERROR
-    // ==================================================
-
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to create employee.",
+      message: "Failed to create employee.",
       error:
-        error.message,
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
