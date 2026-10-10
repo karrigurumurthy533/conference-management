@@ -210,8 +210,6 @@ exports.getRegistrationsByConferenceId = catchAsync(
   }
 );
 
-
-
 exports.getRegistrationById = catchAsync(
   async (req, res, next) => {
     const { id } = req.params;
@@ -380,7 +378,6 @@ exports.deleteDownloadBrochure = catchAsync(async (req, res, next) => {
     message: "Brochure request deleted successfully",
   });
 });
-
 
 exports.createAbstract = catchAsync(async (req, res, next) => {
 

@@ -55,3 +55,285 @@ body {
     border-color 0.3s ease,
     color 0.3s ease;
 }
+
+
+/* ================= EXPLORE CONFERENCE CARDS ================= */
+
+.conference-flip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.conference-flip-card {
+  --card-accent: #7c3aed;
+  --card-light: #f5f3ff;
+
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 285px;
+  overflow: hidden;
+  border: 1px solid #e9e3f5;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgb(40 20 70 / 5%);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  animation: conferenceCardAppear 0.6s ease both;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
+}
+
+.conference-flip-card-1 {
+  --card-accent: #7c3aed;
+  --card-light: #f5f3ff;
+}
+
+.conference-flip-card-2 {
+  --card-accent: #4f46e5;
+  --card-light: #eef2ff;
+}
+
+.conference-flip-card-3 {
+  --card-accent: #9333ea;
+  --card-light: #faf5ff;
+}
+
+.conference-flip-card-4 {
+  --card-accent: #6d28d9;
+  --card-light: #f3e8ff;
+}
+
+.conference-flip-card:hover {
+  transform: translateY(-7px);
+  border-color: var(--card-accent);
+  box-shadow: 0 18px 35px rgb(76 29 149 / 13%);
+}
+
+.conference-flip-card-glow {
+  position: absolute;
+  z-index: -1;
+  top: -65px;
+  right: -55px;
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+  background: var(--card-light);
+  transition:
+    transform 0.45s ease,
+    opacity 0.45s ease;
+}
+
+.conference-flip-card:hover .conference-flip-card-glow {
+  transform: scale(1.65);
+  opacity: 0.9;
+}
+
+.conference-flip-card-inner {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 285px;
+  flex-direction: column;
+  padding: 23px 21px 18px;
+}
+
+.conference-flip-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 23px;
+}
+
+.conference-flip-icon {
+  display: flex;
+  width: 49px;
+  height: 49px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(124 58 237 / 12%);
+  border-radius: 15px;
+  background: var(--card-light);
+  color: var(--card-accent);
+  transition:
+    transform 0.35s ease,
+    background 0.35s ease,
+    color 0.35s ease;
+}
+
+.conference-flip-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.conference-flip-card:hover .conference-flip-icon {
+  transform: rotate(-8deg) scale(1.08);
+  background: var(--card-accent);
+  color: #fff;
+}
+
+.conference-flip-number {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--card-accent);
+  opacity: 0.16;
+}
+
+.conference-flip-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.conference-flip-title {
+  margin: 0 0 12px;
+  color: #211638;
+  font-size: 17px;
+  font-weight: 750;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.conference-flip-description {
+  color: #625b70;
+  font-size: 13px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.conference-flip-description > p {
+  margin: 0 0 8px;
+}
+
+.conference-flip-description ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conference-flip-description li {
+  position: relative;
+  padding-left: 17px;
+}
+
+.conference-flip-description li::before {
+  position: absolute;
+  top: 0.65em;
+  left: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--card-accent);
+  content: "";
+}
+
+.conference-flip-description h3,
+.conference-flip-description h4 {
+  margin: 0 0 8px;
+  color: #35234f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.conference-flip-description img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.conference-flip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #eee9f5;
+  color: var(--card-accent);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.conference-flip-arrow {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--card-light);
+  font-size: 17px;
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+.conference-flip-card:hover .conference-flip-arrow {
+  transform: translate(3px, -3px);
+  background: var(--card-accent);
+  color: #fff;
+}
+
+@keyframes conferenceCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .conference-flip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  .conference-flip-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .conference-flip-card,
+  .conference-flip-card-inner {
+    min-height: 245px;
+  }
+
+  .conference-flip-card-inner {
+    padding: 20px;
+  }
+
+  .conference-flip-card-header {
+    margin-bottom: 17px;
+  }
+
+  .conference-flip-title {
+    font-size: 16px;
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .conference-flip-card,
+  .conference-flip-card-glow,
+  .conference-flip-icon,
+  .conference-flip-arrow {
+    animation: none;
+    transition: none;
+  }
+}

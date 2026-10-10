@@ -17,6 +17,18 @@ const Navbar = () => {
   const location = useLocation();
 
   // =========================================================
+  // HOME NAVIGATION LOGIC
+  // =========================================================
+
+  const conferenceMatch = location.pathname.match(
+    /^\/conferences\/([^/]+)/
+  );
+
+  const homePath = conferenceMatch
+    ? `/conferences/${conferenceMatch[1]}`
+    : "/";
+
+  // =========================================================
   // CHECK ACTIVE ROUTE
   // =========================================================
 
@@ -187,17 +199,17 @@ const Navbar = () => {
             {/* HOME */}
 
             <Link
-              to="/"
-              className={desktopLinkClass("/")}
+              to={homePath}
+              className={desktopLinkClass(homePath)}
               style={{
-                color: isActive("/")
+                color: isActive(homePath)
                   ? "var(--brand)"
                   : "var(--text-secondary)",
               }}
             >
               Home
 
-              {isActive("/") && (
+              {isActive(homePath) && (
                 <span
                   className="
                     absolute
@@ -440,9 +452,7 @@ const Navbar = () => {
 
           <div className="ml-auto flex items-center gap-2">
 
-            {/* =================================================
-                MOBILE MENU BUTTON
-            ================================================== */}
+            {/* MOBILE MENU BUTTON */}
 
             <button
               type="button"
@@ -520,14 +530,14 @@ const Navbar = () => {
             {/* HOME */}
 
             <Link
-              to="/"
+              to={homePath}
               onClick={closeMobileMenu}
-              className={mobileLinkClass("/")}
+              className={mobileLinkClass(homePath)}
               style={{
-                color: isActive("/")
+                color: isActive(homePath)
                   ? "var(--brand)"
                   : "var(--text-secondary)",
-                backgroundColor: isActive("/")
+                backgroundColor: isActive(homePath)
                   ? "var(--bg-secondary)"
                   : "transparent",
               }}
