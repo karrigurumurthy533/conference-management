@@ -1,5 +1,8 @@
 require("dotenv").config();
 
+const dns = require("node:dns");
+dns.setDefaultResultOrder("ipv4first");
+
 const http = require("http");
 
 const app = require("./app");
@@ -8,6 +11,7 @@ const {
     connectDatabase,
     closeDatabase,
 } = require("./config/db");
+
 const {
     initializeSocket,
 } = require("./sockets/socket");
