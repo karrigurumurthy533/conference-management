@@ -437,17 +437,6 @@ exports.sendEmployeeEmail = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log("[SEND EMAIL] API called");
-    console.log("[SEND EMAIL] Employee ID:", id);
-    console.log("[SEND EMAIL] SMTP_HOST configured:", Boolean(process.env.SMTP_HOST));
-    console.log("[SEND EMAIL] SMTP_PORT:", process.env.SMTP_PORT || "NOT SET");
-    console.log("[SEND EMAIL] SMTP_USER configured:", Boolean(process.env.SMTP_USER));
-    console.log("[SEND EMAIL] SMTP_PASS configured:", Boolean(process.env.SMTP_PASS));
-    console.log(
-      "[SEND EMAIL] EMPLOYEE_LOGIN_URL configured:",
-      Boolean(process.env.EMPLOYEE_LOGIN_URL)
-    );
-
     if (!id) {
       return res.status(400).json({
         success: false,
@@ -473,19 +462,25 @@ exports.sendEmployeeEmail = async (req, res) => {
       });
     }
 
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "SMTP configuration is incomplete.",
+      });
+    }
+
     const loginUrl = process.env.EMPLOYEE_LOGIN_URL;
 
     if (!loginUrl) {
-      console.error("[SEND EMAIL] EMPLOYEE_LOGIN_URL is missing");
-
       return res.status(500).json({
         success: false,
         message: "Employee login URL is not configured.",
       });
     }
-
-    console.log("[SEND EMAIL] Employee found:", employee.email);
-    console.log("[SEND EMAIL] Calling sendEmployeeCredentials...");
 
     await sendEmployeeCredentials({
       name: employee.fullName,
@@ -495,25 +490,31 @@ exports.sendEmployeeEmail = async (req, res) => {
       loginUrl,
     });
 
-    console.log("[SEND EMAIL] Email function completed successfully");
-
     return res.status(200).json({
       success: true,
       message: `Email sent successfully to ${employee.email}`,
     });
   } catch (error) {
-    console.error("[SEND EMAIL] Failed:", {
-      name: error.name,
+    // Detailed error stays in server logs, not in the public API response.
+    console.error("Employee email delivery failed:", {
       message: error.message,
       code: error.code,
       command: error.command,
       responseCode: error.responseCode,
-      stack: error.stack,
     });
 
-    return res.status(500).json({
+    const isTimeout = [
+      "ETIMEDOUT",
+      "ESOCKET",
+      "ECONNECTION",
+      "ENETUNREACH",
+    ].includes(error.code);
+
+    return res.status(isTimeout ? 503 : 500).json({
       success: false,
-      message: "Email sending failed. Check backend logs.",
+      message: isTimeout
+        ? "Email service is temporarily unreachable. Please try again."
+        : "Email sending failed. Please check the email configuration.",
       errorCode: error.code || "EMAIL_SEND_FAILED",
     });
   }
