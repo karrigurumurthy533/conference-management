@@ -1,1725 +1,2498 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import SEO from "../components/common/SEO";
-
 import {
-  ArrowLeft,
-  ArrowRight,
   CalendarDays,
   MapPin,
-  Users,
-  Download,
-  CheckCircle2,
-  Brain,
   Globe2,
-  HeartHandshake,
-  FileText,
-  UserPlus,
-  BookOpen,
-  Presentation,
-  Award,
-  RotateCcw,
+  Users,
+  Mic,
+  Download,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsDown,
+  Play,
   ChevronDown,
-  ChevronUp,
+  Lightbulb,
+  Clock,
+  CheckCircle2,
+  GraduationCap,
+  Stethoscope,
+  Microscope,
+  BookOpen,
+  HeartHandshake,
+  Network,
+  Monitor,
+  Presentation,
+  X,
+  Award,
+  ExternalLink,
+  Mail,
+  Phone,
+  Building2,
+  FileText,
+  Video,
+  ClipboardList,
+  Handshake,
+  Target,
+  BookMarked,
+  CalendarCheck,
+  Send,
 } from "lucide-react";
 
 import { getConferenceByIdApi } from "../api/api";
 
-const C = {
-  primary: "#7C3AED",
-  primaryHover: "#6D28D9",
-  deep: "#4C1D95",
-  dark: "#12091F",
-  title: "#2E1065",
-  text: "#4B5563",
-  soft: "#F8F7FF",
-  softer: "#F0EAFE",
-  border: "#E9E3FB",
+// ============================================================
+// FALLBACK CONFIGURATION
+// Used only when the API fails or data is missing.
+// ============================================================
+
+const FALLBACK_CONFERENCE_ID = "6abe6282115ac55e02fcf168";
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=2000&q=90";
+
+const FALLBACK_ABOUT_IMAGE =
+  "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1000&q=85";
+
+const FALLBACK_SPEAKER_IMAGE =
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=85";
+
+const FALLBACK_KEY_POINTS = [
+  "Latest research findings and clinical advancements",
+  "Real-world case studies and success stories",
+  "Global networking and collaboration opportunities",
+  "Access to expert-led sessions and workshops",
+  "Continuing education and professional development",
+];
+
+const FALLBACK_TOPICS = [
+  "Neurodevelopment & Genetics",
+  "Family Support & Caregiver Wellbeing",
+  "Early Diagnosis & Intervention",
+  "Policy & Advocacy",
+  "Behavioral Therapies",
+  "Pharmacological Research",
+  "Mental Health & Co-occurring Conditions",
+  "Transition to Adulthood",
+  "Technology & AI in Autism",
+  "Global Perspectives",
+  "Education & Inclusion",
+  "Innovations & Future Directions",
+];
+
+const FALLBACK_HIGHLIGHTS = [
+  {
+    title: "Expert Speakers",
+    description: "Global leaders and pioneers sharing their expertise.",
+    icon: Users,
+    color: "bg-violet-50 text-violet-600",
+  },
+  {
+    title: "Interactive Sessions",
+    description: "Q&A, panels, workshops and discussions.",
+    icon: Presentation,
+    color: "bg-teal-50 text-teal-600",
+  },
+  {
+    title: "Networking",
+    description: "Build valuable professional connections.",
+    icon: Network,
+    color: "bg-pink-50 text-pink-600",
+  },
+  {
+    title: "Research & Innovation",
+    description: "Discover emerging research and technologies.",
+    icon: Monitor,
+    color: "bg-indigo-50 text-indigo-600",
+  },
+];
+
+// Explore cards. "Sessions" and "Tracks" headings come from the API data
+// (otherData.sampleAgenda and tracks).
+const FALLBACK_EXPLORE_ITEMS = [
+  {
+    number: "01",
+    title: "About Conference",
+    description: "Mission, vision and goals",
+    icon: BookOpen,
+    key: "about",
+  },
+  {
+    number: "02",
+    title: "Scientific Program",
+    description: "Sessions and speakers",
+    icon: Microscope,
+    key: "program",
+  },
+  {
+    number: "03",
+    title: "Sessions",
+    description: "Day-wise schedule",
+    icon: CalendarCheck,
+    key: "agenda",
+  },
+  {
+    number: "04",
+    title: "Tracks",
+    description: "Research tracks",
+    icon: Network,
+    key: "tracks",
+  },
+  {
+    number: "05",
+    title: "Why Attend?",
+    description: "Conference advantages",
+    icon: Target,
+    key: "why",
+  },
+  {
+    number: "06",
+    title: "Benefits",
+    description: "Learning and recognition",
+    icon: Award,
+    key: "benefits",
+  },
+  {
+    number: "07",
+    title: "E-Poster Guidelines",
+    description: "Submission requirements",
+    icon: FileText,
+    key: "poster",
+  },
+  {
+    number: "08",
+    title: "Travel & Venue",
+    description: "Venue and event format",
+    icon: MapPin,
+    key: "venue",
+  },
+  {
+    number: "09",
+    title: "Contact & FAQs",
+    description: "Questions and assistance",
+    icon: Mail,
+    key: "contact",
+  },
+];
+
+const FALLBACK_POSTS = [
+  {
+    title: "Conference Updates",
+    description: "Follow the latest conference announcements and updates.",
+    date: "Latest Updates",
+    image:
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=500&q=80",
+  },
+  {
+    title: "Research & Innovation",
+    description: "Discover new ideas and developments in research.",
+    date: "Conference News",
+    image:
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=500&q=80",
+  },
+  {
+    title: "Global Collaboration",
+    description: "Connecting professionals and researchers worldwide.",
+    date: "Community News",
+    image:
+      "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=500&q=80",
+  },
+];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0 },
 };
 
-const fmt = (date) =>
-  new Date(date).toLocaleDateString("en-US", {
-    month: "long",
+// ============================================================
+// HELPERS
+// ============================================================
+
+const isObject = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const asArray = (value) => (Array.isArray(value) ? value : []);
+
+const asText = (value, fallback = "") => {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number") return String(value);
+  return fallback;
+};
+
+const getText = (item, keys, fallback = "") => {
+  if (typeof item === "string") return item.trim() || fallback;
+  if (!isObject(item)) return fallback;
+
+  for (const key of keys) {
+    const value = item[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+
+  return fallback;
+};
+
+const formatDate = (value, fallback = "Date to be announced") => {
+  if (!value) return fallback;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return asText(value, fallback);
+  }
+
+  return date.toLocaleDateString("en-GB", {
     day: "2-digit",
+    month: "short",
     year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+};
+
+const getDateRange = (conference) => {
+  if (conference?.date) return conference.date;
+
+  const start = conference?.startDate;
+  const end = conference?.endDate;
+
+  if (!start && !end) return "Dates to be announced";
+
+  if (start && end) {
+    const startDate = formatDate(start);
+    const endDate = formatDate(end);
+
+    return startDate === endDate ? startDate : `${startDate} – ${endDate}`;
+  }
+
+  return formatDate(start || end);
+};
+
+const getCountdownPhase = (startDate, endDate) => {
+  const now = Date.now();
+  const start = startDate ? new Date(startDate).getTime() : NaN;
+  const end = endDate ? new Date(endDate).getTime() : NaN;
+
+  if (!Number.isFinite(start)) return "unknown";
+  if (now < start) return "upcoming";
+
+  const effectiveEnd = Number.isFinite(end) ? end : start;
+
+  if (now <= effectiveEnd + 24 * 60 * 60 * 1000) return "live";
+
+  return "ended";
+};
+
+const getCountdown = (startDate, endDate) => {
+  const phase = getCountdownPhase(startDate, endDate);
+
+  if (phase === "unknown" || phase === "ended") {
+    return {
+      phase,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    };
+  }
+
+  const now = Date.now();
+  const start = new Date(startDate).getTime();
+  const end = endDate ? new Date(endDate).getTime() : start;
+  const difference = Math.max(0, (phase === "upcoming" ? start : end) - now);
+
+  return {
+    phase,
+    days: Math.floor(difference / 86400000),
+    hours: Math.floor((difference / 3600000) % 24),
+    minutes: Math.floor((difference / 60000) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
+};
+
+const getConferenceImage = (conference, fallback = FALLBACK_IMAGE) => {
+  const image = conference?.image || conference?.bannerImage;
+  if (typeof image === "string" && image.trim()) return image;
+  if (isObject(image)) {
+    return image.url || image.secure_url || image.fileUrl || fallback;
+  }
+  return fallback;
+};
+
+const getSpeakerImage = (speaker) => {
+  const image = speaker?.image || speaker?.photo || speaker?.profileImage;
+
+  if (typeof image === "string" && image.trim()) return image;
+
+  if (isObject(image)) {
+    return (
+      image.url || image.secure_url || image.fileUrl || FALLBACK_SPEAKER_IMAGE
+    );
+  }
+
+  return FALLBACK_SPEAKER_IMAGE;
+};
+
+const getAgenda = (otherData) => asArray(otherData?.sampleAgenda);
+
+const getAgendaSessions = (agendaDay) =>
+  asArray(agendaDay?.schedule || agendaDay?.sessions);
+
+const getSpeakerOrganization = (speaker) =>
+  asText(speaker?.organization) ||
+  asText(speaker?.institution) ||
+  asText(speaker?.affiliation) ||
+  asText(speaker?.country);
+
+const getVenueName = (conference) =>
+  asText(conference?.venue?.venueName) ||
+  asText(conference?.venue?.name) ||
+  asText(conference?.location) ||
+  "Venue to be announced";
+
+const getVenueAddress = (conference) => {
+  const venue = conference?.venue || {};
+
+  return [venue.address, venue.city, venue.state, venue.country]
+    .filter((value) => typeof value === "string" && value.trim())
+    .filter((value, index, array) => array.indexOf(value) === index)
+    .join(", ");
+};
+
+const SectionLabel = ({ children }) => (
+  <span className="mb-1.5 inline-flex rounded-full bg-violet-100 px-3 py-1 text-[10px] font-semibold text-violet-700">
+    {children}
+  </span>
+);
+
+const SectionHeading = ({ label, title, description }) => (
+  <div className="mb-5">
+    {label && <SectionLabel>{label}</SectionLabel>}
+    <h2 className="text-xl font-bold tracking-tight text-[#171447] sm:text-2xl">
+      {title}
+    </h2>
+    {description && (
+      <p className="mt-1.5 max-w-3xl text-xs leading-5 text-slate-600 sm:text-sm">
+        {description}
+      </p>
+    )}
+  </div>
+);
+
+const EmptyState = ({ children = "Information will be announced soon." }) => (
+  <div className="rounded-lg border border-dashed border-slate-200 bg-white/80 px-4 py-5 text-center text-xs leading-5 text-slate-500">
+    {children}
+  </div>
+);
+
+// ------------------------------------------------------------
+// ExpandCard
+// One-line text card with a double-arrow (chevrons) toggle.
+// Used for all "other data" items (sessions, tracks, why attend,
+// benefits, delegates, e-poster details).
+// ------------------------------------------------------------
+const ExpandCard = ({ title, children }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={`rounded-lg border bg-white transition ${
+        open ? "border-violet-200" : "border-slate-100 hover:border-violet-200"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((previous) => !previous)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          <CheckCircle2 className="shrink-0 text-violet-600" size={16} />
+          <span
+            className={`truncate text-sm font-bold leading-6 ${
+              open ? "text-violet-700" : "text-[#171447]"
+            }`}
+          >
+            {title}
+          </span>
+        </span>
+
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+            open
+              ? "rotate-180 border-violet-200 bg-violet-50 text-violet-700"
+              : "border-slate-200 text-slate-500"
+          }`}
+        >
+          <ChevronsDown size={15} />
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-4 py-3 pl-10">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DetailList = ({
+  items,
+  titleKey = "title",
+  descriptionKey = "description",
+}) => {
+  const validItems = asArray(items).filter((item) => {
+    if (typeof item === "string") return item.trim().length > 0;
+    if (!isObject(item)) return false;
+
+    return Boolean(
+      item[titleKey] ||
+      item[descriptionKey] ||
+      item.name ||
+      item.text ||
+      item.session ||
+      item.time,
+    );
   });
 
-const pick = (item, keys) =>
-  typeof item === "string"
-    ? item
-    : keys.map((key) => item?.[key]).find(Boolean) || "";
+  if (!validItems.length) {
+    return <EmptyState />;
+  }
 
-const reveal = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: "easeOut" },
-  },
+  return (
+    <div className="space-y-2.5">
+      {validItems.map((item, index) => {
+        const title =
+          getText(item, [
+            titleKey,
+            "name",
+            "heading",
+            "title",
+            "session",
+            "text",
+          ]) || `Item ${index + 1}`;
+
+        const description = getText(item, [
+          descriptionKey,
+          "details",
+          "content",
+          "description",
+          "bio",
+        ]);
+
+        // Item with a description -> expandable one-line card.
+        if (description && description !== title) {
+          return (
+            <ExpandCard key={item?._id || `${title}-${index}`} title={title}>
+              <p className="whitespace-pre-line text-xs leading-6 text-slate-600">
+                {description}
+              </p>
+            </ExpandCard>
+          );
+        }
+
+        // Title only -> simple one-line card (nothing to expand).
+        return (
+          <div
+            key={item?._id || `${title}-${index}`}
+            className="flex items-center gap-2.5 rounded-lg border border-slate-100 bg-white px-4 py-3 transition hover:border-violet-200"
+          >
+            <CheckCircle2 className="shrink-0 text-violet-600" size={16} />
+            <span className="text-sm font-bold leading-6 text-[#171447]">
+              {title}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
-const stagger = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.08 },
-  },
-};
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 
 const ConferenceDetails = () => {
-  const { id } = useParams();
+  const { id, conferenceId } = useParams();
   const navigate = useNavigate();
+
+  const speakerRef = useRef(null);
+  const postRef = useRef(null);
+
+  const currentId = id || conferenceId || FALLBACK_CONFERENCE_ID;
 
   const [conference, setConference] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [flipped, setFlipped] = useState({});
-  const [showAllWelcome, setShowAllWelcome] = useState(false);
-
-  const [timeLeft, setTimeLeft] = useState({
+  const [apiError, setApiError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeExplore, setActiveExplore] = useState(null);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [countdown, setCountdown] = useState({
+    phase: "unknown",
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
 
-  const toggleCard = (cardId) => {
-    setFlipped((prev) => ({
-      ...prev,
-      [cardId]: !prev[cardId],
-    }));
-  };
+  // ----------------------------------------------------------
+  // FETCH CONFERENCE API
+  // Expected response:
+  // { success: true, data: { _id, title, speakers, otherData, ... } }
+  // ----------------------------------------------------------
 
-  // ================= FETCH CONFERENCE =================
   useEffect(() => {
-    let mounted = true;
+    let active = true;
 
     const fetchConference = async () => {
+      setLoading(true);
+      setApiError("");
+
       try {
-        setLoading(true);
-        setError("");
-        setConference(null);
+        const response = await getConferenceByIdApi(currentId);
 
-        const response = await getConferenceByIdApi(id);
+        // Supports Axios response and direct API response formats.
+        const body = response?.data ?? response;
 
-        if (!mounted) return;
+        const apiData =
+          body?.data?.conference ||
+          body?.data?.data ||
+          body?.data ||
+          body?.conference ||
+          body;
 
-        const api = response?.data?.data || response?.data || null;
+        if (!active) return;
 
-        if (!api) {
-          setError("Conference not found.");
+        if (
+          !apiData ||
+          typeof apiData !== "object" ||
+          (!apiData._id && !apiData.title && !apiData.name)
+        ) {
+          setConference(null);
+          setApiError("Conference details are not available.");
           return;
         }
 
-        const startDate =
-          api?.conferenceDates?.startDate || api?.startDate || "";
+        setConference(apiData);
+      } catch (error) {
+        if (!active) return;
 
-        const endDate = api?.conferenceDates?.endDate || api?.endDate || "";
-
-        const venue = api?.venueInformation || api?.venue || {};
-        const welcome = api?.welcomeMessage || {};
-
-        setConference({
-          ...api,
-          id: api?._id || api?.id || id,
-
-          title: api?.basicInformation?.title || api?.title || "",
-          category: api?.basicInformation?.category || api?.category || "",
-          subtitle: api?.basicInformation?.subtitle || api?.subtitle || "",
-          description:
-            api?.basicInformation?.description || api?.description || "",
-
-          date:
-            startDate && endDate
-              ? `${fmt(startDate)} - ${fmt(endDate)}`
-              : api?.date || "",
-
-          startDate,
-          endDate,
-
-          time: api?.conferenceDates?.time || api?.time || "",
-          venue,
-
-          location:
-            venue?.city ||
-            venue?.location ||
-            venue?.venueName ||
-            api?.location ||
-            "",
-
-          mode: venue?.mode || api?.mode || api?.conferenceMode || "",
-
-          participants:
-            api?.registrationInformation?.expectedParticipants ||
-            api?.participants ||
-            "",
-
-          image:
-            api?.media?.bannerImage ||
-            api?.media?.conferenceBanner ||
-            api?.bannerImage ||
-            api?.imageUrl ||
-            api?.image ||
-            "",
-
-          speakers: Array.isArray(api?.speakers)
-            ? api.speakers.map((speaker) => ({
-                ...speaker,
-                name: speaker?.fullName || speaker?.name || "",
-                image: speaker?.imageUrl || speaker?.image || "",
-                organization: speaker?.organization || "",
-                role: speaker?.designation || speaker?.role || "",
-                specialty: speaker?.speakerType || speaker?.specialty || "",
-                linkedin: speaker?.linkedin || "",
-              }))
-            : [],
-
-          topics: Array.isArray(api?.topics)
-            ? api.topics.map((topic) => pick(topic, ["title", "name", "topic"]))
-            : [],
-
-          tracks: Array.isArray(api?.tracks) ? api.tracks : [],
-
-          sponsors: Array.isArray(api?.sponsors)
-            ? api.sponsors.map((sponsor) =>
-                pick(sponsor, ["logoUrl", "imageUrl", "logo"]),
-              )
-            : [],
-
-          keyHighlights: Array.isArray(api?.keyHighlights)
-            ? api.keyHighlights
-            : [],
-
-          whoShouldAttend: Array.isArray(api?.whoShouldAttend)
-            ? api.whoShouldAttend.map((item) =>
-                pick(item, ["title", "name", "text"]),
-              )
-            : [],
-
-          whoShouldAttendDescription: api?.whoShouldAttendDescription || "",
-
-          welcomeMessage: {
-            paragraphs: Array.isArray(welcome?.paragraphs)
-              ? welcome.paragraphs
-              : welcome?.paragraph
-                ? [welcome.paragraph]
-                : [],
-            signature: welcome?.signature || "",
-          },
-
-          otherData: api?.otherData || {},
-        });
-      } catch (err) {
-        console.error("Fetch Conference Details Error:", err);
-
-        if (!mounted) return;
+        console.error("Failed to fetch conference details:", error);
 
         setConference(null);
-        setError(
-          err?.response?.data?.message || "Failed to load conference details",
+        setApiError(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Unable to load conference details.",
         );
       } finally {
-        if (mounted) setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
-    if (id) {
-      fetchConference();
-    } else {
-      setLoading(false);
-      setError("Conference ID is missing.");
-    }
+    fetchConference();
 
     return () => {
-      mounted = false;
+      active = false;
     };
-  }, [id]);
+  }, [currentId]);
 
-  // ================= COUNTDOWN =================
+  // ----------------------------------------------------------
+  // NORMALIZED API DATA
+  // ----------------------------------------------------------
+
+  const data = conference || {};
+
+  const title = asText(data.title || data.name, "International Conference");
+
+  const subtitle = asText(
+    data.subtitle,
+    "Research, innovation, collaboration and global knowledge sharing.",
+  );
+
+  const description = asText(
+    data.description,
+    "Explore the conference program, research topics, speakers and participation opportunities.",
+  );
+
+  const category = asText(data.category, "International Conference");
+
+  const dateRange = getDateRange(data);
+
+  const time = asText(data.time, "Schedule to be announced");
+
+  const mode = asText(data.mode || data.time, "To be announced");
+
+  const participants = asText(data.participants, "Global");
+
+  const venueName = getVenueName(data);
+
+  const venueAddress = getVenueAddress(data);
+
+  const heroImage = getConferenceImage(data);
+
+  const aboutImage =
+    (typeof data.aboutImage === "string" && data.aboutImage.trim()
+      ? data.aboutImage
+      : "") || FALLBACK_ABOUT_IMAGE;
+
+  const speakers = asArray(data.speakers);
+
+  const topics = asArray(data.topics)
+    .map((topic) =>
+      getText(
+        topic,
+        ["title", "name", "topic", "text"],
+        typeof topic === "string" ? topic : "",
+      ),
+    )
+    .filter(Boolean);
+
+  const tracks = asArray(data.tracks);
+
+  const keyHighlights = asArray(data.keyHighlights).filter(
+    (item) =>
+      item && (item.title || item.description || typeof item === "string"),
+  );
+
+  const sponsors = asArray(data.sponsors).filter(Boolean);
+
+  const welcome = isObject(data.welcomeMessage) ? data.welcomeMessage : {};
+
+  const welcomeParagraphs = asArray(welcome.paragraphs)
+    .map((paragraph) =>
+      typeof paragraph === "string"
+        ? paragraph.trim()
+        : getText(paragraph, ["text", "content", "description"]),
+    )
+    .filter(Boolean);
+
+  // Keep the full API welcome text, but visually limit it to 10 lines.
+  const welcomeText =
+    welcomeParagraphs.join("\n\n") ||
+    asText(
+      data.welcomeMessageText,
+      "Welcome to our international conference. Explore the conference program, research topics and opportunities to connect with professionals from around the world.",
+    );
+
+  const welcomeSignature = asText(welcome.signature);
+
+  const whoShouldAttend = asText(data.whoShouldAttendDescription, "");
+
+  const otherData = isObject(data.otherData) ? data.otherData : {};
+
+  const agenda = getAgenda(otherData);
+
+  const whyToAttend = asArray(otherData.whyToAttend);
+
+  const benefits = asArray(otherData.benefitsOfAttending);
+
+  const delegates = asArray(otherData.delegates);
+
+  const ePoster = isObject(otherData.ePosterPresenters)
+    ? otherData.ePosterPresenters
+    : {};
+
+  const contact = isObject(data.contact) ? data.contact : {};
+
+  const submission = isObject(data.submission) ? data.submission : {};
+
+  const registrationDates = isObject(data.registrationDates)
+    ? data.registrationDates
+    : {};
+
+  const registrationCategories = asArray(data.registrationCategories);
+
+  const socialPosts = asArray(data.recentPosts || data.posts);
+
+  const posts = socialPosts.length ? socialPosts : FALLBACK_POSTS;
+
+  const countdownStart = data.startDate || null;
+  const countdownEnd = data.endDate || data.startDate || null;
+
+  // Section visibility flags (sections disappear when no data is added,
+  // and appear in the same place as soon as data is added).
+  const hasHighlights = keyHighlights.length > 0;
+  const hasTopics = topics.length > 0;
+  const hasSponsors = sponsors.length > 0;
+
+  // ----------------------------------------------------------
+  // COUNTDOWN
+  // ----------------------------------------------------------
+
   useEffect(() => {
-    if (!conference?.startDate) return;
+    const updateCountdown = () => {
+      setCountdown(getCountdown(countdownStart, countdownEnd));
+    };
 
-    const calculateTime = () => {
-      const diff = new Date(conference.startDate).getTime() - Date.now();
+    updateCountdown();
 
-      if (Number.isNaN(diff) || diff <= 0) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const timer = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [countdownStart, countdownEnd]);
+
+  // ----------------------------------------------------------
+  // SEO METADATA + EVENT STRUCTURED DATA
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const originalTitle = document.title;
+
+    const pageTitle = `${title} | GlobalScion Conferences`;
+
+    const pageDescription = (
+      description ||
+      subtitle ||
+      `Explore ${title}, including speakers, scientific sessions, research topics and registration details.`
+    )
+      .replace(/\s+/g, " ")
+      .slice(0, 300);
+
+    document.title = pageTitle;
+
+    const setMeta = (attribute, key, content) => {
+      if (!content) return;
+
+      let element = document.head.querySelector(`meta[${attribute}="${key}"]`);
+
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
       }
 
-      return {
-        days: Math.floor(diff / 86400000),
-        hours: Math.floor((diff / 3600000) % 24),
-        minutes: Math.floor((diff / 60000) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      };
+      element.setAttribute("content", content);
     };
 
-    setTimeLeft(calculateTime());
+    setMeta("name", "description", pageDescription);
+    setMeta(
+      "name",
+      "keywords",
+      [
+        title,
+        category,
+        "GlobalScion Conferences",
+        "international conference",
+        "scientific program",
+        "conference speakers",
+        "conference registration",
+        "research and innovation",
+      ].join(", "),
+    );
 
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTime());
-    }, 1000);
+    setMeta("property", "og:type", "event");
+    setMeta("property", "og:title", pageTitle);
+    setMeta("property", "og:description", pageDescription);
+    setMeta("property", "og:image", heroImage);
+    setMeta("property", "og:site_name", "GlobalScion Conferences");
 
-    return () => clearInterval(timer);
-  }, [conference?.startDate]);
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", pageTitle);
+    setMeta("name", "twitter:description", pageDescription);
+    setMeta("name", "twitter:image", heroImage);
 
-  // ================= LOADING =================
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+
+    canonical.href = `${window.location.origin}${window.location.pathname}`;
+
+    const eventSchema = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: title,
+      description: pageDescription,
+      image: heroImage ? [heroImage] : undefined,
+      startDate: data.startDate || undefined,
+      endDate: data.endDate || undefined,
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode: /webinar|online|virtual/i.test(mode)
+        ? "https://schema.org/OnlineEventAttendanceMode"
+        : "https://schema.org/MixedEventAttendanceMode",
+      location: /webinar|online|virtual/i.test(mode)
+        ? {
+            "@type": "VirtualLocation",
+            url: data.venue?.onlineLink || window.location.href,
+          }
+        : {
+            "@type": "Place",
+            name: venueName,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: data.venue?.address || "",
+              addressLocality: data.venue?.city || data.location || "",
+              addressRegion: data.venue?.state || "",
+              addressCountry: data.venue?.country || "",
+            },
+          },
+      organizer: {
+        "@type": "Organization",
+        name: "GlobalScion Conferences",
+        url: "https://globalscion.com/",
+      },
+    };
+
+    let jsonLd = document.getElementById("conference-event-jsonld");
+
+    if (!jsonLd) {
+      jsonLd = document.createElement("script");
+      jsonLd.id = "conference-event-jsonld";
+      jsonLd.type = "application/ld+json";
+      document.head.appendChild(jsonLd);
+    }
+
+    jsonLd.textContent = JSON.stringify(eventSchema);
+
+    return () => {
+      document.title = originalTitle;
+      document.getElementById("conference-event-jsonld")?.remove();
+    };
+  }, [
+    title,
+    description,
+    subtitle,
+    category,
+    heroImage,
+    data.startDate,
+    data.endDate,
+    data.location,
+    data.venue,
+    mode,
+    venueName,
+  ]);
+
+  // ----------------------------------------------------------
+  // NAVIGATION
+  // Adjust route strings here if your router uses other paths.
+  // ----------------------------------------------------------
+
+  const goToRegistration = () => {
+    navigate(`/conferences/${currentId}/register`);
+  };
+
+  const goToScientificProgram = () => {
+    navigate(`/conferences/${currentId}/scientific-program`);
+  };
+
+  // Abstracts -> abstract-download page for this conference id
+  const goToAbstracts = () => {
+    navigate(`/conferences/${currentId}/abstract-download`);
+  };
+
+  const goToBrochure = () => {
+    const brochureUrl =
+      data.brochureUrl ||
+      data.brochure?.fileUrl ||
+      data.brochure?.url ||
+      data.brochure;
+
+    if (typeof brochureUrl === "string" && /^https?:\/\//i.test(brochureUrl)) {
+      window.open(brochureUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    navigate(`/conferences/${currentId}/brochure`);
+  };
+
+  const scrollTo = (sectionId) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    setMenuOpen(false);
+  };
+
+  const scroll = (ref, direction) => {
+    if (!ref.current) return;
+
+    ref.current.scrollBy({
+      left: direction * 280,
+      behavior: "smooth",
+    });
+  };
+
+  // ----------------------------------------------------------
+  // EXPLORE CARD DETAILS
+  // ----------------------------------------------------------
+
+  const exploreItems = useMemo(
+    () =>
+      FALLBACK_EXPLORE_ITEMS.map((item) => {
+        if (item.key === "about") {
+          return {
+            ...item,
+            content: description,
+          };
+        }
+
+        if (item.key === "program") {
+          return {
+            ...item,
+            content: subtitle,
+          };
+        }
+
+        if (item.key === "agenda") {
+          return {
+            ...item,
+            content:
+              "Explore the day-wise conference sessions and schedule.",
+          };
+        }
+
+        if (item.key === "tracks") {
+          return {
+            ...item,
+            content: "Explore the scientific tracks and research areas.",
+          };
+        }
+
+        if (item.key === "why") {
+          return {
+            ...item,
+            content:
+              "Discover the main reasons to participate in this conference.",
+          };
+        }
+
+        if (item.key === "benefits") {
+          return {
+            ...item,
+            content:
+              "Review the learning, networking and presentation benefits.",
+          };
+        }
+
+        if (item.key === "poster") {
+          return {
+            ...item,
+            content:
+              "Review E-Poster presentation and submission requirements.",
+          };
+        }
+
+        if (item.key === "venue") {
+          return {
+            ...item,
+            content: `${venueName}${venueAddress ? ` — ${venueAddress}` : ""}. Participation mode: ${mode}.`,
+          };
+        }
+
+        return {
+          ...item,
+          content: "Contact the conference team for further information.",
+        };
+      }),
+    [description, subtitle, venueName, venueAddress, mode],
+  );
+
+  const handleExploreClick = (index) => {
+    setActiveExplore((previous) => (previous === index ? null : index));
+  };
+
+  const activeItem =
+    activeExplore !== null ? exploreItems[activeExplore] : null;
+
+  const formatValue = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "To be announced";
+    }
+
+    if (typeof value === "boolean")
+      return value ? "Available" : "Not available";
+
+    if (typeof value === "object") {
+      return JSON.stringify(value);
+    }
+
+    return String(value);
+  };
+
+  // E-Poster text groups (each rendered as an expandable one-line card)
+  const posterGroups = [
+    ["Poster Content", ePoster.posterContent],
+    ["Design Requirements", ePoster.designRequirements],
+    ["Submission Guidelines", ePoster.submissionGuidelines],
+    ["Review & Acceptance", ePoster.reviewAndAcceptance],
+    ["Presentation", ePoster.presentation],
+    ["Certificate", ePoster.certificate],
+    ["Closing Notes", ePoster.closingNotes],
+  ]
+    .map(([heading, items]) => [
+      heading,
+      asArray(items).filter((item) => typeof item === "string" && item.trim()),
+    ])
+    .filter(([, items]) => items.length > 0);
+
+  const posterIntroLines = asText(ePoster.guidelinesIntro)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  // ==========================================================
+  // LOADING STATE
+  // ==========================================================
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600"
-          aria-label="Loading conference"
-        />
-      </div>
-    );
-  }
-
-  // ================= ERROR =================
-  if (!conference) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-white px-6">
+      <div className="flex min-h-[60vh] items-center justify-center bg-white px-5">
         <div className="text-center">
-          <div
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: C.softer, color: C.primary }}
-          >
-            <Brain size={30} />
-          </div>
-
-          <h1 className="mt-5 text-2xl font-bold" style={{ color: C.title }}>
-            Conference Details
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            {error || "Please select a conference from the conferences page."}
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-violet-100 border-t-violet-600" />
+          <p className="mt-4 text-sm font-semibold text-[#171447]">
+            Loading conference details...
           </p>
-
-          <Link
-            to="/conferences"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white"
-            style={{ backgroundColor: C.primary }}
-          >
-            <ArrowLeft size={17} />
-            Back to Conferences
-          </Link>
+          <p className="mt-1 text-xs text-slate-500">
+            Please wait while we fetch the latest conference information.
+          </p>
         </div>
       </div>
     );
   }
 
-  // ================= SEO =================
-  const conferenceUrl = `https://www.globalscion.com/conferences/${conference.id}`;
-
-  const attendanceMode = {
-    Webinar: "https://schema.org/OnlineEventAttendanceMode",
-    Online: "https://schema.org/OnlineEventAttendanceMode",
-    Physical: "https://schema.org/OfflineEventAttendanceMode",
-    Hybrid: "https://schema.org/MixedEventAttendanceMode",
-  }[conference.mode];
-
-  const getEventLocation = () => {
-    const venue = conference.venue || {};
-
-    const physical = {
-      "@type": "Place",
-      name:
-        venue.venueName ||
-        conference.location ||
-        "GlobalScion Conference Venue",
-      address: {
-        "@type": "PostalAddress",
-        ...(venue.address ? { streetAddress: venue.address } : {}),
-        ...(venue.city || conference.location
-          ? { addressLocality: venue.city || conference.location }
-          : {}),
-        ...(venue.state ? { addressRegion: venue.state } : {}),
-        ...(venue.country ? { addressCountry: venue.country } : {}),
-      },
-    };
-
-    const virtual = {
-      "@type": "VirtualLocation",
-      url: venue.onlineLink || conferenceUrl,
-    };
-
-    if (conference.mode === "Webinar" || conference.mode === "Online") {
-      return virtual;
-    }
-
-    if (conference.mode === "Hybrid") {
-      return [physical, virtual];
-    }
-
-    return physical;
-  };
-
-  const eventSchema = {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    name: conference.title,
-    description:
-      conference.description || `${conference.title} - GlobalScion Conferences`,
-    url: conferenceUrl,
-
-    ...(conference.image
-      ? {
-          image: [
-            conference.image.startsWith("http")
-              ? conference.image
-              : `https://www.globalscion.com${conference.image}`,
-          ],
-        }
-      : {}),
-
-    ...(conference.startDate
-      ? { startDate: new Date(conference.startDate).toISOString() }
-      : {}),
-
-    ...(conference.endDate
-      ? { endDate: new Date(conference.endDate).toISOString() }
-      : {}),
-
-    eventStatus: "https://schema.org/EventScheduled",
-
-    ...(attendanceMode ? { eventAttendanceMode: attendanceMode } : {}),
-
-    location: getEventLocation(),
-
-    organizer: {
-      "@type": "Organization",
-      name: "GlobalScion Conferences",
-      url: "https://www.globalscion.com",
-    },
-  };
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://www.globalscion.com/",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Conferences",
-        item: "https://www.globalscion.com/conferences",
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: conference.title,
-        item: conferenceUrl,
-      },
-    ],
-  };
-
-  // ================= OTHER DATA =================
-  const otherData = conference.otherData || {};
-
-  const sampleAgenda = otherData.sampleAgenda || [];
-  const whyToAttend = otherData.whyToAttend || [];
-  const benefits = otherData.benefitsOfAttending || [];
-  const delegates = otherData.delegates || [];
-  const posterLive = otherData.posterPresentersLive || [];
-  const ePoster = otherData.ePosterPresenters || {};
-  const market = otherData.marketAnalysis || {};
-
-  const hasEPoster =
-    (ePoster?.benefits?.length || 0) > 0 ||
-    Object.keys(ePoster?.specifications || {}).length > 0;
-
-  const hasWelcome =
-    Boolean(conference.image) ||
-    conference.welcomeMessage.paragraphs.length > 0 ||
-    Boolean(conference.welcomeMessage.signature);
-
-  const hasAttend =
-    Boolean(conference.whoShouldAttendDescription) ||
-    conference.whoShouldAttend.length > 0;
-
-  const hasHighlights = conference.keyHighlights.length > 0;
-  const hasTopics = conference.topics.length > 0;
-
-  const welcomeParagraphs = conference.welcomeMessage.paragraphs;
-  const shouldCollapseWelcome = welcomeParagraphs.length > 4;
-
-  const visibleWelcomeParagraphs =
-    showAllWelcome || !shouldCollapseWelcome
-      ? welcomeParagraphs
-      : welcomeParagraphs.slice(0, 4);
-
-  // ================= EXPLORE CARD DATA =================
-  // Exactly 8 cards are always created.
-  // Cards without API data show a helpful fallback message.
-  const flipCards = [
-    {
-      id: "tracks",
-      label: "Sessions / Tracks",
-      icon: <BookOpen size={22} />,
-      description: "Explore conference sessions and research tracks.",
-      content:
-        conference.tracks.length > 0 ? (
-          <div className="space-y-3">
-            {conference.tracks.map((track, index) => (
-              <div
-                key={track?._id || track?.title || index}
-                className="rounded-xl border border-violet-100 bg-violet-50/70 p-3"
-              >
-                <p className="text-sm font-bold text-violet-950">
-                  {String(index + 1).padStart(2, "0")}.{" "}
-                  {track?.title || track?.name || `Track ${index + 1}`}
-                </p>
-                {track?.description && (
-                  <p className="mt-1 text-xs leading-5 text-gray-600">
-                    {track.description}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyCardContent text="Session and track information will be announced soon." />
-        ),
-    },
-
-    {
-      id: "why",
-      label: "Why to Attend",
-      icon: <HeartHandshake size={22} />,
-      description: "Discover the value of attending this conference.",
-      content:
-        whyToAttend.length > 0 ? (
-          <ItemList items={whyToAttend} />
-        ) : (
-          <EmptyCardContent text="More information about the conference experience will be available soon." />
-        ),
-    },
-
-    {
-      id: "agenda",
-      label: "Sample Agenda",
-      icon: <CalendarDays size={22} />,
-      description: "View the planned sessions and schedule.",
-      content:
-        sampleAgenda.length > 0 ? (
-          <div className="space-y-4">
-            {sampleAgenda.map((day, index) => (
-              <div
-                key={day?.day || index}
-                className="rounded-xl border border-violet-100 p-3"
-              >
-                <p className="rounded-lg bg-violet-100 px-3 py-2 text-sm font-bold text-violet-950">
-                  {day?.day || `Day ${index + 1}`}
-                </p>
-
-                <div className="mt-3 space-y-3">
-                  {(day?.schedule || []).map((item, scheduleIndex) => (
-                    <div
-                      key={`${item?.time || "session"}-${scheduleIndex}`}
-                      className="flex gap-3 text-xs leading-5"
-                    >
-                      <span className="w-20 shrink-0 font-bold text-violet-700">
-                        {item?.time || ""}
-                      </span>
-                      <span className="text-gray-600">
-                        {item?.session || item?.title || ""}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyCardContent text="The conference agenda will be published soon." />
-        ),
-    },
-
-    {
-      id: "benefits",
-      label: "Benefits of Attending",
-      icon: <Award size={22} />,
-      description: "Learn about the benefits of participation.",
-      content:
-        benefits.length > 0 ? (
-          <ItemList items={benefits} />
-        ) : (
-          <EmptyCardContent text="Participant benefits will be announced soon." />
-        ),
-    },
-
-    {
-      id: "delegates",
-      label: "Delegates",
-      icon: <Users size={22} />,
-      description: "Find out who can participate in the event.",
-      content:
-        delegates.length > 0 ? (
-          <ItemList items={delegates} />
-        ) : (
-          <EmptyCardContent text="Delegate and participant information will be available soon." />
-        ),
-    },
-
-    {
-      id: "poster",
-      label: "Live Poster Presentations",
-      icon: <Presentation size={22} />,
-      description: "Explore live poster presentation opportunities.",
-      content:
-        posterLive.length > 0 ? (
-          <Bullets items={posterLive} />
-        ) : (
-          <EmptyCardContent text="Live poster presentation details will be announced soon." />
-        ),
-    },
-
-    {
-      id: "eposter",
-      label: "E-Poster Presenters",
-      icon: <FileText size={22} />,
-      description: "Explore virtual poster presentation requirements.",
-      content: hasEPoster ? (
-        <div className="space-y-4">
-          <Bullets items={ePoster.benefits || []} />
-
-          {ePoster.guidelinesIntro && (
-            <p className="text-xs leading-5 text-gray-600">
-              {ePoster.guidelinesIntro}
-            </p>
-          )}
-
-          {Object.keys(ePoster.specifications || {}).length > 0 && (
-            <Sub title="Specifications">
-              <div className="space-y-2">
-                {Object.entries(ePoster.specifications).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex justify-between gap-3 border-b border-violet-100 pb-2 text-xs"
-                  >
-                    <span className="font-semibold text-gray-600">{key}</span>
-                    <span className="text-right font-bold text-violet-700">
-                      {String(value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Sub>
-          )}
-
-          {ePoster.posterContent?.length > 0 && (
-            <Sub title="Poster Content">
-              <Bullets items={ePoster.posterContent} />
-            </Sub>
-          )}
-
-          {ePoster.designRequirements?.length > 0 && (
-            <Sub title="Design Requirements">
-              <Bullets items={ePoster.designRequirements} />
-            </Sub>
-          )}
-
-          {ePoster.submissionGuidelines?.length > 0 && (
-            <Sub title="Submission Guidelines">
-              <Bullets items={ePoster.submissionGuidelines} />
-            </Sub>
-          )}
-
-          {ePoster.reviewAndAcceptance?.length > 0 && (
-            <Sub title="Review & Acceptance">
-              <Bullets items={ePoster.reviewAndAcceptance} />
-            </Sub>
-          )}
-
-          {(ePoster.presentation?.length > 0 ||
-            ePoster.certificate?.length > 0) && (
-            <Sub title="Presentation & Certificate">
-              <Bullets
-                items={[
-                  ...(ePoster.presentation || []),
-                  ...(ePoster.certificate || []),
-                ]}
-              />
-            </Sub>
-          )}
-        </div>
-      ) : (
-        <EmptyCardContent text="E-poster submission guidelines will be available soon." />
-      ),
-    },
-
-    {
-      id: "market",
-      label: "Market Analysis",
-      icon: <Globe2 size={22} />,
-      description: "Explore the conference's research and market context.",
-      content:
-        market?.paragraphs?.length > 0 ? (
-          <div className="space-y-3">
-            {market.heading && (
-              <h4 className="text-sm font-bold text-violet-950">
-                {market.heading}
-              </h4>
-            )}
-
-            {market.paragraphs.map((paragraph, index) => (
-              <p key={index} className="text-xs leading-5 text-gray-600">
-                {paragraph}
-              </p>
-            ))}
-
-            {market.image && (
-              <img
-                src={market.image}
-                alt="Market analysis"
-                loading="lazy"
-                className="h-40 w-full rounded-xl object-cover"
-              />
-            )}
-          </div>
-        ) : (
-          <EmptyCardContent text="Conference market analysis will be available soon." />
-        ),
-    },
-  ];
+  // ==========================================================
+  // MAIN UI
+  // ==========================================================
 
   return (
-    <>
-      <SEO
-        title={conference.title}
-        description={
-          conference.description ||
-          `${conference.title} - GlobalScion Conferences`
-        }
-        keywords={[
-          conference.title,
-          conference.category,
-          "GlobalScion",
-          "International Conference",
-          "Conference",
-          "Research Conference",
-        ]
-          .filter(Boolean)
-          .join(", ")}
-        canonical={conferenceUrl}
-        image={conference.image}
-        type="event"
-        structuredData={[eventSchema, breadcrumbSchema]}
-      />
+    <div className="min-h-screen overflow-hidden bg-white font-sans text-slate-800">
+      {/* SEO fallback message. Page still renders if API fails. */}
+      {apiError && (
+        <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-center text-xs text-amber-800">
+          {apiError} Showing available fallback content where appropriate.
+        </div>
+      )}
 
-      <div className="min-h-screen overflow-hidden bg-white text-gray-900">
-        {/* ================= HERO ================= */}
-        <section
-          className="relative overflow-hidden"
-          style={{ backgroundColor: C.dark }}
-        >
-          {conference.image && (
-            <img
-              src={conference.image}
-              alt={conference.title}
-              fetchPriority="high"
-              className="absolute inset-0 h-full w-full object-cover"
-              style={{ filter: "brightness(0.4)" }}
-            />
-          )}
+      {/* HERO BANNER */}
+      <section
+        id="home"
+        className="relative isolate scroll-mt-20 overflow-hidden"
+      >
+        <div
+          className="absolute inset-0 -z-20 bg-cover bg-center"
+          style={{ backgroundImage: `url("${heroImage}")` }}
+        />
 
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(100deg, rgba(15,5,28,0.97) 0%, rgba(35,13,55,0.87) 55%, rgba(76,29,149,0.55) 100%)",
-            }}
-          />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#071b38]/95 via-[#17123c]/85 to-[#26124b]/45" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#08162c]/50 via-transparent to-[#08162c]/20" />
 
-          <div className="relative z-10 mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-            <Link
-              to="/conferences"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-purple-200 transition hover:bg-white/10 hover:text-white"
-            >
-              <ArrowLeft size={15} />
-              Back to Conferences
-            </Link>
+        <div className="mx-auto flex min-h-[390px] max-w-[1400px] flex-col items-center justify-between gap-8 px-5 py-10 sm:px-8 lg:min-h-[440px] lg:flex-row lg:gap-10 lg:px-10">
+          <motion.div
+            initial={{ opacity: 0, x: -25 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+            className="w-full max-w-[760px] flex-1 text-white"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-semibold backdrop-blur-md">
+              <CalendarDays size={12} />
+              {category}
+            </span>
 
-            <div className="mt-7 grid items-center gap-8 lg:grid-cols-[1fr_300px] lg:gap-12">
-              <motion.div
-                initial={{ opacity: 0, x: -24 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                {conference.category && (
-                  <span className="inline-flex rounded-full border border-purple-300/30 bg-purple-500/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-purple-100">
-                    {conference.category}
-                  </span>
-                )}
+            <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
+              {title}
+            </h1>
 
-                <h1 className="mt-4 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  {conference.title}
-                </h1>
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-white/90 sm:text-base">
+              {subtitle}
+            </p>
 
-                {conference.subtitle && (
-                  <p className="mt-4 max-w-3xl text-sm font-medium leading-7 text-violet-100 sm:text-base sm:leading-8">
-                    {conference.subtitle}
-                  </p>
-                )}
-
-                {conference.description && (
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-violet-200 sm:text-base">
-                    {conference.description}
-                  </p>
-                )}
-
-                <div className="mt-6 flex flex-wrap gap-2.5">
-                  {conference.date && (
-                    <Pill icon={<CalendarDays size={15} />}>
-                      {conference.date}
-                      {conference.time ? ` · ${conference.time}` : ""}
-                    </Pill>
-                  )}
-
-                  {(conference.location || conference.mode) && (
-                    <Pill icon={<MapPin size={15} />}>
-                      {[conference.location, conference.mode]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </Pill>
-                  )}
-
-                  {conference.participants && (
-                    <Pill icon={<Users size={15} />}>
-                      {conference.participants} Expected
-                    </Pill>
-                  )}
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-4">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="shrink-0 text-violet-300" size={23} />
+                <div>
+                  <p className="text-xs font-semibold">{dateRange}</p>
+                  <p className="mt-1 text-[10px] text-white/70">{time}</p>
                 </div>
-              </motion.div>
+              </div>
 
-              {/* COUNTDOWN */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="rounded-2xl border border-white/15 bg-black/30 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
+              <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
+                <MapPin className="shrink-0 text-violet-300" size={24} />
+                <div>
+                  <p className="text-xs font-semibold">{venueName}</p>
+                  <p className="mt-1 text-[10px] text-white/70">{mode}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
+                <Globe2 className="shrink-0 text-violet-300" size={23} />
+                <div>
+                  <p className="text-xs font-semibold">{participants}</p>
+                  <p className="mt-1 text-[10px] text-white/70">{mode}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button
+                onClick={goToRegistration}
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:-translate-y-0.5 hover:shadow-violet-500/30"
               >
-                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-purple-200">
-                  Conference Starts In
+                Register Now
+                <ArrowRight size={15} />
+              </button>
+
+              <button
+                onClick={goToBrochure}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/50 bg-white/5 px-4 py-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/15"
+              >
+                <Download size={14} />
+                Download Brochure
+              </button>
+
+              <button
+                onClick={goToScientificProgram}
+                className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
+              >
+                View Scientific Program
+              </button>
+
+              <button
+                onClick={goToAbstracts}
+                className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
+              >
+                Abstracts
+              </button>
+            </div>
+          </motion.div>
+
+          {/* COUNTDOWN */}
+          <motion.aside
+            initial={{ opacity: 0, x: 25, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="w-full max-w-[420px] shrink-0 rounded-2xl border border-white/20 bg-[#100d35]/80 p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:w-[370px]"
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-500/20 text-violet-200">
+                <Clock size={23} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {countdown.phase === "upcoming"
+                    ? "Conference Countdown"
+                    : countdown.phase === "live"
+                      ? "Conference Is Live"
+                      : countdown.phase === "ended"
+                        ? "Conference Completed"
+                        : "Conference Schedule"}
+                </h2>
+                <p className="mt-1 text-[11px] leading-4 text-white/65">
+                  {title}
+                </p>
+              </div>
+            </div>
+
+            {countdown.phase === "upcoming" && (
+              <>
+                <p className="mb-4 text-center text-[10px] font-semibold uppercase tracking-[0.15em] text-violet-200 sm:text-xs">
+                  Time Remaining Until Conference
                 </p>
 
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    ["Days", timeLeft.days],
-                    ["Hours", timeLeft.hours],
-                    ["Mins", timeLeft.minutes],
-                    ["Secs", timeLeft.seconds],
-                  ].map(([label, value]) => (
+                    { label: "Days", value: countdown.days },
+                    { label: "Hours", value: countdown.hours },
+                    { label: "Minutes", value: countdown.minutes },
+                    { label: "Seconds", value: countdown.seconds },
+                  ].map((item) => (
                     <div
-                      key={label}
-                      className="rounded-xl border border-white/10 bg-white/[0.07] px-1 py-3 text-center"
+                      key={item.label}
+                      className="flex min-w-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.13] to-white/[0.06] px-1 py-4"
                     >
-                      <span className="block text-xl font-extrabold leading-none text-white sm:text-2xl">
-                        {String(value).padStart(2, "0")}
+                      <span className="text-2xl font-extrabold tabular-nums text-white sm:text-3xl">
+                        {String(item.value).padStart(2, "0")}
                       </span>
-                      <span className="mt-2 block text-[9px] font-bold uppercase tracking-wider text-purple-300">
-                        {label}
+                      <span className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-violet-200 sm:text-[10px]">
+                        {item.label}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  <ActionBtn
-                    primary
-                    icon={<UserPlus size={15} />}
-                    text="Register Now"
-                    onClick={() =>
-                      navigate(`/conferences/${conference.id}/register`)
-                    }
-                  />
-
-                  <ActionBtn
-                    icon={<FileText size={15} />}
-                    text="Abstract"
-                    onClick={() =>
-                      navigate(
-                        `/conferences/${conference.id}/abstract-submission`,
-                      )
-                    }
-                  />
-
-                  <ActionBtn
-                    icon={<Download size={15} />}
-                    text="Brochure"
-                    onClick={() =>
-                      navigate(`/conferences/${conference.id}/brochure`, {
-                        state: { conference },
-                      })
-                    }
-                  />
-
-                  <ActionBtn
-                    icon={<BookOpen size={15} />}
-                    text="Program"
-                    onClick={() =>
-                      navigate(
-                        `/conferences/${conference.id}/scientific-program`,
-                      )
-                    }
-                  />
+                <div className="mt-5 flex items-center justify-center gap-2 text-xs text-white/80">
+                  <CalendarDays size={15} className="text-violet-300" />
+                  {dateRange}
                 </div>
-              </motion.div>
+
+                <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-white/65">
+                  <Globe2 size={14} className="text-violet-300" />
+                  {venueName} · {mode}
+                </div>
+
+                <button
+                  onClick={goToRegistration}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-xs font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-violet-500/30"
+                >
+                  Secure Your Registration
+                  <ArrowRight size={15} />
+                </button>
+
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <span className="text-[10px] text-white/60">
+                    Live countdown · Updates every second
+                  </span>
+                </div>
+              </>
+            )}
+
+            {countdown.phase === "live" && (
+              <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-6 text-center">
+                <CheckCircle2
+                  size={38}
+                  className="mx-auto mb-3 text-emerald-300"
+                />
+                <h3 className="text-lg font-bold text-white">
+                  The Conference Is Live!
+                </h3>
+                <p className="mt-2 text-xs leading-6 text-white/70">
+                  The conference is in progress. Explore the scientific program
+                  and available sessions.
+                </p>
+                <button
+                  onClick={goToScientificProgram}
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                >
+                  View Conference Program
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {countdown.phase === "ended" && (
+              <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-4 py-7 text-center">
+                <Award size={38} className="mx-auto mb-3 text-violet-200" />
+                <h3 className="text-lg font-bold text-white">
+                  Thank You for Your Interest!
+                </h3>
+                <p className="mt-2 text-xs leading-6 text-white/70">
+                  Explore the conference details, speakers, scientific topics
+                  and other available resources.
+                </p>
+                <button
+                  onClick={() => scrollTo("explore")}
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                >
+                  Explore Conference
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {countdown.phase === "unknown" && (
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-7 text-center">
+                <CalendarDays
+                  size={34}
+                  className="mx-auto mb-3 text-violet-200"
+                />
+                <h3 className="text-lg font-bold text-white">
+                  Schedule Coming Soon
+                </h3>
+                <p className="mt-2 text-xs leading-6 text-white/70">
+                  Conference dates will be published when the schedule is
+                  confirmed.
+                </p>
+                <button
+                  onClick={goToRegistration}
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                >
+                  Registration Details
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+          </motion.aside>
+        </div>
+      </section>
+
+      {/* WELCOME MESSAGE */}
+      <section
+        id="welcome"
+        className="scroll-mt-24 bg-white px-5 py-10 sm:px-10 lg:py-12"
+      >
+        <div className="mx-auto grid max-w-[1300px] items-center gap-8 lg:grid-cols-[1.15fr_0.95fr_0.38fr]">
+          <div>
+            <SectionLabel>
+              {asText(welcome.heading, "Welcome Message")}
+            </SectionLabel>
+
+            <h2 className="text-2xl font-bold leading-tight text-[#171447]">
+              Welcome to GlobalScion
+            </h2>
+
+            <h3 className="mt-1 text-sm font-bold leading-6 text-[#24205c]">
+              {title}
+            </h3>
+
+            <p className="welcome-copy mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
+              {welcomeText}
+            </p>
+
+            {welcomeSignature && (
+              <p className="mt-4 whitespace-pre-line text-sm font-semibold leading-6 text-violet-800">
+                {welcomeSignature}
+              </p>
+            )}
+
+            <p className="mt-4 font-serif text-xl italic text-violet-800">
+              Together for a Brighter Future
+            </p>
+            <div className="ml-10 mt-1 h-0.5 w-32 rotate-[-5deg] rounded-full bg-violet-500" />
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setVideoOpen(true)}
+              className="group relative block aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100 shadow-md"
+              aria-label="Open conference introduction"
+            >
+              <img
+                src={aboutImage}
+                alt={`${title} introduction`}
+                loading="lazy"
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
+              <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-violet-700 shadow-xl transition group-hover:scale-110">
+                <Play size={25} fill="currentColor" />
+              </span>
+              <span className="absolute bottom-8 left-0 w-full text-center text-sm font-bold text-white">
+                About the Conference
+              </span>
+              <span className="absolute bottom-3 left-0 w-full text-center text-[11px] text-white/80">
+                Discover our vision
+              </span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 rounded-xl bg-violet-50 p-4 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1">
+            {[
+              { icon: Users, value: "4800+", label: "Attendees" },
+              { icon: Globe2, value: "60+", label: "Countries" },
+              { icon: CalendarDays, value: "25+", label: "Conferences" },
+              { icon: Mic, value: "300+", label: "Speakers" },
+            ].map(({ icon: Icon, value, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 rounded-lg p-2 lg:py-3"
+              >
+                <Icon className="shrink-0 text-violet-600" size={28} />
+                <div>
+                  <p className="text-xl font-extrabold leading-tight text-violet-800">
+                    {value}
+                  </p>
+                  <p className="mt-1 text-[15px] font-semibold text-slate-600">
+                    {label}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SPEAKERS */}
+      <section
+        id="speakers"
+        className="scroll-mt-24 bg-[#f7faff] px-5 py-10 sm:px-10"
+      >
+        <div className="mx-auto max-w-[1300px]">
+          <div className="flex items-end justify-between gap-3">
+            <SectionHeading
+              label="Featured Speakers"
+              title="Renowned Speakers"
+              description="Meet the speakers and professionals participating in this conference."
+            />
+
+            <button
+              onClick={() => scroll(speakerRef, 1)}
+              className="mb-6 hidden shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 sm:flex"
+            >
+              View Speakers <ArrowRight size={14} />
+            </button>
+          </div>
+
+          <div
+            ref={speakerRef}
+            className="flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {speakers.length ? (
+              speakers.map((speaker, index) => (
+                <motion.article
+                  key={speaker._id || speaker.name || index}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="flex min-w-[270px] snap-start items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-w-[calc(50%-8px)] lg:min-w-[calc(25%-12px)]"
+                >
+                  <img
+                    src={getSpeakerImage(speaker)}
+                    alt={asText(speaker.name, "Conference speaker")}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                    }}
+                    className="h-[72px] w-[72px] shrink-0 rounded-full border-2 border-violet-100 object-cover"
+                  />
+
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-[#171447]">
+                      {asText(speaker.name, "Speaker")}
+                    </h3>
+                    <p className="mt-1 text-xs leading-4 text-slate-600">
+                      {asText(speaker.role, "Conference Speaker")}
+                    </p>
+                    {getSpeakerOrganization(speaker) && (
+                      <p className="mt-1 text-xs leading-4 text-slate-500">
+                        {getSpeakerOrganization(speaker)}
+                      </p>
+                    )}
+                    {speaker.specialty && (
+                      <span className="mt-2 inline-block rounded-full bg-violet-50 px-2 py-1 text-[9px] font-medium text-violet-700">
+                        {speaker.specialty}
+                      </span>
+                    )}
+                    {speaker.bio && (
+                      <p className="mt-2 line-clamp-3 text-[10px] leading-4 text-slate-500">
+                        {speaker.bio}
+                      </p>
+                    )}
+                  </div>
+                </motion.article>
+              ))
+            ) : (
+              <div className="w-full">
+                <EmptyState>
+                  No speakers have been added to this conference yet.
+                </EmptyState>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-1 flex justify-end gap-3">
+            <button
+              onClick={() => scroll(speakerRef, -1)}
+              aria-label="Previous speakers"
+              className="rounded-full border border-slate-200 bg-white p-2 text-violet-700 shadow-sm hover:bg-violet-50"
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <button
+              onClick={() => scroll(speakerRef, 1)}
+              aria-label="Next speakers"
+              className="rounded-full border border-slate-200 bg-white p-2 text-violet-700 shadow-sm hover:bg-violet-50"
+            >
+              <ChevronRight size={17} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* WHO SHOULD ATTEND + KEY POINTS */}
+      <section className="bg-[#f7faff] px-5 pb-10 sm:px-10">
+        <div className="mx-auto grid max-w-[1300px] gap-5 lg:grid-cols-2">
+          <article className="rounded-xl bg-gradient-to-br from-[#edf6ff] to-[#e9f3ff] p-6">
+            <div className="flex gap-4">
+              <Users className="mt-1 shrink-0 text-violet-600" size={31} />
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-[#171447]">
+                  Who Should Attend?
+                </h2>
+
+                {whoShouldAttend ? (
+                  <p className="mt-2 whitespace-pre-line text-sm leading-[1.85] text-slate-600">
+                    {whoShouldAttend}
+                  </p>
+                ) : asArray(data.whoShouldAttend).length ? (
+                  <div className="mt-3">
+                    <DetailList items={data.whoShouldAttend} />
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                    This conference welcomes researchers, clinicians, educators,
+                    students, professionals and others interested in the
+                    conference subject. Please check the program for details.
+                  </p>
+                )}
+
+                <button
+                  onClick={() => scrollTo("explore")}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2.5 text-[11px] font-semibold text-white transition hover:bg-violet-700"
+                >
+                  View Conference Details <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-xl bg-gradient-to-br from-[#f5f0ff] to-[#f0f3ff] p-6">
+            <div className="flex gap-4">
+              <Lightbulb className="mt-1 shrink-0 text-violet-600" size={32} />
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-[#171447]">Key Points</h2>
+                <p className="mt-2 text-sm leading-[1.85] text-slate-600">
+                  Explore conference information, scientific topics, expert
+                  sessions and opportunities for professional collaboration.
+                </p>
+                <ul className="mt-4 space-y-3">
+                  {FALLBACK_KEY_POINTS.map((point) => (
+                    <li
+                      key={point}
+                      className="flex items-start gap-2.5 text-sm leading-7 text-slate-700"
+                    >
+                      <CheckCircle2
+                        className="mt-0.5 shrink-0 text-violet-600"
+                        size={15}
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* KEY HIGHLIGHTS + TOPICS
+          - If Key Topics is empty, the topics division disappears and
+            Key Highlights takes the full width.
+          - If Key Highlights is empty, Key Topics takes the full width.
+          - If both are empty, the whole section is hidden.
+          - As soon as data is added, each block appears in the same place. */}
+      {(hasHighlights || hasTopics) && (
+        <section className="bg-white px-5 py-10 sm:px-10">
+          <div
+            className={`mx-auto grid max-w-[1300px] gap-10 ${
+              hasHighlights && hasTopics ? "lg:grid-cols-2" : "grid-cols-1"
+            }`}
+          >
+            {/* KEY HIGHLIGHTS */}
+            {hasHighlights && (
+              <div>
+                <SectionHeading
+                  label="Conference Highlights"
+                  title="Key Highlights"
+                  description="Important sessions and opportunities featured in the conference."
+                />
+
+                <div className="divide-y divide-slate-100 border-y border-slate-100">
+                  {keyHighlights.map((highlight, index) => {
+                    const highlightTitle = getText(
+                      highlight,
+                      ["title", "name"],
+                      "Conference Highlight",
+                    );
+
+                    const highlightDescription = getText(
+                      highlight,
+                      ["description", "content", "text"],
+                      "More details will be announced soon.",
+                    );
+
+                    return (
+                      <details
+                        key={highlight._id || `${highlightTitle}-${index}`}
+                        className="group"
+                      >
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-600" />
+                            <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700 sm:text-base">
+                              {highlightTitle}
+                            </span>
+                          </span>
+
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-50 group-open:text-violet-700">
+                            <ChevronDown size={17} />
+                          </span>
+                        </summary>
+
+                        <div className="pb-4 pl-5 pr-10">
+                          <p className="text-sm leading-7 text-slate-600">
+                            {highlightDescription}
+                          </p>
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* KEY TOPICS */}
+            {hasTopics && (
+              <div
+                id="topics"
+                className={`scroll-mt-24 ${
+                  hasHighlights
+                    ? "border-t border-slate-100 pt-8 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0"
+                    : ""
+                }`}
+              >
+                <SectionHeading
+                  label="Explore Research Areas"
+                  title="Key Topics"
+                  description="Explore the research areas and topics published for this conference."
+                />
+
+                <div className="divide-y divide-slate-100 border-y border-slate-100">
+                  {topics.map((topic, index) => {
+                    const topicTitle =
+                      typeof topic === "string"
+                        ? topic
+                        : getText(
+                            topic,
+                            ["title", "name", "topic", "label"],
+                            `Research Topic ${index + 1}`,
+                          );
+
+                    const topicDescription =
+                      typeof topic === "object" && topic !== null
+                        ? getText(
+                            topic,
+                            ["description", "content", "details"],
+                            "",
+                          )
+                        : "";
+
+                    return (
+                      <details
+                        key={
+                          typeof topic === "object" && topic !== null
+                            ? topic._id || `${topicTitle}-${index}`
+                            : `${topicTitle}-${index}`
+                        }
+                        className="group"
+                      >
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
+                          <span className="flex min-w-0 items-center gap-3">
+                            <CheckCircle2
+                              size={17}
+                              className="shrink-0 text-violet-600"
+                            />
+
+                            <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700 sm:text-base">
+                              {topicTitle}
+                            </span>
+                          </span>
+
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-50 group-open:text-violet-700">
+                            <ChevronDown size={17} />
+                          </span>
+                        </summary>
+
+                        {topicDescription && (
+                          <div className="pb-4 pl-8 pr-10">
+                            <p className="text-sm leading-7 text-slate-600">
+                              {topicDescription}
+                            </p>
+                          </div>
+                        )}
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* EXPLORE CONFERENCE */}
+      <section
+        id="explore"
+        className="scroll-mt-20 bg-[#f5f9ff] px-5 py-10 sm:px-10"
+      >
+        <div className="mx-auto max-w-[1300px]">
+          <SectionHeading
+            label="Event Details"
+            title="Explore the Conference"
+            description="Explore the sessions, tracks, benefits and other conference resources."
+          />
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
+            {exploreItems.map((item, index) => {
+              const Icon = item.icon || BookOpen;
+
+              return (
+                <button
+                  key={item.number}
+                  onClick={() => handleExploreClick(index)}
+                  className={`min-h-[125px] rounded-xl border p-3 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${
+                    activeExplore === index
+                      ? "border-violet-400 bg-violet-50"
+                      : "border-slate-100 bg-white"
+                  }`}
+                >
+                  <span
+                    className={`mb-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold ${
+                      index % 3 === 0
+                        ? "bg-violet-100 text-violet-700"
+                        : index % 3 === 1
+                          ? "bg-teal-50 text-teal-700"
+                          : "bg-pink-50 text-pink-700"
+                    }`}
+                  >
+                    {item.number}
+                  </span>
+
+                  <Icon className="mb-2 text-violet-600" size={18} />
+
+                  <h3 className="text-xs font-bold leading-5 text-[#171447]">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                    {item.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {activeItem && (
+            <motion.div
+              key={activeItem.key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 rounded-xl border border-violet-100 bg-white p-6 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <SectionLabel>
+                    Conference Details {activeItem.number}
+                  </SectionLabel>
+                  <h3 className="text-lg font-bold text-[#171447]">
+                    {activeItem.title}
+                  </h3>
+                </div>
+
+                <button
+                  onClick={() => setActiveExplore(null)}
+                  aria-label="Close details"
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {activeItem.content}
+              </p>
+
+              {/* SESSIONS (otherData.sampleAgenda) */}
+              {activeItem.key === "agenda" && (
+                <div className="mt-5">
+                  {agenda.length ? (
+                    <div className="space-y-2.5">
+                      {agenda.map((day, dayIndex) => (
+                        <ExpandCard
+                          key={day._id || day.day || dayIndex}
+                          title={asText(day.day, `Day ${dayIndex + 1}`)}
+                        >
+                          {getAgendaSessions(day).length ? (
+                            <div className="space-y-2">
+                              {getAgendaSessions(day).map(
+                                (session, sessionIndex) => (
+                                  <div
+                                    key={
+                                      session._id ||
+                                      `${session.time}-${sessionIndex}`
+                                    }
+                                    className="flex flex-col gap-1 rounded-lg bg-slate-50 p-3 sm:flex-row sm:items-start sm:gap-4"
+                                  >
+                                    <span className="min-w-[95px] text-xs font-bold text-violet-700">
+                                      {asText(session.time, "Time TBA")}
+                                    </span>
+                                    <span className="text-xs leading-5 text-slate-700">
+                                      {asText(
+                                        session.session ||
+                                          session.title ||
+                                          session.name,
+                                        "Session details to be announced",
+                                      )}
+                                    </span>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-500">
+                              No sessions have been added for this day.
+                            </p>
+                          )}
+                        </ExpandCard>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState>
+                      No sessions have been published yet.
+                    </EmptyState>
+                  )}
+                </div>
+              )}
+
+              {activeItem.key === "program" && (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <Microscope className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">
+                      Scientific Sessions
+                    </h4>
+                    <p className="mt-2 text-xs leading-6 text-slate-600">
+                      Explore the published agenda, keynote sessions and
+                      scientific tracks.
+                    </p>
+                    <button
+                      onClick={goToScientificProgram}
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+                    >
+                      Open Scientific Program <ArrowRight size={13} />
+                    </button>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <FileText className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">
+                      Abstract Submission
+                    </h4>
+                    <p className="mt-2 text-xs leading-6 text-slate-600">
+                      Review abstract submission options and presentation
+                      opportunities.
+                    </p>
+                    <button
+                      onClick={goToAbstracts}
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+                    >
+                      Abstract Details <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TRACKS */}
+              {activeItem.key === "tracks" && (
+                <div className="mt-5">
+                  <DetailList items={tracks} />
+                </div>
+              )}
+
+              {activeItem.key === "why" && (
+                <div className="mt-5">
+                  <DetailList items={whyToAttend} />
+                </div>
+              )}
+
+              {activeItem.key === "benefits" && (
+                <div className="mt-5 space-y-5">
+                  <div>
+                    <h4 className="mb-2 text-sm font-bold text-[#171447]">
+                      Benefits of Attending
+                    </h4>
+                    <DetailList items={benefits} />
+                  </div>
+
+                  {delegates.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 text-sm font-bold text-[#171447]">
+                        Delegates
+                      </h4>
+                      <DetailList items={delegates} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeItem.key === "poster" && (
+                <div className="mt-5 space-y-4">
+                  {posterIntroLines.length > 0 && (
+                    <ExpandCard title="E-Poster Overview">
+                      <ul className="space-y-2">
+                        {posterIntroLines.map((line, index) => (
+                          <li
+                            key={`intro-${index}`}
+                            className="flex items-start gap-2 text-xs leading-6 text-slate-600"
+                          >
+                            <CheckCircle2
+                              className="mt-1 shrink-0 text-violet-600"
+                              size={14}
+                            />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </ExpandCard>
+                  )}
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {isObject(ePoster.specifications) &&
+                      Object.entries(ePoster.specifications).map(
+                        ([key, value]) => (
+                          <div
+                            key={key}
+                            className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                          >
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                              {key}
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-[#171447]">
+                              {formatValue(value)}
+                            </p>
+                          </div>
+                        ),
+                      )}
+                  </div>
+
+                  {posterGroups.length > 0 && (
+                    <div className="space-y-2.5">
+                      {posterGroups.map(([heading, items]) => (
+                        <ExpandCard key={heading} title={heading}>
+                          <ul className="space-y-2">
+                            {items.map((item, index) => (
+                              <li
+                                key={`${heading}-${index}`}
+                                className="flex items-start gap-2 text-xs leading-6 text-slate-600"
+                              >
+                                <CheckCircle2
+                                  className="mt-1 shrink-0 text-violet-600"
+                                  size={14}
+                                />
+                                <span className="whitespace-pre-line">
+                                  {item}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </ExpandCard>
+                      ))}
+                    </div>
+                  )}
+
+                  {!posterIntroLines.length &&
+                    !posterGroups.length &&
+                    !isObject(ePoster.specifications) && (
+                      <EmptyState>
+                        E-Poster guidelines will be announced soon.
+                      </EmptyState>
+                    )}
+                </div>
+              )}
+
+              {activeItem.key === "venue" && (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <MapPin className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">
+                      Venue Information
+                    </h4>
+                    <p className="mt-2 text-xs leading-6 text-slate-600">
+                      {venueName}
+                    </p>
+                    {venueAddress && (
+                      <p className="mt-1 text-xs leading-6 text-slate-500">
+                        {venueAddress}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs text-slate-500">
+                      Format: {mode}
+                    </p>
+                    {data.venue?.mapUrl && (
+                      <a
+                        href={data.venue.mapUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+                      >
+                        View Map <ExternalLink size={13} />
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <CalendarDays className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">
+                      Conference Dates
+                    </h4>
+                    <p className="mt-2 text-xs leading-6 text-slate-600">
+                      {dateRange}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">Time: {time}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Timezone: {asText(data.venue?.timezone, "Asia/Kolkata")}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeItem.key === "contact" && (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <Mail className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">Email</h4>
+                    {contact.email ? (
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="mt-2 block break-all text-xs text-violet-700 hover:underline"
+                      >
+                        {contact.email}
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500">
+                        Email to be announced.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border border-slate-100 p-4">
+                    <Phone className="mb-2 text-violet-600" size={22} />
+                    <h4 className="text-sm font-bold text-[#171447]">Phone</h4>
+                    {contact.phone ? (
+                      <a
+                        href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}
+                        className="mt-2 block text-xs text-violet-700 hover:underline"
+                      >
+                        {contact.phone}
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500">
+                        Phone number to be announced.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border border-slate-100 p-4 sm:col-span-2">
+                    <h4 className="text-sm font-bold text-[#171447]">
+                      Important Deadlines
+                    </h4>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {[
+                        [
+                          "Registration Deadline",
+                          registrationDates.registrationDeadline,
+                        ],
+                        [
+                          "Abstract Deadline",
+                          registrationDates.abstractDeadline,
+                        ],
+                        ["Paper Deadline", registrationDates.paperDeadline],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-lg bg-slate-50 p-3">
+                          <p className="text-[10px] text-slate-500">{label}</p>
+                          <p className="mt-1 text-xs font-semibold text-[#171447]">
+                            {formatDate(value, "Not announced")}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => scrollTo("welcome")}
+                className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+              >
+                Back to conference overview <ArrowRight size={14} />
+              </button>
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* REGISTRATION CATEGORIES */}
+      {registrationCategories.length > 0 && (
+        <section className="bg-white px-5 py-10 sm:px-10">
+          <div className="mx-auto max-w-[1300px]">
+            <SectionHeading
+              label="Join Us"
+              title="Registration Categories"
+              description="Registration categories available for this conference."
+            />
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {registrationCategories.map((categoryItem, index) => (
+                <div
+                  key={categoryItem._id || categoryItem.name || index}
+                  className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+                >
+                  <h3 className="text-sm font-bold text-[#171447]">
+                    {getText(
+                      categoryItem,
+                      ["name", "title", "category", "label"],
+                      `Category ${index + 1}`,
+                    )}
+                  </h3>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">
+                    {getText(
+                      categoryItem,
+                      ["description", "details"],
+                      "Registration details are available through the registration page.",
+                    )}
+                  </p>
+                  {categoryItem.price !== undefined && (
+                    <p className="mt-3 text-sm font-bold text-violet-700">
+                      {categoryItem.currency || ""} {categoryItem.price}
+                    </p>
+                  )}
+                  <button
+                    onClick={goToRegistration}
+                    className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+                  >
+                    Register <ArrowRight size={13} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </section>
+      )}
 
-        {/* ================= WELCOME MESSAGE ================= */}
-        {hasWelcome && (
-          <Section>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="grid items-center gap-8 md:grid-cols-[0.8fr_1.2fr] lg:grid-cols-[0.85fr_1.25fr] lg:gap-10">
-                {conference.image && (
-                  <motion.div
-                    variants={reveal}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.2 }}
-                    className="order-1 flex justify-center md:justify-start"
-                  >
-                    <div className="relative flex items-center justify-center">
-                      <div
-                        className="absolute h-[280px] w-[280px] rounded-full sm:h-[340px] sm:w-[340px] lg:h-[390px] lg:w-[390px]"
-                        style={{ backgroundColor: C.softer }}
-                      />
-
-                      <div
-                        className="relative h-[260px] w-[260px] overflow-hidden rounded-full border-[5px] shadow-lg sm:h-[320px] sm:w-[320px] lg:h-[370px] lg:w-[370px]"
-                        style={{
-                          borderColor: C.border,
-                          backgroundColor: C.softer,
-                        }}
-                      >
-                        <img
-                          src={conference.image}
-                          alt={`${conference.title} welcome`}
-                          loading="lazy"
-                          className="h-full w-full rounded-full object-cover transition-transform duration-700 hover:scale-105"
-                        />
-                      </div>
-
-                      <div
-                        className="absolute bottom-3 right-3 h-9 w-9 rounded-full border-4 border-white shadow-sm sm:bottom-4 sm:right-4 sm:h-11 sm:w-11"
-                        style={{ backgroundColor: C.primary }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-
-                <motion.div
-                  variants={reveal}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.15 }}
-                  className="order-2 relative z-10 min-w-0"
-                >
-                  <h2
-                    className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl"
-                    style={{ color: C.title }}
-                  >
-                    Welcome Message
+      {/* SPONSORS + RECENT POSTS
+          - Sponsors card appears only when sponsors are added.
+          - When there are no sponsors, Recent Posts takes the full width. */}
+      <section className="bg-white px-5 py-10 sm:px-10">
+        <div
+          className={`mx-auto grid max-w-[1300px] gap-5 ${
+            hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
+          }`}
+        >
+          {/* SPONSORS */}
+          {hasSponsors && (
+            <div className="rounded-xl border border-slate-100 bg-[#fbfdff] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <SectionLabel>Our Sponsors</SectionLabel>
+                  <h2 className="text-lg font-bold text-[#171447]">
+                    Our Valued Sponsors
                   </h2>
+                </div>
+                <Handshake className="text-violet-600" size={25} />
+              </div>
 
-                  <div className="mt-4 max-w-[680px]">
-                    {visibleWelcomeParagraphs.map((paragraph, index) => (
-                      <p
-                        key={index}
-                        className="mb-2 text-[13px] leading-6 text-gray-600 sm:text-sm sm:leading-6"
-                        style={{
-                          textAlign: "left",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                We appreciate the organizations supporting this conference and
+                its research community.
+              </p>
 
-                    {shouldCollapseWelcome && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAllWelcome((prev) => !prev)}
-                        className="inline-flex items-center gap-1 text-sm font-semibold transition hover:opacity-75"
-                        style={{ color: C.primary }}
-                        aria-expanded={showAllWelcome}
-                      >
-                        {showAllWelcome ? "Show Less" : "Show More"}
-                        {showAllWelcome ? (
-                          <ChevronUp size={16} />
-                        ) : (
-                          <ChevronDown size={16} />
-                        )}
-                      </button>
-                    )}
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {sponsors.map((sponsor, index) => {
+                  const sponsorName = getText(
+                    sponsor,
+                    ["name", "title", "companyName"],
+                    typeof sponsor === "string"
+                      ? sponsor
+                      : `Sponsor ${index + 1}`,
+                  );
 
-                    {conference.welcomeMessage?.signature && (
-                      <div
-                        className="mt-4 border-l-[3px] py-1 pl-3"
-                        style={{ borderColor: C.primary }}
-                      >
-                        <p
-                          className="text-sm font-bold sm:text-base"
-                          style={{ color: C.title }}
+                  const logo =
+                    typeof sponsor === "object"
+                      ? sponsor.logo ||
+                        sponsor.logoUrl ||
+                        sponsor.image ||
+                        sponsor.imageUrl ||
+                        sponsor.fileUrl
+                      : "";
+
+                  const website =
+                    typeof sponsor === "object"
+                      ? sponsor.website || sponsor.url || ""
+                      : "";
+
+                  return (
+                    <div
+                      key={sponsor._id || sponsorName || index}
+                      className="flex min-h-[75px] items-center justify-center rounded-lg border border-slate-100 bg-white px-3 py-3 text-center shadow-sm transition hover:border-violet-200"
+                    >
+                      {logo ? (
+                        <img
+                          src={logo}
+                          alt={sponsorName}
+                          loading="lazy"
+                          className="max-h-12 max-w-full object-contain"
+                        />
+                      ) : website ? (
+                        <a
+                          href={website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-bold text-violet-700 hover:underline"
                         >
-                          {conference.welcomeMessage.signature}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/conferences/${conference.id}/register`)
-                      }
-                      className="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ backgroundColor: C.primary }}
-                      onMouseEnter={(event) => {
-                        event.currentTarget.style.backgroundColor =
-                          C.primaryHover;
-                      }}
-                      onMouseLeave={(event) => {
-                        event.currentTarget.style.backgroundColor = C.primary;
-                      }}
-                    >
-                      Register Now
-                      <ArrowRight size={16} className="ml-2" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/conferences/${conference.id}/brochure`, {
-                          state: { conference },
-                        })
-                      }
-                      className="inline-flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition duration-200 hover:bg-purple-50"
-                      style={{
-                        borderColor: C.primary,
-                        color: C.primary,
-                      }}
-                    >
-                      Download Brochure
-                      <Download size={16} className="ml-2" />
-                    </button>
-                  </div>
-                </motion.div>
+                          {sponsorName}
+                        </a>
+                      ) : (
+                        <span className="text-sm font-bold text-slate-700">
+                          {sponsorName}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </Section>
-        )}
+          )}
 
-        {/* ================= SPEAKERS ================= */}
-        {conference.speakers?.length > 0 && (
-          <Section bg="#FFFFFF">
-            <div className="mx-auto w-full max-w-7xl">
-              <Heading
-                label="Renowned Speakers"
-                eyebrow="MEET THE EXPERTS"
-                description="Learn from distinguished researchers, professionals, and thought leaders."
-              />
+          {/* RECENT POSTS */}
+          <div className="rounded-xl bg-gradient-to-br from-[#f6f3ff] to-[#f4f8ff] p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <SectionLabel>Follow Us</SectionLabel>
+                <h2 className="text-lg font-bold text-[#171447]">
+                  Recent Posts
+                </h2>
+              </div>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => scroll(postRef, -1)}
+                  aria-label="Previous posts"
+                  className="rounded-full bg-white p-2 text-violet-700 shadow-sm"
+                >
+                  <ChevronLeft size={15} />
+                </button>
+                <button
+                  onClick={() => scroll(postRef, 1)}
+                  aria-label="Next posts"
+                  className="rounded-full bg-white p-2 text-violet-700 shadow-sm"
+                >
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            </div>
 
-              <motion.div
-                variants={stagger}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.12 }}
-                className="mx-auto mt-9 flex max-w-6xl flex-wrap items-start justify-center gap-x-8 gap-y-10 sm:gap-x-10 lg:gap-x-12"
-              >
-                {conference.speakers.map((speaker, index) => (
-                  <motion.div
-                    variants={reveal}
-                    key={speaker._id || speaker.name || index}
-                    className="group w-[145px] text-center sm:w-[175px]"
+            <p className="mt-2 text-xs leading-5 text-slate-600">
+              Follow conference announcements, research news and community
+              updates.
+            </p>
+
+            <div className="mt-3 flex gap-2.5">
+              {[
+                {
+                  label: "Facebook",
+                  url: contact.facebook || "https://www.facebook.com/",
+                  className: "bg-[#4267B2]",
+                },
+                {
+                  label: "LinkedIn",
+                  url: contact.linkedin || "https://www.linkedin.com/",
+                  className: "bg-[#0A66C2]",
+                },
+                {
+                  label: "Instagram",
+                  url: contact.instagram || "https://www.instagram.com/",
+                  className: "bg-gradient-to-br from-pink-500 to-orange-400",
+                },
+                {
+                  label: "Website",
+                  url: contact.website || "https://globalscion.com/",
+                  className: "bg-violet-700",
+                },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={social.label}
+                  title={social.label}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:-translate-y-1 ${social.className}`}
+                >
+                  {social.label === "Website" ? (
+                    <Globe2 size={14} />
+                  ) : (
+                    <ExternalLink size={14} />
+                  )}
+                </a>
+              ))}
+            </div>
+
+            <div
+              ref={postRef}
+              className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {posts.map((post, index) => {
+                const postTitle = getText(
+                  post,
+                  ["title", "name"],
+                  `Conference Update ${index + 1}`,
+                );
+
+                const postImage =
+                  post.image ||
+                  post.imageUrl ||
+                  post.thumbnail ||
+                  FALLBACK_IMAGE;
+
+                return (
+                  <article
+                    key={post._id || postTitle || index}
+                    className="min-w-[155px] max-w-[190px] flex-1 snap-start overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm"
                   >
-                    <div className="relative mx-auto h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32">
-                      <div
-                        className="absolute -inset-1 rounded-full border-2 transition duration-500 group-hover:scale-105"
-                        style={{ borderColor: "#D8C7FF" }}
-                      />
-
-                      <div
-                        className="h-full w-full overflow-hidden rounded-full shadow-md"
-                        style={{ backgroundColor: C.softer }}
-                      >
-                        {speaker.image ? (
-                          <img
-                            src={speaker.image}
-                            alt={speaker.name || "Conference speaker"}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <Users size={34} style={{ color: C.primary }} />
-                          </div>
+                    <img
+                      src={postImage}
+                      alt={postTitle}
+                      loading="lazy"
+                      className="h-24 w-full object-cover"
+                    />
+                    <div className="p-3">
+                      <h3 className="text-xs font-bold text-[#171447]">
+                        {postTitle}
+                      </h3>
+                      <p className="mt-1.5 line-clamp-3 text-[10px] leading-4 text-slate-500">
+                        {getText(
+                          post,
+                          ["description", "content", "caption"],
+                          "Follow GlobalScion for more updates.",
                         )}
-                      </div>
-
-                      {speaker.linkedin && (
+                      </p>
+                      <p className="mt-2 text-[9px] text-slate-400">
+                        {formatDate(
+                          post.date || post.createdAt,
+                          "Latest Updates",
+                        )}
+                      </p>
+                      {post.url && (
                         <a
-                          href={speaker.linkedin}
+                          href={post.url}
                           target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`${speaker.name || "Speaker"} LinkedIn`}
-                          className="absolute bottom-1 right-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition hover:scale-110"
-                          style={{ backgroundColor: C.primary }}
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700"
                         >
-                          <img
-                            src="/svgs/linkedin.svg"
-                            alt=""
-                            className="h-4 w-4"
-                          />
+                          Read more <ExternalLink size={11} />
                         </a>
                       )}
                     </div>
-
-                    <h3
-                      className="mt-5 text-sm font-bold leading-6 sm:text-base"
-                      style={{ color: C.title }}
-                    >
-                      {speaker.name}
-                    </h3>
-
-                    {(speaker.organization || speaker.role) && (
-                      <p className="mx-auto mt-1 max-w-full text-xs leading-5 text-gray-500 sm:text-sm">
-                        {speaker.organization || speaker.role}
-                      </p>
-                    )}
-
-                    {speaker.specialty && (
-                      <p
-                        className="mt-2 text-xs font-semibold sm:text-sm"
-                        style={{ color: C.primary }}
-                      >
-                        {speaker.specialty}
-                      </p>
-                    )}
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-          </Section>
-        )}
-
-        {/* ================= WHO SHOULD ATTEND ================= */}
-        {hasAttend && (
-          <Section>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="text-center">
-                <p
-                  className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]"
-                  style={{ color: C.primary }}
-                >
-                  AUDIENCE
-                </p>
-
-                <h2
-                  className="text-2xl font-bold sm:text-3xl"
-                  style={{ color: C.title }}
-                >
-                  Who Should Attend
-                </h2>
-
-                <div
-                  className="mx-auto mt-3 h-1 w-12 rounded-full"
-                  style={{ backgroundColor: C.primary }}
-                />
-              </div>
-
-              {conference.whoShouldAttendDescription && (
-                <p className="mt-5 w-full text-left text-sm leading-7 text-gray-600 sm:text-[15px]">
-                  {conference.whoShouldAttendDescription}
-                </p>
-              )}
-
-              <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                {(conference.whoShouldAttend.length > 0
-                  ? conference.whoShouldAttend
-                  : [
-                      "Researchers and Scientists",
-                      "Healthcare Professionals",
-                      "Medical Practitioners",
-                      "Academic Faculty",
-                      "Students and Scholars",
-                      "Industry Professionals",
-                      "Policy Makers",
-                      "Research Organizations",
-                    ]
-                ).map((item, index) => (
-                  <div
-                    key={`${item}-${index}`}
-                    className="flex min-h-[42px] items-center gap-2 rounded-lg border bg-white px-3 py-2 transition-all duration-200 hover:border-violet-400 hover:shadow-sm"
-                    style={{ borderColor: C.border }}
-                  >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: C.primary }}
-                    />
-                    <span
-                      className="text-xs font-medium sm:text-sm"
-                      style={{ color: C.title }}
-                    >
-                      {item}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Section>
-        )}
-
-        {/* ================= KEY HIGHLIGHTS + TOPICS ================= */}
-        {(hasHighlights || hasTopics) && (
-          <Section bg={C.soft}>
-            <Heading
-              label="Conference Overview"
-              eyebrow="WHAT TO EXPECT"
-              description="Explore the key highlights and important topics covered during the conference."
-            />
-
-            <div
-              className={`mt-9 grid items-stretch gap-6 lg:gap-8 ${
-                hasHighlights && hasTopics ? "lg:grid-cols-2" : "grid-cols-1"
-              }`}
-            >
-              {hasHighlights && (
-                <motion.div
-                  variants={reveal}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.12 }}
-                  className="min-w-0"
-                >
-                  <Panel
-                    title="Key Highlights"
-                    subtitle="Discover what makes this conference valuable."
-                    icon={<Award size={21} />}
-                  >
-                    {conference.keyHighlights.map((highlight, index) => (
-                      <LineCard key={highlight?.title || index} index={index}>
-                        <span
-                          className="block text-sm font-bold leading-6 sm:text-base"
-                          style={{ color: C.title }}
-                        >
-                          {highlight?.title ||
-                            (typeof highlight === "string" ? highlight : "")}
-                        </span>
-
-                        {highlight?.description && (
-                          <span
-                            className="mt-1 block text-sm leading-6"
-                            style={{ color: C.text }}
-                          >
-                            {highlight.description}
-                          </span>
-                        )}
-                      </LineCard>
-                    ))}
-                  </Panel>
-                </motion.div>
-              )}
-
-              {hasTopics && (
-                <motion.div
-                  variants={reveal}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.12 }}
-                  className="min-w-0"
-                >
-                  <Panel
-                    title="Key Topics"
-                    subtitle="Explore the major themes and research areas."
-                    icon={<BookOpen size={21} />}
-                  >
-                    {conference.topics.map((topic, index) => (
-                      <LineCard key={`${topic}-${index}`} index={index}>
-                        <span
-                          className="block text-sm font-semibold leading-6 sm:text-base"
-                          style={{ color: C.title }}
-                        >
-                          {topic}
-                        </span>
-                      </LineCard>
-                    ))}
-                  </Panel>
-                </motion.div>
-              )}
-            </div>
-          </Section>
-        )}
-
-        {/* ================= EXPLORE CONFERENCE ================= */}
-        <Section>
-          <div className="mx-auto max-w-7xl">
-            <Heading
-              label="Explore the Conference"
-              eyebrow="MORE TO DISCOVER"
-              description="Discover sessions, benefits, participation details, and other conference information."
-            />
-
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }}
-              className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-            >
-              {flipCards.map((card, index) => {
-                const isFlipped = Boolean(flipped[card.id]);
-
-                return (
-                  <motion.div
-                    variants={reveal}
-                    key={card.id}
-                    className="h-[330px] min-w-0"
-                    style={{ perspective: "1200px" }}
-                  >
-                    <motion.div
-                      className="relative h-full w-full"
-                      animate={{ rotateY: isFlipped ? 180 : 0 }}
-                      transition={{
-                        duration: 0.55,
-                        ease: "easeInOut",
-                      }}
-                      style={{ transformStyle: "preserve-3d" }}
-                    >
-                      {/* FRONT OF CARD */}
-                      <button
-                        type="button"
-                        onClick={() => toggleCard(card.id)}
-                        aria-expanded={isFlipped}
-                        aria-label={`Explore ${card.label}`}
-                        tabIndex={isFlipped ? -1 : 0}
-                        className="group absolute inset-0 flex w-full flex-col justify-between overflow-hidden rounded-2xl border border-violet-100 bg-white p-5 text-left text-violet-950 shadow-md shadow-violet-100/70 transition-all duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-200/60 sm:p-6"
-                        style={{
-                          background: "#FFFFFF",
-                          backfaceVisibility: "hidden",
-                          WebkitBackfaceVisibility: "hidden",
-                        }}
-                      >
-                        {/* Decorative shapes */}
-                        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full border-[20px] border-violet-100/70 transition-colors duration-300 group-hover:border-violet-200/70" />
-
-                        <div className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-violet-100/60 blur-2xl" />
-
-                        {/* Number and icon */}
-                        <div className="relative flex items-start justify-between gap-3">
-                          <span className="text-4xl font-extrabold leading-none text-violet-200">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
-
-                          <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-violet-700 transition duration-300 group-hover:scale-105 group-hover:bg-violet-100">
-                            {card.icon}
-                          </span>
-                        </div>
-
-                        {/* Card content */}
-                        <div className="relative">
-                          <h3 className="text-base font-extrabold leading-6 text-violet-950 sm:text-lg">
-                            {card.label}
-                          </h3>
-
-                          <p className="mt-2 text-xs leading-5 text-violet-700">
-                            {card.description}
-                          </p>
-
-                          <span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-violet-800">
-                            Explore Details
-                            <ArrowRight
-                              size={15}
-                              className="transition-transform duration-300 group-hover:translate-x-1"
-                            />
-                          </span>
-                        </div>
-                      </button>
-
-                      {/* BACK OF CARD */}
-                      <div
-                        aria-hidden={!isFlipped}
-                        className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-white p-4 shadow-xl shadow-violet-100/70 sm:p-5"
-                        style={{
-                          transform: "rotateY(180deg)",
-                          backfaceVisibility: "hidden",
-                          WebkitBackfaceVisibility: "hidden",
-                        }}
-                      >
-                        {/* Back card heading */}
-                        <div className="flex items-start justify-between gap-3 border-b border-violet-100 pb-3">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-violet-50 text-violet-700">
-                              {card.icon}
-                            </span>
-
-                            <h3 className="text-sm font-extrabold leading-5 text-violet-950">
-                              {card.label}
-                            </h3>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleCard(card.id)}
-                            tabIndex={isFlipped ? 0 : -1}
-                            aria-label={`Flip back: ${card.label}`}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-50"
-                          >
-                            <RotateCcw size={15} />
-                          </button>
-                        </div>
-
-                        {/* Back card details */}
-                        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 text-sm leading-6 text-violet-800">
-                          {card.content}
-                        </div>
-
-                        {/* Flip back button */}
-                        <button
-                          type="button"
-                          onClick={() => toggleCard(card.id)}
-                          tabIndex={isFlipped ? 0 : -1}
-                          className="mt-3 inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-violet-800 hover:shadow-md"
-                        >
-                          <RotateCcw size={14} />
-                          Flip Back
-                        </button>
-                      </div>
-                    </motion.div>
-                  </motion.div>
+                  </article>
                 );
               })}
-            </motion.div>
+            </div>
+
+            <div className="mt-3 text-right">
+              <a
+                href="https://globalscion.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700"
+              >
+                Visit GlobalScion <ArrowRight size={12} />
+              </a>
+            </div>
           </div>
-        </Section>
+        </div>
+      </section>
 
-        {/* ================= SPONSORS ================= */}
-        <Section bg={C.soft}>
-          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Heading
-              label="Partners & Sponsors"
-              eyebrow="OUR PARTNERS"
-              description="We appreciate the organizations supporting this conference."
-            />
-
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }}
-              className="mx-auto mt-9 grid max-w-6xl grid-cols-2 items-center gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-            >
-              {(conference.sponsors.length > 0
-                ? conference.sponsors.map((logo, index) => ({
-                    name: `Sponsor ${index + 1}`,
-                    logo,
-                  }))
-                : [
-                    { name: "Sponsor One", logo: "/sponsors/sponsor-1.png" },
-                    { name: "Sponsor Two", logo: "/sponsors/sponsor-2.png" },
-                    {
-                      name: "Sponsor Three",
-                      logo: "/sponsors/sponsor-3.png",
-                    },
-                    {
-                      name: "Sponsor Four",
-                      logo: "/sponsors/sponsor-4.png",
-                    },
-                    {
-                      name: "Sponsor Five",
-                      logo: "/sponsors/sponsor-5.png",
-                    },
-                    { name: "Sponsor Six", logo: "/sponsors/sponsor-6.png" },
-                  ]
-              ).map((sponsor, index) => (
-                <motion.div
-                  variants={reveal}
-                  key={`${sponsor.name}-${index}`}
-                  className="group flex h-[100px] items-center justify-center overflow-hidden rounded-xl border bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[115px] sm:p-5"
-                  style={{ borderColor: C.border }}
-                >
-                  <img
-                    src={sponsor.logo}
-                    alt={sponsor.name}
-                    loading="lazy"
-                    className="max-h-[70px] max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </Section>
-      </div>
-    </>
-  );
-};
-
-// ================= SECTION =================
-const Section = ({ bg = "#FFFFFF", children }) => (
-  <motion.section
-    initial={{ opacity: 0, y: 10 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.04 }}
-    transition={{ duration: 0.4, ease: "easeOut" }}
-    className="px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-14"
-    style={{ backgroundColor: bg }}
-  >
-    <div className="mx-auto max-w-7xl">{children}</div>
-  </motion.section>
-);
-
-// ================= HEADING =================
-const Heading = ({ label, eyebrow, description, align = "center" }) => {
-  if (align === "left") {
-    return (
-      <div>
-        {eyebrow && (
-          <p
-            className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs"
-            style={{ color: C.primary }}
+      {/* FOOTER */}
+      <footer
+        id="footer"
+        className="scroll-mt-20 bg-gradient-to-r from-[#35236e] via-[#45317e] to-[#30215f] px-5 py-7 text-white sm:px-10"
+      >
+        <div className="mx-auto flex max-w-[1300px] flex-col items-center justify-between gap-5 sm:flex-row">
+          <button
+            onClick={() => scrollTo("home")}
+            className="flex items-center gap-2"
           >
-            {eyebrow}
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+              <Globe2 size={25} />
+            </span>
+            <span className="text-left">
+              <span className="block text-sm font-bold">GlobalScion</span>
+              <span className="block text-[10px] text-white/70">
+                Conferences
+              </span>
+            </span>
+          </button>
+
+          <p className="text-center text-[10px] leading-5 text-white/70">
+            © {new Date().getFullYear()} GlobalScion Conferences. All rights
+            reserved.
           </p>
-        )}
 
-        <h2
-          className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl"
-          style={{ color: C.title }}
-        >
-          {label}
-        </h2>
-
-        <span
-          className="mt-3 block h-1 w-14 rounded-full"
-          style={{ backgroundColor: C.primary }}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-3xl text-center">
-      {eyebrow && (
-        <p
-          className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs"
-          style={{ color: C.primary }}
-        >
-          {eyebrow}
-        </p>
-      )}
-
-      <h2
-        className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-4xl"
-        style={{ color: C.title }}
-      >
-        {label}
-      </h2>
-
-      <span
-        className="mx-auto mt-3 block h-1 w-14 rounded-full"
-        style={{ backgroundColor: C.primary }}
-      />
-
-      {description && (
-        <p
-          className="mx-auto mt-4 max-w-3xl text-sm leading-7 sm:text-base"
-          style={{ color: C.text }}
-        >
-          {description}
-        </p>
-      )}
-    </div>
-  );
-};
-
-// ================= HERO PILL =================
-const Pill = ({ icon, children }) => (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm">
-    <span className="text-purple-300">{icon}</span>
-    {children}
-  </span>
-);
-
-// ================= ACTION BUTTON =================
-const ActionBtn = ({ icon, text, onClick, primary = false }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="group flex min-w-0 items-center justify-between gap-1.5 rounded-xl border px-3 py-3 text-xs font-bold text-white transition duration-300 hover:-translate-y-0.5"
-    style={{
-      backgroundColor: primary ? C.primary : "rgba(255,255,255,0.07)",
-      borderColor: primary ? C.primary : "rgba(255,255,255,0.15)",
-    }}
-    onMouseEnter={(event) => {
-      event.currentTarget.style.backgroundColor = primary
-        ? C.primaryHover
-        : "rgba(255,255,255,0.15)";
-    }}
-    onMouseLeave={(event) => {
-      event.currentTarget.style.backgroundColor = primary
-        ? C.primary
-        : "rgba(255,255,255,0.07)";
-    }}
-  >
-    <span className="flex min-w-0 items-center gap-2">
-      {icon}
-      <span>{text}</span>
-    </span>
-
-    <ArrowRight
-      size={14}
-      className="shrink-0 transition-transform group-hover:translate-x-1"
-    />
-  </button>
-);
-
-// ================= PANEL =================
-const Panel = ({ title, subtitle, icon, children }) => (
-  <div
-    className="h-full rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
-    style={{ borderColor: C.border }}
-  >
-    <div className="mb-5 flex items-start gap-3">
-      <div
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-        style={{
-          backgroundColor: C.softer,
-          color: C.primary,
-        }}
-      >
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <h3
-          className="text-lg font-extrabold sm:text-xl"
-          style={{ color: C.title }}
-        >
-          {title}
-        </h3>
-
-        {subtitle && (
-          <p className="mt-1 text-xs leading-5 text-gray-500 sm:text-sm">
-            {subtitle}
-          </p>
-        )}
-      </div>
-    </div>
-
-    <div className="space-y-3">{children}</div>
-  </div>
-);
-
-// ================= LINE CARD =================
-const LineCard = ({ index, children }) => (
-  <div
-    className="flex items-start gap-3 rounded-xl border px-3 py-3 transition duration-300 hover:border-purple-300 hover:bg-purple-50/50 sm:px-4 sm:py-3.5"
-    style={{ borderColor: C.border }}
-  >
-    <span
-      className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold"
-      style={{
-        color: C.primary,
-        backgroundColor: C.softer,
-      }}
-    >
-      {String(index + 1).padStart(2, "0")}
-    </span>
-
-    <div className="min-w-0 flex-1">{children}</div>
-  </div>
-);
-
-// ================= ITEM LIST =================
-const ItemList = ({ items = [] }) => (
-  <div className="space-y-3">
-    {items.map((item, index) => {
-      const title = pick(item, ["title", "name", "text"]);
-      const description = typeof item === "string" ? "" : item?.description;
-
-      return (
-        <div key={`${title}-${index}`} className="flex items-start gap-2.5">
-          <CheckCircle2
-            size={16}
-            className="mt-0.5 shrink-0"
-            style={{ color: C.primary }}
-          />
-
-          <div className="min-w-0">
-            <p
-              className="text-sm font-bold leading-5"
-              style={{ color: C.title }}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] text-white/80">
+            <button
+              onClick={() => navigate("/privacy-policy")}
+              className="hover:text-white"
             >
-              {title}
+              Privacy Policy
+            </button>
+            <button
+              onClick={() => navigate("/terms")}
+              className="hover:text-white"
+            >
+              Terms & Conditions
+            </button>
+            <a
+              href={`mailto:${contact.email || "info@globalscion.com"}`}
+              className="hover:text-white"
+            >
+              Contact
+            </a>
+            <a
+              href={contact.website || "https://globalscion.com/"}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="GlobalScion website"
+              className="hover:text-white"
+            >
+              <ExternalLink size={14} />
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      {/* CONFERENCE INTRODUCTION MODAL */}
+      {videoOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm"
+          onClick={() => setVideoOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="About the conference"
+            className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setVideoOpen(false)}
+              aria-label="Close modal"
+              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-violet-100"
+            >
+              <X size={19} />
+            </button>
+
+            <SectionLabel>About GlobalScion</SectionLabel>
+
+            <h2 className="mt-2 text-2xl font-bold text-[#171447]">{title}</h2>
+
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
+              {welcomeText}
             </p>
 
-            {description && (
-              <p className="mt-1 text-xs leading-5" style={{ color: C.text }}>
-                {description}
-              </p>
-            )}
+            <button
+              onClick={() => {
+                setVideoOpen(false);
+                scrollTo("explore");
+              }}
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-xs font-semibold text-white hover:bg-violet-700"
+            >
+              Explore Conference <ArrowRight size={14} />
+            </button>
           </div>
         </div>
-      );
-    })}
-  </div>
-);
-
-// ================= BULLETS =================
-const Bullets = ({ items = [] }) => {
-  if (!items.length) return null;
-
-  return (
-    <div className="space-y-2.5">
-      {items.map((item, index) => (
-        <div
-          key={`${typeof item === "string" ? item : item?.title || index}-${index}`}
-          className="flex items-start gap-2"
-        >
-          <CheckCircle2
-            size={15}
-            className="mt-0.5 shrink-0"
-            style={{ color: C.primary }}
-          />
-
-          <span className="text-xs leading-5" style={{ color: C.text }}>
-            {typeof item === "string" ? item : item?.title || item?.text || ""}
-          </span>
-        </div>
-      ))}
+      )}
     </div>
   );
 };
-
-// ================= SUB SECTION =================
-const Sub = ({ title, children }) => (
-  <div>
-    <h4 className="mb-2 text-sm font-extrabold" style={{ color: C.title }}>
-      {title}
-    </h4>
-
-    {children}
-  </div>
-);
-
-// ================= EMPTY CARD CONTENT =================
-const EmptyCardContent = ({ text }) => (
-  <div className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-dashed border-violet-200 bg-violet-50/70 px-4 py-5 text-center">
-    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm">
-      <BookOpen size={17} />
-    </span>
-
-    <p className="mt-3 text-xs leading-5 text-gray-600">{text}</p>
-  </div>
-);
 
 export default ConferenceDetails;
