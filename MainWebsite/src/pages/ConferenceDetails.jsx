@@ -12,6 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsDown,
+  Star,
+  Gift,
+  BarChart3,
+  Image as ImageIcon,
   Play,
   ChevronDown,
   Lightbulb,
@@ -109,71 +113,61 @@ const FALLBACK_HIGHLIGHTS = [
   },
 ];
 
-// Explore cards. "Sessions" and "Tracks" headings come from the API data
-// (otherData.sampleAgenda and tracks).
-const FALLBACK_EXPLORE_ITEMS = [
+// Premium card style (white card + violet shadow)
+const PREMIUM_CARD =
+  "rounded-2xl border border-violet-100 bg-white shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] transition-shadow duration-300 hover:shadow-[0_26px_60px_-20px_rgba(109,40,217,0.42)]";
+
+const ROW_SHADOW = "shadow-[0_8px_24px_-12px_rgba(109,40,217,0.28)]";
+
+// Conference detail rows (icon list with dividers pattern)
+const DETAIL_ROWS = [
   {
-    number: "01",
-    title: "About Conference",
-    description: "Mission, vision and goals",
-    icon: BookOpen,
-    key: "about",
+    key: "sessions",
+    title: "Sessions/Tracks",
+    icon: CalendarDays,
+    gradient: "from-violet-600 to-purple-500",
   },
   {
-    number: "02",
-    title: "Scientific Program",
-    description: "Sessions and speakers",
-    icon: Microscope,
-    key: "program",
-  },
-  {
-    number: "03",
-    title: "Sessions",
-    description: "Day-wise schedule",
-    icon: CalendarCheck,
-    key: "agenda",
-  },
-  {
-    number: "04",
-    title: "Tracks",
-    description: "Research tracks",
-    icon: Network,
-    key: "tracks",
-  },
-  {
-    number: "05",
-    title: "Why Attend?",
-    description: "Conference advantages",
-    icon: Target,
     key: "why",
+    title: "Why to Attend",
+    icon: Star,
+    gradient: "from-pink-500 to-rose-500",
   },
   {
-    number: "06",
-    title: "Benefits",
-    description: "Learning and recognition",
-    icon: Award,
+    key: "agenda",
+    title: "Sample Agenda",
+    icon: CalendarCheck,
+    gradient: "from-blue-600 to-sky-500",
+  },
+  {
     key: "benefits",
+    title: "Benefits of Attending",
+    icon: Gift,
+    gradient: "from-green-600 to-emerald-500",
   },
   {
-    number: "07",
-    title: "E-Poster Guidelines",
-    description: "Submission requirements",
-    icon: FileText,
-    key: "poster",
+    key: "delegates",
+    title: "Delegates",
+    icon: Users,
+    gradient: "from-amber-500 to-orange-500",
   },
   {
-    number: "08",
-    title: "Travel & Venue",
-    description: "Venue and event format",
-    icon: MapPin,
-    key: "venue",
+    key: "posterLive",
+    title: "Poster Presenters (Live Presentation)",
+    icon: Presentation,
+    gradient: "from-cyan-600 to-teal-400",
   },
   {
-    number: "09",
-    title: "Contact & FAQs",
-    description: "Questions and assistance",
-    icon: Mail,
-    key: "contact",
+    key: "ePoster",
+    title: "E-Poster Presenters (Virtual Display Only)",
+    icon: ImageIcon,
+    gradient: "from-violet-600 to-fuchsia-500",
+  },
+  {
+    key: "market",
+    title: "Market Analysis",
+    icon: BarChart3,
+    gradient: "from-blue-700 to-indigo-500",
   },
 ];
 
@@ -527,7 +521,7 @@ const ConferenceDetails = () => {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeExplore, setActiveExplore] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
   const [videoOpen, setVideoOpen] = useState(false);
   const [countdown, setCountdown] = useState({
     phase: "unknown",
@@ -690,6 +684,12 @@ const ConferenceDetails = () => {
   const benefits = asArray(otherData.benefitsOfAttending);
 
   const delegates = asArray(otherData.delegates);
+
+  const posterPresentersLive = asArray(otherData.posterPresentersLive);
+
+  const marketAnalysis = isObject(otherData.marketAnalysis)
+    ? otherData.marketAnalysis
+    : {};
 
   const ePoster = isObject(otherData.ePosterPresenters)
     ? otherData.ePosterPresenters
@@ -883,7 +883,7 @@ const ConferenceDetails = () => {
 
   // Abstracts -> abstract-download page for this conference id
   const goToAbstracts = () => {
-    navigate(`/conferences/${currentId}/abstract-download`);
+    navigate(`/conferences/${currentId}/abstract-submission`);
   };
 
   const goToBrochure = () => {
@@ -919,87 +919,9 @@ const ConferenceDetails = () => {
     });
   };
 
-  // ----------------------------------------------------------
-  // EXPLORE CARD DETAILS
-  // ----------------------------------------------------------
-
-  const exploreItems = useMemo(
-    () =>
-      FALLBACK_EXPLORE_ITEMS.map((item) => {
-        if (item.key === "about") {
-          return {
-            ...item,
-            content: description,
-          };
-        }
-
-        if (item.key === "program") {
-          return {
-            ...item,
-            content: subtitle,
-          };
-        }
-
-        if (item.key === "agenda") {
-          return {
-            ...item,
-            content:
-              "Explore the day-wise conference sessions and schedule.",
-          };
-        }
-
-        if (item.key === "tracks") {
-          return {
-            ...item,
-            content: "Explore the scientific tracks and research areas.",
-          };
-        }
-
-        if (item.key === "why") {
-          return {
-            ...item,
-            content:
-              "Discover the main reasons to participate in this conference.",
-          };
-        }
-
-        if (item.key === "benefits") {
-          return {
-            ...item,
-            content:
-              "Review the learning, networking and presentation benefits.",
-          };
-        }
-
-        if (item.key === "poster") {
-          return {
-            ...item,
-            content:
-              "Review E-Poster presentation and submission requirements.",
-          };
-        }
-
-        if (item.key === "venue") {
-          return {
-            ...item,
-            content: `${venueName}${venueAddress ? ` — ${venueAddress}` : ""}. Participation mode: ${mode}.`,
-          };
-        }
-
-        return {
-          ...item,
-          content: "Contact the conference team for further information.",
-        };
-      }),
-    [description, subtitle, venueName, venueAddress, mode],
-  );
-
-  const handleExploreClick = (index) => {
-    setActiveExplore((previous) => (previous === index ? null : index));
+  const handleRowClick = (key) => {
+    setActiveRow((previous) => (previous === key ? null : key));
   };
-
-  const activeItem =
-    activeExplore !== null ? exploreItems[activeExplore] : null;
 
   const formatValue = (value) => {
     if (value === null || value === undefined || value === "") {
@@ -1036,6 +958,180 @@ const ConferenceDetails = () => {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+  // Content shown when a detail row is expanded
+  const renderRowContent = (key) => {
+    switch (key) {
+      case "sessions":
+        return <DetailList items={[...tracks, ...asArray(data.sessions)]} />;
+
+      case "why":
+        return <DetailList items={whyToAttend} />;
+
+      case "benefits":
+        return <DetailList items={benefits} />;
+
+      case "delegates":
+        return <DetailList items={delegates} />;
+
+      case "posterLive":
+        return <DetailList items={posterPresentersLive} />;
+
+      case "agenda":
+        return agenda.length ? (
+          <div className="space-y-2.5">
+            {agenda.map((day, dayIndex) => (
+              <ExpandCard
+                key={day._id || day.day || dayIndex}
+                title={asText(day.day, `Day ${dayIndex + 1}`)}
+              >
+                {getAgendaSessions(day).length ? (
+                  <div className="space-y-2">
+                    {getAgendaSessions(day).map((session, sessionIndex) => (
+                      <div
+                        key={session._id || `${session.time}-${sessionIndex}`}
+                        className="flex flex-col gap-1 rounded-lg bg-violet-50/60 p-3 sm:flex-row sm:items-start sm:gap-4"
+                      >
+                        <span className="min-w-[95px] text-xs font-bold text-violet-700">
+                          {asText(session.time, "Time TBA")}
+                        </span>
+                        <span className="text-xs leading-5 text-slate-700">
+                          {asText(
+                            session.session || session.title || session.name,
+                            "Session details to be announced",
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    No sessions have been added for this day.
+                  </p>
+                )}
+              </ExpandCard>
+            ))}
+          </div>
+        ) : (
+          <EmptyState>No agenda sessions have been published yet.</EmptyState>
+        );
+
+      case "ePoster":
+        return (
+          <div className="space-y-4">
+            {posterIntroLines.length > 0 && (
+              <ExpandCard title="E-Poster Overview">
+                <ul className="space-y-2">
+                  {posterIntroLines.map((line, index) => (
+                    <li
+                      key={`intro-${index}`}
+                      className="flex items-start gap-2 text-xs leading-6 text-slate-600"
+                    >
+                      <CheckCircle2
+                        className="mt-1 shrink-0 text-violet-600"
+                        size={14}
+                      />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </ExpandCard>
+            )}
+
+            {isObject(ePoster.specifications) && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {Object.entries(ePoster.specifications).map(([k, value]) => (
+                  <div
+                    key={k}
+                    className="rounded-lg border border-violet-100 bg-white p-3 shadow-sm"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      {k}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#171447]">
+                      {formatValue(value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {posterGroups.length > 0 && (
+              <div className="space-y-2.5">
+                {posterGroups.map(([heading, items]) => (
+                  <ExpandCard key={heading} title={heading}>
+                    <ul className="space-y-2">
+                      {items.map((item, index) => (
+                        <li
+                          key={`${heading}-${index}`}
+                          className="flex items-start gap-2 text-xs leading-6 text-slate-600"
+                        >
+                          <CheckCircle2
+                            className="mt-1 shrink-0 text-violet-600"
+                            size={14}
+                          />
+                          <span className="whitespace-pre-line">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </ExpandCard>
+                ))}
+              </div>
+            )}
+
+            {!posterIntroLines.length &&
+              !posterGroups.length &&
+              !isObject(ePoster.specifications) && (
+                <EmptyState>
+                  E-Poster guidelines will be announced soon.
+                </EmptyState>
+              )}
+          </div>
+        );
+
+      case "market": {
+        const paragraphs = asArray(marketAnalysis.paragraphs);
+
+        if (!paragraphs.length && !marketAnalysis.image) {
+          return <EmptyState />;
+        }
+
+        return (
+          <div className="grid items-start gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              {asText(marketAnalysis.heading) && (
+                <h4 className="text-sm font-bold text-[#171447]">
+                  {asText(marketAnalysis.heading)}
+                </h4>
+              )}
+              {paragraphs.map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="mt-3 whitespace-pre-line text-xs leading-6 text-slate-600"
+                >
+                  {typeof paragraph === "string"
+                    ? paragraph
+                    : getText(paragraph, ["text", "content", "description"])}
+                </p>
+              ))}
+            </div>
+
+            {marketAnalysis.image && (
+              <img
+                src={marketAnalysis.image}
+                alt={asText(marketAnalysis.heading, "Market analysis")}
+                loading="lazy"
+                className="max-h-[320px] w-full rounded-xl object-cover shadow-md"
+              />
+            )}
+          </div>
+        );
+      }
+
+      default:
+        return <EmptyState />;
+    }
+  };
 
   // ==========================================================
   // LOADING STATE
@@ -1434,7 +1530,7 @@ const ConferenceDetails = () => {
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="flex min-w-[270px] snap-start items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-w-[calc(50%-8px)] lg:min-w-[calc(25%-12px)]"
+                  className="flex min-w-[270px] snap-start items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-[0_14px_36px_-16px_rgba(109,40,217,0.30)] transition hover:-translate-y-1 hover:shadow-[0_20px_44px_-16px_rgba(109,40,217,0.42)] sm:min-w-[calc(50%-8px)] lg:min-w-[calc(25%-12px)]"
                 >
                   <img
                     src={getSpeakerImage(speaker)}
@@ -1501,11 +1597,14 @@ const ConferenceDetails = () => {
       </section>
 
       {/* WHO SHOULD ATTEND + KEY POINTS */}
-      <section className="bg-[#f7faff] px-5 pb-10 sm:px-10">
-        <div className="mx-auto grid max-w-[1300px] gap-5 lg:grid-cols-2">
-          <article className="rounded-xl bg-gradient-to-br from-[#edf6ff] to-[#e9f3ff] p-6">
+      <section className="bg-white px-5 py-12 sm:px-10">
+        <div className="mx-auto grid max-w-[1300px] gap-6 lg:grid-cols-2">
+          <article className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
             <div className="flex gap-4">
-              <Users className="mt-1 shrink-0 text-violet-600" size={31} />
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-500 text-white shadow-lg shadow-violet-300/50">
+                <Users size={26} />
+              </span>
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-[#171447]">
                   Who Should Attend?
@@ -1529,7 +1628,7 @@ const ConferenceDetails = () => {
 
                 <button
                   onClick={() => scrollTo("explore")}
-                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2.5 text-[11px] font-semibold text-white transition hover:bg-violet-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-2.5 text-[11px] font-semibold text-white shadow-lg shadow-violet-300/50 transition hover:-translate-y-0.5 hover:shadow-violet-400/60"
                 >
                   View Conference Details <ArrowRight size={14} />
                 </button>
@@ -1537,9 +1636,12 @@ const ConferenceDetails = () => {
             </div>
           </article>
 
-          <article className="rounded-xl bg-gradient-to-br from-[#f5f0ff] to-[#f0f3ff] p-6">
+          <article className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-violet-600" />
             <div className="flex gap-4">
-              <Lightbulb className="mt-1 shrink-0 text-violet-600" size={32} />
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-lg shadow-violet-300/50">
+                <Lightbulb size={26} />
+              </span>
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-[#171447]">Key Points</h2>
                 <p className="mt-2 text-sm leading-[1.85] text-slate-600">
@@ -1550,12 +1652,11 @@ const ConferenceDetails = () => {
                   {FALLBACK_KEY_POINTS.map((point) => (
                     <li
                       key={point}
-                      className="flex items-start gap-2.5 text-sm leading-7 text-slate-700"
+                      className="flex items-start gap-3 text-sm leading-7 text-slate-700"
                     >
-                      <CheckCircle2
-                        className="mt-0.5 shrink-0 text-violet-600"
-                        size={15}
-                      />
+                      <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                        <CheckCircle2 size={13} />
+                      </span>
                       {point}
                     </li>
                   ))}
@@ -1573,22 +1674,23 @@ const ConferenceDetails = () => {
           - If both are empty, the whole section is hidden.
           - As soon as data is added, each block appears in the same place. */}
       {(hasHighlights || hasTopics) && (
-        <section className="bg-white px-5 py-10 sm:px-10">
+        <section className="bg-gradient-to-b from-violet-50/70 to-white px-5 py-12 sm:px-10">
           <div
-            className={`mx-auto grid max-w-[1300px] gap-10 ${
+            className={`mx-auto grid max-w-[1300px] gap-6 ${
               hasHighlights && hasTopics ? "lg:grid-cols-2" : "grid-cols-1"
             }`}
           >
             {/* KEY HIGHLIGHTS */}
             {hasHighlights && (
-              <div>
+              <div className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
                 <SectionHeading
                   label="Conference Highlights"
                   title="Key Highlights"
                   description="Important sessions and opportunities featured in the conference."
                 />
 
-                <div className="divide-y divide-slate-100 border-y border-slate-100">
+                <div className="space-y-3">
                   {keyHighlights.map((highlight, index) => {
                     const highlightTitle = getText(
                       highlight,
@@ -1605,22 +1707,22 @@ const ConferenceDetails = () => {
                     return (
                       <details
                         key={highlight._id || `${highlightTitle}-${index}`}
-                        className="group"
+                        className={`group rounded-xl border border-violet-100 bg-white ${ROW_SHADOW} transition hover:border-violet-200 open:border-violet-300 open:bg-violet-50/40`}
                       >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
                           <span className="flex min-w-0 items-center gap-3">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-600" />
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500" />
                             <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700 sm:text-base">
                               {highlightTitle}
                             </span>
                           </span>
 
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-50 group-open:text-violet-700">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white text-violet-600 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-100 group-open:text-violet-700">
                             <ChevronDown size={17} />
                           </span>
                         </summary>
 
-                        <div className="pb-4 pl-5 pr-10">
+                        <div className="px-4 pb-4 pl-9 pr-10">
                           <p className="text-sm leading-7 text-slate-600">
                             {highlightDescription}
                           </p>
@@ -1636,19 +1738,16 @@ const ConferenceDetails = () => {
             {hasTopics && (
               <div
                 id="topics"
-                className={`scroll-mt-24 ${
-                  hasHighlights
-                    ? "border-t border-slate-100 pt-8 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0"
-                    : ""
-                }`}
+                className={`${PREMIUM_CARD} relative scroll-mt-24 overflow-hidden p-6 sm:p-8`}
               >
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-violet-600" />
                 <SectionHeading
                   label="Explore Research Areas"
                   title="Key Topics"
                   description="Explore the research areas and topics published for this conference."
                 />
 
-                <div className="divide-y divide-slate-100 border-y border-slate-100">
+                <div className="space-y-3">
                   {topics.map((topic, index) => {
                     const topicTitle =
                       typeof topic === "string"
@@ -1675,9 +1774,9 @@ const ConferenceDetails = () => {
                             ? topic._id || `${topicTitle}-${index}`
                             : `${topicTitle}-${index}`
                         }
-                        className="group"
+                        className={`group rounded-xl border border-violet-100 bg-white ${ROW_SHADOW} transition hover:border-violet-200 open:border-violet-300 open:bg-violet-50/40`}
                       >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
                           <span className="flex min-w-0 items-center gap-3">
                             <CheckCircle2
                               size={17}
@@ -1689,13 +1788,13 @@ const ConferenceDetails = () => {
                             </span>
                           </span>
 
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-50 group-open:text-violet-700">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white text-violet-600 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-100 group-open:text-violet-700">
                             <ChevronDown size={17} />
                           </span>
                         </summary>
 
                         {topicDescription && (
-                          <div className="pb-4 pl-8 pr-10">
+                          <div className="px-4 pb-4 pl-10 pr-10">
                             <p className="text-sm leading-7 text-slate-600">
                               {topicDescription}
                             </p>
@@ -1711,404 +1810,67 @@ const ConferenceDetails = () => {
         </section>
       )}
 
-      {/* EXPLORE CONFERENCE */}
-      <section
-        id="explore"
-        className="scroll-mt-20 bg-[#f5f9ff] px-5 py-10 sm:px-10"
-      >
+      {/* CONFERENCE DETAILS - icon list with dividers */}
+      <section id="explore" className="scroll-mt-20 bg-white px-5 py-12 sm:px-10">
         <div className="mx-auto max-w-[1300px]">
           <SectionHeading
             label="Event Details"
-            title="Explore the Conference"
-            description="Explore the sessions, tracks, benefits and other conference resources."
+            title="Conference Information"
+            description="Tap any item to view its details."
           />
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
-            {exploreItems.map((item, index) => {
-              const Icon = item.icon || BookOpen;
+          <div className={`${PREMIUM_CARD} space-y-3 p-3 sm:p-5`}>
+            {DETAIL_ROWS.map((row) => {
+              const Icon = row.icon;
+              const open = activeRow === row.key;
 
               return (
-                <button
-                  key={item.number}
-                  onClick={() => handleExploreClick(index)}
-                  className={`min-h-[125px] rounded-xl border p-3 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${
-                    activeExplore === index
-                      ? "border-violet-400 bg-violet-50"
-                      : "border-slate-100 bg-white"
+                <div
+                  key={row.key}
+                  className={`overflow-hidden rounded-xl border bg-white transition ${ROW_SHADOW} ${
+                    open
+                      ? "border-violet-300"
+                      : "border-slate-100 hover:border-violet-200"
                   }`}
                 >
-                  <span
-                    className={`mb-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold ${
-                      index % 3 === 0
-                        ? "bg-violet-100 text-violet-700"
-                        : index % 3 === 1
-                          ? "bg-teal-50 text-teal-700"
-                          : "bg-pink-50 text-pink-700"
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => handleRowClick(row.key)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left sm:px-6"
                   >
-                    {item.number}
-                  </span>
+                    <span className="flex min-w-0 items-center gap-4 sm:gap-6">
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${row.gradient} text-white shadow-md`}
+                      >
+                        <Icon size={20} />
+                      </span>
+                      <span className="text-sm font-bold uppercase tracking-wide text-[#171447] sm:text-base">
+                        {row.title}
+                      </span>
+                    </span>
 
-                  <Icon className="mb-2 text-violet-600" size={18} />
+                    <ArrowRight
+                      size={22}
+                      className={`shrink-0 text-violet-600 transition-transform duration-300 ${
+                        open ? "rotate-90" : ""
+                      }`}
+                    />
+                  </button>
 
-                  <h3 className="text-xs font-bold leading-5 text-[#171447]">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    {item.description}
-                  </p>
-                </button>
+                  {open && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border-t border-violet-100 bg-violet-50/30 px-4 py-5 sm:px-6"
+                    >
+                      {renderRowContent(row.key)}
+                    </motion.div>
+                  )}
+                </div>
               );
             })}
           </div>
-
-          {activeItem && (
-            <motion.div
-              key={activeItem.key}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-5 rounded-xl border border-violet-100 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <SectionLabel>
-                    Conference Details {activeItem.number}
-                  </SectionLabel>
-                  <h3 className="text-lg font-bold text-[#171447]">
-                    {activeItem.title}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={() => setActiveExplore(null)}
-                  aria-label="Close details"
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">
-                {activeItem.content}
-              </p>
-
-              {/* SESSIONS (otherData.sampleAgenda) */}
-              {activeItem.key === "agenda" && (
-                <div className="mt-5">
-                  {agenda.length ? (
-                    <div className="space-y-2.5">
-                      {agenda.map((day, dayIndex) => (
-                        <ExpandCard
-                          key={day._id || day.day || dayIndex}
-                          title={asText(day.day, `Day ${dayIndex + 1}`)}
-                        >
-                          {getAgendaSessions(day).length ? (
-                            <div className="space-y-2">
-                              {getAgendaSessions(day).map(
-                                (session, sessionIndex) => (
-                                  <div
-                                    key={
-                                      session._id ||
-                                      `${session.time}-${sessionIndex}`
-                                    }
-                                    className="flex flex-col gap-1 rounded-lg bg-slate-50 p-3 sm:flex-row sm:items-start sm:gap-4"
-                                  >
-                                    <span className="min-w-[95px] text-xs font-bold text-violet-700">
-                                      {asText(session.time, "Time TBA")}
-                                    </span>
-                                    <span className="text-xs leading-5 text-slate-700">
-                                      {asText(
-                                        session.session ||
-                                          session.title ||
-                                          session.name,
-                                        "Session details to be announced",
-                                      )}
-                                    </span>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-500">
-                              No sessions have been added for this day.
-                            </p>
-                          )}
-                        </ExpandCard>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState>
-                      No sessions have been published yet.
-                    </EmptyState>
-                  )}
-                </div>
-              )}
-
-              {activeItem.key === "program" && (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <Microscope className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">
-                      Scientific Sessions
-                    </h4>
-                    <p className="mt-2 text-xs leading-6 text-slate-600">
-                      Explore the published agenda, keynote sessions and
-                      scientific tracks.
-                    </p>
-                    <button
-                      onClick={goToScientificProgram}
-                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
-                    >
-                      Open Scientific Program <ArrowRight size={13} />
-                    </button>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <FileText className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">
-                      Abstract Submission
-                    </h4>
-                    <p className="mt-2 text-xs leading-6 text-slate-600">
-                      Review abstract submission options and presentation
-                      opportunities.
-                    </p>
-                    <button
-                      onClick={goToAbstracts}
-                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
-                    >
-                      Abstract Details <ArrowRight size={13} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* TRACKS */}
-              {activeItem.key === "tracks" && (
-                <div className="mt-5">
-                  <DetailList items={tracks} />
-                </div>
-              )}
-
-              {activeItem.key === "why" && (
-                <div className="mt-5">
-                  <DetailList items={whyToAttend} />
-                </div>
-              )}
-
-              {activeItem.key === "benefits" && (
-                <div className="mt-5 space-y-5">
-                  <div>
-                    <h4 className="mb-2 text-sm font-bold text-[#171447]">
-                      Benefits of Attending
-                    </h4>
-                    <DetailList items={benefits} />
-                  </div>
-
-                  {delegates.length > 0 && (
-                    <div>
-                      <h4 className="mb-2 text-sm font-bold text-[#171447]">
-                        Delegates
-                      </h4>
-                      <DetailList items={delegates} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeItem.key === "poster" && (
-                <div className="mt-5 space-y-4">
-                  {posterIntroLines.length > 0 && (
-                    <ExpandCard title="E-Poster Overview">
-                      <ul className="space-y-2">
-                        {posterIntroLines.map((line, index) => (
-                          <li
-                            key={`intro-${index}`}
-                            className="flex items-start gap-2 text-xs leading-6 text-slate-600"
-                          >
-                            <CheckCircle2
-                              className="mt-1 shrink-0 text-violet-600"
-                              size={14}
-                            />
-                            <span>{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </ExpandCard>
-                  )}
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {isObject(ePoster.specifications) &&
-                      Object.entries(ePoster.specifications).map(
-                        ([key, value]) => (
-                          <div
-                            key={key}
-                            className="rounded-lg border border-slate-100 bg-slate-50 p-3"
-                          >
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                              {key}
-                            </p>
-                            <p className="mt-1 text-xs font-semibold text-[#171447]">
-                              {formatValue(value)}
-                            </p>
-                          </div>
-                        ),
-                      )}
-                  </div>
-
-                  {posterGroups.length > 0 && (
-                    <div className="space-y-2.5">
-                      {posterGroups.map(([heading, items]) => (
-                        <ExpandCard key={heading} title={heading}>
-                          <ul className="space-y-2">
-                            {items.map((item, index) => (
-                              <li
-                                key={`${heading}-${index}`}
-                                className="flex items-start gap-2 text-xs leading-6 text-slate-600"
-                              >
-                                <CheckCircle2
-                                  className="mt-1 shrink-0 text-violet-600"
-                                  size={14}
-                                />
-                                <span className="whitespace-pre-line">
-                                  {item}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </ExpandCard>
-                      ))}
-                    </div>
-                  )}
-
-                  {!posterIntroLines.length &&
-                    !posterGroups.length &&
-                    !isObject(ePoster.specifications) && (
-                      <EmptyState>
-                        E-Poster guidelines will be announced soon.
-                      </EmptyState>
-                    )}
-                </div>
-              )}
-
-              {activeItem.key === "venue" && (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <MapPin className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">
-                      Venue Information
-                    </h4>
-                    <p className="mt-2 text-xs leading-6 text-slate-600">
-                      {venueName}
-                    </p>
-                    {venueAddress && (
-                      <p className="mt-1 text-xs leading-6 text-slate-500">
-                        {venueAddress}
-                      </p>
-                    )}
-                    <p className="mt-2 text-xs text-slate-500">
-                      Format: {mode}
-                    </p>
-                    {data.venue?.mapUrl && (
-                      <a
-                        href={data.venue.mapUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
-                      >
-                        View Map <ExternalLink size={13} />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <CalendarDays className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">
-                      Conference Dates
-                    </h4>
-                    <p className="mt-2 text-xs leading-6 text-slate-600">
-                      {dateRange}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">Time: {time}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Timezone: {asText(data.venue?.timezone, "Asia/Kolkata")}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {activeItem.key === "contact" && (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <Mail className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">Email</h4>
-                    {contact.email ? (
-                      <a
-                        href={`mailto:${contact.email}`}
-                        className="mt-2 block break-all text-xs text-violet-700 hover:underline"
-                      >
-                        {contact.email}
-                      </a>
-                    ) : (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Email to be announced.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="rounded-lg border border-slate-100 p-4">
-                    <Phone className="mb-2 text-violet-600" size={22} />
-                    <h4 className="text-sm font-bold text-[#171447]">Phone</h4>
-                    {contact.phone ? (
-                      <a
-                        href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}
-                        className="mt-2 block text-xs text-violet-700 hover:underline"
-                      >
-                        {contact.phone}
-                      </a>
-                    ) : (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Phone number to be announced.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="rounded-lg border border-slate-100 p-4 sm:col-span-2">
-                    <h4 className="text-sm font-bold text-[#171447]">
-                      Important Deadlines
-                    </h4>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {[
-                        [
-                          "Registration Deadline",
-                          registrationDates.registrationDeadline,
-                        ],
-                        [
-                          "Abstract Deadline",
-                          registrationDates.abstractDeadline,
-                        ],
-                        ["Paper Deadline", registrationDates.paperDeadline],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-lg bg-slate-50 p-3">
-                          <p className="text-[10px] text-slate-500">{label}</p>
-                          <p className="mt-1 text-xs font-semibold text-[#171447]">
-                            {formatDate(value, "Not announced")}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={() => scrollTo("welcome")}
-                className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
-              >
-                Back to conference overview <ArrowRight size={14} />
-              </button>
-            </motion.div>
-          )}
         </div>
       </section>
 
@@ -2126,7 +1888,7 @@ const ConferenceDetails = () => {
               {registrationCategories.map((categoryItem, index) => (
                 <div
                   key={categoryItem._id || categoryItem.name || index}
-                  className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+                  className="rounded-2xl border border-violet-100 bg-white p-4 shadow-[0_14px_36px_-16px_rgba(109,40,217,0.30)]"
                 >
                   <h3 className="text-sm font-bold text-[#171447]">
                     {getText(
@@ -2171,7 +1933,7 @@ const ConferenceDetails = () => {
         >
           {/* SPONSORS */}
           {hasSponsors && (
-            <div className="rounded-xl border border-slate-100 bg-[#fbfdff] p-5 sm:p-6">
+            <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] sm:p-6">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <SectionLabel>Our Sponsors</SectionLabel>
@@ -2245,7 +2007,7 @@ const ConferenceDetails = () => {
           )}
 
           {/* RECENT POSTS */}
-          <div className="rounded-xl bg-gradient-to-br from-[#f6f3ff] to-[#f4f8ff] p-5 sm:p-6">
+          <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <SectionLabel>Follow Us</SectionLabel>
