@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -11,45 +11,30 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  ChevronsDown,
+  ChevronDown,
   Star,
   Gift,
   BarChart3,
   Image as ImageIcon,
   Play,
-  ChevronDown,
   Lightbulb,
   Clock,
   CheckCircle2,
-  GraduationCap,
-  Stethoscope,
-  Microscope,
-  BookOpen,
-  HeartHandshake,
-  Network,
-  Monitor,
   Presentation,
   X,
   Award,
   ExternalLink,
-  Mail,
-  Phone,
-  Building2,
-  FileText,
-  Video,
-  ClipboardList,
   Handshake,
-  Target,
-  BookMarked,
   CalendarCheck,
-  Send,
+  Layers,
+  Sparkles,
+  Hash,
 } from "lucide-react";
 
 import { getConferenceByIdApi } from "../api/api";
 
 // ============================================================
 // FALLBACK CONFIGURATION
-// Used only when the API fails or data is missing.
 // ============================================================
 
 const FALLBACK_CONFERENCE_ID = "6abe6282115ac55e02fcf168";
@@ -71,104 +56,27 @@ const FALLBACK_KEY_POINTS = [
   "Continuing education and professional development",
 ];
 
-const FALLBACK_TOPICS = [
-  "Neurodevelopment & Genetics",
-  "Family Support & Caregiver Wellbeing",
-  "Early Diagnosis & Intervention",
-  "Policy & Advocacy",
-  "Behavioral Therapies",
-  "Pharmacological Research",
-  "Mental Health & Co-occurring Conditions",
-  "Transition to Adulthood",
-  "Technology & AI in Autism",
-  "Global Perspectives",
-  "Education & Inclusion",
-  "Innovations & Future Directions",
-];
-
-const FALLBACK_HIGHLIGHTS = [
-  {
-    title: "Expert Speakers",
-    description: "Global leaders and pioneers sharing their expertise.",
-    icon: Users,
-    color: "bg-violet-50 text-violet-600",
-  },
-  {
-    title: "Interactive Sessions",
-    description: "Q&A, panels, workshops and discussions.",
-    icon: Presentation,
-    color: "bg-teal-50 text-teal-600",
-  },
-  {
-    title: "Networking",
-    description: "Build valuable professional connections.",
-    icon: Network,
-    color: "bg-pink-50 text-pink-600",
-  },
-  {
-    title: "Research & Innovation",
-    description: "Discover emerging research and technologies.",
-    icon: Monitor,
-    color: "bg-indigo-50 text-indigo-600",
-  },
-];
-
-// Premium card style (white card + violet shadow)
+// Premium card shell (soft border + very light tinted shadow)
 const PREMIUM_CARD =
-  "rounded-2xl border border-violet-100 bg-white shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] transition-shadow duration-300 hover:shadow-[0_26px_60px_-20px_rgba(109,40,217,0.42)]";
+  "rounded-3xl border border-violet-100/80 bg-white shadow-[0_18px_50px_-24px_rgba(76,29,149,0.28)]";
 
-const ROW_SHADOW = "shadow-[0_8px_24px_-12px_rgba(109,40,217,0.28)]";
-
-// Conference detail rows (icon list with dividers pattern)
+// Expandable rows shown BELOW the Sessions / Tracks block
 const DETAIL_ROWS = [
-  {
-    key: "sessions",
-    title: "Sessions/Tracks",
-    icon: CalendarDays,
-    gradient: "from-violet-600 to-purple-500",
-  },
-  {
-    key: "why",
-    title: "Why to Attend",
-    icon: Star,
-    gradient: "from-pink-500 to-rose-500",
-  },
-  {
-    key: "agenda",
-    title: "Sample Agenda",
-    icon: CalendarCheck,
-    gradient: "from-blue-600 to-sky-500",
-  },
-  {
-    key: "benefits",
-    title: "Benefits of Attending",
-    icon: Gift,
-    gradient: "from-green-600 to-emerald-500",
-  },
-  {
-    key: "delegates",
-    title: "Delegates",
-    icon: Users,
-    gradient: "from-amber-500 to-orange-500",
-  },
+  { key: "why", title: "Why to Attend", icon: Star },
+  { key: "agenda", title: "Sample Agenda", icon: CalendarCheck },
+  { key: "benefits", title: "Benefits of Attending", icon: Gift },
+  { key: "delegates", title: "Delegates", icon: Users },
   {
     key: "posterLive",
     title: "Poster Presenters (Live Presentation)",
     icon: Presentation,
-    gradient: "from-cyan-600 to-teal-400",
   },
   {
     key: "ePoster",
     title: "E-Poster Presenters (Virtual Display Only)",
     icon: ImageIcon,
-    gradient: "from-violet-600 to-fuchsia-500",
   },
-  {
-    key: "market",
-    title: "Market Analysis",
-    icon: BarChart3,
-    gradient: "from-blue-700 to-indigo-500",
-  },
+  { key: "market", title: "Market Analysis", icon: BarChart3 },
 ];
 
 const FALLBACK_POSTS = [
@@ -282,13 +190,7 @@ const getCountdown = (startDate, endDate) => {
   const phase = getCountdownPhase(startDate, endDate);
 
   if (phase === "unknown" || phase === "ended") {
-    return {
-      phase,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-    };
+    return { phase, days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
 
   const now = Date.now();
@@ -312,6 +214,14 @@ const getConferenceImage = (conference, fallback = FALLBACK_IMAGE) => {
     return image.url || image.secure_url || image.fileUrl || fallback;
   }
   return fallback;
+};
+
+const getMediaUrl = (value) => {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (isObject(value)) {
+    return value.secure_url || value.url || value.fileUrl || value.path || "";
+  }
+  return "";
 };
 
 const getSpeakerImage = (speaker) => {
@@ -345,29 +255,33 @@ const getVenueName = (conference) =>
   asText(conference?.location) ||
   "Venue to be announced";
 
-const getVenueAddress = (conference) => {
-  const venue = conference?.venue || {};
-
-  return [venue.address, venue.city, venue.state, venue.country]
-    .filter((value) => typeof value === "string" && value.trim())
-    .filter((value, index, array) => array.indexOf(value) === index)
-    .join(", ");
+const formatValue = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "To be announced";
+  }
+  if (typeof value === "boolean") return value ? "Available" : "Not available";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 };
 
+// ============================================================
+// SMALL UI PIECES
+// ============================================================
+
 const SectionLabel = ({ children }) => (
-  <span className="mb-1.5 inline-flex rounded-full bg-violet-100 px-3 py-1 text-[10px] font-semibold text-violet-700">
+  <span className="mb-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-[10px] font-semibold text-violet-700">
     {children}
   </span>
 );
 
 const SectionHeading = ({ label, title, description }) => (
-  <div className="mb-5">
+  <div className="mb-6">
     {label && <SectionLabel>{label}</SectionLabel>}
-    <h2 className="text-xl font-bold tracking-tight text-[#171447] sm:text-2xl">
+    <h2 className="text-2xl font-extrabold tracking-tight text-[#171447] sm:text-3xl lg:text-4xl">
       {title}
     </h2>
     {description && (
-      <p className="mt-1.5 max-w-3xl text-xs leading-5 text-slate-600 sm:text-sm">
+      <p className="mt-1.5 max-w-3xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
         {description}
       </p>
     )}
@@ -375,67 +289,39 @@ const SectionHeading = ({ label, title, description }) => (
 );
 
 const EmptyState = ({ children = "Information will be announced soon." }) => (
-  <div className="rounded-lg border border-dashed border-slate-200 bg-white/80 px-4 py-5 text-center text-xs leading-5 text-slate-500">
+  <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 px-4 py-6 text-center text-xs leading-5 text-slate-500">
     {children}
   </div>
 );
 
-// ------------------------------------------------------------
-// ExpandCard
-// One-line text card with a double-arrow (chevrons) toggle.
-// Used for all "other data" items (sessions, tracks, why attend,
-// benefits, delegates, e-poster details).
-// ------------------------------------------------------------
-const ExpandCard = ({ title, children }) => {
-  const [open, setOpen] = useState(false);
+const IconTile = ({ icon: Icon, size = 22 }) => (
+  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-[0_10px_24px_-10px_rgba(109,40,217,0.8)]">
+    <Icon size={size} />
+  </span>
+);
 
-  return (
-    <div
-      className={`rounded-lg border bg-white transition ${
-        open ? "border-violet-200" : "border-slate-100 hover:border-violet-200"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((previous) => !previous)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-      >
-        <span className="flex min-w-0 items-center gap-2.5">
-          <CheckCircle2 className="shrink-0 text-violet-600" size={16} />
-          <span
-            className={`truncate text-sm font-bold leading-6 ${
-              open ? "text-violet-700" : "text-[#171447]"
-            }`}
-          >
-            {title}
-          </span>
-        </span>
-
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
-            open
-              ? "rotate-180 border-violet-200 bg-violet-50 text-violet-700"
-              : "border-slate-200 text-slate-500"
-          }`}
-        >
-          <ChevronsDown size={15} />
-        </span>
-      </button>
-
-      {open && (
-        <div className="border-t border-slate-100 px-4 py-3 pl-10">
-          {children}
-        </div>
-      )}
+// Premium feature card used for Key Highlights / Key Topics / Key Points
+const FeatureCard = ({ icon, title, description, children }) => (
+  <div className={`${PREMIUM_CARD} flex flex-col p-6 sm:p-7`}>
+    <div className="flex items-start gap-4">
+      <IconTile icon={icon} />
+      <div className="min-w-0">
+        <h3 className="text-xl font-bold text-[#171447] sm:text-2xl">{title}</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+      </div>
     </div>
-  );
-};
+    <div className="mt-5 border-t border-violet-100 pt-2">{children}</div>
+  </div>
+);
 
-const DetailList = ({
+// ------------------------------------------------------------
+// FlatList – plain rows with dividers (NO inner cards)
+// ------------------------------------------------------------
+const FlatList = ({
   items,
   titleKey = "title",
   descriptionKey = "description",
+  emptyText,
 }) => {
   const validItems = asArray(items).filter((item) => {
     if (typeof item === "string") return item.trim().length > 0;
@@ -443,20 +329,20 @@ const DetailList = ({
 
     return Boolean(
       item[titleKey] ||
-      item[descriptionKey] ||
-      item.name ||
-      item.text ||
-      item.session ||
-      item.time,
+        item[descriptionKey] ||
+        item.name ||
+        item.text ||
+        item.session ||
+        item.time,
     );
   });
 
   if (!validItems.length) {
-    return <EmptyState />;
+    return <EmptyState>{emptyText}</EmptyState>;
   }
 
   return (
-    <div className="space-y-2.5">
+    <ul className="divide-y divide-violet-100">
       {validItems.map((item, index) => {
         const title =
           getText(item, [
@@ -476,31 +362,121 @@ const DetailList = ({
           "bio",
         ]);
 
-        // Item with a description -> expandable one-line card.
-        if (description && description !== title) {
-          return (
-            <ExpandCard key={item?._id || `${title}-${index}`} title={title}>
-              <p className="whitespace-pre-line text-xs leading-6 text-slate-600">
-                {description}
-              </p>
-            </ExpandCard>
-          );
-        }
-
-        // Title only -> simple one-line card (nothing to expand).
         return (
-          <div
+          <li
             key={item?._id || `${title}-${index}`}
-            className="flex items-center gap-2.5 rounded-lg border border-slate-100 bg-white px-4 py-3 transition hover:border-violet-200"
+            className="flex items-start gap-3 py-4 first:pt-1 last:pb-1"
           >
-            <CheckCircle2 className="shrink-0 text-violet-600" size={16} />
-            <span className="text-sm font-bold leading-6 text-[#171447]">
-              {title}
-            </span>
-          </div>
+            <CheckCircle2
+              className="mt-1 shrink-0 text-violet-600"
+              size={16}
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-bold leading-6 text-[#171447]">
+                {title}
+              </p>
+              {description && description !== title && (
+                <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-6 text-slate-600">
+                  {description}
+                </p>
+              )}
+            </div>
+          </li>
         );
       })}
+    </ul>
+  );
+};
+
+// ------------------------------------------------------------
+// AccordionList – used inside Key Highlights / Key Topics cards
+// ------------------------------------------------------------
+const AccordionList = ({ rows, icon: Icon, emptyText }) => {
+  if (!rows.length) return <EmptyState>{emptyText}</EmptyState>;
+
+  return (
+    <div className="divide-y divide-violet-100">
+      {rows.map((row) => (
+        <details key={row.key} className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
+            <span className="flex min-w-0 items-center gap-3">
+              <Icon size={16} className="shrink-0 text-violet-600" />
+              <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700">
+                {row.title}
+              </span>
+            </span>
+            {row.description ? (
+              <ChevronDown
+                size={17}
+                className="shrink-0 text-violet-500 transition-transform duration-300 group-open:rotate-180"
+              />
+            ) : null}
+          </summary>
+
+          {row.description && (
+            <p className="pb-4 pl-7 pr-6 text-sm font-semibold leading-6 text-slate-600">
+              {row.description}
+            </p>
+          )}
+        </details>
+      ))}
     </div>
+  );
+};
+
+// ------------------------------------------------------------
+// SessionsPanel – full width, always visible, no inner cards
+// (bigger bold titles + bigger semibold paragraph text)
+// ------------------------------------------------------------
+const SessionsPanel = ({ items }) => {
+  const validItems = asArray(items).filter((item) => {
+    if (typeof item === "string") return item.trim().length > 0;
+    if (!isObject(item)) return false;
+    return Boolean(
+      item.title || item.name || item.heading || item.description || item.text,
+    );
+  });
+
+  if (!validItems.length) {
+    return <EmptyState>Sessions and tracks will be announced soon.</EmptyState>;
+  }
+
+  return (
+    <ul className="grid gap-x-10 md:grid-cols-2">
+      {validItems.map((item, index) => {
+        const itemTitle =
+          getText(item, ["title", "name", "heading", "session", "text"]) ||
+          `Session ${index + 1}`;
+
+        const itemDescription = getText(item, [
+          "description",
+          "details",
+          "content",
+          "bio",
+        ]);
+
+        return (
+          <li
+            key={item?._id || `${itemTitle}-${index}`}
+            className="flex items-start gap-3 border-b border-violet-100 py-5"
+          >
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+              <CheckCircle2 size={16} />
+            </span>
+            <div className="min-w-0">
+              <h4 className="text-base font-bold leading-7 text-[#171447] sm:text-lg">
+                {itemTitle}
+              </h4>
+              {itemDescription && itemDescription !== itemTitle && (
+                <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-7 text-slate-600 sm:text-[15px]">
+                  {itemDescription}
+                </p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 };
 
@@ -512,7 +488,6 @@ const ConferenceDetails = () => {
   const { id, conferenceId } = useParams();
   const navigate = useNavigate();
 
-  const speakerRef = useRef(null);
   const postRef = useRef(null);
 
   const currentId = id || conferenceId || FALLBACK_CONFERENCE_ID;
@@ -520,7 +495,6 @@ const ConferenceDetails = () => {
   const [conference, setConference] = useState(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
   const [videoOpen, setVideoOpen] = useState(false);
   const [countdown, setCountdown] = useState({
@@ -533,8 +507,6 @@ const ConferenceDetails = () => {
 
   // ----------------------------------------------------------
   // FETCH CONFERENCE API
-  // Expected response:
-  // { success: true, data: { _id, title, speakers, otherData, ... } }
   // ----------------------------------------------------------
 
   useEffect(() => {
@@ -547,7 +519,6 @@ const ConferenceDetails = () => {
       try {
         const response = await getConferenceByIdApi(currentId);
 
-        // Supports Axios response and direct API response formats.
         const body = response?.data ?? response;
 
         const apiData =
@@ -623,8 +594,6 @@ const ConferenceDetails = () => {
 
   const venueName = getVenueName(data);
 
-  const venueAddress = getVenueAddress(data);
-
   const heroImage = getConferenceImage(data);
 
   const aboutImage =
@@ -663,7 +632,6 @@ const ConferenceDetails = () => {
     )
     .filter(Boolean);
 
-  // Keep the full API welcome text, but visually limit it to 10 lines.
   const welcomeText =
     welcomeParagraphs.join("\n\n") ||
     asText(
@@ -697,12 +665,6 @@ const ConferenceDetails = () => {
 
   const contact = isObject(data.contact) ? data.contact : {};
 
-  const submission = isObject(data.submission) ? data.submission : {};
-
-  const registrationDates = isObject(data.registrationDates)
-    ? data.registrationDates
-    : {};
-
   const registrationCategories = asArray(data.registrationCategories);
 
   const socialPosts = asArray(data.recentPosts || data.posts);
@@ -712,11 +674,32 @@ const ConferenceDetails = () => {
   const countdownStart = data.startDate || null;
   const countdownEnd = data.endDate || data.startDate || null;
 
-  // Section visibility flags (sections disappear when no data is added,
-  // and appear in the same place as soon as data is added).
-  const hasHighlights = keyHighlights.length > 0;
-  const hasTopics = topics.length > 0;
   const hasSponsors = sponsors.length > 0;
+
+  // Sessions / Tracks content (full width, always visible)
+  const sessionItems = [...tracks, ...asArray(data.sessions)];
+
+  // Rows for the Key Highlights / Key Topics cards
+  const highlightRows = keyHighlights.map((highlight, index) => ({
+    key: highlight?._id || `highlight-${index}`,
+    title: getText(highlight, ["title", "name"], "Conference Highlight"),
+    description: getText(highlight, ["description", "content", "text"], ""),
+  }));
+
+  const topicRows = asArray(data.topics)
+    .map((topic, index) => ({
+      key: topic?._id || `topic-${index}`,
+      title: getText(
+        topic,
+        ["title", "name", "topic", "label"],
+        `Research Topic ${index + 1}`,
+      ),
+      description:
+        typeof topic === "object" && topic !== null
+          ? getText(topic, ["description", "content", "details"], "")
+          : "",
+    }))
+    .filter((row) => row.title);
 
   // ----------------------------------------------------------
   // COUNTDOWN
@@ -870,7 +853,6 @@ const ConferenceDetails = () => {
 
   // ----------------------------------------------------------
   // NAVIGATION
-  // Adjust route strings here if your router uses other paths.
   // ----------------------------------------------------------
 
   const goToRegistration = () => {
@@ -881,7 +863,6 @@ const ConferenceDetails = () => {
     navigate(`/conferences/${currentId}/scientific-program`);
   };
 
-  // Abstracts -> abstract-download page for this conference id
   const goToAbstracts = () => {
     navigate(`/conferences/${currentId}/abstract-submission`);
   };
@@ -906,8 +887,6 @@ const ConferenceDetails = () => {
       behavior: "smooth",
       block: "start",
     });
-
-    setMenuOpen(false);
   };
 
   const scroll = (ref, direction) => {
@@ -923,22 +902,6 @@ const ConferenceDetails = () => {
     setActiveRow((previous) => (previous === key ? null : key));
   };
 
-  const formatValue = (value) => {
-    if (value === null || value === undefined || value === "") {
-      return "To be announced";
-    }
-
-    if (typeof value === "boolean")
-      return value ? "Available" : "Not available";
-
-    if (typeof value === "object") {
-      return JSON.stringify(value);
-    }
-
-    return String(value);
-  };
-
-  // E-Poster text groups (each rendered as an expandable one-line card)
   const posterGroups = [
     ["Poster Content", ePoster.posterContent],
     ["Design Requirements", ePoster.designRequirements],
@@ -959,57 +922,70 @@ const ConferenceDetails = () => {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  // Content shown when a detail row is expanded
+  // Small flat bullet list (no cards)
+  const BulletLines = ({ lines }) => (
+    <ul className="space-y-2.5">
+      {lines.map((line, index) => (
+        <li
+          key={index}
+          className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-600"
+        >
+          <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={14} />
+          <span className="whitespace-pre-line">{line}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  // Full content shown when a row below Sessions/Tracks is expanded
   const renderRowContent = (key) => {
     switch (key) {
-      case "sessions":
-        return <DetailList items={[...tracks, ...asArray(data.sessions)]} />;
-
       case "why":
-        return <DetailList items={whyToAttend} />;
+        return <FlatList items={whyToAttend} />;
 
       case "benefits":
-        return <DetailList items={benefits} />;
+        return <FlatList items={benefits} />;
 
       case "delegates":
-        return <DetailList items={delegates} />;
+        return <FlatList items={delegates} />;
 
       case "posterLive":
-        return <DetailList items={posterPresentersLive} />;
+        return <FlatList items={posterPresentersLive} />;
 
       case "agenda":
         return agenda.length ? (
-          <div className="space-y-2.5">
+          <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {agenda.map((day, dayIndex) => (
-              <ExpandCard
-                key={day._id || day.day || dayIndex}
-                title={asText(day.day, `Day ${dayIndex + 1}`)}
-              >
+              <div key={day._id || day.day || dayIndex}>
+                <h4 className="mb-3 inline-flex rounded-full bg-violet-600 px-3.5 py-1 text-xs font-bold text-white">
+                  {asText(day.day, `Day ${dayIndex + 1}`)}
+                </h4>
+
                 {getAgendaSessions(day).length ? (
-                  <div className="space-y-2">
+                  <ul className="divide-y divide-violet-100 border-l-2 border-violet-200 pl-4">
                     {getAgendaSessions(day).map((session, sessionIndex) => (
-                      <div
+                      <li
                         key={session._id || `${session.time}-${sessionIndex}`}
-                        className="flex flex-col gap-1 rounded-lg bg-violet-50/60 p-3 sm:flex-row sm:items-start sm:gap-4"
+                        className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4"
                       >
-                        <span className="min-w-[95px] text-xs font-bold text-violet-700">
+                        <span className="min-w-[110px] text-xs font-bold text-violet-700">
                           {asText(session.time, "Time TBA")}
                         </span>
-                        <span className="text-xs leading-5 text-slate-700">
+                        <span className="text-sm font-semibold leading-6 text-slate-700">
                           {asText(
                             session.session || session.title || session.name,
                             "Session details to be announced",
                           )}
                         </span>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
                   <p className="text-xs text-slate-500">
                     No sessions have been added for this day.
                   </p>
                 )}
-              </ExpandCard>
+              </div>
             ))}
           </div>
         ) : (
@@ -1018,63 +994,48 @@ const ConferenceDetails = () => {
 
       case "ePoster":
         return (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {posterIntroLines.length > 0 && (
-              <ExpandCard title="E-Poster Overview">
-                <ul className="space-y-2">
-                  {posterIntroLines.map((line, index) => (
-                    <li
-                      key={`intro-${index}`}
-                      className="flex items-start gap-2 text-xs leading-6 text-slate-600"
-                    >
-                      <CheckCircle2
-                        className="mt-1 shrink-0 text-violet-600"
-                        size={14}
-                      />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </ExpandCard>
+              <div>
+                <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                  E-Poster Overview
+                </h4>
+                <BulletLines lines={posterIntroLines} />
+              </div>
             )}
 
             {isObject(ePoster.specifications) && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {Object.entries(ePoster.specifications).map(([k, value]) => (
-                  <div
-                    key={k}
-                    className="rounded-lg border border-violet-100 bg-white p-3 shadow-sm"
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                      {k}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-[#171447]">
-                      {formatValue(value)}
-                    </p>
-                  </div>
-                ))}
+              <div>
+                <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                  Specifications
+                </h4>
+                <dl className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(ePoster.specifications).map(([k, value]) => (
+                    <div
+                      key={k}
+                      className="border-b border-violet-100 py-3"
+                    >
+                      <dt className="text-[11px] font-semibold text-slate-500">
+                        {k}
+                      </dt>
+                      <dd className="mt-1 text-[13px] font-semibold text-[#171447]">
+                        {formatValue(value)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             )}
 
             {posterGroups.length > 0 && (
-              <div className="space-y-2.5">
+              <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
                 {posterGroups.map(([heading, items]) => (
-                  <ExpandCard key={heading} title={heading}>
-                    <ul className="space-y-2">
-                      {items.map((item, index) => (
-                        <li
-                          key={`${heading}-${index}`}
-                          className="flex items-start gap-2 text-xs leading-6 text-slate-600"
-                        >
-                          <CheckCircle2
-                            className="mt-1 shrink-0 text-violet-600"
-                            size={14}
-                          />
-                          <span className="whitespace-pre-line">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </ExpandCard>
+                  <div key={heading}>
+                    <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                      {heading}
+                    </h4>
+                    <BulletLines lines={items} />
+                  </div>
                 ))}
               </div>
             )}
@@ -1097,17 +1058,17 @@ const ConferenceDetails = () => {
         }
 
         return (
-          <div className="grid items-start gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid items-start gap-8 lg:grid-cols-2">
             <div>
               {asText(marketAnalysis.heading) && (
-                <h4 className="text-sm font-bold text-[#171447]">
+                <h4 className="text-base font-bold text-[#171447]">
                   {asText(marketAnalysis.heading)}
                 </h4>
               )}
               {paragraphs.map((paragraph, index) => (
                 <p
                   key={index}
-                  className="mt-3 whitespace-pre-line text-xs leading-6 text-slate-600"
+                  className="mt-3 whitespace-pre-line text-sm font-semibold leading-7 text-slate-600"
                 >
                   {typeof paragraph === "string"
                     ? paragraph
@@ -1121,7 +1082,7 @@ const ConferenceDetails = () => {
                 src={marketAnalysis.image}
                 alt={asText(marketAnalysis.heading, "Market analysis")}
                 loading="lazy"
-                className="max-h-[320px] w-full rounded-xl object-cover shadow-md"
+                className="max-h-[360px] w-full rounded-2xl object-cover"
               />
             )}
           </div>
@@ -1159,7 +1120,6 @@ const ConferenceDetails = () => {
 
   return (
     <div className="min-h-screen overflow-hidden bg-white font-sans text-slate-800">
-      {/* SEO fallback message. Page still renders if API fails. */}
       {apiError && (
         <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-center text-xs text-amber-800">
           {apiError} Showing available fallback content where appropriate.
@@ -1228,7 +1188,7 @@ const ConferenceDetails = () => {
             <div className="mt-7 flex flex-wrap gap-3">
               <button
                 onClick={goToRegistration}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:-translate-y-0.5 hover:shadow-violet-500/30"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-semibold text-white transition hover:-translate-y-0.5"
               >
                 Register Now
                 <ArrowRight size={15} />
@@ -1263,7 +1223,7 @@ const ConferenceDetails = () => {
             initial={{ opacity: 0, x: 25, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="w-full max-w-[420px] shrink-0 rounded-2xl border border-white/20 bg-[#100d35]/80 p-5 shadow-2xl backdrop-blur-xl sm:p-6 lg:w-[370px]"
+            className="w-full max-w-[420px] shrink-0 rounded-2xl border border-white/20 bg-[#100d35]/80 p-5 backdrop-blur-xl sm:p-6 lg:w-[370px]"
           >
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-500/20 text-violet-200">
@@ -1324,7 +1284,7 @@ const ConferenceDetails = () => {
 
                 <button
                   onClick={goToRegistration}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-xs font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-violet-500/30"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
                 >
                   Secure Your Registration
                   <ArrowRight size={15} />
@@ -1430,7 +1390,7 @@ const ConferenceDetails = () => {
               {title}
             </h3>
 
-            <p className="welcome-copy mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
+            <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
               {welcomeText}
             </p>
 
@@ -1449,7 +1409,7 @@ const ConferenceDetails = () => {
           <div className="relative">
             <button
               onClick={() => setVideoOpen(true)}
-              className="group relative block aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100 shadow-md"
+              className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.4)]"
               aria-label="Open conference introduction"
             >
               <img
@@ -1459,7 +1419,7 @@ const ConferenceDetails = () => {
                 className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
-              <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-violet-700 shadow-xl transition group-hover:scale-110">
+              <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-violet-700 transition group-hover:scale-110">
                 <Play size={25} fill="currentColor" />
               </span>
               <span className="absolute bottom-8 left-0 w-full text-center text-sm font-bold text-white">
@@ -1471,7 +1431,7 @@ const ConferenceDetails = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-xl bg-violet-50 p-4 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl bg-violet-50 p-4 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1">
             {[
               { icon: Users, value: "4800+", label: "Attendees" },
               { icon: Globe2, value: "60+", label: "Countries" },
@@ -1497,40 +1457,28 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-      {/* SPEAKERS */}
+      {/* SPEAKERS – vertical cards, 5 per row on large screens */}
       <section
         id="speakers"
-        className="scroll-mt-24 bg-[#f7faff] px-5 py-10 sm:px-10"
+        className="scroll-mt-24 bg-white px-5 py-10 sm:px-10"
       >
         <div className="mx-auto max-w-[1300px]">
-          <div className="flex items-end justify-between gap-3">
-            <SectionHeading
-              label="Featured Speakers"
-              title="Renowned Speakers"
-              description="Meet the speakers and professionals participating in this conference."
-            />
+          <SectionHeading
+            label="Featured Speakers"
+            title="Renowned Speakers"
+            description="Meet the speakers and professionals participating in this conference."
+          />
 
-            <button
-              onClick={() => scroll(speakerRef, 1)}
-              className="mb-6 hidden shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 sm:flex"
-            >
-              View Speakers <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div
-            ref={speakerRef}
-            className="flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {speakers.length ? (
-              speakers.map((speaker, index) => (
+          {speakers.length ? (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {speakers.map((speaker, index) => (
                 <motion.article
                   key={speaker._id || speaker.name || index}
                   variants={fadeUp}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="flex min-w-[270px] snap-start items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-[0_14px_36px_-16px_rgba(109,40,217,0.30)] transition hover:-translate-y-1 hover:shadow-[0_20px_44px_-16px_rgba(109,40,217,0.42)] sm:min-w-[calc(50%-8px)] lg:min-w-[calc(25%-12px)]"
+                  className="flex min-h-[270px] flex-col items-center rounded-2xl border border-violet-200 bg-violet-50 p-4 text-center transition hover:-translate-y-1 hover:border-violet-400 hover:bg-violet-100/70"
                 >
                   <img
                     src={getSpeakerImage(speaker)}
@@ -1540,329 +1488,224 @@ const ConferenceDetails = () => {
                       event.currentTarget.onerror = null;
                       event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
                     }}
-                    className="h-[72px] w-[72px] shrink-0 rounded-full border-2 border-violet-100 object-cover"
+                    className="h-24 w-24 shrink-0 rounded-full border-[3px] border-violet-600 object-cover shadow-md"
                   />
 
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-[#171447]">
+                  <div className="mt-3 flex min-w-0 flex-1 flex-col items-center">
+                    <h3 className="text-base font-bold leading-6 text-violet-700">
                       {asText(speaker.name, "Speaker")}
                     </h3>
-                    <p className="mt-1 text-xs leading-4 text-slate-600">
+
+                    <p className="mt-1 text-xs font-semibold leading-4 text-violet-600">
                       {asText(speaker.role, "Conference Speaker")}
                     </p>
+
                     {getSpeakerOrganization(speaker) && (
-                      <p className="mt-1 text-xs leading-4 text-slate-500">
+                      <p className="mt-1.5 text-sm font-semibold leading-6 text-slate-600">
                         {getSpeakerOrganization(speaker)}
                       </p>
                     )}
+
                     {speaker.specialty && (
-                      <span className="mt-2 inline-block rounded-full bg-violet-50 px-2 py-1 text-[9px] font-medium text-violet-700">
+                      <span className="mt-3 inline-block rounded-full bg-violet-600 px-3 py-1 text-[10px] font-medium text-white">
                         {speaker.specialty}
                       </span>
                     )}
+
                     {speaker.bio && (
-                      <p className="mt-2 line-clamp-3 text-[10px] leading-4 text-slate-500">
+                      <p className="mt-3 line-clamp-3 text-[11px] leading-4 text-slate-600">
                         {speaker.bio}
                       </p>
                     )}
                   </div>
                 </motion.article>
-              ))
-            ) : (
-              <div className="w-full">
-                <EmptyState>
-                  No speakers have been added to this conference yet.
-                </EmptyState>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-1 flex justify-end gap-3">
-            <button
-              onClick={() => scroll(speakerRef, -1)}
-              aria-label="Previous speakers"
-              className="rounded-full border border-slate-200 bg-white p-2 text-violet-700 shadow-sm hover:bg-violet-50"
-            >
-              <ChevronLeft size={17} />
-            </button>
-            <button
-              onClick={() => scroll(speakerRef, 1)}
-              aria-label="Next speakers"
-              className="rounded-full border border-slate-200 bg-white p-2 text-violet-700 shadow-sm hover:bg-violet-50"
-            >
-              <ChevronRight size={17} />
-            </button>
-          </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState>
+              No speakers have been added to this conference yet.
+            </EmptyState>
+          )}
         </div>
       </section>
 
-      {/* WHO SHOULD ATTEND + KEY POINTS */}
-      <section className="bg-white px-5 py-12 sm:px-10">
-        <div className="mx-auto grid max-w-[1300px] gap-6 lg:grid-cols-2">
-          <article className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
-            <div className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-500 text-white shadow-lg shadow-violet-300/50">
-                <Users size={26} />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-[#171447]">
-                  Who Should Attend?
-                </h2>
-
-                {whoShouldAttend ? (
-                  <p className="mt-2 whitespace-pre-line text-sm leading-[1.85] text-slate-600">
-                    {whoShouldAttend}
-                  </p>
-                ) : asArray(data.whoShouldAttend).length ? (
-                  <div className="mt-3">
-                    <DetailList items={data.whoShouldAttend} />
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
-                    This conference welcomes researchers, clinicians, educators,
-                    students, professionals and others interested in the
-                    conference subject. Please check the program for details.
-                  </p>
-                )}
-
-                <button
-                  onClick={() => scrollTo("explore")}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-2.5 text-[11px] font-semibold text-white shadow-lg shadow-violet-300/50 transition hover:-translate-y-0.5 hover:shadow-violet-400/60"
-                >
-                  View Conference Details <ArrowRight size={14} />
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <article className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-violet-600" />
-            <div className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-lg shadow-violet-300/50">
-                <Lightbulb size={26} />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-[#171447]">Key Points</h2>
-                <p className="mt-2 text-sm leading-[1.85] text-slate-600">
-                  Explore conference information, scientific topics, expert
-                  sessions and opportunities for professional collaboration.
-                </p>
-                <ul className="mt-4 space-y-3">
-                  {FALLBACK_KEY_POINTS.map((point) => (
-                    <li
-                      key={point}
-                      className="flex items-start gap-3 text-sm leading-7 text-slate-700"
-                    >
-                      <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                        <CheckCircle2 size={13} />
-                      </span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      {/* KEY HIGHLIGHTS + TOPICS
-          - If Key Topics is empty, the topics division disappears and
-            Key Highlights takes the full width.
-          - If Key Highlights is empty, Key Topics takes the full width.
-          - If both are empty, the whole section is hidden.
-          - As soon as data is added, each block appears in the same place. */}
-      {(hasHighlights || hasTopics) && (
-        <section className="bg-gradient-to-b from-violet-50/70 to-white px-5 py-12 sm:px-10">
+      {/* WHO SHOULD ATTEND + THREE CARDS */}
+      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-5 py-14 sm:px-10">
+        <div className="mx-auto max-w-[1300px] space-y-6">
+          {/* WHO SHOULD ATTEND */}
           <div
-            className={`mx-auto grid max-w-[1300px] gap-6 ${
-              hasHighlights && hasTopics ? "lg:grid-cols-2" : "grid-cols-1"
-            }`}
+            className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}
           >
-            {/* KEY HIGHLIGHTS */}
-            {hasHighlights && (
-              <div className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}>
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
-                <SectionHeading
-                  label="Conference Highlights"
-                  title="Key Highlights"
-                  description="Important sessions and opportunities featured in the conference."
-                />
+            <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" />
 
-                <div className="space-y-3">
-                  {keyHighlights.map((highlight, index) => {
-                    const highlightTitle = getText(
-                      highlight,
-                      ["title", "name"],
-                      "Conference Highlight",
-                    );
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex gap-4 sm:gap-5">
+                <IconTile icon={Users} size={24} />
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                    Who Should Attend?
+                  </h2>
 
-                    const highlightDescription = getText(
-                      highlight,
-                      ["description", "content", "text"],
-                      "More details will be announced soon.",
-                    );
-
-                    return (
-                      <details
-                        key={highlight._id || `${highlightTitle}-${index}`}
-                        className={`group rounded-xl border border-violet-100 bg-white ${ROW_SHADOW} transition hover:border-violet-200 open:border-violet-300 open:bg-violet-50/40`}
-                      >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
-                          <span className="flex min-w-0 items-center gap-3">
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500" />
-                            <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700 sm:text-base">
-                              {highlightTitle}
-                            </span>
-                          </span>
-
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white text-violet-600 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-100 group-open:text-violet-700">
-                            <ChevronDown size={17} />
-                          </span>
-                        </summary>
-
-                        <div className="px-4 pb-4 pl-9 pr-10">
-                          <p className="text-sm leading-7 text-slate-600">
-                            {highlightDescription}
-                          </p>
-                        </div>
-                      </details>
-                    );
-                  })}
+                  {whoShouldAttend ? (
+                    <p className="mt-2 max-w-3xl whitespace-pre-line text-sm leading-[1.85] text-slate-600">
+                      {whoShouldAttend}
+                    </p>
+                  ) : asArray(data.whoShouldAttend).length ? (
+                    <div className="mt-3 max-w-3xl">
+                      <FlatList items={data.whoShouldAttend} />
+                    </div>
+                  ) : (
+                    <p className="mt-2 max-w-3xl text-sm leading-[1.85] text-slate-600">
+                      This conference welcomes researchers, clinicians,
+                      educators, students, professionals and others interested
+                      in the conference subject. Please check the program for
+                      details.
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* KEY TOPICS */}
-            {hasTopics && (
-              <div
-                id="topics"
-                className={`${PREMIUM_CARD} relative scroll-mt-24 overflow-hidden p-6 sm:p-8`}
+              <button
+                onClick={() => scrollTo("explore")}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-xs font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-violet-600" />
-                <SectionHeading
-                  label="Explore Research Areas"
-                  title="Key Topics"
-                  description="Explore the research areas and topics published for this conference."
-                />
-
-                <div className="space-y-3">
-                  {topics.map((topic, index) => {
-                    const topicTitle =
-                      typeof topic === "string"
-                        ? topic
-                        : getText(
-                            topic,
-                            ["title", "name", "topic", "label"],
-                            `Research Topic ${index + 1}`,
-                          );
-
-                    const topicDescription =
-                      typeof topic === "object" && topic !== null
-                        ? getText(
-                            topic,
-                            ["description", "content", "details"],
-                            "",
-                          )
-                        : "";
-
-                    return (
-                      <details
-                        key={
-                          typeof topic === "object" && topic !== null
-                            ? topic._id || `${topicTitle}-${index}`
-                            : `${topicTitle}-${index}`
-                        }
-                        className={`group rounded-xl border border-violet-100 bg-white ${ROW_SHADOW} transition hover:border-violet-200 open:border-violet-300 open:bg-violet-50/40`}
-                      >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
-                          <span className="flex min-w-0 items-center gap-3">
-                            <CheckCircle2
-                              size={17}
-                              className="shrink-0 text-violet-600"
-                            />
-
-                            <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700 sm:text-base">
-                              {topicTitle}
-                            </span>
-                          </span>
-
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-100 bg-white text-violet-600 transition-all duration-300 group-open:rotate-180 group-open:border-violet-200 group-open:bg-violet-100 group-open:text-violet-700">
-                            <ChevronDown size={17} />
-                          </span>
-                        </summary>
-
-                        {topicDescription && (
-                          <div className="px-4 pb-4 pl-10 pr-10">
-                            <p className="text-sm leading-7 text-slate-600">
-                              {topicDescription}
-                            </p>
-                          </div>
-                        )}
-                      </details>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                View Conference Details <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
-        </section>
-      )}
 
-      {/* CONFERENCE DETAILS - icon list with dividers */}
-      <section id="explore" className="scroll-mt-20 bg-white px-5 py-12 sm:px-10">
-        <div className="mx-auto max-w-[1300px]">
-          <SectionHeading
-            label="Event Details"
-            title="Conference Information"
-            description="Tap any item to view its details."
-          />
+          {/* THREE CARDS */}
+          <div className="grid items-start gap-6 lg:grid-cols-3">
+            <FeatureCard
+              icon={Sparkles}
+              title="Key Highlights"
+              description="Important sessions and opportunities featured in the conference."
+            >
+              <AccordionList
+                rows={highlightRows}
+                icon={CheckCircle2}
+                emptyText="Highlights will be announced soon."
+              />
+            </FeatureCard>
 
-          <div className={`${PREMIUM_CARD} space-y-3 p-3 sm:p-5`}>
+            <FeatureCard
+              icon={Hash}
+              title="Key Topics"
+              description="Research areas and topics published for this conference."
+            >
+              <div id="topics" className="scroll-mt-24">
+                <AccordionList
+                  rows={topicRows}
+                  icon={CheckCircle2}
+                  emptyText="Topics will be announced soon."
+                />
+              </div>
+            </FeatureCard>
+
+            <FeatureCard
+              icon={Lightbulb}
+              title="Key Points"
+              description="Explore information, expert sessions and professional collaboration."
+            >
+              <ul className="divide-y divide-violet-100">
+                {FALLBACK_KEY_POINTS.map((point) => (
+                  <li
+                    key={point}
+                    className="flex items-start gap-3 py-3.5 text-sm leading-6 text-slate-700"
+                  >
+                    <CheckCircle2
+                      size={16}
+                      className="mt-1 shrink-0 text-violet-600"
+                    />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </FeatureCard>
+          </div>
+        </div>
+      </section>
+
+      {/* SESSIONS AND TRACKS
+          "Conference Information" heading removed.
+          Heading is now "Sessions and Tracks" – bigger + bold.
+          Paragraph text – bigger + semibold. */}
+      <section
+        id="explore"
+        className="scroll-mt-20 bg-white px-5 py-12 sm:px-10"
+      >
+        <div className="mx-auto max-w-[1300px] space-y-8">
+          {/* SESSIONS / TRACKS */}
+          <div className={`${PREMIUM_CARD} p-6 sm:p-8`}>
+            <div className="mb-4 flex items-center gap-4">
+              <IconTile icon={Layers} />
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight text-[#171447] sm:text-3xl lg:text-4xl">
+                  Sessions and Tracks
+                </h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 sm:text-base">
+                  Scientific sessions planned for this conference.
+                </p>
+              </div>
+            </div>
+
+            <SessionsPanel items={sessionItems} />
+          </div>
+
+          {/* OTHER DATA (accordion, one row per section, full-width content) */}
+          <div
+            className={`${PREMIUM_CARD} divide-y divide-violet-100 overflow-hidden`}
+          >
             {DETAIL_ROWS.map((row) => {
               const Icon = row.icon;
               const open = activeRow === row.key;
 
               return (
-                <div
-                  key={row.key}
-                  className={`overflow-hidden rounded-xl border bg-white transition ${ROW_SHADOW} ${
-                    open
-                      ? "border-violet-300"
-                      : "border-slate-100 hover:border-violet-200"
-                  }`}
-                >
+                <div key={row.key}>
                   <button
                     type="button"
                     onClick={() => handleRowClick(row.key)}
                     aria-expanded={open}
-                    className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left sm:px-6"
+                    className={`flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition sm:px-7 ${
+                      open ? "bg-violet-50/60" : "hover:bg-violet-50/40"
+                    }`}
                   >
-                    <span className="flex min-w-0 items-center gap-4 sm:gap-6">
+                    <span className="flex min-w-0 items-center gap-4">
                       <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${row.gradient} text-white shadow-md`}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
+                          open
+                            ? "bg-gradient-to-br from-violet-600 to-purple-700 text-white"
+                            : "bg-violet-100 text-violet-700"
+                        }`}
                       >
-                        <Icon size={20} />
+                        <Icon size={19} />
                       </span>
-                      <span className="text-sm font-bold uppercase tracking-wide text-[#171447] sm:text-base">
+                      <span
+                        className={`text-sm font-bold sm:text-base ${
+                          open ? "text-violet-700" : "text-[#171447]"
+                        }`}
+                      >
                         {row.title}
                       </span>
                     </span>
 
-                    <ArrowRight
-                      size={22}
-                      className={`shrink-0 text-violet-600 transition-transform duration-300 ${
-                        open ? "rotate-90" : ""
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                        open
+                          ? "rotate-180 border-violet-300 bg-white text-violet-700"
+                          : "border-violet-100 text-violet-500"
                       }`}
-                    />
+                    >
+                      <ChevronDown size={17} />
+                    </span>
                   </button>
 
                   {open && (
                     <motion.div
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="border-t border-violet-100 bg-violet-50/30 px-4 py-5 sm:px-6"
+                      transition={{ duration: 0.25 }}
+                      className="bg-violet-50/40 px-5 pb-7 pt-5 sm:px-7"
                     >
                       {renderRowContent(row.key)}
                     </motion.div>
@@ -1884,11 +1727,11 @@ const ConferenceDetails = () => {
               description="Registration categories available for this conference."
             />
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {registrationCategories.map((categoryItem, index) => (
                 <div
                   key={categoryItem._id || categoryItem.name || index}
-                  className="rounded-2xl border border-violet-100 bg-white p-4 shadow-[0_14px_36px_-16px_rgba(109,40,217,0.30)]"
+                  className={`${PREMIUM_CARD} p-5`}
                 >
                   <h3 className="text-sm font-bold text-[#171447]">
                     {getText(
@@ -1897,7 +1740,7 @@ const ConferenceDetails = () => {
                       `Category ${index + 1}`,
                     )}
                   </h3>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
                     {getText(
                       categoryItem,
                       ["description", "details"],
@@ -1922,9 +1765,7 @@ const ConferenceDetails = () => {
         </section>
       )}
 
-      {/* SPONSORS + RECENT POSTS
-          - Sponsors card appears only when sponsors are added.
-          - When there are no sponsors, Recent Posts takes the full width. */}
+      {/* SPONSORS + RECENT POSTS */}
       <section className="bg-white px-5 py-10 sm:px-10">
         <div
           className={`mx-auto grid max-w-[1300px] gap-5 ${
@@ -1933,11 +1774,11 @@ const ConferenceDetails = () => {
         >
           {/* SPONSORS */}
           {hasSponsors && (
-            <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] sm:p-6">
+            <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <SectionLabel>Our Sponsors</SectionLabel>
-                  <h2 className="text-lg font-bold text-[#171447]">
+                  <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
                     Our Valued Sponsors
                   </h2>
                 </div>
@@ -1959,14 +1800,15 @@ const ConferenceDetails = () => {
                       : `Sponsor ${index + 1}`,
                   );
 
-                  const logo =
-                    typeof sponsor === "object"
-                      ? sponsor.logo ||
-                        sponsor.logoUrl ||
-                        sponsor.image ||
-                        sponsor.imageUrl ||
-                        sponsor.fileUrl
-                      : "";
+                  const logo = isObject(sponsor)
+                    ? getMediaUrl(
+                        sponsor.logo ||
+                          sponsor.logoUrl ||
+                          sponsor.image ||
+                          sponsor.imageUrl ||
+                          sponsor.fileUrl
+                      )
+                    : "";
 
                   const website =
                     typeof sponsor === "object"
@@ -1976,14 +1818,17 @@ const ConferenceDetails = () => {
                   return (
                     <div
                       key={sponsor._id || sponsorName || index}
-                      className="flex min-h-[75px] items-center justify-center rounded-lg border border-slate-100 bg-white px-3 py-3 text-center shadow-sm transition hover:border-violet-200"
+                      className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 text-center transition hover:border-violet-200"
                     >
                       {logo ? (
                         <img
                           src={logo}
                           alt={sponsorName}
                           loading="lazy"
-                          className="max-h-12 max-w-full object-contain"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                          className="block max-h-20 w-full max-w-full object-contain"
                         />
                       ) : website ? (
                         <a
@@ -2007,11 +1852,11 @@ const ConferenceDetails = () => {
           )}
 
           {/* RECENT POSTS */}
-          <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_20px_50px_-20px_rgba(109,40,217,0.30)] sm:p-6">
+          <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <SectionLabel>Follow Us</SectionLabel>
-                <h2 className="text-lg font-bold text-[#171447]">
+                <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
                   Recent Posts
                 </h2>
               </div>
@@ -2019,21 +1864,21 @@ const ConferenceDetails = () => {
                 <button
                   onClick={() => scroll(postRef, -1)}
                   aria-label="Previous posts"
-                  className="rounded-full bg-white p-2 text-violet-700 shadow-sm"
+                  className="rounded-full border border-violet-100 bg-white p-2 text-violet-700"
                 >
                   <ChevronLeft size={15} />
                 </button>
                 <button
                   onClick={() => scroll(postRef, 1)}
                   aria-label="Next posts"
-                  className="rounded-full bg-white p-2 text-violet-700 shadow-sm"
+                  className="rounded-full border border-violet-100 bg-white p-2 text-violet-700"
                 >
                   <ChevronRight size={15} />
                 </button>
               </div>
             </div>
 
-            <p className="mt-2 text-xs leading-5 text-slate-600">
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
               Follow conference announcements, research news and community
               updates.
             </p>
@@ -2099,7 +1944,7 @@ const ConferenceDetails = () => {
                 return (
                   <article
                     key={post._id || postTitle || index}
-                    className="min-w-[155px] max-w-[190px] flex-1 snap-start overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm"
+                    className="min-w-[155px] max-w-[190px] flex-1 snap-start overflow-hidden rounded-xl border border-slate-100 bg-white"
                   >
                     <img
                       src={postImage}
