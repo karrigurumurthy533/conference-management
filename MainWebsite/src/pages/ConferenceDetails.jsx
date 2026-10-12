@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
 import {
   CalendarDays,
   MapPin,
@@ -29,9 +30,12 @@ import {
   Layers,
   Sparkles,
   Hash,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
-import { getConferenceByIdApi } from "../api/api";
+import { getConferenceByIdApi, getConferencesApi } from "../api/api";
+import { subscribe, clearSubscribe } from "../redux/userSlice";
 
 // ============================================================
 // FALLBACK CONFIGURATION
@@ -56,11 +60,9 @@ const FALLBACK_KEY_POINTS = [
   "Continuing education and professional development",
 ];
 
-// Premium card shell (soft border + very light tinted shadow)
 const PREMIUM_CARD =
   "rounded-3xl border border-violet-100/80 bg-white shadow-[0_18px_50px_-24px_rgba(76,29,149,0.28)]";
 
-// Expandable rows shown BELOW the Sessions / Tracks block
 const DETAIL_ROWS = [
   { key: "why", title: "Why to Attend", icon: Star },
   { key: "agenda", title: "Sample Agenda", icon: CalendarCheck },
@@ -138,12 +140,8 @@ const getText = (item, keys, fallback = "") => {
 
 const formatDate = (value, fallback = "Date to be announced") => {
   if (!value) return fallback;
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return asText(value, fallback);
-  }
+  if (Number.isNaN(date.getTime())) return asText(value, fallback);
 
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -155,16 +153,13 @@ const formatDate = (value, fallback = "Date to be announced") => {
 
 const getDateRange = (conference) => {
   if (conference?.date) return conference.date;
-
   const start = conference?.startDate;
   const end = conference?.endDate;
-
   if (!start && !end) return "Dates to be announced";
 
   if (start && end) {
     const startDate = formatDate(start);
     const endDate = formatDate(end);
-
     return startDate === endDate ? startDate : `${startDate} – ${endDate}`;
   }
 
@@ -178,17 +173,13 @@ const getCountdownPhase = (startDate, endDate) => {
 
   if (!Number.isFinite(start)) return "unknown";
   if (now < start) return "upcoming";
-
   const effectiveEnd = Number.isFinite(end) ? end : start;
-
   if (now <= effectiveEnd + 24 * 60 * 60 * 1000) return "live";
-
   return "ended";
 };
 
 const getCountdown = (startDate, endDate) => {
   const phase = getCountdownPhase(startDate, endDate);
-
   if (phase === "unknown" || phase === "ended") {
     return { phase, days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
@@ -208,38 +199,33 @@ const getCountdown = (startDate, endDate) => {
 };
 
 const getConferenceImage = (conference, fallback = FALLBACK_IMAGE) => {
-  const image = conference?.image || conference?.bannerImage;
+  const image =
+    conference?.image || conference?.bannerImage || conference?.conferenceImage;
   if (typeof image === "string" && image.trim()) return image;
-  if (isObject(image)) {
+  if (isObject(image))
     return image.url || image.secure_url || image.fileUrl || fallback;
-  }
   return fallback;
 };
 
 const getMediaUrl = (value) => {
   if (typeof value === "string" && value.trim()) return value.trim();
-  if (isObject(value)) {
+  if (isObject(value))
     return value.secure_url || value.url || value.fileUrl || value.path || "";
-  }
   return "";
 };
 
 const getSpeakerImage = (speaker) => {
   const image = speaker?.image || speaker?.photo || speaker?.profileImage;
-
   if (typeof image === "string" && image.trim()) return image;
-
   if (isObject(image)) {
     return (
       image.url || image.secure_url || image.fileUrl || FALLBACK_SPEAKER_IMAGE
     );
   }
-
   return FALLBACK_SPEAKER_IMAGE;
 };
 
 const getAgenda = (otherData) => asArray(otherData?.sampleAgenda);
-
 const getAgendaSessions = (agendaDay) =>
   asArray(agendaDay?.schedule || agendaDay?.sessions);
 
@@ -256,13 +242,18 @@ const getVenueName = (conference) =>
   "Venue to be announced";
 
 const formatValue = (value) => {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === "")
     return "To be announced";
-  }
   if (typeof value === "boolean") return value ? "Available" : "Not available";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 };
+
+const getConferenceTitle = (conference) =>
+  conference?.basicInformation?.title ||
+  conference?.title ||
+  conference?.name ||
+  "Conference";
 
 // ============================================================
 // SMALL UI PIECES
@@ -277,9 +268,7 @@ const SectionLabel = ({ children }) => (
 const SectionHeading = ({ label, title, description }) => (
   <div className="mb-6">
     {label && <SectionLabel>{label}</SectionLabel>}
-    <h2 className="text-2xl font-extrabold tracking-tight text-[#171447] sm:text-3xl lg:text-4xl">
-      {title}
-    </h2>
+    <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">{title}</h2>
     {description && (
       <p className="mt-1.5 max-w-3xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
         {description}
@@ -300,13 +289,14 @@ const IconTile = ({ icon: Icon, size = 22 }) => (
   </span>
 );
 
-// Premium feature card used for Key Highlights / Key Topics / Key Points
 const FeatureCard = ({ icon, title, description, children }) => (
   <div className={`${PREMIUM_CARD} flex flex-col p-6 sm:p-7`}>
     <div className="flex items-start gap-4">
       <IconTile icon={icon} />
       <div className="min-w-0">
-        <h3 className="text-xl font-bold text-[#171447] sm:text-2xl">{title}</h3>
+        <h3 className="text-xl font-bold text-[#171447] sm:text-2xl">
+          {title}
+        </h3>
         <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       </div>
     </div>
@@ -314,32 +304,26 @@ const FeatureCard = ({ icon, title, description, children }) => (
   </div>
 );
 
-// ------------------------------------------------------------
-// FlatList – plain rows with dividers (NO inner cards)
-// ------------------------------------------------------------
 const FlatList = ({
   items,
   titleKey = "title",
   descriptionKey = "description",
-  emptyText,
+  emptyText = "Information will be announced soon.",
 }) => {
   const validItems = asArray(items).filter((item) => {
     if (typeof item === "string") return item.trim().length > 0;
     if (!isObject(item)) return false;
-
     return Boolean(
       item[titleKey] ||
-        item[descriptionKey] ||
-        item.name ||
-        item.text ||
-        item.session ||
-        item.time,
+      item[descriptionKey] ||
+      item.name ||
+      item.text ||
+      item.session ||
+      item.time,
     );
   });
 
-  if (!validItems.length) {
-    return <EmptyState>{emptyText}</EmptyState>;
-  }
+  if (!validItems.length) return <EmptyState>{emptyText}</EmptyState>;
 
   return (
     <ul className="divide-y divide-violet-100">
@@ -353,7 +337,6 @@ const FlatList = ({
             "session",
             "text",
           ]) || `Item ${index + 1}`;
-
         const description = getText(item, [
           descriptionKey,
           "details",
@@ -367,10 +350,7 @@ const FlatList = ({
             key={item?._id || `${title}-${index}`}
             className="flex items-start gap-3 py-4 first:pt-1 last:pb-1"
           >
-            <CheckCircle2
-              className="mt-1 shrink-0 text-violet-600"
-              size={16}
-            />
+            <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={16} />
             <div className="min-w-0">
               <p className="text-sm font-bold leading-6 text-[#171447]">
                 {title}
@@ -388,9 +368,6 @@ const FlatList = ({
   );
 };
 
-// ------------------------------------------------------------
-// AccordionList – used inside Key Highlights / Key Topics cards
-// ------------------------------------------------------------
 const AccordionList = ({ rows, icon: Icon, emptyText }) => {
   if (!rows.length) return <EmptyState>{emptyText}</EmptyState>;
 
@@ -412,7 +389,6 @@ const AccordionList = ({ rows, icon: Icon, emptyText }) => {
               />
             ) : null}
           </summary>
-
           {row.description && (
             <p className="pb-4 pl-7 pr-6 text-sm font-semibold leading-6 text-slate-600">
               {row.description}
@@ -424,61 +400,50 @@ const AccordionList = ({ rows, icon: Icon, emptyText }) => {
   );
 };
 
-// ------------------------------------------------------------
-// SessionsPanel – full width, always visible, no inner cards
-// (bigger bold titles + bigger semibold paragraph text)
-// ------------------------------------------------------------
-const SessionsPanel = ({ items }) => {
-  const validItems = asArray(items).filter((item) => {
-    if (typeof item === "string") return item.trim().length > 0;
-    if (!isObject(item)) return false;
-    return Boolean(
-      item.title || item.name || item.heading || item.description || item.text,
+function SessionsPanel({ items = [] }) {
+  if (!items.length) {
+    return (
+      <EmptyState>No sessions or tracks have been published yet.</EmptyState>
     );
-  });
-
-  if (!validItems.length) {
-    return <EmptyState>Sessions and tracks will be announced soon.</EmptyState>;
   }
 
   return (
-    <ul className="grid gap-x-10 md:grid-cols-2">
-      {validItems.map((item, index) => {
-        const itemTitle =
-          getText(item, ["title", "name", "heading", "session", "text"]) ||
-          `Session ${index + 1}`;
-
-        const itemDescription = getText(item, [
-          "description",
-          "details",
-          "content",
-          "bio",
-        ]);
-
-        return (
-          <li
-            key={item?._id || `${itemTitle}-${index}`}
-            className="flex items-start gap-3 border-b border-violet-100 py-5"
-          >
+    <div className="w-full divide-y divide-violet-100">
+      {items.map((item, index) => (
+        <div
+          key={item._id || item.id || index}
+          className="w-full py-5 first:pt-4 last:pb-5"
+        >
+          <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
               <CheckCircle2 size={16} />
             </span>
-            <div className="min-w-0">
-              <h4 className="text-base font-bold leading-7 text-[#171447] sm:text-lg">
-                {itemTitle}
-              </h4>
-              {itemDescription && itemDescription !== itemTitle && (
-                <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-7 text-slate-600 sm:text-[15px]">
-                  {itemDescription}
-                </p>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+            <h3 className="text-sm font-semibold leading-6 text-[#171447] sm:text-base">
+              {item.title || item.name || item.trackName || "Session"}
+            </h3>
+          </div>
+          <p className="mt-2 pl-10 text-sm font-medium leading-6 text-slate-700">
+            {item.description || item.details || ""}
+          </p>
+        </div>
+      ))}
+    </div>
   );
-};
+}
+
+const BulletLines = ({ lines }) => (
+  <ul className="space-y-2.5">
+    {lines.map((line, index) => (
+      <li
+        key={index}
+        className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-600"
+      >
+        <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={14} />
+        <span className="whitespace-pre-line">{line}</span>
+      </li>
+    ))}
+  </ul>
+);
 
 // ============================================================
 // MAIN COMPONENT
@@ -487,16 +452,30 @@ const SessionsPanel = ({ items }) => {
 const ConferenceDetails = () => {
   const { id, conferenceId } = useParams();
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const postRef = useRef(null);
 
   const currentId = id || conferenceId || FALLBACK_CONFERENCE_ID;
+
+  const {
+    subscribeLoading = false,
+    subscribeSuccess = false,
+    subscribeError = "",
+  } = useSelector((state) => state.user || {});
 
   const [conference, setConference] = useState(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   const [activeRow, setActiveRow] = useState(null);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [subscriberForm, setSubscriberForm] = useState({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    conferenceId: "",
+  });
+  const [formError, setFormError] = useState("");
+  const [conferences, setConferences] = useState([]);
   const [countdown, setCountdown] = useState({
     phase: "unknown",
     days: 0,
@@ -505,10 +484,7 @@ const ConferenceDetails = () => {
     seconds: 0,
   });
 
-  // ----------------------------------------------------------
-  // FETCH CONFERENCE API
-  // ----------------------------------------------------------
-
+  // Fetch current conference details
   useEffect(() => {
     let active = true;
 
@@ -518,9 +494,7 @@ const ConferenceDetails = () => {
 
       try {
         const response = await getConferenceByIdApi(currentId);
-
         const body = response?.data ?? response;
-
         const apiData =
           body?.data?.conference ||
           body?.data?.data ||
@@ -543,9 +517,7 @@ const ConferenceDetails = () => {
         setConference(apiData);
       } catch (error) {
         if (!active) return;
-
         console.error("Failed to fetch conference details:", error);
-
         setConference(null);
         setApiError(
           error?.response?.data?.message ||
@@ -558,70 +530,73 @@ const ConferenceDetails = () => {
     };
 
     fetchConference();
-
     return () => {
       active = false;
     };
   }, [currentId]);
 
-  // ----------------------------------------------------------
-  // NORMALIZED API DATA
-  // ----------------------------------------------------------
+  // Fetch conference list for subscription dropdown
+  useEffect(() => {
+    let active = true;
 
+    const fetchConferences = async () => {
+      try {
+        const response = await getConferencesApi();
+        const body = response?.data?.data ?? response?.data ?? [];
+        const conferenceList = Array.isArray(body)
+          ? body
+          : Array.isArray(body?.conferences)
+            ? body.conferences
+            : Array.isArray(body?.items)
+              ? body.items
+              : [];
+
+        if (active) setConferences(conferenceList);
+      } catch (error) {
+        console.error("Failed to fetch conferences:", error);
+        if (active) setConferences([]);
+      }
+    };
+
+    fetchConferences();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Normalized conference data
   const data = conference || {};
-
   const title = asText(data.title || data.name, "International Conference");
-
   const subtitle = asText(
     data.subtitle,
     "Research, innovation, collaboration and global knowledge sharing.",
   );
-
   const description = asText(
     data.description,
     "Explore the conference program, research topics, speakers and participation opportunities.",
   );
-
   const category = asText(data.category, "International Conference");
-
   const dateRange = getDateRange(data);
-
   const time = asText(data.time, "Schedule to be announced");
-
   const mode = asText(data.mode || data.time, "To be announced");
-
   const participants = asText(data.participants, "Global");
-
   const venueName = getVenueName(data);
-
   const heroImage = getConferenceImage(data);
 
-  const aboutImage =
-    (typeof data.aboutImage === "string" && data.aboutImage.trim()
-      ? data.aboutImage
-      : "") || FALLBACK_ABOUT_IMAGE;
+  const aboutImage = getMediaUrl(data.aboutImage) || FALLBACK_ABOUT_IMAGE;
 
   const speakers = asArray(data.speakers);
 
-  const topics = asArray(data.topics)
-    .map((topic) =>
-      getText(
-        topic,
-        ["title", "name", "topic", "text"],
-        typeof topic === "string" ? topic : "",
-      ),
-    )
-    .filter(Boolean);
-
   const tracks = asArray(data.tracks);
+  const sessions = asArray(data.sessions);
+  const sessionItems = [...tracks, ...sessions];
 
   const keyHighlights = asArray(data.keyHighlights).filter(
     (item) =>
       item && (item.title || item.description || typeof item === "string"),
   );
-
+  const topics = asArray(data.topics);
   const sponsors = asArray(data.sponsors).filter(Boolean);
-
   const welcome = isObject(data.welcomeMessage) ? data.welcomeMessage : {};
 
   const welcomeParagraphs = asArray(welcome.paragraphs)
@@ -640,53 +615,34 @@ const ConferenceDetails = () => {
     );
 
   const welcomeSignature = asText(welcome.signature);
-
   const whoShouldAttend = asText(data.whoShouldAttendDescription, "");
-
   const otherData = isObject(data.otherData) ? data.otherData : {};
-
   const agenda = getAgenda(otherData);
-
   const whyToAttend = asArray(otherData.whyToAttend);
-
   const benefits = asArray(otherData.benefitsOfAttending);
-
   const delegates = asArray(otherData.delegates);
-
   const posterPresentersLive = asArray(otherData.posterPresentersLive);
-
   const marketAnalysis = isObject(otherData.marketAnalysis)
     ? otherData.marketAnalysis
     : {};
-
   const ePoster = isObject(otherData.ePosterPresenters)
     ? otherData.ePosterPresenters
     : {};
-
   const contact = isObject(data.contact) ? data.contact : {};
-
   const registrationCategories = asArray(data.registrationCategories);
-
   const socialPosts = asArray(data.recentPosts || data.posts);
-
   const posts = socialPosts.length ? socialPosts : FALLBACK_POSTS;
-
   const countdownStart = data.startDate || null;
   const countdownEnd = data.endDate || data.startDate || null;
-
   const hasSponsors = sponsors.length > 0;
 
-  // Sessions / Tracks content (full width, always visible)
-  const sessionItems = [...tracks, ...asArray(data.sessions)];
-
-  // Rows for the Key Highlights / Key Topics cards
   const highlightRows = keyHighlights.map((highlight, index) => ({
     key: highlight?._id || `highlight-${index}`,
     title: getText(highlight, ["title", "name"], "Conference Highlight"),
     description: getText(highlight, ["description", "content", "text"], ""),
   }));
 
-  const topicRows = asArray(data.topics)
+  const topicRows = topics
     .map((topic, index) => ({
       key: topic?._id || `topic-${index}`,
       title: getText(
@@ -701,31 +657,19 @@ const ConferenceDetails = () => {
     }))
     .filter((row) => row.title);
 
-  // ----------------------------------------------------------
-  // COUNTDOWN
-  // ----------------------------------------------------------
-
+  // Countdown
   useEffect(() => {
-    const updateCountdown = () => {
+    const updateCountdown = () =>
       setCountdown(getCountdown(countdownStart, countdownEnd));
-    };
-
     updateCountdown();
-
     const timer = window.setInterval(updateCountdown, 1000);
-
     return () => window.clearInterval(timer);
   }, [countdownStart, countdownEnd]);
 
-  // ----------------------------------------------------------
-  // SEO METADATA + EVENT STRUCTURED DATA
-  // ----------------------------------------------------------
-
+  // SEO metadata and Event structured data
   useEffect(() => {
     const originalTitle = document.title;
-
     const pageTitle = `${title} | GlobalScion Conferences`;
-
     const pageDescription = (
       description ||
       subtitle ||
@@ -738,15 +682,12 @@ const ConferenceDetails = () => {
 
     const setMeta = (attribute, key, content) => {
       if (!content) return;
-
       let element = document.head.querySelector(`meta[${attribute}="${key}"]`);
-
       if (!element) {
         element = document.createElement("meta");
         element.setAttribute(attribute, key);
         document.head.appendChild(element);
       }
-
       element.setAttribute("content", content);
     };
 
@@ -765,28 +706,25 @@ const ConferenceDetails = () => {
         "research and innovation",
       ].join(", "),
     );
-
     setMeta("property", "og:type", "event");
     setMeta("property", "og:title", pageTitle);
     setMeta("property", "og:description", pageDescription);
     setMeta("property", "og:image", heroImage);
     setMeta("property", "og:site_name", "GlobalScion Conferences");
-
     setMeta("name", "twitter:card", "summary_large_image");
     setMeta("name", "twitter:title", pageTitle);
     setMeta("name", "twitter:description", pageDescription);
     setMeta("name", "twitter:image", heroImage);
 
     let canonical = document.head.querySelector('link[rel="canonical"]');
-
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
-
     canonical.href = `${window.location.origin}${window.location.pathname}`;
 
+    const isOnline = /webinar|online|virtual/i.test(mode);
     const eventSchema = {
       "@context": "https://schema.org",
       "@type": "Event",
@@ -796,10 +734,10 @@ const ConferenceDetails = () => {
       startDate: data.startDate || undefined,
       endDate: data.endDate || undefined,
       eventStatus: "https://schema.org/EventScheduled",
-      eventAttendanceMode: /webinar|online|virtual/i.test(mode)
+      eventAttendanceMode: isOnline
         ? "https://schema.org/OnlineEventAttendanceMode"
         : "https://schema.org/MixedEventAttendanceMode",
-      location: /webinar|online|virtual/i.test(mode)
+      location: isOnline
         ? {
             "@type": "VirtualLocation",
             url: data.venue?.onlineLink || window.location.href,
@@ -823,14 +761,12 @@ const ConferenceDetails = () => {
     };
 
     let jsonLd = document.getElementById("conference-event-jsonld");
-
     if (!jsonLd) {
       jsonLd = document.createElement("script");
       jsonLd.id = "conference-event-jsonld";
       jsonLd.type = "application/ld+json";
       document.head.appendChild(jsonLd);
     }
-
     jsonLd.textContent = JSON.stringify(eventSchema);
 
     return () => {
@@ -851,21 +787,12 @@ const ConferenceDetails = () => {
     venueName,
   ]);
 
-  // ----------------------------------------------------------
-  // NAVIGATION
-  // ----------------------------------------------------------
-
-  const goToRegistration = () => {
-    navigate(`/conferences/${currentId}/register`);
-  };
-
-  const goToScientificProgram = () => {
+  // Navigation
+  const goToRegistration = () => navigate(`/conferences/${currentId}/register`);
+  const goToScientificProgram = () =>
     navigate(`/conferences/${currentId}/scientific-program`);
-  };
-
-  const goToAbstracts = () => {
+  const goToAbstracts = () =>
     navigate(`/conferences/${currentId}/abstract-submission`);
-  };
 
   const goToBrochure = () => {
     const brochureUrl =
@@ -878,7 +805,6 @@ const ConferenceDetails = () => {
       window.open(brochureUrl, "_blank", "noopener,noreferrer");
       return;
     }
-
     navigate(`/conferences/${currentId}/brochure`);
   };
 
@@ -891,16 +817,71 @@ const ConferenceDetails = () => {
 
   const scroll = (ref, direction) => {
     if (!ref.current) return;
-
-    ref.current.scrollBy({
-      left: direction * 280,
-      behavior: "smooth",
-    });
+    ref.current.scrollBy({ left: direction * 280, behavior: "smooth" });
   };
 
   const handleRowClick = (key) => {
     setActiveRow((previous) => (previous === key ? null : key));
   };
+
+  // Subscription form handlers
+  useEffect(() => {
+    return () => {
+      dispatch(clearSubscribe());
+    };
+  }, [dispatch]);
+
+  const handleSubscriberChange = (event) => {
+    const { name, value } = event.target;
+    setSubscriberForm((previous) => ({ ...previous, [name]: value }));
+    setFormError("");
+
+    if (subscribeSuccess || subscribeError) {
+      dispatch(clearSubscribe());
+    }
+  };
+
+  const handleSubscribe = (event) => {
+    event.preventDefault();
+    setFormError("");
+
+    const name = subscriberForm.name.trim();
+    const email = subscriberForm.email.trim();
+    const phoneNumber = subscriberForm.phoneNumber.trim();
+    const selectedConferenceId = subscriberForm.conferenceId;
+
+    if (!name) return setFormError("Please enter your name.");
+    if (!email) return setFormError("Please enter your email.");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return setFormError("Please enter a valid email address.");
+    }
+    if (!phoneNumber) return setFormError("Please enter your phone number.");
+    if (!selectedConferenceId)
+      return setFormError("Please select a conference.");
+
+    dispatch(
+      subscribe({
+        name,
+        email,
+        phoneNumber,
+        conferenceId: selectedConferenceId,
+      }),
+    );
+  };
+
+  useEffect(() => {
+    if (subscribeSuccess) {
+      setSubscriberForm({
+        name: "",
+        email: "",
+        phoneNumber: "",
+        conferenceId: "",
+      });
+      setFormError("");
+    }
+  }, [subscribeSuccess]);
 
   const posterGroups = [
     ["Poster Content", ePoster.posterContent],
@@ -922,36 +903,36 @@ const ConferenceDetails = () => {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  // Small flat bullet list (no cards)
-  const BulletLines = ({ lines }) => (
-    <ul className="space-y-2.5">
-      {lines.map((line, index) => (
-        <li
-          key={index}
-          className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-600"
-        >
-          <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={14} />
-          <span className="whitespace-pre-line">{line}</span>
-        </li>
-      ))}
-    </ul>
-  );
-
-  // Full content shown when a row below Sessions/Tracks is expanded
   const renderRowContent = (key) => {
     switch (key) {
       case "why":
-        return <FlatList items={whyToAttend} />;
-
+        return (
+          <FlatList
+            items={whyToAttend}
+            emptyText="Reasons to attend will be announced soon."
+          />
+        );
       case "benefits":
-        return <FlatList items={benefits} />;
-
+        return (
+          <FlatList
+            items={benefits}
+            emptyText="Benefits will be announced soon."
+          />
+        );
       case "delegates":
-        return <FlatList items={delegates} />;
-
+        return (
+          <FlatList
+            items={delegates}
+            emptyText="Delegate information will be announced soon."
+          />
+        );
       case "posterLive":
-        return <FlatList items={posterPresentersLive} />;
-
+        return (
+          <FlatList
+            items={posterPresentersLive}
+            emptyText="Live poster presentation details will be announced soon."
+          />
+        );
       case "agenda":
         return agenda.length ? (
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
@@ -960,7 +941,6 @@ const ConferenceDetails = () => {
                 <h4 className="mb-3 inline-flex rounded-full bg-violet-600 px-3.5 py-1 text-xs font-bold text-white">
                   {asText(day.day, `Day ${dayIndex + 1}`)}
                 </h4>
-
                 {getAgendaSessions(day).length ? (
                   <ul className="divide-y divide-violet-100 border-l-2 border-violet-200 pl-4">
                     {getAgendaSessions(day).map((session, sessionIndex) => (
@@ -991,7 +971,6 @@ const ConferenceDetails = () => {
         ) : (
           <EmptyState>No agenda sessions have been published yet.</EmptyState>
         );
-
       case "ePoster":
         return (
           <div className="space-y-8">
@@ -1003,30 +982,30 @@ const ConferenceDetails = () => {
                 <BulletLines lines={posterIntroLines} />
               </div>
             )}
-
             {isObject(ePoster.specifications) && (
               <div>
                 <h4 className="mb-3 text-sm font-bold text-[#171447]">
                   Specifications
                 </h4>
                 <dl className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
-                  {Object.entries(ePoster.specifications).map(([k, value]) => (
-                    <div
-                      key={k}
-                      className="border-b border-violet-100 py-3"
-                    >
-                      <dt className="text-[11px] font-semibold text-slate-500">
-                        {k}
-                      </dt>
-                      <dd className="mt-1 text-[13px] font-semibold text-[#171447]">
-                        {formatValue(value)}
-                      </dd>
-                    </div>
-                  ))}
+                  {Object.entries(ePoster.specifications).map(
+                    ([key, value]) => (
+                      <div
+                        key={key}
+                        className="border-b border-violet-100 py-3"
+                      >
+                        <dt className="text-[11px] font-semibold text-slate-500">
+                          {key}
+                        </dt>
+                        <dd className="mt-1 text-[13px] font-semibold text-[#171447]">
+                          {formatValue(value)}
+                        </dd>
+                      </div>
+                    ),
+                  )}
                 </dl>
               </div>
             )}
-
             {posterGroups.length > 0 && (
               <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
                 {posterGroups.map(([heading, items]) => (
@@ -1039,7 +1018,6 @@ const ConferenceDetails = () => {
                 ))}
               </div>
             )}
-
             {!posterIntroLines.length &&
               !posterGroups.length &&
               !isObject(ePoster.specifications) && (
@@ -1049,14 +1027,9 @@ const ConferenceDetails = () => {
               )}
           </div>
         );
-
       case "market": {
         const paragraphs = asArray(marketAnalysis.paragraphs);
-
-        if (!paragraphs.length && !marketAnalysis.image) {
-          return <EmptyState />;
-        }
-
+        if (!paragraphs.length && !marketAnalysis.image) return <EmptyState />;
         return (
           <div className="grid items-start gap-8 lg:grid-cols-2">
             <div>
@@ -1076,10 +1049,9 @@ const ConferenceDetails = () => {
                 </p>
               ))}
             </div>
-
             {marketAnalysis.image && (
               <img
-                src={marketAnalysis.image}
+                src={getMediaUrl(marketAnalysis.image)}
                 alt={asText(marketAnalysis.heading, "Market analysis")}
                 loading="lazy"
                 className="max-h-[360px] w-full rounded-2xl object-cover"
@@ -1088,16 +1060,12 @@ const ConferenceDetails = () => {
           </div>
         );
       }
-
       default:
         return <EmptyState />;
     }
   };
 
-  // ==========================================================
-  // LOADING STATE
-  // ==========================================================
-
+  // Loading state
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-white px-5">
@@ -1114,10 +1082,6 @@ const ConferenceDetails = () => {
     );
   }
 
-  // ==========================================================
-  // MAIN UI
-  // ==========================================================
-
   return (
     <div className="min-h-screen overflow-hidden bg-white font-sans text-slate-800">
       {apiError && (
@@ -1125,7 +1089,6 @@ const ConferenceDetails = () => {
           {apiError} Showing available fallback content where appropriate.
         </div>
       )}
-
       {/* HERO BANNER */}
       <section
         id="home"
@@ -1135,7 +1098,6 @@ const ConferenceDetails = () => {
           className="absolute inset-0 -z-20 bg-cover bg-center"
           style={{ backgroundImage: `url("${heroImage}")` }}
         />
-
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#071b38]/95 via-[#17123c]/85 to-[#26124b]/45" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#08162c]/50 via-transparent to-[#08162c]/20" />
 
@@ -1147,14 +1109,11 @@ const ConferenceDetails = () => {
             className="w-full max-w-[760px] flex-1 text-white"
           >
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-semibold backdrop-blur-md">
-              <CalendarDays size={12} />
-              {category}
+              <CalendarDays size={12} /> {category}
             </span>
-
             <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
               {title}
             </h1>
-
             <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-white/90 sm:text-base">
               {subtitle}
             </p>
@@ -1167,7 +1126,6 @@ const ConferenceDetails = () => {
                   <p className="mt-1 text-[10px] text-white/70">{time}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
                 <MapPin className="shrink-0 text-violet-300" size={24} />
                 <div>
@@ -1175,7 +1133,6 @@ const ConferenceDetails = () => {
                   <p className="mt-1 text-[10px] text-white/70">{mode}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
                 <Globe2 className="shrink-0 text-violet-300" size={23} />
                 <div>
@@ -1190,30 +1147,25 @@ const ConferenceDetails = () => {
                 onClick={goToRegistration}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-semibold text-white transition hover:-translate-y-0.5"
               >
-                Register Now
-                <ArrowRight size={15} />
+                Register Now <ArrowRight size={15} />
               </button>
-
               <button
                 onClick={goToBrochure}
                 className="inline-flex items-center gap-2 rounded-lg border border-white/50 bg-white/5 px-4 py-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/15"
               >
-                <Download size={14} />
-                Download Brochure
+                <Download size={14} /> Download Brochure
               </button>
-
               <button
                 onClick={goToScientificProgram}
                 className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
               >
                 View Scientific Program
               </button>
-
               <button
                 onClick={goToAbstracts}
                 className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
               >
-                Abstracts
+                Abstract Submission
               </button>
             </div>
           </motion.div>
@@ -1250,7 +1202,6 @@ const ConferenceDetails = () => {
                 <p className="mb-4 text-center text-[10px] font-semibold uppercase tracking-[0.15em] text-violet-200 sm:text-xs">
                   Time Remaining Until Conference
                 </p>
-
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { label: "Days", value: countdown.days },
@@ -1271,25 +1222,20 @@ const ConferenceDetails = () => {
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-5 flex items-center justify-center gap-2 text-xs text-white/80">
                   <CalendarDays size={15} className="text-violet-300" />
                   {dateRange}
                 </div>
-
                 <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-white/65">
                   <Globe2 size={14} className="text-violet-300" />
                   {venueName} · {mode}
                 </div>
-
                 <button
                   onClick={goToRegistration}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
                 >
-                  Secure Your Registration
-                  <ArrowRight size={15} />
+                  Secure Your Registration <ArrowRight size={15} />
                 </button>
-
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
@@ -1301,7 +1247,6 @@ const ConferenceDetails = () => {
                 </div>
               </>
             )}
-
             {countdown.phase === "live" && (
               <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-6 text-center">
                 <CheckCircle2
@@ -1319,12 +1264,10 @@ const ConferenceDetails = () => {
                   onClick={goToScientificProgram}
                   className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
                 >
-                  View Conference Program
-                  <ArrowRight size={14} />
+                  View Conference Program <ArrowRight size={14} />
                 </button>
               </div>
             )}
-
             {countdown.phase === "ended" && (
               <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-4 py-7 text-center">
                 <Award size={38} className="mx-auto mb-3 text-violet-200" />
@@ -1339,12 +1282,10 @@ const ConferenceDetails = () => {
                   onClick={() => scrollTo("explore")}
                   className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
                 >
-                  Explore Conference
-                  <ArrowRight size={14} />
+                  Explore Conference <ArrowRight size={14} />
                 </button>
               </div>
             )}
-
             {countdown.phase === "unknown" && (
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-7 text-center">
                 <CalendarDays
@@ -1362,15 +1303,13 @@ const ConferenceDetails = () => {
                   onClick={goToRegistration}
                   className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
                 >
-                  Registration Details
-                  <ArrowRight size={14} />
+                  Registration Details <ArrowRight size={14} />
                 </button>
               </div>
             )}
           </motion.aside>
         </div>
       </section>
-
       {/* WELCOME MESSAGE */}
       <section
         id="welcome"
@@ -1381,25 +1320,20 @@ const ConferenceDetails = () => {
             <SectionLabel>
               {asText(welcome.heading, "Welcome Message")}
             </SectionLabel>
-
             <h2 className="text-2xl font-bold leading-tight text-[#171447]">
               Welcome to GlobalScion
             </h2>
-
             <h3 className="mt-1 text-sm font-bold leading-6 text-[#24205c]">
               {title}
             </h3>
-
             <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
               {welcomeText}
             </p>
-
             {welcomeSignature && (
               <p className="mt-4 whitespace-pre-line text-sm font-semibold leading-6 text-violet-800">
                 {welcomeSignature}
               </p>
             )}
-
             <p className="mt-4 font-serif text-xl italic text-violet-800">
               Together for a Brighter Future
             </p>
@@ -1456,11 +1390,10 @@ const ConferenceDetails = () => {
           </div>
         </div>
       </section>
-
-      {/* SPEAKERS – vertical cards, 5 per row on large screens */}
+      {/* SPEAKERS */}
       <section
         id="speakers"
-        className="scroll-mt-24 bg-white px-5 py-10 sm:px-10"
+        className="scroll-mt-24 bg-white px-5 py-12 sm:px-10"
       >
         <div className="mx-auto max-w-[1300px]">
           <SectionHeading
@@ -1478,45 +1411,55 @@ const ConferenceDetails = () => {
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="flex min-h-[270px] flex-col items-center rounded-2xl border border-violet-200 bg-violet-50 p-4 text-center transition hover:-translate-y-1 hover:border-violet-400 hover:bg-violet-100/70"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-[0_8px_25px_-15px_rgba(109,40,217,0.25)] transition-all duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_18px_35px_-15px_rgba(109,40,217,0.3)]"
                 >
-                  <img
-                    src={getSpeakerImage(speaker)}
-                    alt={asText(speaker.name, "Conference speaker")}
-                    loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-                    }}
-                    className="h-24 w-24 shrink-0 rounded-full border-[3px] border-violet-600 object-cover shadow-md"
-                  />
+                  {/* SQUARE / RECTANGULAR SPEAKER IMAGE */}
+                  <div className="relative aspect-square w-full overflow-hidden bg-violet-50">
+                    <img
+                      src={getSpeakerImage(speaker)}
+                      alt={asText(speaker.name, "Conference speaker")}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                      }}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
 
-                  <div className="mt-3 flex min-w-0 flex-1 flex-col items-center">
-                    <h3 className="text-base font-bold leading-6 text-violet-700">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#171447]/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  </div>
+
+                  {/* SPEAKER DETAILS */}
+                  <div className="flex flex-1 flex-col p-4 text-center">
+                    <h3 className="text-base font-bold leading-6 text-[#171447]">
                       {asText(speaker.name, "Speaker")}
                     </h3>
 
-                    <p className="mt-1 text-xs font-semibold leading-4 text-violet-600">
+                    <p className="mt-1 text-xs font-semibold leading-5 text-violet-600">
                       {asText(speaker.role, "Conference Speaker")}
                     </p>
 
                     {getSpeakerOrganization(speaker) && (
-                      <p className="mt-1.5 text-sm font-semibold leading-6 text-slate-600">
+                      <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
                         {getSpeakerOrganization(speaker)}
                       </p>
                     )}
 
                     {speaker.specialty && (
-                      <span className="mt-3 inline-block rounded-full bg-violet-600 px-3 py-1 text-[10px] font-medium text-white">
-                        {speaker.specialty}
-                      </span>
+                      <div className="mt-3">
+                        <span className="inline-flex max-w-full items-center justify-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-[10px] font-semibold text-violet-700">
+                          {speaker.specialty}
+                        </span>
+                      </div>
                     )}
 
                     {speaker.bio && (
-                      <p className="mt-3 line-clamp-3 text-[11px] leading-4 text-slate-600">
+                      <p className="mt-3 line-clamp-3 text-xs leading-5 text-slate-500">
                         {speaker.bio}
                       </p>
                     )}
+
+                    <div className="mx-auto mt-4 h-1 w-10 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-300 group-hover:w-16" />
                   </div>
                 </motion.article>
               ))}
@@ -1528,10 +1471,10 @@ const ConferenceDetails = () => {
           )}
         </div>
       </section>
-
-      {/* WHO SHOULD ATTEND + THREE CARDS */}
+      
+      {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
       <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-5 py-14 sm:px-10">
-        <div className="mx-auto max-w-[1300px] space-y-6">
+        <div className="mx-auto max-w-[1300px] space-y-8">
           {/* WHO SHOULD ATTEND */}
           <div
             className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}
@@ -1541,6 +1484,7 @@ const ConferenceDetails = () => {
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex gap-4 sm:gap-5">
                 <IconTile icon={Users} size={24} />
+
                 <div className="min-w-0">
                   <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
                     Who Should Attend?
@@ -1569,13 +1513,182 @@ const ConferenceDetails = () => {
                 onClick={() => scrollTo("explore")}
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-xs font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
               >
-                View Conference Details <ArrowRight size={14} />
+                View Conference Details
+                <ArrowRight size={14} />
               </button>
             </div>
           </div>
 
-          {/* THREE CARDS */}
+          {/* OUR CONFERENCE GALLERY */}
+          <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-8">
+            {/* GALLERY HEADING */}
+            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <SectionLabel>Moments & Memories</SectionLabel>
+
+                <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                  Our Conference Gallery
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+                  Explore conference experiences, research presentations, expert
+                  discussions and opportunities to connect with the global
+                  community.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start rounded-full border border-violet-100 bg-violet-50 px-4 py-2 sm:self-auto">
+                <ImageIcon size={16} className="text-violet-600" />
+                <span className="text-xs font-semibold text-violet-700">
+                  Conference Moments
+                </span>
+              </div>
+            </div>
+
+            {/* RESPONSIVE MASONRY-STYLE GALLERY */}
+            {/* RESPONSIVE CONFERENCE GALLERY */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+              {/* LARGE FEATURED IMAGE */}
+              <div className="group relative min-h-[260px] overflow-hidden rounded-2xl sm:col-span-2 sm:row-span-2 sm:min-h-[420px]">
+                <img
+                  src="/images/one.jpeg"
+                  alt="International conference experience"
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/90 via-[#100d35]/10 to-transparent" />
+
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
+                    Featured Moment
+                  </span>
+                  <h3 className="mt-3 text-xl font-bold text-white sm:text-2xl">
+                    Global Conference Experience
+                  </h3>
+                  <p className="mt-2 max-w-md text-xs font-medium leading-5 text-white/80 sm:text-sm">
+                    Bringing researchers, professionals and innovators together.
+                  </p>
+                </div>
+              </div>
+
+              {/* WIDE LANDSCAPE IMAGE */}
+              <div className="group relative h-[220px] overflow-hidden rounded-2xl lg:col-span-2">
+                <img
+                  src="/images/second.jpeg"
+                  alt="Expert conference presentation"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/80 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                    Knowledge Sharing
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-white">
+                    Expert Presentations
+                  </h3>
+                </div>
+              </div>
+
+              {/* COLLABORATION IMAGE */}
+              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+                <img
+                  src="/images/three.jpeg"
+                  alt="Professional collaboration"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 p-4">
+                  <p className="text-[10px] font-semibold text-violet-200">
+                    COLLABORATION
+                  </p>
+                  <h3 className="mt-1 text-sm font-bold text-white">
+                    Networking & Ideas
+                  </h3>
+                </div>
+              </div>
+
+              {/* RESEARCH IMAGE */}
+              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+                <img
+                  src="/images/four.jpeg"
+                  alt="Research and technology"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 p-4">
+                  <p className="text-[10px] font-semibold text-violet-200">
+                    INNOVATION
+                  </p>
+                  <h3 className="mt-1 text-sm font-bold text-white">
+                    Research & Technology
+                  </h3>
+                </div>
+              </div>
+
+              {/* WIDE COMMUNITY IMAGE */}
+              <div className="group relative h-[230px] overflow-hidden rounded-2xl sm:col-span-2">
+                <img
+                  src="/images/five.jpeg"
+                  alt="Conference community"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                    Global Community
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-white">
+                    Connecting People, Inspiring Change
+                  </h3>
+                </div>
+              </div>
+
+              {/* TEAMWORK IMAGE */}
+              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+                <img
+                  src="/images/six.jpeg"
+                  alt="Conference teamwork"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 p-4">
+                  <p className="text-[10px] font-semibold text-violet-200">
+                    TEAMWORK
+                  </p>
+                  <h3 className="mt-1 text-sm font-bold text-white">
+                    Working Together
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            {/* GALLERY FOOTER */}
+            <div className="mt-6 flex flex-col gap-3 border-t border-violet-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-semibold leading-5 text-slate-500">
+                Inspiring conversations. Meaningful connections. Shared
+                discoveries.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => scrollTo("explore")}
+                className="inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-xs font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-600 hover:text-white sm:self-auto"
+              >
+                Explore Conference
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* KEY HIGHLIGHTS + KEY TOPICS + KEY POINTS */}
           <div className="grid items-start gap-6 lg:grid-cols-3">
+            {/* KEY HIGHLIGHTS */}
             <FeatureCard
               icon={Sparkles}
               title="Key Highlights"
@@ -1588,6 +1701,7 @@ const ConferenceDetails = () => {
               />
             </FeatureCard>
 
+            {/* KEY TOPICS */}
             <FeatureCard
               icon={Hash}
               title="Key Topics"
@@ -1602,6 +1716,7 @@ const ConferenceDetails = () => {
               </div>
             </FeatureCard>
 
+            {/* KEY POINTS */}
             <FeatureCard
               icon={Lightbulb}
               title="Key Points"
@@ -1625,98 +1740,242 @@ const ConferenceDetails = () => {
           </div>
         </div>
       </section>
+      {/* SUBSCRIPTION SECTION - NAVY BLUE */}
+      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-7 sm:px-10">
+        <div className="mx-auto max-w-7xl">
+          <motion.form
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            onSubmit={handleSubscribe}
+            className="flex flex-col items-center gap-4 lg:flex-row"
+          >
+            <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+                Stay Connected
+              </p>
+              <h2 className="mt-1 text-base font-semibold leading-6 text-white">
+                Subscribe to Our Mailing List
+              </h2>
+              <p className="mt-1 text-xs font-medium leading-5 text-slate-300">
+                Get conference updates and announcements.
+              </p>
+            </div>
 
-      {/* SESSIONS AND TRACKS
-          "Conference Information" heading removed.
-          Heading is now "Sessions and Tracks" – bigger + bold.
-          Paragraph text – bigger + semibold. */}
+            <div className="w-full lg:flex-1">
+              <input
+                type="text"
+                name="name"
+                value={subscriberForm.name}
+                onChange={handleSubscriberChange}
+                placeholder="Full Name"
+                autoComplete="name"
+                disabled={subscribeLoading}
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+            <div className="w-full lg:flex-1">
+              <input
+                type="email"
+                name="email"
+                value={subscriberForm.email}
+                onChange={handleSubscriberChange}
+                placeholder="Email Address"
+                autoComplete="email"
+                disabled={subscribeLoading}
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+            <div className="w-full lg:flex-1">
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={subscriberForm.phoneNumber}
+                onChange={handleSubscriberChange}
+                placeholder="Phone Number"
+                autoComplete="tel"
+                disabled={subscribeLoading}
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+            <div className="w-full lg:flex-1">
+              <select
+                name="conferenceId"
+                value={subscriberForm.conferenceId}
+                onChange={handleSubscriberChange}
+                disabled={subscribeLoading}
+                className={`h-11 w-full rounded-lg border border-white/15 bg-[#20244D] px-3 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
+              >
+                <option value="" disabled>
+                  Select Conference
+                </option>
+                {conferences.map((item) => {
+                  const optionId = item?._id || item?.id;
+                  return (
+                    <option
+                      key={optionId}
+                      value={optionId}
+                      className="bg-[#11143A] text-white"
+                    >
+                      {getConferenceTitle(item)}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={subscribeLoading}
+              className="flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+            >
+              {subscribeLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 size={15} className="animate-spin" />
+                  Subscribing...
+                </span>
+              ) : (
+                "Subscribe"
+              )}
+            </button>
+          </motion.form>
+
+          {formError && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-red-300 lg:justify-end"
+            >
+              <AlertCircle size={14} />
+              <span>{formError}</span>
+            </motion.div>
+          )}
+          {subscribeError && !formError && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-red-300 lg:justify-end"
+            >
+              <AlertCircle size={14} />
+              <span>
+                {typeof subscribeError === "string"
+                  ? subscribeError
+                  : "Unable to subscribe. Please try again."}
+              </span>
+            </motion.div>
+          )}
+          {subscribeSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-emerald-300 lg:justify-end"
+            >
+              <CheckCircle2 size={14} />
+              <span>Successfully subscribed to the conference.</span>
+            </motion.div>
+          )}
+        </div>
+      </section>
+      {/* SESSIONS AND TRACKS + CONFERENCE INFORMATION */}
       <section
         id="explore"
         className="scroll-mt-20 bg-white px-5 py-12 sm:px-10"
       >
-        <div className="mx-auto max-w-[1300px] space-y-8">
-          {/* SESSIONS / TRACKS */}
-          <div className={`${PREMIUM_CARD} p-6 sm:p-8`}>
-            <div className="mb-4 flex items-center gap-4">
-              <IconTile icon={Layers} />
-              <div>
-                <h2 className="text-2xl font-extrabold tracking-tight text-[#171447] sm:text-3xl lg:text-4xl">
-                  Sessions and Tracks
-                </h2>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 sm:text-base">
-                  Scientific sessions planned for this conference.
-                </p>
+        <div className="mx-auto max-w-[1300px]">
+          <div className={`${PREMIUM_CARD} overflow-hidden`}>
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div className="flex min-h-0 flex-col bg-white">
+                <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <Layers size={19} />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                        Conference Information
+                      </h2>
+                      <p className="mt-1 text-xs font-medium leading-5 text-black/70 sm:text-sm">
+                        Explore conference details and opportunities.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-[560px] overflow-y-auto overscroll-contain [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+                  {DETAIL_ROWS.map((row) => {
+                    const Icon = row.icon;
+                    const open = activeRow === row.key;
+                    return (
+                      <div
+                        key={row.key}
+                        className="border-b border-violet-100 last:border-b-0"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleRowClick(row.key)}
+                          aria-expanded={open}
+                          className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition sm:px-5 ${open ? "bg-violet-50" : "bg-white hover:bg-violet-50/50"}`}
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${open ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700"}`}
+                            >
+                              <Icon size={17} />
+                            </span>
+                            <span
+                              className={`text-sm font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
+                            >
+                              {row.title}
+                            </span>
+                          </span>
+                          <span
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${open ? "rotate-180 border-violet-300 bg-white text-violet-700" : "border-violet-100 text-violet-600"}`}
+                          >
+                            <ChevronDown size={15} />
+                          </span>
+                        </button>
+                        {open && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.22 }}
+                            className="bg-white px-4 pb-5 pt-3 sm:px-5"
+                          >
+                            <div className="text-sm font-medium leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-sm [&_p]:font-medium [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-sm [&_li]:font-medium [&_li]:leading-6 [&_li]:text-black/80">
+                              {renderRowContent(row.key)}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex min-h-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
+                <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <Layers size={19} />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                        Sessions and Tracks
+                      </h2>
+                      <p className="mt-1 text-xs font-medium leading-5 text-black/70 sm:text-sm">
+                        Explore the scientific sessions and research topics
+                        planned for this conference.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="h-[560px] overflow-y-auto overscroll-contain px-5 py-2 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+                  <SessionsPanel items={sessionItems} />
+                </div>
               </div>
             </div>
-
-            <SessionsPanel items={sessionItems} />
-          </div>
-
-          {/* OTHER DATA (accordion, one row per section, full-width content) */}
-          <div
-            className={`${PREMIUM_CARD} divide-y divide-violet-100 overflow-hidden`}
-          >
-            {DETAIL_ROWS.map((row) => {
-              const Icon = row.icon;
-              const open = activeRow === row.key;
-
-              return (
-                <div key={row.key}>
-                  <button
-                    type="button"
-                    onClick={() => handleRowClick(row.key)}
-                    aria-expanded={open}
-                    className={`flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition sm:px-7 ${
-                      open ? "bg-violet-50/60" : "hover:bg-violet-50/40"
-                    }`}
-                  >
-                    <span className="flex min-w-0 items-center gap-4">
-                      <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
-                          open
-                            ? "bg-gradient-to-br from-violet-600 to-purple-700 text-white"
-                            : "bg-violet-100 text-violet-700"
-                        }`}
-                      >
-                        <Icon size={19} />
-                      </span>
-                      <span
-                        className={`text-sm font-bold sm:text-base ${
-                          open ? "text-violet-700" : "text-[#171447]"
-                        }`}
-                      >
-                        {row.title}
-                      </span>
-                    </span>
-
-                    <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
-                        open
-                          ? "rotate-180 border-violet-300 bg-white text-violet-700"
-                          : "border-violet-100 text-violet-500"
-                      }`}
-                    >
-                      <ChevronDown size={17} />
-                    </span>
-                  </button>
-
-                  {open && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="bg-violet-50/40 px-5 pb-7 pt-5 sm:px-7"
-                    >
-                      {renderRowContent(row.key)}
-                    </motion.div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
-
       {/* REGISTRATION CATEGORIES */}
       {registrationCategories.length > 0 && (
         <section className="bg-white px-5 py-10 sm:px-10">
@@ -1726,7 +1985,6 @@ const ConferenceDetails = () => {
               title="Registration Categories"
               description="Registration categories available for this conference."
             />
-
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {registrationCategories.map((categoryItem, index) => (
                 <div
@@ -1764,15 +2022,11 @@ const ConferenceDetails = () => {
           </div>
         </section>
       )}
-
       {/* SPONSORS + RECENT POSTS */}
       <section className="bg-white px-5 py-10 sm:px-10">
         <div
-          className={`mx-auto grid max-w-[1300px] gap-5 ${
-            hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
-          }`}
+          className={`mx-auto grid max-w-[1300px] gap-5 ${hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"}`}
         >
-          {/* SPONSORS */}
           {hasSponsors && (
             <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
               <div className="flex items-center justify-between gap-2">
@@ -1784,12 +2038,10 @@ const ConferenceDetails = () => {
                 </div>
                 <Handshake className="text-violet-600" size={25} />
               </div>
-
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 We appreciate the organizations supporting this conference and
                 its research community.
               </p>
-
               <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {sponsors.map((sponsor, index) => {
                   const sponsorName = getText(
@@ -1799,22 +2051,19 @@ const ConferenceDetails = () => {
                       ? sponsor
                       : `Sponsor ${index + 1}`,
                   );
-
                   const logo = isObject(sponsor)
                     ? getMediaUrl(
                         sponsor.logo ||
                           sponsor.logoUrl ||
                           sponsor.image ||
                           sponsor.imageUrl ||
-                          sponsor.fileUrl
+                          sponsor.fileUrl,
                       )
                     : "";
-
                   const website =
                     typeof sponsor === "object"
                       ? sponsor.website || sponsor.url || ""
                       : "";
-
                   return (
                     <div
                       key={sponsor._id || sponsorName || index}
@@ -1851,7 +2100,6 @@ const ConferenceDetails = () => {
             </div>
           )}
 
-          {/* RECENT POSTS */}
           <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -1877,12 +2125,10 @@ const ConferenceDetails = () => {
                 </button>
               </div>
             </div>
-
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
               Follow conference announcements, research news and community
               updates.
             </p>
-
             <div className="mt-3 flex gap-2.5">
               {[
                 {
@@ -1923,7 +2169,6 @@ const ConferenceDetails = () => {
                 </a>
               ))}
             </div>
-
             <div
               ref={postRef}
               className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -1934,13 +2179,9 @@ const ConferenceDetails = () => {
                   ["title", "name"],
                   `Conference Update ${index + 1}`,
                 );
-
                 const postImage =
-                  post.image ||
-                  post.imageUrl ||
-                  post.thumbnail ||
+                  getMediaUrl(post.image || post.imageUrl || post.thumbnail) ||
                   FALLBACK_IMAGE;
-
                 return (
                   <article
                     key={post._id || postTitle || index}
@@ -1984,7 +2225,6 @@ const ConferenceDetails = () => {
                 );
               })}
             </div>
-
             <div className="mt-3 text-right">
               <a
                 href="https://globalscion.com/"
@@ -1998,65 +2238,6 @@ const ConferenceDetails = () => {
           </div>
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer
-        id="footer"
-        className="scroll-mt-20 bg-gradient-to-r from-[#35236e] via-[#45317e] to-[#30215f] px-5 py-7 text-white sm:px-10"
-      >
-        <div className="mx-auto flex max-w-[1300px] flex-col items-center justify-between gap-5 sm:flex-row">
-          <button
-            onClick={() => scrollTo("home")}
-            className="flex items-center gap-2"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
-              <Globe2 size={25} />
-            </span>
-            <span className="text-left">
-              <span className="block text-sm font-bold">GlobalScion</span>
-              <span className="block text-[10px] text-white/70">
-                Conferences
-              </span>
-            </span>
-          </button>
-
-          <p className="text-center text-[10px] leading-5 text-white/70">
-            © {new Date().getFullYear()} GlobalScion Conferences. All rights
-            reserved.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] text-white/80">
-            <button
-              onClick={() => navigate("/privacy-policy")}
-              className="hover:text-white"
-            >
-              Privacy Policy
-            </button>
-            <button
-              onClick={() => navigate("/terms")}
-              className="hover:text-white"
-            >
-              Terms & Conditions
-            </button>
-            <a
-              href={`mailto:${contact.email || "info@globalscion.com"}`}
-              className="hover:text-white"
-            >
-              Contact
-            </a>
-            <a
-              href={contact.website || "https://globalscion.com/"}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="GlobalScion website"
-              className="hover:text-white"
-            >
-              <ExternalLink size={14} />
-            </a>
-          </div>
-        </div>
-      </footer>
-
       {/* CONFERENCE INTRODUCTION MODAL */}
       {videoOpen && (
         <div
@@ -2077,15 +2258,11 @@ const ConferenceDetails = () => {
             >
               <X size={19} />
             </button>
-
             <SectionLabel>About GlobalScion</SectionLabel>
-
             <h2 className="mt-2 text-2xl font-bold text-[#171447]">{title}</h2>
-
             <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
               {welcomeText}
             </p>
-
             <button
               onClick={() => {
                 setVideoOpen(false);
