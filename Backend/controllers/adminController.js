@@ -17,16 +17,12 @@ const { sendEmployeeCredentials } = require("../utils/emailService");
 
 
 
+
 const parseConferenceData = (req) => {
-  let data = req.body?.conferenceData;
-
-  if (!data) {
-    data = req.body?.data;
-  }
-
-  if (!data) {
-    data = req.body;
-  }
+  let data =
+    req.body?.conferenceData ||
+    req.body?.data ||
+    req.body;
 
   if (typeof data === "string") {
     try {
@@ -36,12 +32,38 @@ const parseConferenceData = (req) => {
     }
   }
 
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid conference data");
+  }
+
   return data;
+};
+
+const getUploadedFiles = (req) => {
+  if (Array.isArray(req.files)) {
+    return req.files;
+  }
+
+  if (req.files && typeof req.files === "object") {
+    return Object.values(req.files).flat();
+  }
+
+  if (req.file) {
+    return [req.file];
+  }
+
+  return [];
 };
 
 exports.createConference = async (req, res) => {
   try {
     const data = parseConferenceData(req);
+    const files = getUploadedFiles(req);
+
+    const findFile = (...fieldNames) =>
+      files.find((file) =>
+        fieldNames.includes(file.fieldname)
+      );
 
     if (!data.title) {
       return res.status(400).json({
@@ -57,11 +79,8 @@ exports.createConference = async (req, res) => {
       });
     }
 
-    const files = req.files || [];
-
-    const heroImage = files.find(
-      (file) => file.fieldname === "conferenceImage"
-    );
+    // 1. HERO IMAGE
+    const heroImage = findFile("conferenceImage");
 
     if (heroImage) {
       const result = await uploadToCloudinary(
@@ -69,12 +88,15 @@ exports.createConference = async (req, res) => {
         "globalscion/conferences/hero"
       );
 
+      if (!result?.secure_url) {
+        throw new Error("Conference hero image upload failed");
+      }
+
       data.image = result.secure_url;
     }
 
-    const aboutImage = files.find(
-      (file) => file.fieldname === "aboutImage"
-    );
+    // 2. ABOUT IMAGE
+    const aboutImage = findFile("aboutImage");
 
     if (aboutImage) {
       const result = await uploadToCloudinary(
@@ -82,40 +104,48 @@ exports.createConference = async (req, res) => {
         "globalscion/conferences/about"
       );
 
+      if (!result?.secure_url) {
+        throw new Error("About image upload failed");
+      }
+
       data.aboutImage = result.secure_url;
     }
 
-    const marketImage = files.find(
-      (file) => file.fieldname === "marketImage"
-    );
+    // 3. MARKET ANALYSIS IMAGE
+    const marketImage = findFile("marketImage");
 
     if (marketImage) {
-      if (!data.otherData) {
-        data.otherData = {};
-      }
-
-      if (!data.otherData.marketAnalysis) {
-        data.otherData.marketAnalysis = {};
-      }
+      data.otherData = data.otherData || {};
+      data.otherData.marketAnalysis =
+        data.otherData.marketAnalysis || {};
 
       const result = await uploadToCloudinary(
         marketImage,
         "globalscion/conferences/market"
       );
 
+      if (!result?.secure_url) {
+        throw new Error("Market analysis image upload failed");
+      }
+
       data.otherData.marketAnalysis.image =
         result.secure_url;
     }
 
+    // 4. SPEAKER IMAGES
     if (Array.isArray(data.speakers)) {
       for (
         let index = 0;
         index < data.speakers.length;
         index++
       ) {
-        const speakerFile = files.find(
-          (file) =>
-            file.fieldname === `speakerImage_${index}`
+        const speakerFile = findFile(
+          `speakerImage_${index}`,
+          `speakerImages_${index}`,
+          `speakerImages[${index}]`,
+          `speakers[${index}][image]`,
+          `speakers.${index}.image`,
+          ...(index === 0 ? ["speakerImages"] : [])
         );
 
         if (speakerFile) {
@@ -124,22 +154,33 @@ exports.createConference = async (req, res) => {
             "globalscion/conferences/speakers"
           );
 
-          data.speakers[index].image =
-            result.secure_url;
+          if (!result?.secure_url) {
+            throw new Error(
+              `Speaker image upload failed for ${
+                data.speakers[index]?.name ||
+                `speaker ${index + 1}`
+              }`
+            );
+          }
+
+          data.speakers[index].image = result.secure_url;
         }
       }
     }
 
+    // 5. COMMITTEE IMAGES
     if (Array.isArray(data.committee)) {
       for (
         let index = 0;
         index < data.committee.length;
         index++
       ) {
-        const committeeFile = files.find(
-          (file) =>
-            file.fieldname ===
-            `committeeImage_${index}`
+        const committeeFile = findFile(
+          `committeeImage_${index}`,
+          `committeeImages_${index}`,
+          `committeeImages[${index}]`,
+          `committee[${index}][image]`,
+          `committee.${index}.image`
         );
 
         if (committeeFile) {
@@ -148,14 +189,20 @@ exports.createConference = async (req, res) => {
             "globalscion/conferences/committee"
           );
 
-          data.committee[index].image =
-            result.secure_url;
+          if (!result?.secure_url) {
+            throw new Error(
+              `Committee image upload failed at index ${index}`
+            );
+          }
+
+          data.committee[index].image = result.secure_url;
         }
       }
     }
 
+    // 6. SPONSOR IMAGES
     const sponsorFiles = files.filter((file) =>
-      file.fieldname.startsWith("sponsorImage_")
+      /^sponsorImage_\d+$/.test(file.fieldname)
     );
 
     if (sponsorFiles.length > 0) {
@@ -169,45 +216,40 @@ exports.createConference = async (req, res) => {
           "globalscion/conferences/sponsors"
         );
 
+        if (!result?.secure_url) {
+          throw new Error(
+            `Sponsor image upload failed: ${file.originalname}`
+          );
+        }
+
         const index = Number(
-          file.fieldname.replace(
-            "sponsorImage_",
-            ""
-          )
+          file.fieldname.replace("sponsorImage_", "")
         );
 
-        data.sponsors[index] =
-          result.secure_url;
+        data.sponsors[index] = result.secure_url;
       }
 
-      data.sponsors =
-        data.sponsors.filter(Boolean);
+      data.sponsors = data.sponsors.filter(Boolean);
     }
 
-    const conference =
-      await Conference.create({
-        ...data,
-        createdBy:
-          req.user?._id || null,
-      });
+    // 7. SAVE CONFERENCE
+    const conference = await Conference.create({
+      ...data,
+      createdBy: req.user?._id || null,
+    });
 
     return res.status(201).json({
       success: true,
-      message:
-        "Conference created successfully",
+      message: "Conference created successfully",
       data: conference,
     });
   } catch (error) {
-    console.error(
-      "Create conference error:",
-      error
-    );
+    console.error("Create conference error:", error);
 
     return res.status(500).json({
       success: false,
       message:
-        error.message ||
-        "Failed to create conference",
+        error.message || "Failed to create conference",
     });
   }
 };

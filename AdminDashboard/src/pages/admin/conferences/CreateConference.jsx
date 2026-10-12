@@ -1201,13 +1201,31 @@ const CreateConference = () => {
         }
       });
 
-      /* ---------------------------------------------
-         SPONSOR IMAGES
-      --------------------------------------------- */
+      /* SPONSOR IMAGES */
 
-      sponsors.forEach((sponsor) => {
-        if (sponsor.file instanceof File) {
-          form.append("sponsorImages", sponsor.file);
+      const sponsorPayload = sponsors.map((sponsor) => {
+        if (typeof sponsor === "string") {
+          return sponsor;
+        }
+
+        if (sponsor?.file instanceof File) {
+          return sponsor.url || sponsor.image || sponsor.imageUrl || null;
+        }
+
+        return (
+          sponsor?.url ||
+          sponsor?.image ||
+          sponsor?.imageUrl ||
+          sponsor?.secure_url ||
+          null
+        );
+      });
+
+      conferenceData.sponsors = sponsorPayload;
+
+      sponsors.forEach((sponsor, index) => {
+        if (sponsor?.file instanceof File) {
+          form.append(`sponsorImage_${index}`, sponsor.file);
         }
       });
 
