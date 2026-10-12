@@ -260,7 +260,7 @@ const getConferenceTitle = (conference) =>
 // ============================================================
 
 const SectionLabel = ({ children }) => (
-  <span className="mb-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-[10px] font-semibold text-violet-700">
+  <span className="mb-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
     {children}
   </span>
 );
@@ -268,9 +268,11 @@ const SectionLabel = ({ children }) => (
 const SectionHeading = ({ label, title, description }) => (
   <div className="mb-6">
     {label && <SectionLabel>{label}</SectionLabel>}
-    <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">{title}</h2>
+    <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+      {title}
+    </h2>
     {description && (
-      <p className="mt-1.5 max-w-3xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
+      <p className="mt-1.5 max-w-3xl text-base font-semibold leading-6 text-slate-600 sm:text-lg">
         {description}
       </p>
     )}
@@ -278,7 +280,7 @@ const SectionHeading = ({ label, title, description }) => (
 );
 
 const EmptyState = ({ children = "Information will be announced soon." }) => (
-  <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 px-4 py-6 text-center text-xs leading-5 text-slate-500">
+  <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 px-4 py-6 text-center text-sm leading-5 text-slate-500">
     {children}
   </div>
 );
@@ -294,10 +296,12 @@ const FeatureCard = ({ icon, title, description, children }) => (
     <div className="flex items-start gap-4">
       <IconTile icon={icon} />
       <div className="min-w-0">
-        <h3 className="text-xl font-bold text-[#171447] sm:text-2xl">
+        <h3 className="text-2xl text-[#171447] sm:text-3xl font-bold">
           {title}
         </h3>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        <p className="mt-1 text-sm leading-5 text-slate-500 font-semibold">
+          {description}
+        </p>
       </div>
     </div>
     <div className="mt-5 border-t border-violet-100 pt-2">{children}</div>
@@ -348,15 +352,15 @@ const FlatList = ({
         return (
           <li
             key={item?._id || `${title}-${index}`}
-            className="flex items-start gap-3 py-4 first:pt-1 last:pb-1"
+            className="flex items-start gap-3 py-4 first:pt-1 last:pb-1 font-semibold"
           >
             <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={16} />
             <div className="min-w-0">
-              <p className="text-sm font-bold leading-6 text-[#171447]">
+              <p className="text-base font-bold leading-6 text-[#171447]">
                 {title}
               </p>
               {description && description !== title && (
-                <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-6 text-slate-600">
+                <p className="mt-1 whitespace-pre-line text-base font-semibold leading-6 text-slate-600">
                   {description}
                 </p>
               )}
@@ -378,7 +382,7 @@ const AccordionList = ({ rows, icon: Icon, emptyText }) => {
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 transition-colors hover:text-violet-700 [&::-webkit-details-marker]:hidden">
             <span className="flex min-w-0 items-center gap-3">
               <Icon size={16} className="shrink-0 text-violet-600" />
-              <span className="text-sm font-semibold leading-6 text-[#171447] group-open:text-violet-700">
+              <span className="text-base font-semibold leading-6 text-[#171447] group-open:text-violet-700">
                 {row.title}
               </span>
             </span>
@@ -390,7 +394,7 @@ const AccordionList = ({ rows, icon: Icon, emptyText }) => {
             ) : null}
           </summary>
           {row.description && (
-            <p className="pb-4 pl-7 pr-6 text-sm font-semibold leading-6 text-slate-600">
+            <p className="pb-4 pl-7 pr-6 text-base font-semibold leading-6 text-slate-600">
               {row.description}
             </p>
           )}
@@ -418,11 +422,11 @@ function SessionsPanel({ items = [] }) {
             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
               <CheckCircle2 size={16} />
             </span>
-            <h3 className="text-sm font-semibold leading-6 text-[#171447] sm:text-base">
+            <h3 className="text-base leading-6 text-violet-600  sm:text-lg font-bold">
               {item.title || item.name || item.trackName || "Session"}
             </h3>
           </div>
-          <p className="mt-2 pl-10 text-sm font-medium leading-6 text-slate-700">
+          <p className="mt-2 pl-10 text-base font-semibold leading-6 text-slate-700">
             {item.description || item.details || ""}
           </p>
         </div>
@@ -436,13 +440,49 @@ const BulletLines = ({ lines }) => (
     {lines.map((line, index) => (
       <li
         key={index}
-        className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-600"
+        className="flex items-start gap-2.5 text-base font-semibold leading-6 text-slate-600"
       >
         <CheckCircle2 className="mt-1 shrink-0 text-violet-600" size={14} />
         <span className="whitespace-pre-line">{line}</span>
       </li>
     ))}
   </ul>
+);
+
+// ============================================================
+// WHATSAPP FLOATING BUTTON
+// ============================================================
+
+const WHATSAPP_NUMBER = "443308088650";
+const WHATSAPP_MESSAGE =
+  "Hello, I would like to know more about the conference.";
+
+const WhatsAppIcon = ({ size = 30 }) => (
+  <svg
+    viewBox="0 0 32 32"
+    width={size}
+    height={size}
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M16.003 3C9.375 3 4 8.373 4 15c0 2.386.7 4.61 1.9 6.48L4 29l7.7-1.86A11.94 11.94 0 0 0 16.003 27C22.63 27 28 21.627 28 15S22.63 3 16.003 3zm0 21.8c-1.93 0-3.73-.56-5.25-1.52l-.38-.23-4.57 1.1 1.14-4.45-.25-.4A9.77 9.77 0 0 1 6.2 15c0-5.42 4.4-9.8 9.8-9.8 5.4 0 9.8 4.38 9.8 9.8 0 5.4-4.4 9.8-9.8 9.8zm5.4-7.33c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.22 3.08.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z" />
+  </svg>
+);
+
+const WhatsAppButton = () => (
+  <a
+    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Chat with us on WhatsApp"
+    title="Chat with us on WhatsApp"
+    className="fixed bottom-5 left-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_30px_-8px_rgba(37,211,102,0.8)] transition hover:-translate-y-1 hover:bg-[#1ebe5b] sm:bottom-7 sm:left-7 sm:h-16 sm:w-16"
+  >
+    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#25D366] opacity-30" />
+    <span className="relative">
+      <WhatsAppIcon size={30} />
+    </span>
+  </a>
 );
 
 // ============================================================
@@ -563,6 +603,10 @@ const ConferenceDetails = () => {
       active = false;
     };
   }, []);
+
+// AUTOMATIC RECENT POSTS SCROLL
+
+
 
   // Normalized conference data
   const data = conference || {};
@@ -787,6 +831,39 @@ const ConferenceDetails = () => {
     venueName,
   ]);
 
+  useEffect(() => {
+  const container = postRef.current;
+
+  if (!container || posts.length <= 1) return;
+
+  const interval = setInterval(() => {
+    const firstCard = container.querySelector("article");
+
+    if (!firstCard) return;
+
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const gap = 12; // gap-3 = 12px
+    const maxScroll =
+      container.scrollWidth - container.clientWidth;
+
+    if (container.scrollLeft >= maxScroll - 5) {
+      // Last post reached: restart from the first post
+      container.scrollTo({
+        left: 0,
+        behavior: "smooth",
+      });
+    } else {
+      // Move to the next post automatically
+      container.scrollBy({
+        left: cardWidth + gap,
+        behavior: "smooth",
+      });
+    }
+  }, 3000); // Every 3 seconds
+
+  return () => clearInterval(interval);
+}, [posts.length]);
+
   // Navigation
   const goToRegistration = () => navigate(`/conferences/${currentId}/register`);
   const goToScientificProgram = () =>
@@ -938,7 +1015,7 @@ const ConferenceDetails = () => {
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {agenda.map((day, dayIndex) => (
               <div key={day._id || day.day || dayIndex}>
-                <h4 className="mb-3 inline-flex rounded-full bg-violet-600 px-3.5 py-1 text-xs font-bold text-white">
+                <h4 className="mb-3 inline-flex rounded-full bg-violet-600 px-3.5 py-1 text-sm text-white font-extrabold">
                   {asText(day.day, `Day ${dayIndex + 1}`)}
                 </h4>
                 {getAgendaSessions(day).length ? (
@@ -946,12 +1023,12 @@ const ConferenceDetails = () => {
                     {getAgendaSessions(day).map((session, sessionIndex) => (
                       <li
                         key={session._id || `${session.time}-${sessionIndex}`}
-                        className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4"
+                        className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4 font-semibold"
                       >
-                        <span className="min-w-[110px] text-xs font-bold text-violet-700">
+                        <span className="min-w-[110px] text-sm font-bold text-violet-700">
                           {asText(session.time, "Time TBA")}
                         </span>
-                        <span className="text-sm font-semibold leading-6 text-slate-700">
+                        <span className="text-base font-semibold leading-6 text-slate-700">
                           {asText(
                             session.session || session.title || session.name,
                             "Session details to be announced",
@@ -961,7 +1038,7 @@ const ConferenceDetails = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-500 font-semibold">
                     No sessions have been added for this day.
                   </p>
                 )}
@@ -976,7 +1053,7 @@ const ConferenceDetails = () => {
           <div className="space-y-8">
             {posterIntroLines.length > 0 && (
               <div>
-                <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                <h4 className="mb-3 text-base text-[#171447] font-extrabold">
                   E-Poster Overview
                 </h4>
                 <BulletLines lines={posterIntroLines} />
@@ -984,7 +1061,7 @@ const ConferenceDetails = () => {
             )}
             {isObject(ePoster.specifications) && (
               <div>
-                <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                <h4 className="mb-3 text-base text-[#171447] font-extrabold">
                   Specifications
                 </h4>
                 <dl className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
@@ -994,10 +1071,10 @@ const ConferenceDetails = () => {
                         key={key}
                         className="border-b border-violet-100 py-3"
                       >
-                        <dt className="text-[11px] font-semibold text-slate-500">
+                        <dt className="text-[13px] font-semibold text-slate-500">
                           {key}
                         </dt>
-                        <dd className="mt-1 text-[13px] font-semibold text-[#171447]">
+                        <dd className="mt-1 text-[15px] font-semibold text-[#171447]">
                           {formatValue(value)}
                         </dd>
                       </div>
@@ -1010,7 +1087,7 @@ const ConferenceDetails = () => {
               <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
                 {posterGroups.map(([heading, items]) => (
                   <div key={heading}>
-                    <h4 className="mb-3 text-sm font-bold text-[#171447]">
+                    <h4 className="mb-3 text-base text-[#171447] font-extrabold">
                       {heading}
                     </h4>
                     <BulletLines lines={items} />
@@ -1034,14 +1111,14 @@ const ConferenceDetails = () => {
           <div className="grid items-start gap-8 lg:grid-cols-2">
             <div>
               {asText(marketAnalysis.heading) && (
-                <h4 className="text-base font-bold text-[#171447]">
+                <h4 className="text-lg text-[#171447] font-extrabold">
                   {asText(marketAnalysis.heading)}
                 </h4>
               )}
               {paragraphs.map((paragraph, index) => (
                 <p
                   key={index}
-                  className="mt-3 whitespace-pre-line text-sm font-semibold leading-7 text-slate-600"
+                  className="mt-3 whitespace-pre-line text-base font-semibold leading-7 text-slate-600"
                 >
                   {typeof paragraph === "string"
                     ? paragraph
@@ -1071,10 +1148,10 @@ const ConferenceDetails = () => {
       <div className="flex min-h-[60vh] items-center justify-center bg-white px-5">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-violet-100 border-t-violet-600" />
-          <p className="mt-4 text-sm font-semibold text-[#171447]">
+          <p className="mt-4 text-base font-semibold text-[#171447]">
             Loading conference details...
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 font-semibold">
             Please wait while we fetch the latest conference information.
           </p>
         </div>
@@ -1085,7 +1162,7 @@ const ConferenceDetails = () => {
   return (
     <div className="min-h-screen overflow-hidden bg-white font-sans text-slate-800">
       {apiError && (
-        <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-center text-xs text-amber-800">
+        <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-center text-sm text-amber-800">
           {apiError} Showing available fallback content where appropriate.
         </div>
       )}
@@ -1108,13 +1185,13 @@ const ConferenceDetails = () => {
             transition={{ duration: 0.7 }}
             className="w-full max-w-[760px] flex-1 text-white"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-semibold backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur-md">
               <CalendarDays size={12} /> {category}
             </span>
-            <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
+            <h1 className="mt-4 text-4xl leading-tight tracking-tight sm:text-5xl lg:text-[52px] font-extrabold">
               {title}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-white/90 sm:text-base">
+            <p className="mt-3 max-w-2xl text-base font-semibold leading-6 text-white/90 sm:text-lg">
               {subtitle}
             </p>
 
@@ -1122,52 +1199,67 @@ const ConferenceDetails = () => {
               <div className="flex items-center gap-2.5">
                 <CalendarDays className="shrink-0 text-violet-300" size={23} />
                 <div>
-                  <p className="text-xs font-semibold">{dateRange}</p>
-                  <p className="mt-1 text-[10px] text-white/70">{time}</p>
+                  <p className="text-sm font-semibold">{dateRange}</p>
+                  <p className="mt-1 text-xs text-white/70 font-semibold">
+                    {time}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
                 <MapPin className="shrink-0 text-violet-300" size={24} />
                 <div>
-                  <p className="text-xs font-semibold">{venueName}</p>
-                  <p className="mt-1 text-[10px] text-white/70">{mode}</p>
+                  <p className="text-sm font-semibold">{venueName}</p>
+                  <p className="mt-1 text-xs text-white/70 font-semibold">
+                    {mode}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2.5 border-white/20 sm:border-l sm:pl-5">
                 <Globe2 className="shrink-0 text-violet-300" size={23} />
                 <div>
-                  <p className="text-xs font-semibold">{participants}</p>
-                  <p className="mt-1 text-[10px] text-white/70">{mode}</p>
+                  <p className="text-sm font-semibold">{participants}</p>
+                  <p className="mt-1 text-xs text-white/70 font-semibold">
+                    {mode}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-7 flex flex-wrap gap-3">
-              <button
-                onClick={goToRegistration}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-semibold text-white transition hover:-translate-y-0.5"
-              >
-                Register Now <ArrowRight size={15} />
-              </button>
-              <button
-                onClick={goToBrochure}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/50 bg-white/5 px-4 py-3 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/15"
-              >
-                <Download size={14} /> Download Brochure
-              </button>
-              <button
-                onClick={goToScientificProgram}
-                className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
-              >
-                View Scientific Program
-              </button>
-              <button
-                onClick={goToAbstracts}
-                className="rounded-lg border border-violet-300/80 px-4 py-3 text-xs font-semibold text-white transition hover:bg-violet-600/30"
-              >
-                Abstract Submission
-              </button>
-            </div>
+          
+
+
+<div className="mt-7 grid grid-cols-1 justify-center gap-4 sm:grid-cols-2">
+  <button
+    onClick={goToRegistration}
+    className="inline-flex w-full max-w-[280px] items-center justify-center gap-3 justify-self-center rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:justify-self-start"
+  >
+    Register Now <ArrowRight size={19} />
+  </button>
+
+  <button
+    onClick={goToBrochure}
+    className="inline-flex w-full max-w-[280px] items-center justify-center gap-3 justify-self-center rounded-xl border border-white/50 bg-white/5 px-5 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:justify-self-start"
+  >
+    <Download size={18} /> Download Brochure
+  </button>
+
+  <button
+    onClick={goToScientificProgram}
+    className="inline-flex w-full max-w-[280px] items-center justify-center justify-self-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30 sm:justify-self-start"
+  >
+    View Scientific Program
+  </button>
+
+  <button
+    onClick={goToAbstracts}
+    className="inline-flex w-full max-w-[280px] items-center justify-center justify-self-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30 sm:justify-self-start"
+  >
+    Abstract Submission
+  </button>
+</div>
+
+
+
           </motion.div>
 
           {/* COUNTDOWN */}
@@ -1182,7 +1274,7 @@ const ConferenceDetails = () => {
                 <Clock size={23} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="text-xl text-white font-extrabold">
                   {countdown.phase === "upcoming"
                     ? "Conference Countdown"
                     : countdown.phase === "live"
@@ -1191,7 +1283,7 @@ const ConferenceDetails = () => {
                         ? "Conference Completed"
                         : "Conference Schedule"}
                 </h2>
-                <p className="mt-1 text-[11px] leading-4 text-white/65">
+                <p className="mt-1 text-[13px] leading-4 text-white/65 font-semibold">
                   {title}
                 </p>
               </div>
@@ -1199,7 +1291,7 @@ const ConferenceDetails = () => {
 
             {countdown.phase === "upcoming" && (
               <>
-                <p className="mb-4 text-center text-[10px] font-semibold uppercase tracking-[0.15em] text-violet-200 sm:text-xs">
+                <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.15em] text-violet-200 sm:text-sm">
                   Time Remaining Until Conference
                 </p>
                 <div className="grid grid-cols-4 gap-2">
@@ -1213,26 +1305,26 @@ const ConferenceDetails = () => {
                       key={item.label}
                       className="flex min-w-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.13] to-white/[0.06] px-1 py-4"
                     >
-                      <span className="text-2xl font-extrabold tabular-nums text-white sm:text-3xl">
+                      <span className="text-3xl font-extrabold tabular-nums text-white sm:text-4xl">
                         {String(item.value).padStart(2, "0")}
                       </span>
-                      <span className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-violet-200 sm:text-[10px]">
+                      <span className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-200 sm:text-xs">
                         {item.label}
                       </span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-5 flex items-center justify-center gap-2 text-xs text-white/80">
+                <div className="mt-5 flex items-center justify-center gap-2 text-sm text-white/80">
                   <CalendarDays size={15} className="text-violet-300" />
                   {dateRange}
                 </div>
-                <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-white/65">
+                <div className="mt-2 flex items-center justify-center gap-2 text-[13px] text-white/65">
                   <Globe2 size={14} className="text-violet-300" />
                   {venueName} · {mode}
                 </div>
                 <button
                   onClick={goToRegistration}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-xs font-bold text-white transition hover:-translate-y-0.5"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
                 >
                   Secure Your Registration <ArrowRight size={15} />
                 </button>
@@ -1241,7 +1333,7 @@ const ConferenceDetails = () => {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
-                  <span className="text-[10px] text-white/60">
+                  <span className="text-xs text-white/60">
                     Live countdown · Updates every second
                   </span>
                 </div>
@@ -1253,16 +1345,16 @@ const ConferenceDetails = () => {
                   size={38}
                   className="mx-auto mb-3 text-emerald-300"
                 />
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-xl text-white font-extrabold">
                   The Conference Is Live!
                 </h3>
-                <p className="mt-2 text-xs leading-6 text-white/70">
+                <p className="mt-2 text-sm leading-6 text-white/70 font-semibold">
                   The conference is in progress. Explore the scientific program
                   and available sessions.
                 </p>
                 <button
                   onClick={goToScientificProgram}
-                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-violet-800 transition hover:bg-violet-50"
                 >
                   View Conference Program <ArrowRight size={14} />
                 </button>
@@ -1271,16 +1363,16 @@ const ConferenceDetails = () => {
             {countdown.phase === "ended" && (
               <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-4 py-7 text-center">
                 <Award size={38} className="mx-auto mb-3 text-violet-200" />
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-xl text-white font-extrabold">
                   Thank You for Your Interest!
                 </h3>
-                <p className="mt-2 text-xs leading-6 text-white/70">
+                <p className="mt-2 text-sm leading-6 text-white/70 font-semibold">
                   Explore the conference details, speakers, scientific topics
                   and other available resources.
                 </p>
                 <button
                   onClick={() => scrollTo("explore")}
-                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-violet-800 transition hover:bg-violet-50"
                 >
                   Explore Conference <ArrowRight size={14} />
                 </button>
@@ -1292,16 +1384,16 @@ const ConferenceDetails = () => {
                   size={34}
                   className="mx-auto mb-3 text-violet-200"
                 />
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-xl text-white font-extrabold">
                   Schedule Coming Soon
                 </h3>
-                <p className="mt-2 text-xs leading-6 text-white/70">
+                <p className="mt-2 text-sm leading-6 text-white/70 font-semibold">
                   Conference dates will be published when the schedule is
                   confirmed.
                 </p>
                 <button
                   onClick={goToRegistration}
-                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold text-violet-800 transition hover:bg-violet-50"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-violet-800 transition hover:bg-violet-50"
                 >
                   Registration Details <ArrowRight size={14} />
                 </button>
@@ -1320,21 +1412,21 @@ const ConferenceDetails = () => {
             <SectionLabel>
               {asText(welcome.heading, "Welcome Message")}
             </SectionLabel>
-            <h2 className="text-2xl font-bold leading-tight text-[#171447]">
+            <h2 className="text-3xl leading-tight text-[#171447] font-bold">
               Welcome to GlobalScion
             </h2>
-            <h3 className="mt-1 text-sm font-bold leading-6 text-[#24205c]">
+            <h3 className="mt-1 text-base leading-6 text-[#24205c] font-extrabold">
               {title}
             </h3>
-            <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
+            <p className="mt-3 whitespace-pre-line text-[17px] leading-[1.7] text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden font-semibold">
               {welcomeText}
             </p>
             {welcomeSignature && (
-              <p className="mt-4 whitespace-pre-line text-sm font-semibold leading-6 text-violet-800">
+              <p className="mt-4 whitespace-pre-line text-base font-semibold leading-6 text-violet-800">
                 {welcomeSignature}
               </p>
             )}
-            <p className="mt-4 font-serif text-xl italic text-violet-800">
+            <p className="mt-4 font-serif text-2xl italic text-violet-800">
               Together for a Brighter Future
             </p>
             <div className="ml-10 mt-1 h-0.5 w-32 rotate-[-5deg] rounded-full bg-violet-500" />
@@ -1356,10 +1448,10 @@ const ConferenceDetails = () => {
               <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-violet-700 transition group-hover:scale-110">
                 <Play size={25} fill="currentColor" />
               </span>
-              <span className="absolute bottom-8 left-0 w-full text-center text-sm font-bold text-white">
+              <span className="absolute bottom-8 left-0 w-full text-center text-base font-bold text-white">
                 About the Conference
               </span>
-              <span className="absolute bottom-3 left-0 w-full text-center text-[11px] text-white/80">
+              <span className="absolute bottom-3 left-0 w-full text-center text-[13px] text-white/80">
                 Discover our vision
               </span>
             </button>
@@ -1378,10 +1470,10 @@ const ConferenceDetails = () => {
               >
                 <Icon className="shrink-0 text-violet-600" size={28} />
                 <div>
-                  <p className="text-xl font-extrabold leading-tight text-violet-800">
+                  <p className="text-2xl font-extrabold leading-tight text-violet-800">
                     {value}
                   </p>
-                  <p className="mt-1 text-[15px] font-semibold text-slate-600">
+                  <p className="mt-1 text-[17px] font-semibold text-slate-600">
                     {label}
                   </p>
                 </div>
@@ -1431,30 +1523,30 @@ const ConferenceDetails = () => {
 
                   {/* SPEAKER DETAILS */}
                   <div className="flex flex-1 flex-col p-4 text-center">
-                    <h3 className="text-base font-bold leading-6 text-[#171447]">
+                    <h3 className="text-lg leading-6 text-[#171447] font-extrabold">
                       {asText(speaker.name, "Speaker")}
                     </h3>
 
-                    <p className="mt-1 text-xs font-semibold leading-5 text-violet-600">
+                    <p className="mt-1 text-sm font-semibold leading-5 text-violet-600">
                       {asText(speaker.role, "Conference Speaker")}
                     </p>
 
                     {getSpeakerOrganization(speaker) && (
-                      <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+                      <p className="mt-2 text-sm font-semibold leading-5 text-slate-600">
                         {getSpeakerOrganization(speaker)}
                       </p>
                     )}
 
                     {speaker.specialty && (
                       <div className="mt-3">
-                        <span className="inline-flex max-w-full items-center justify-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-[10px] font-semibold text-violet-700">
+                        <span className="inline-flex max-w-full items-center justify-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
                           {speaker.specialty}
                         </span>
                       </div>
                     )}
 
                     {speaker.bio && (
-                      <p className="mt-3 line-clamp-3 text-xs leading-5 text-slate-500">
+                      <p className="mt-3 line-clamp-3 text-sm leading-5 text-slate-500 font-semibold">
                         {speaker.bio}
                       </p>
                     )}
@@ -1471,7 +1563,7 @@ const ConferenceDetails = () => {
           )}
         </div>
       </section>
-      
+
       {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
       <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-5 py-14 sm:px-10">
         <div className="mx-auto max-w-[1300px] space-y-8">
@@ -1486,12 +1578,12 @@ const ConferenceDetails = () => {
                 <IconTile icon={Users} size={24} />
 
                 <div className="min-w-0">
-                  <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                  <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
                     Who Should Attend?
                   </h2>
 
                   {whoShouldAttend ? (
-                    <p className="mt-2 max-w-3xl whitespace-pre-line text-sm leading-[1.85] text-slate-600">
+                    <p className="mt-2 max-w-3xl whitespace-pre-line text-base leading-[1.85] text-slate-600 font-semibold">
                       {whoShouldAttend}
                     </p>
                   ) : asArray(data.whoShouldAttend).length ? (
@@ -1499,7 +1591,7 @@ const ConferenceDetails = () => {
                       <FlatList items={data.whoShouldAttend} />
                     </div>
                   ) : (
-                    <p className="mt-2 max-w-3xl text-sm leading-[1.85] text-slate-600">
+                    <p className="mt-2 max-w-3xl text-base leading-[1.85] text-slate-600 font-semibold">
                       This conference welcomes researchers, clinicians,
                       educators, students, professionals and others interested
                       in the conference subject. Please check the program for
@@ -1511,7 +1603,7 @@ const ConferenceDetails = () => {
 
               <button
                 onClick={() => scrollTo("explore")}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-xs font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
               >
                 View Conference Details
                 <ArrowRight size={14} />
@@ -1526,11 +1618,11 @@ const ConferenceDetails = () => {
               <div>
                 <SectionLabel>Moments & Memories</SectionLabel>
 
-                <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
                   Our Conference Gallery
                 </h2>
 
-                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+                <p className="mt-2 max-w-2xl text-base font-semibold leading-6 text-slate-600">
                   Explore conference experiences, research presentations, expert
                   discussions and opportunities to connect with the global
                   community.
@@ -1539,13 +1631,12 @@ const ConferenceDetails = () => {
 
               <div className="flex items-center gap-2 self-start rounded-full border border-violet-100 bg-violet-50 px-4 py-2 sm:self-auto">
                 <ImageIcon size={16} className="text-violet-600" />
-                <span className="text-xs font-semibold text-violet-700">
+                <span className="text-sm font-semibold text-violet-700">
                   Conference Moments
                 </span>
               </div>
             </div>
 
-            {/* RESPONSIVE MASONRY-STYLE GALLERY */}
             {/* RESPONSIVE CONFERENCE GALLERY */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
               {/* LARGE FEATURED IMAGE */}
@@ -1560,13 +1651,13 @@ const ConferenceDetails = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/90 via-[#100d35]/10 to-transparent" />
 
                 <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
+                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
                     Featured Moment
                   </span>
-                  <h3 className="mt-3 text-xl font-bold text-white sm:text-2xl">
+                  <h3 className="mt-3 text-2xl text-white sm:text-3xl font-extrabold">
                     Global Conference Experience
                   </h3>
-                  <p className="mt-2 max-w-md text-xs font-medium leading-5 text-white/80 sm:text-sm">
+                  <p className="mt-2 max-w-md text-sm font-semibold leading-5 text-white/80 sm:text-base">
                     Bringing researchers, professionals and innovators together.
                   </p>
                 </div>
@@ -1582,10 +1673,10 @@ const ConferenceDetails = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/80 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 p-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-200">
                     Knowledge Sharing
                   </p>
-                  <h3 className="mt-1 text-lg font-bold text-white">
+                  <h3 className="mt-1 text-xl text-white font-extrabold">
                     Expert Presentations
                   </h3>
                 </div>
@@ -1601,10 +1692,10 @@ const ConferenceDetails = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-[10px] font-semibold text-violet-200">
+                  <p className="text-xs font-semibold text-violet-200">
                     COLLABORATION
                   </p>
-                  <h3 className="mt-1 text-sm font-bold text-white">
+                  <h3 className="mt-1 text-base text-white font-extrabold">
                     Networking & Ideas
                   </h3>
                 </div>
@@ -1620,10 +1711,10 @@ const ConferenceDetails = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-[10px] font-semibold text-violet-200">
+                  <p className="text-xs font-semibold text-violet-200">
                     INNOVATION
                   </p>
-                  <h3 className="mt-1 text-sm font-bold text-white">
+                  <h3 className="mt-1 text-base text-white font-extrabold">
                     Research & Technology
                   </h3>
                 </div>
@@ -1639,10 +1730,10 @@ const ConferenceDetails = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 p-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-200">
                     Global Community
                   </p>
-                  <h3 className="mt-1 text-lg font-bold text-white">
+                  <h3 className="mt-1 text-xl text-white font-extrabold">
                     Connecting People, Inspiring Change
                   </h3>
                 </div>
@@ -1658,10 +1749,10 @@ const ConferenceDetails = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-[10px] font-semibold text-violet-200">
+                  <p className="text-xs font-semibold text-violet-200">
                     TEAMWORK
                   </p>
-                  <h3 className="mt-1 text-sm font-bold text-white">
+                  <h3 className="mt-1 text-base text-white font-extrabold">
                     Working Together
                   </h3>
                 </div>
@@ -1670,7 +1761,7 @@ const ConferenceDetails = () => {
 
             {/* GALLERY FOOTER */}
             <div className="mt-6 flex flex-col gap-3 border-t border-violet-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs font-semibold leading-5 text-slate-500">
+              <p className="text-sm font-semibold leading-5 text-slate-500">
                 Inspiring conversations. Meaningful connections. Shared
                 discoveries.
               </p>
@@ -1678,7 +1769,7 @@ const ConferenceDetails = () => {
               <button
                 type="button"
                 onClick={() => scrollTo("explore")}
-                className="inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-xs font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-600 hover:text-white sm:self-auto"
+                className="inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-sm font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-600 hover:text-white sm:self-auto"
               >
                 Explore Conference
                 <ArrowRight size={14} />
@@ -1726,7 +1817,7 @@ const ConferenceDetails = () => {
                 {FALLBACK_KEY_POINTS.map((point) => (
                   <li
                     key={point}
-                    className="flex items-start gap-3 py-3.5 text-sm leading-6 text-slate-700"
+                    className="flex items-start gap-3 py-3.5 text-base leading-6 text-slate-700 font-semibold"
                   >
                     <CheckCircle2
                       size={16}
@@ -1752,13 +1843,13 @@ const ConferenceDetails = () => {
             className="flex flex-col items-center gap-4 lg:flex-row"
           >
             <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
                 Stay Connected
               </p>
-              <h2 className="mt-1 text-base font-semibold leading-6 text-white">
+              <h2 className="mt-1 text-lg leading-6 text-white font-extrabold">
                 Subscribe to Our Mailing List
               </h2>
-              <p className="mt-1 text-xs font-medium leading-5 text-slate-300">
+              <p className="mt-1 text-sm font-semibold leading-5 text-slate-300">
                 Get conference updates and announcements.
               </p>
             </div>
@@ -1772,7 +1863,7 @@ const ConferenceDetails = () => {
                 placeholder="Full Name"
                 autoComplete="name"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1784,7 +1875,7 @@ const ConferenceDetails = () => {
                 placeholder="Email Address"
                 autoComplete="email"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1796,7 +1887,7 @@ const ConferenceDetails = () => {
                 placeholder="Phone Number"
                 autoComplete="tel"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1805,7 +1896,7 @@ const ConferenceDetails = () => {
                 value={subscriberForm.conferenceId}
                 onChange={handleSubscriberChange}
                 disabled={subscribeLoading}
-                className={`h-11 w-full rounded-lg border border-white/15 bg-[#20244D] px-3 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
+                className={`h-11 w-full rounded-lg border border-white/15 bg-[#20244D] px-3 text-base font-semibold outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
               >
                 <option value="" disabled>
                   Select Conference
@@ -1827,7 +1918,7 @@ const ConferenceDetails = () => {
             <button
               type="submit"
               disabled={subscribeLoading}
-              className="flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+              className="flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-6 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
             >
               {subscribeLoading ? (
                 <span className="flex items-center gap-2">
@@ -1844,7 +1935,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-red-300 lg:justify-end"
+              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
             >
               <AlertCircle size={14} />
               <span>{formError}</span>
@@ -1854,7 +1945,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-red-300 lg:justify-end"
+              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
             >
               <AlertCircle size={14} />
               <span>
@@ -1868,7 +1959,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-emerald-300 lg:justify-end"
+              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300 lg:justify-end"
             >
               <CheckCircle2 size={14} />
               <span>Successfully subscribed to the conference.</span>
@@ -1891,10 +1982,10 @@ const ConferenceDetails = () => {
                       <Layers size={19} />
                     </span>
                     <div className="min-w-0">
-                      <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                      <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
                         Conference Information
                       </h2>
-                      <p className="mt-1 text-xs font-medium leading-5 text-black/70 sm:text-sm">
+                      <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
                         Explore conference details and opportunities.
                       </p>
                     </div>
@@ -1922,7 +2013,7 @@ const ConferenceDetails = () => {
                               <Icon size={17} />
                             </span>
                             <span
-                              className={`text-sm font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
+                              className={`text-base font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
                             >
                               {row.title}
                             </span>
@@ -1940,7 +2031,7 @@ const ConferenceDetails = () => {
                             transition={{ duration: 0.22 }}
                             className="bg-white px-4 pb-5 pt-3 sm:px-5"
                           >
-                            <div className="text-sm font-medium leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-sm [&_p]:font-medium [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-sm [&_li]:font-medium [&_li]:leading-6 [&_li]:text-black/80">
+                            <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80">
                               {renderRowContent(row.key)}
                             </div>
                           </motion.div>
@@ -1958,10 +2049,10 @@ const ConferenceDetails = () => {
                       <Layers size={19} />
                     </span>
                     <div className="min-w-0">
-                      <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
+                      <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
                         Sessions and Tracks
                       </h2>
-                      <p className="mt-1 text-xs font-medium leading-5 text-black/70 sm:text-sm">
+                      <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
                         Explore the scientific sessions and research topics
                         planned for this conference.
                       </p>
@@ -1991,14 +2082,14 @@ const ConferenceDetails = () => {
                   key={categoryItem._id || categoryItem.name || index}
                   className={`${PREMIUM_CARD} p-5`}
                 >
-                  <h3 className="text-sm font-bold text-[#171447]">
+                  <h3 className="text-base text-[#171447] font-extrabold">
                     {getText(
                       categoryItem,
                       ["name", "title", "category", "label"],
                       `Category ${index + 1}`,
                     )}
                   </h3>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                  <p className="mt-2 text-base font-semibold leading-6 text-slate-600">
                     {getText(
                       categoryItem,
                       ["description", "details"],
@@ -2006,13 +2097,13 @@ const ConferenceDetails = () => {
                     )}
                   </p>
                   {categoryItem.price !== undefined && (
-                    <p className="mt-3 text-sm font-bold text-violet-700">
+                    <p className="mt-3 text-base font-bold text-violet-700">
                       {categoryItem.currency || ""} {categoryItem.price}
                     </p>
                   )}
                   <button
                     onClick={goToRegistration}
-                    className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-violet-700"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700"
                   >
                     Register <ArrowRight size={13} />
                   </button>
@@ -2022,222 +2113,300 @@ const ConferenceDetails = () => {
           </div>
         </section>
       )}
-      {/* SPONSORS + RECENT POSTS */}
-      <section className="bg-white px-5 py-10 sm:px-10">
-        <div
-          className={`mx-auto grid max-w-[1300px] gap-5 ${hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"}`}
-        >
-          {hasSponsors && (
-            <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <SectionLabel>Our Sponsors</SectionLabel>
-                  <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
-                    Our Valued Sponsors
-                  </h2>
-                </div>
-                <Handshake className="text-violet-600" size={25} />
-              </div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                We appreciate the organizations supporting this conference and
-                its research community.
-              </p>
-              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {sponsors.map((sponsor, index) => {
-                  const sponsorName = getText(
+{/* SPONSORS + RECENT POSTS */}
+<section className="bg-white px-5 py-10 sm:px-10">
+  <div
+    className={`mx-auto grid max-w-[1300px] gap-5 ${
+      hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
+    }`}
+  >
+    {/* SPONSORS */}
+    {hasSponsors && (
+      <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <SectionLabel>Our Sponsors</SectionLabel>
+            <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+              Media Partners & Sponsors
+            </h2>
+          </div>
+          <Handshake
+            className="shrink-0 text-violet-600"
+            size={28}
+          />
+        </div>
+
+        <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+          We appreciate the organizations supporting this conference and
+          its research community.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {sponsors.map((sponsor, index) => {
+            const logo =
+              typeof sponsor === "string"
+                ? getMediaUrl(sponsor)
+                : getMediaUrl(
+                    sponsor?.logo ||
+                      sponsor?.logoUrl ||
+                      sponsor?.image ||
+                      sponsor?.imageUrl ||
+                      sponsor?.fileUrl ||
+                      sponsor?.url
+                  );
+
+            const sponsorName =
+              typeof sponsor === "string"
+                ? `Sponsor ${index + 1}`
+                : getText(
                     sponsor,
                     ["name", "title", "companyName"],
-                    typeof sponsor === "string"
-                      ? sponsor
-                      : `Sponsor ${index + 1}`,
+                    `Sponsor ${index + 1}`
                   );
-                  const logo = isObject(sponsor)
-                    ? getMediaUrl(
-                        sponsor.logo ||
-                          sponsor.logoUrl ||
-                          sponsor.image ||
-                          sponsor.imageUrl ||
-                          sponsor.fileUrl,
-                      )
-                    : "";
-                  const website =
-                    typeof sponsor === "object"
-                      ? sponsor.website || sponsor.url || ""
-                      : "";
-                  return (
-                    <div
-                      key={sponsor._id || sponsorName || index}
-                      className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 text-center transition hover:border-violet-200"
-                    >
-                      {logo ? (
-                        <img
-                          src={logo}
-                          alt={sponsorName}
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.style.display = "none";
-                          }}
-                          className="block max-h-20 w-full max-w-full object-contain"
-                        />
-                      ) : website ? (
-                        <a
-                          href={website}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm font-bold text-violet-700 hover:underline"
-                        >
-                          {sponsorName}
-                        </a>
-                      ) : (
-                        <span className="text-sm font-bold text-slate-700">
-                          {sponsorName}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
-          <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <SectionLabel>Follow Us</SectionLabel>
-                <h2 className="text-xl font-bold text-[#171447] sm:text-2xl">
-                  Recent Posts
-                </h2>
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => scroll(postRef, -1)}
-                  aria-label="Previous posts"
-                  className="rounded-full border border-violet-100 bg-white p-2 text-violet-700"
-                >
-                  <ChevronLeft size={15} />
-                </button>
-                <button
-                  onClick={() => scroll(postRef, 1)}
-                  aria-label="Next posts"
-                  className="rounded-full border border-violet-100 bg-white p-2 text-violet-700"
-                >
-                  <ChevronRight size={15} />
-                </button>
-              </div>
-            </div>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-              Follow conference announcements, research news and community
-              updates.
-            </p>
-            <div className="mt-3 flex gap-2.5">
-              {[
-                {
-                  label: "Facebook",
-                  url: contact.facebook || "https://www.facebook.com/",
-                  className: "bg-[#4267B2]",
-                },
-                {
-                  label: "LinkedIn",
-                  url: contact.linkedin || "https://www.linkedin.com/",
-                  className: "bg-[#0A66C2]",
-                },
-                {
-                  label: "Instagram",
-                  url: contact.instagram || "https://www.instagram.com/",
-                  className: "bg-gradient-to-br from-pink-500 to-orange-400",
-                },
-                {
-                  label: "Website",
-                  url: contact.website || "https://globalscion.com/",
-                  className: "bg-violet-700",
-                },
-              ].map((social) => (
-                <a
-                  key={social.label}
-                  href={social.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={social.label}
-                  title={social.label}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition hover:-translate-y-1 ${social.className}`}
-                >
-                  {social.label === "Website" ? (
-                    <Globe2 size={14} />
-                  ) : (
-                    <ExternalLink size={14} />
-                  )}
-                </a>
-              ))}
-            </div>
-            <div
-              ref={postRef}
-              className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {posts.map((post, index) => {
-                const postTitle = getText(
-                  post,
-                  ["title", "name"],
-                  `Conference Update ${index + 1}`,
-                );
-                const postImage =
-                  getMediaUrl(post.image || post.imageUrl || post.thumbnail) ||
-                  FALLBACK_IMAGE;
-                return (
-                  <article
-                    key={post._id || postTitle || index}
-                    className="min-w-[155px] max-w-[190px] flex-1 snap-start overflow-hidden rounded-xl border border-slate-100 bg-white"
-                  >
-                    <img
-                      src={postImage}
-                      alt={postTitle}
-                      loading="lazy"
-                      className="h-24 w-full object-cover"
-                    />
-                    <div className="p-3">
-                      <h3 className="text-xs font-bold text-[#171447]">
-                        {postTitle}
-                      </h3>
-                      <p className="mt-1.5 line-clamp-3 text-[10px] leading-4 text-slate-500">
-                        {getText(
-                          post,
-                          ["description", "content", "caption"],
-                          "Follow GlobalScion for more updates.",
-                        )}
-                      </p>
-                      <p className="mt-2 text-[9px] text-slate-400">
-                        {formatDate(
-                          post.date || post.createdAt,
-                          "Latest Updates",
-                        )}
-                      </p>
-                      {post.url && (
-                        <a
-                          href={post.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700"
-                        >
-                          Read more <ExternalLink size={11} />
-                        </a>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-            <div className="mt-3 text-right">
-              <a
-                href="https://globalscion.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700"
+            return (
+              <div
+                key={`${logo || sponsorName}-${index}`}
+                className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition duration-300 hover:border-violet-300 hover:shadow-md"
               >
-                Visit GlobalScion <ArrowRight size={12} />
-              </a>
-            </div>
-          </div>
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={sponsorName}
+                    loading="lazy"
+                    className="block h-full w-full object-contain"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-slate-700 sm:text-base">
+                    {sponsorName}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </section>
+      </div>
+    )}
+
+    {/* RECENT POSTS */}
+    <div className="min-w-0 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <SectionLabel>Follow Us</SectionLabel>
+          <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+            Recent Posts
+          </h2>
+        </div>
+
+        {/* SCROLL CONTROLS */}
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => scroll(postRef, -1)}
+            aria-label="Previous posts"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+          >
+            <ChevronLeft size={19} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scroll(postRef, 1)}
+            aria-label="Next posts"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+          >
+            <ChevronRight size={19} />
+          </button>
+        </div>
+      </div>
+
+      <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+        Follow conference announcements, research news and community
+        updates.
+      </p>
+
+      {/* SOCIAL MEDIA SVG ICONS */}
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {[
+          {
+            label: "Facebook",
+            url: contact.facebook || "https://www.facebook.com/",
+            className: "bg-[#1877F2]",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M13.5 21v-8.18h2.75l.41-3.19H13.5V7.6c0-.92.26-1.55 1.58-1.55h1.69V3.2c-.29-.04-1.3-.13-2.48-.13-2.45 0-4.12 1.5-4.12 4.25v2.31H7.4v3.19h2.77V21h3.33Z" />
+              </svg>
+            ),
+          },
+          {
+            label: "LinkedIn",
+            url: contact.linkedin || "https://www.linkedin.com/",
+            className: "bg-[#0A66C2]",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M5.2 3.5a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM3.55 8.75h3.3v11.7h-3.3V8.75Zm5.35 0h3.16v1.6h.05c.44-.83 1.52-1.95 3.14-1.95 3.36 0 3.98 2.21 3.98 5.08v6.97h-3.3v-6.18c0-1.47-.03-3.36-2.05-3.36-2.05 0-2.36 1.6-2.36 3.25v6.29H8.9V8.75Z" />
+              </svg>
+            ),
+          },
+          {
+            label: "Instagram",
+            url: contact.instagram || "https://www.instagram.com/",
+            className: "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            ),
+          },
+          {
+            label: "YouTube",
+            url: contact.youtube || "https://www.youtube.com/",
+            className: "bg-[#FF0033]",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M23.2 7a3 3 0 0 0-2.1-2.1C19.25 4.4 12 4.4 12 4.4s-7.25 0-9.1.5A3 3 0 0 0 .8 7 31 31 0 0 0 .3 12a31 31 0 0 0 .5 5 3 3 0 0 0 2.1 2.1c1.85.5 9.1.5 9.1.5s7.25 0 9.1-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-5 31 31 0 0 0-.5-5ZM9.6 15.5v-7l6.1 3.5-6.1 3.5Z" />
+              </svg>
+            ),
+          },
+        ].map((social) => (
+          <a
+            key={social.label}
+            href={social.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Visit GlobalScion on ${social.label}`}
+            title={social.label}
+            className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md ${social.className}`}
+          >
+            {social.svg}
+          </a>
+        ))}
+      </div>
+
+      {/* SCROLLING POSTS */}
+      <div
+        ref={postRef}
+        className="mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {posts.length > 0 ? (
+          posts.map((post, index) => {
+            const postTitle = getText(
+              post,
+              ["title", "name"],
+              `Conference Update ${index + 1}`
+            );
+
+            const postImage =
+              getMediaUrl(
+                post.image || post.imageUrl || post.thumbnail
+              ) || FALLBACK_IMAGE;
+
+            return (
+              <article
+                key={post._id || `${postTitle}-${index}`}
+                className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[190px] sm:min-w-[190px]"
+              >
+                <div className="h-28 overflow-hidden bg-violet-50">
+                  <img
+                    src={postImage}
+                    alt={postTitle}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-col p-3.5">
+                  <h3 className="line-clamp-2 text-sm font-extrabold leading-5 text-[#171447] sm:text-base">
+                    {postTitle}
+                  </h3>
+
+                  <p className="mt-2 line-clamp-3 text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
+                    {getText(
+                      post,
+                      ["description", "content", "caption"],
+                      "Follow GlobalScion for more updates."
+                    )}
+                  </p>
+
+                  <p className="mt-3 text-[11px] font-semibold text-slate-400">
+                    {formatDate(
+                      post.date || post.createdAt,
+                      "Latest Updates"
+                    )}
+                  </p>
+
+                  {post.url && (
+                    <a
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-extrabold text-violet-700 hover:text-violet-900"
+                    >
+                      Read more <ExternalLink size={13} />
+                    </a>
+                  )}
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="flex min-h-36 w-full items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white px-4 text-center">
+            <p className="text-sm font-semibold text-slate-500">
+              New conference updates will appear here.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold text-slate-400">
+          Scroll to explore updates
+        </p>
+
+        <a
+          href="https://globalscion.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-violet-700 transition hover:text-violet-900 sm:text-sm"
+        >
+          Visit GlobalScion <ArrowRight size={14} />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
       {/* CONFERENCE INTRODUCTION MODAL */}
       {videoOpen && (
         <div
@@ -2259,8 +2428,10 @@ const ConferenceDetails = () => {
               <X size={19} />
             </button>
             <SectionLabel>About GlobalScion</SectionLabel>
-            <h2 className="mt-2 text-2xl font-bold text-[#171447]">{title}</h2>
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden">
+            <h2 className="mt-2 text-3xl text-[#171447] font-extrabold">
+              {title}
+            </h2>
+            <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden font-semibold">
               {welcomeText}
             </p>
             <button
@@ -2268,13 +2439,16 @@ const ConferenceDetails = () => {
                 setVideoOpen(false);
                 scrollTo("explore");
               }}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-xs font-semibold text-white hover:bg-violet-700"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700"
             >
               Explore Conference <ArrowRight size={14} />
             </button>
           </div>
         </div>
       )}
+
+      {/* WHATSAPP FLOATING BUTTON */}
+      <WhatsAppButton />
     </div>
   );
 };
