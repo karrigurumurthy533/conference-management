@@ -322,6 +322,25 @@ const AdminSidebar = ({
             )}
           </NavLink>
 
+          {/* Payment Receipts */}
+          <NavLink
+            to="/admin/payment-receipts"
+            onClick={onClose}
+            className={navClass}
+          >
+            {({ isActive }) => (
+              <>
+                <Receipt
+                  size={17}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={iconClass({ isActive })}
+                />
+                <span>Payment Receipts</span>
+              </>
+            )}
+          </NavLink>
+
+
           {/* Reports */}
           <NavLink
             to="/admin/reports"
@@ -390,24 +409,6 @@ const AdminSidebar = ({
                   className={iconClass({ isActive })}
                 />
                 <span>Subscribers</span>
-              </>
-            )}
-          </NavLink>
-
-          {/* Profile */}
-          <NavLink
-            to="/admin/profile"
-            onClick={onClose}
-            className={navClass}
-          >
-            {({ isActive }) => (
-              <>
-                <UserCircle
-                  size={17}
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={iconClass({ isActive })}
-                />
-                <span>Profile</span>
               </>
             )}
           </NavLink>

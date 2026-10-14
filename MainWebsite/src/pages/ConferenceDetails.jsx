@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ChevronDown,
   Building2,
+  ChevronsRight,
   Star,
   Gift,
   BarChart3,
@@ -43,6 +44,14 @@ import { subscribe, clearSubscribe } from "../redux/userSlice";
 // ============================================================
 
 const FALLBACK_CONFERENCE_ID = "6abe6282115ac55e02fcf168";
+
+const LATEST_UPDATES = [
+  "Early bird registration is now open",
+  "Abstract submission deadline: 30 November 2026",
+  "Keynote speakers announced",
+  "Workshops and poster sessions open for registration",
+  "Group registration discounts available",
+];
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=2000&q=90";
@@ -294,19 +303,14 @@ const IconTile = ({ icon: Icon, size = 22 }) => (
   </span>
 );
 
-
 const FeatureCard = ({ icon, title, description, children }) => (
-  <div
-    className={`${PREMIUM_CARD} flex h-full flex-col p-6 sm:p-7`}
-  >
+  <div className={`${PREMIUM_CARD} flex h-full flex-col p-6 sm:p-7`}>
     {/* HEADER */}
     <div className="flex shrink-0 items-start gap-4">
       <IconTile icon={icon} />
 
       <div className="min-w-0 flex-1">
-        <h3 className="text-2xl font-bold text-[#171447]">
-          {title}
-        </h3>
+        <h3 className="text-2xl font-bold text-[#171447]">{title}</h3>
 
         <p className="mt-1 text-sm font-semibold leading-5 text-slate-500">
           {description}
@@ -320,8 +324,6 @@ const FeatureCard = ({ icon, title, description, children }) => (
     </div>
   </div>
 );
-
-
 
 const FlatList = ({
   items,
@@ -1510,6 +1512,41 @@ const ConferenceDetails = () => {
           </motion.aside>
         </div>
       </section>
+
+      {/* LATEST UPDATES TICKER — FULL WIDTH */}
+      <section className="w-full bg-white">
+        <div className="flex w-full items-stretch overflow-hidden border-y border-red-100 bg-white">
+          {/* LABEL */}
+          <div className="z-10 flex shrink-0 items-center gap-2 bg-red-600 px-4 py-3 text-white sm:px-6">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+            </span>
+            <span className="text-sm font-extrabold uppercase tracking-wide">
+              Latest Updates
+            </span>
+          </div>
+
+          {/* SCROLLING AREA */}
+          <div className="group relative min-w-0 flex-1 overflow-hidden bg-white">
+            <div className="flex w-max animate-ticker items-center group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+              {[...LATEST_UPDATES, ...LATEST_UPDATES].map((item, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-2 whitespace-nowrap px-6 py-3 text-sm font-bold text-violet-700"
+                >
+                  <ChevronsRight
+                    size={18}
+                    strokeWidth={3}
+                    className="shrink-0 text-red-500"
+                  />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
       {/* WELCOME MESSAGE */}
       <section
         id="welcome"
@@ -1692,7 +1729,7 @@ const ConferenceDetails = () => {
       </section>
 
       {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
-      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 py-14 sm:px-6">
+      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 pb-14 pt-4 sm:px-6">
         <div className="mx-auto max-w-[1600px] space-y-8">
           {/* WHO SHOULD ATTEND */}
           <div

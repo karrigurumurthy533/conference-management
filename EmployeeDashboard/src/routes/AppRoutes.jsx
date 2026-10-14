@@ -12,6 +12,7 @@ import Profile from "../Pages/Profile";
 import MainLayout from "../layouts/MainLayout";
 import Attendance from "../Pages/Attendance";
 import Brochures from "../Pages/Brochures";
+import ChangePassword from "../Pages/ChangePassword";
 
 // ======================================================
 // PROTECTED ROUTE
@@ -21,12 +22,21 @@ function ProtectedRoute({ children }) {
   const token = localStorage.getItem("employeeToken");
 
   if (!token) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+// ======================================================
+// PUBLIC ROUTE - LOGIN PAGE
+// ======================================================
+
+function PublicRoute({ children }) {
+  const token = localStorage.getItem("employeeToken");
+
+  if (token) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -39,34 +49,33 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-
-      {/* ==================================================
-          ROOT
-      ================================================== */}
-
+      {/* ROOT */}
       <Route
         path="/"
+        element={<Navigate to="/login" replace />}
+      />
+
+      {/* LOGIN - OUTSIDE MAIN LAYOUT */}
+      <Route
+        path="/login"
         element={
-          <Navigate
-            to="/login"
-            replace
-          />
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
         }
       />
 
-      {/* ==================================================
-          LOGIN
-      ================================================== */}
-
+      {/* CHANGE PASSWORD - OUTSIDE MAIN LAYOUT / OUTLET */}
       <Route
-        path="/login"
-        element={<Login />}
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
+          </ProtectedRoute>
+        }
       />
 
-      {/* ==================================================
-          PROTECTED EMPLOYEE ROUTES
-      ================================================== */}
-
+      {/* PROTECTED EMPLOYEE ROUTES - INSIDE MAIN LAYOUT / OUTLET */}
       <Route
         element={
           <ProtectedRoute>
@@ -74,77 +83,22 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-
-        {/* Dashboard */}
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
-
-        {/* My Conference */}
-        <Route
-          path="/conference"
-          element={<MyConference />}
-        />
-
-        {/* Speakers */}
-        <Route
-          path="/speakers"
-          element={<Speakers />}
-        />
-
-        {/* Abstracts */}
-        <Route
-          path="/abstracts"
-          element={<Abstracts />}
-        />
-
-        {/* Registrations */}
-        <Route
-          path="/registrations"
-          element={<Registrations />}
-        />
-
-        {/* Brochures */}
-        <Route
-          path="/brochures"
-          element={<Brochures />}
-        />
-
-        {/* Attendance */}
-        <Route
-          path="/attendance"
-          element={<Attendance />}
-        />
-
-        {/* Notifications */}
-        <Route
-          path="/notifications"
-          element={<Notifications />}
-        />
-
-        {/* Profile */}
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
-
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/conference" element={<MyConference />} />
+        <Route path="/speakers" element={<Speakers />} />
+        <Route path="/abstracts" element={<Abstracts />} />
+        <Route path="/registrations" element={<Registrations />} />
+        <Route path="/brochures" element={<Brochures />} />
+        <Route path="/attendance" element={<Attendance />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
-      {/* ==================================================
-          404
-      ================================================== */}
-
+      {/* 404 */}
       <Route
         path="*"
-        element={
-          <Navigate
-            to="/login"
-            replace
-          />
-        }
+        element={<Navigate to="/login" replace />}
       />
-
     </Routes>
   );
 }

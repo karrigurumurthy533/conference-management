@@ -128,5 +128,11 @@ router.post(
   employeeController.sendEmployeeEmail
 );
 
+router.put(
+  "/change-password",
+  employeeAuthMiddleware,
+  employeeController.changePassword
+);
+
 
 module.exports = router;

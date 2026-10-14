@@ -62,34 +62,39 @@ const sendEmployeeCredentials = async ({
 
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#333">
-        <div style="background:#7c3aed;padding:24px;text-align:center;border-radius:10px 10px 0 0">
-          <h1 style="color:white;margin:0">GlobalScion</h1>
-          <p style="color:white;margin-bottom:0">Employee Account Information</p>
+        <div style="background:#7c3aed;padding:28px 24px;border-radius:12px 12px 0 0">
+          <h1 style="color:#ffffff;margin:0;font-size:28px">Welcome to GlobalScion</h1>
+          <p style="color:#ffffff;margin:8px 0 0;font-size:16px">Your employee account has been created</p>
         </div>
 
-        <div style="padding:24px;border:1px solid #eee;border-radius:0 0 10px 10px">
-          <h2>Welcome, ${escapeHtml(name || "Employee")}!</h2>
+        <div style="padding:24px;border:1px solid #eee;border-top:none;border-radius:0 0 12px 12px">
+          <p style="font-size:16px">Hello <strong>${escapeHtml(name || "Employee")}</strong>,</p>
 
-          <p>Your employee account information is ready.</p>
+          <p style="font-size:15px;line-height:1.7;color:#555">
+            Your GlobalScion employee account has been successfully created.
+            You can use the following credentials to access your employee dashboard.
+          </p>
 
-          <p><strong>Name:</strong> ${escapeHtml(name || "")}</p>
-          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-          <p><strong>Employee Type:</strong> ${escapeHtml(employeeType || "Employee")}</p>
-
-          <p>Use the button below to access the employee portal.</p>
+          <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:18px 20px;margin:24px 0">
+            <p style="margin:0 0 10px"><strong>Email:</strong><br/>${escapeHtml(email)}</p>
+            <p style="margin:0 0 10px"><strong>Employee Type:</strong> ${escapeHtml(employeeType || "Employee")}</p>
+            <p style="margin:0"><strong>Password:</strong> ${escapeHtml(password || "")}</p>
+          </div>
 
           <p style="text-align:center;margin:28px 0">
             <a href="${escapeHtml(employeeLoginUrl)}"
-              style="background:#7c3aed;color:#fff;padding:13px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-              Open Employee Portal
+              style="background:#7c3aed;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;font-size:16px">
+              Login to Employee Dashboard
             </a>
           </p>
 
-          <p style="font-size:13px;color:#666">
-            For security, set or reset your password through your authorized password setup process.
-          </p>
+          <div style="background:#fff7ed;border-left:4px solid #ea580c;padding:14px 16px;border-radius:4px;margin:24px 0">
+            <p style="margin:0;font-size:14px;line-height:1.6;color:#c2410c">
+              For security, please change your password after your first login.
+            </p>
+          </div>
 
-          <p>Regards,<br/>GlobalScion Team</p>
+          <p style="margin-top:28px">Regards,<br/>GlobalScion Team</p>
         </div>
       </div>
     `,

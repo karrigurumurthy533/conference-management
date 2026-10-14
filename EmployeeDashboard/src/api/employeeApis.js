@@ -153,3 +153,13 @@ export const getMonthlyAttendanceApi = async (
 
     return response.data;
 };
+
+
+export const changeEmployeePasswordApi = async (passwordData) => {
+    const response = await axiosInstance.put(
+        "/employee/change-password",
+        passwordData
+    );
+
+    return response.data;
+};

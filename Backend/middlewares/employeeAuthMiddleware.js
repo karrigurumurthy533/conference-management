@@ -43,11 +43,6 @@ const employeeAuthMiddleware = catchAsync(
           process.env.JWT_SECRET
         );
       } catch (error) {
-        console.error(
-          "Employee JWT Error:",
-          error.message
-        );
-
         return next(
           new AppError(
             "Invalid or expired employee authentication token",
@@ -69,19 +64,13 @@ const employeeAuthMiddleware = catchAsync(
         );
       }
 
-      console.log(
-        "Employee Token Decoded ID:",
-        decoded.id
-      );
-
       // ======================================================
       // FIND EMPLOYEE
       // ======================================================
 
-      const employee =
-        await Employee.findById(decoded.id).select(
-          "-password"
-        );
+      const employee = await Employee.findById(
+        decoded.id
+      ).select("-password");
 
       if (!employee) {
         return next(
@@ -136,32 +125,8 @@ const employeeAuthMiddleware = catchAsync(
       // Compatibility with other existing code
       req.role = employee;
 
-      console.log(
-        "EMPLOYEE AUTH SUCCESS"
-      );
-
-      console.log(
-        "Employee ID:",
-        employee._id.toString()
-      );
-
-      console.log(
-        "Employee Role:",
-        employee.role
-      );
-
-      console.log(
-        "Employee Status:",
-        employee.status
-      );
-
       next();
     } catch (error) {
-      console.error(
-        "Employee Authentication Error:",
-        error
-      );
-
       return next(
         new AppError(
           "Employee authentication failed",

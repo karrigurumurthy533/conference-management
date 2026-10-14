@@ -49,10 +49,11 @@ const employeeSchema = new mongoose.Schema(
             type: String,
             required: true,
             enum: [
-                "event manager",
-                "coordinator",
-                "marketing",
-                "webiner",
+                "conference intern",
+                "conference coordinator",
+                "senior conference coordinator",
+                "conference team lead",
+                "conference manager",
             ],
             lowercase: true,
             trim: true,
@@ -89,51 +90,6 @@ const employeeSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
         },
-
-        // =====================================================
-        // EMPLOYEE DETAILS
-        // =====================================================
-
-        department: {
-            type: String,
-            trim: true,
-        },
-
-        designation: {
-            type: String,
-            trim: true,
-        },
-
-        country: {
-            type: String,
-            trim: true,
-        },
-
-        location: {
-            type: String,
-            trim: true,
-        },
-
-        timezone: {
-            type: String,
-            default: "Asia/Kolkata",
-            trim: true,
-        },
-
-        about: {
-            type: String,
-            trim: true,
-        },
-
-        // =====================================================
-        // PERMISSIONS
-        // =====================================================
-
-        permissions: {
-            type: [String],
-            default: [],
-        },
-
         lastLogin: {
             type: Date,
             default: null,

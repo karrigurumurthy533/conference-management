@@ -1,15 +1,7 @@
-
 import { useEffect, useState } from "react";
-import {
-  Menu,
-  X,
-  ChevronRight,
-} from "lucide-react";
+import { Menu, X, ChevronRight } from "lucide-react";
 
-import {
-  Link,
-  useLocation,
-} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,13 +12,9 @@ const Navbar = () => {
   // HOME NAVIGATION LOGIC
   // =========================================================
 
-  const conferenceMatch = location.pathname.match(
-    /^\/conferences\/([^/]+)/
-  );
+  const conferenceMatch = location.pathname.match(/^\/conferences\/([^/]+)/);
 
-  const homePath = conferenceMatch
-    ? `/conferences/${conferenceMatch[1]}`
-    : "/";
+  const homePath = conferenceMatch ? `/conferences/${conferenceMatch[1]}` : "/";
 
   // =========================================================
   // CHECK ACTIVE ROUTE
@@ -107,11 +95,7 @@ const Navbar = () => {
     transition-all
     duration-300
     hover:opacity-75
-    ${
-      isActive(path)
-        ? "font-bold"
-        : "font-medium"
-    }
+    ${isActive(path) ? "font-bold" : "font-medium"}
   `;
 
   // =========================================================
@@ -128,11 +112,7 @@ const Navbar = () => {
     text-sm
     transition-all
     duration-300
-    ${
-      isActive(path)
-        ? "font-semibold"
-        : "font-medium"
-    }
+    ${isActive(path) ? "font-semibold" : "font-medium"}
   `;
 
   return (
@@ -153,8 +133,7 @@ const Navbar = () => {
         "
         style={navbarStyle}
       >
-        <div className="mx-auto flex h-20 max-w-7xl items-center px-5 sm:px-6">
-
+        <div className="mx-auto flex h-20 max-w-7xl items-center px-0">
           {/* =================================================
               LOGO
           ================================================== */}
@@ -168,14 +147,7 @@ const Navbar = () => {
               <img
                 src={logoSrc}
                 alt="GlobalScion Conferences"
-                className="
-                  h-11
-                  w-auto
-                  object-contain
-                  transition-all
-                  duration-500
-                  sm:h-12
-                "
+                className="h-11 w-auto object-contain transition-all duration-500 sm:h-18"
               />
             </Link>
           </div>
@@ -195,7 +167,6 @@ const Navbar = () => {
               lg:gap-8
             "
           >
-
             {/* HOME */}
 
             <Link
@@ -208,7 +179,6 @@ const Navbar = () => {
               }}
             >
               Home
-
               {isActive(homePath) && (
                 <span
                   className="
@@ -239,7 +209,6 @@ const Navbar = () => {
               }}
             >
               About
-
               {isActive("/about") && (
                 <span
                   className="
@@ -270,7 +239,6 @@ const Navbar = () => {
               }}
             >
               Conferences
-
               {isActive("/conferences") && (
                 <span
                   className="
@@ -301,7 +269,6 @@ const Navbar = () => {
               }}
             >
               Speakers
-
               {isActive("/speakers") && (
                 <span
                   className="
@@ -332,7 +299,6 @@ const Navbar = () => {
               }}
             >
               Reviews
-
               {isActive("/reviews") && (
                 <span
                   className="
@@ -363,7 +329,6 @@ const Navbar = () => {
               }}
             >
               Terms & Conditions
-
               {isActive("/terms") && (
                 <span
                   className="
@@ -394,7 +359,6 @@ const Navbar = () => {
               }}
             >
               Global Privacy Policy
-
               {isActive("/privacy") && (
                 <span
                   className="
@@ -425,7 +389,6 @@ const Navbar = () => {
               }}
             >
               Contact
-
               {isActive("/contact") && (
                 <span
                   className="
@@ -443,7 +406,6 @@ const Navbar = () => {
                 />
               )}
             </Link>
-
           </nav>
 
           {/* =================================================
@@ -451,19 +413,12 @@ const Navbar = () => {
           ================================================== */}
 
           <div className="ml-auto flex items-center gap-2">
-
             {/* MOBILE MENU BUTTON */}
 
             <button
               type="button"
-              onClick={() =>
-                setMobileMenuOpen((prev) => !prev)
-              }
-              aria-label={
-                mobileMenuOpen
-                  ? "Close menu"
-                  : "Open menu"
-              }
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
               className="
                 flex
@@ -485,13 +440,8 @@ const Navbar = () => {
                 color: "var(--brand)",
               }}
             >
-              {mobileMenuOpen ? (
-                <X size={21} />
-              ) : (
-                <Menu size={21} />
-              )}
+              {mobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
             </button>
-
           </div>
         </div>
 
@@ -526,7 +476,6 @@ const Navbar = () => {
               sm:px-6
             "
           >
-
             {/* HOME */}
 
             <Link
@@ -678,7 +627,6 @@ const Navbar = () => {
               <span>Contact</span>
               <ChevronRight size={16} />
             </Link>
-
           </nav>
         </div>
       </header>

@@ -9,6 +9,7 @@ import AddSpeakersPage from "./pages/admin/AddSpeakersPage";
 import EmployeeDetailsPage from "./pages/admin/employees/EmployeeDetailsPage";
 import RegistrationDetailsPage from "./pages/admin/RegistrationDetailsPage";
 import RegistrationUserDetailsPage from "./pages/admin/RegistrationUserDetailsPage";
+import PaymentReceipts from "./pages/admin/PaymentReceipts";
 
 import Dashboard from "./pages/admin/Dashboard";
 
@@ -54,43 +55,25 @@ function App() {
 
         {/* ================= ADMIN ================= */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route
-            index
-            element={<Navigate to="/admin/dashboard" replace />}
-          />
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* Dashboard */}
           <Route path="dashboard" element={<Dashboard />} />
 
           {/* Conferences */}
-          <Route
-            path="conferences/create"
-            element={<CreateConference />}
-          />
-          <Route
-            path="conferences/create/:id"
-            element={<CreateConference />}
-          />
+          <Route path="conferences/create" element={<CreateConference />} />
+          <Route path="conferences/create/:id" element={<CreateConference />} />
           <Route path="conferences" element={<AllConferences />} />
-          <Route
-            path="conferences/:id"
-            element={<ConferenceDetails />}
-          />
+          <Route path="conferences/:id" element={<ConferenceDetails />} />
 
           {/* Employees */}
           <Route path="employees" element={<Employees />} />
-          <Route
-            path="employees/create"
-            element={<CreateEmployee />}
-          />
+          <Route path="employees/create" element={<CreateEmployee />} />
           <Route
             path="employees/:employeeId"
             element={<EmployeeDetailsPage />}
           />
-          <Route
-            path="employee-attendance"
-            element={<EmployeeAttendance />}
-          />
+          <Route path="employee-attendance" element={<EmployeeAttendance />} />
 
           {/* Registrations */}
           <Route path="registrations" element={<Registrations />} />
@@ -109,30 +92,15 @@ function App() {
 
           {/* Speakers */}
           <Route path="speakers" element={<Speakers />} />
-          <Route
-            path="speakers/:id"
-            element={<SpeakersDetailsPage />}
-          />
+          <Route path="speakers/:id" element={<SpeakersDetailsPage />} />
           <Route path="speakers/add" element={<AddSpeakersPage />} />
-          <Route
-            path="speakers/add/:id"
-            element={<AddSpeakersPage />}
-          />
+          <Route path="speakers/add/:id" element={<AddSpeakersPage />} />
 
           {/* Brochures */}
           <Route path="brochures" element={<BrochureManagement />} />
-          <Route
-            path="brochures/:id"
-            element={<BrochureDetails />}
-          />
-          <Route
-            path="brochures/upload"
-            element={<UploadBrochure />}
-          />
-          <Route
-            path="download-brochures"
-            element={<DownloadBrochures />}
-          />
+          <Route path="brochures/:id" element={<BrochureDetails />} />
+          <Route path="brochures/upload" element={<UploadBrochure />} />
+          <Route path="download-brochures" element={<DownloadBrochures />} />
           <Route
             path="download-brochures/:id/details"
             element={<UserDownloadBrochureDetails />}
@@ -141,17 +109,13 @@ function App() {
           {/* Invoices */}
           <Route path="invoices" element={<Invoices />} />
           <Route path="invoices/create" element={<CreateInvoice />} />
-          <Route
-            path="invoices/:invoiceId"
-            element={<InvoiceDetails />}
-          />
+          <Route path="invoices/:invoiceId" element={<InvoiceDetails />} />
+
+          <Route path="payment-receipts" element={<PaymentReceipts />} />
 
           {/* Abstracts */}
           <Route path="abstracts" element={<Abstracts />} />
-          <Route
-            path="abstracts/:id"
-            element={<AbstractDetails />}
-          />
+          <Route path="abstracts/:id" element={<AbstractDetails />} />
 
           {/* Reviews */}
           <Route path="reviews" element={<AdminReviews />} />
@@ -160,10 +124,7 @@ function App() {
 
           {/* Subscribers */}
           <Route path="subscribers" element={<Subscribers />} />
-          <Route
-            path="subscribers/:id"
-            element={<SubscribersDetails />}
-          />
+          <Route path="subscribers/:id" element={<SubscribersDetails />} />
 
           {/* Notifications and Profile */}
           <Route path="notifications" element={<Notifications />} />
@@ -171,10 +132,7 @@ function App() {
         </Route>
 
         {/* Default Route */}
-        <Route
-          path="*"
-          element={<Navigate to="/admin/login" replace />}
-        />
+        <Route path="*" element={<Navigate to="/admin/login" replace />} />
       </Routes>
     </>
   );

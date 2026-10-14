@@ -28,7 +28,6 @@ import {
 const EmployeeDetailsPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const { employeeId } = useParams();
 
   const {
@@ -69,46 +68,75 @@ const EmployeeDetailsPage = () => {
   ========================================================= */
 
   const conferenceDetails = Array.isArray(
-    employee?.conferenceDetails
+    employee?.assignedConferences
   )
-    ? employee.conferenceDetails
+    ? employee.assignedConferences
     : [];
 
   const conferenceName =
     conferenceDetails.length > 0
       ? conferenceDetails
-          .map((conference) => conference?.title)
+          .map((conference) => {
+            if (typeof conference === "string") {
+              return "";
+            }
+
+            return (
+              conference?.basicInformation?.title ||
+              conference?.basicInformation?.conferenceName ||
+              conference?.title ||
+              conference?.name ||
+              conference?.conferenceName ||
+              ""
+            );
+          })
           .filter(Boolean)
-          .join(", ")
+          .join(", ") || "Conference details unavailable"
       : "No conference assigned";
+
+  const conferenceIds =
+    conferenceDetails.length > 0
+      ? conferenceDetails
+          .map((conference) =>
+            typeof conference === "string"
+              ? conference
+              : conference?._id || conference?.conferenceId || ""
+          )
+          .filter(Boolean)
+          .join(", ") || "-"
+      : "-";
 
   /* =========================================================
      EMPLOYEE STATUS
   ========================================================= */
 
   const employeeStatus = (() => {
-    if (employee?.status) {
-      const status = String(employee.status).toLowerCase();
+    const status = String(
+      employee?.status || ""
+    ).toLowerCase();
 
-      if (status === "active") {
-        return "Active";
-      }
+    if (status === "active") return "Active";
+    if (status === "inactive") return "Inactive";
 
-      if (status === "inactive") {
-        return "Inactive";
-      }
-    }
+    if (employee?.isActive === true) return "Active";
+    if (employee?.isActive === false) return "Inactive";
 
-    if (employee?.isActive === true) {
-      return "Active";
-    }
-
-    if (employee?.isActive === false) {
-      return "Inactive";
-    }
-
-    return "Active";
+    return "-";
   })();
+
+  /* =========================================================
+     EMPLOYEE TYPE
+  ========================================================= */
+
+  const employeeType = employee?.employeeType
+    ? employee.employeeType
+        .split(" ")
+        .map(
+          (word) =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        )
+        .join(" ")
+    : "-";
 
   /* =========================================================
      INITIALS
@@ -123,6 +151,28 @@ const EmployeeDetailsPage = () => {
         .slice(0, 2)
         .toUpperCase()
     : "EM";
+
+  /* =========================================================
+     DATE FORMAT
+  ========================================================= */
+
+  const formatDateTime = (dateValue) => {
+    if (!dateValue) return "-";
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return "-";
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    });
+  };
 
   /* =========================================================
      UPDATE
@@ -145,7 +195,7 @@ const EmployeeDetailsPage = () => {
 
   const handleDelete = async () => {
     if (!employee?._id) {
-      alert("Employee ID not found.");
+      window.alert("Employee ID not found.");
       return;
     }
 
@@ -160,13 +210,20 @@ const EmployeeDetailsPage = () => {
         deleteEmployee(employee._id)
       ).unwrap();
 
-      alert("Employee deleted successfully");
+      window.alert("Employee deleted successfully.");
 
       navigate("/admin/employees");
-    } catch (error) {
+    } catch (deleteError) {
       console.error(
         "Failed to delete employee:",
-        error
+        deleteError
+      );
+
+      window.alert(
+        typeof deleteError === "string"
+          ? deleteError
+          : deleteError?.message ||
+              "Failed to delete employee. Please try again."
       );
     }
   };
@@ -175,7 +232,7 @@ const EmployeeDetailsPage = () => {
      LOADING
   ========================================================= */
 
-  if (loading || !employee) {
+  if (loading || (!employee && !error)) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 sm:p-5 lg:p-6">
         <div className="flex min-h-[400px] items-center justify-center">
@@ -195,14 +252,22 @@ const EmployeeDetailsPage = () => {
      ERROR
   ========================================================= */
 
-  if (error) {
+  if (error || !employee) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 sm:p-5 lg:p-6">
         <div className="rounded-xl border border-red-100 bg-red-50 p-5">
           <p className="text-sm font-semibold text-red-600">
-            {error}
+            {error || "Employee details not found."}
           </p>
 
+          <button
+            type="button"
+            onClick={() => navigate("/admin/employees")}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#7C3AED] ring-1 ring-purple-200 transition hover:bg-purple-50"
+          >
+            <ArrowLeft size={14} />
+            Back to Employees
+          </button>
         </div>
       </div>
     );
@@ -216,13 +281,10 @@ const EmployeeDetailsPage = () => {
 
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          {/* Back */}
-
           <button
             type="button"
-            onClick={() =>
-              navigate("/admin/employees")
-            }
+            onClick={() => navigate("/admin/employees")}
+            aria-label="Back to employees"
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-purple-200 hover:bg-purple-50 hover:text-[#7C3AED]"
           >
             <ArrowLeft size={17} />
@@ -234,13 +296,12 @@ const EmployeeDetailsPage = () => {
             </h1>
 
             <p className="mt-1 text-xs text-gray-500">
-              View employee information and activity
-              details.
+              View employee information and activity details.
             </p>
           </div>
         </div>
 
-        {/* Actions */}
+        {/* ACTIONS */}
 
         <div className="flex items-center gap-2">
           <button
@@ -260,9 +321,7 @@ const EmployeeDetailsPage = () => {
           >
             <Trash2 size={15} />
 
-            {deleteLoading
-              ? "Deleting..."
-              : "Delete"}
+            {deleteLoading ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>
@@ -274,8 +333,6 @@ const EmployeeDetailsPage = () => {
       <div className="mb-5 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            {/* Avatar */}
-
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-purple-100 text-lg font-bold text-[#7C3AED]">
               {initials}
             </div>
@@ -283,19 +340,25 @@ const EmployeeDetailsPage = () => {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-bold text-gray-800">
-                  {employee.fullName}
+                  {employee.fullName || "-"}
                 </h2>
 
                 <span
                   className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                     employeeStatus === "Active"
                       ? "bg-green-50 text-green-600"
-                      : "bg-red-50 text-red-500"
+                      : employeeStatus === "Inactive"
+                        ? "bg-red-50 text-red-500"
+                        : "bg-gray-100 text-gray-500"
                   }`}
                 >
                   {employeeStatus}
                 </span>
               </div>
+
+              <p className="mt-1 text-xs font-medium text-[#7C3AED]">
+                {employeeType}
+              </p>
 
               <p className="mt-1 text-xs text-gray-400">
                 Employee ID: #{employee._id}
@@ -303,13 +366,13 @@ const EmployeeDetailsPage = () => {
             </div>
           </div>
 
-          {/* Conference */}
+          {/* ASSIGNED CONFERENCE */}
 
           <div className="rounded-lg bg-purple-50 px-4 py-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2">
               <Building2
                 size={16}
-                className="text-[#7C3AED]"
+                className="mt-0.5 shrink-0 text-[#7C3AED]"
               />
 
               <div>
@@ -317,7 +380,7 @@ const EmployeeDetailsPage = () => {
                   Assigned Conference
                 </p>
 
-                <p className="mt-0.5 max-w-[350px] text-xs font-semibold text-gray-700">
+                <p className="mt-0.5 max-w-[350px] break-words text-xs font-semibold text-gray-700">
                   {conferenceName}
                 </p>
               </div>
@@ -338,10 +401,7 @@ const EmployeeDetailsPage = () => {
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-4 py-3">
             <div className="flex items-center gap-2">
-              <User
-                size={16}
-                className="text-[#7C3AED]"
-              />
+              <User size={16} className="text-[#7C3AED]" />
 
               <div>
                 <h3 className="text-[13px] font-bold text-gray-800">
@@ -356,14 +416,11 @@ const EmployeeDetailsPage = () => {
           </div>
 
           <div className="divide-y divide-gray-50">
-            {/* Full Name */}
+            {/* FULL NAME */}
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <User
-                  size={14}
-                  className="text-gray-400"
-                />
+                <User size={14} className="text-gray-400" />
 
                 <span className="text-[11px] text-gray-500">
                   Full Name
@@ -375,33 +432,27 @@ const EmployeeDetailsPage = () => {
               </span>
             </div>
 
-            {/* Email */}
+            {/* EMAIL */}
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <Mail
-                  size={14}
-                  className="text-gray-400"
-                />
+                <Mail size={14} className="text-gray-400" />
 
                 <span className="text-[11px] text-gray-500">
                   Email
                 </span>
               </div>
 
-              <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
+              <span className="max-w-[60%] break-all text-right text-xs font-semibold text-gray-700">
                 {employee.email || "-"}
               </span>
             </div>
 
-            {/* Phone */}
+            {/* PHONE */}
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <Phone
-                  size={14}
-                  className="text-gray-400"
-                />
+                <Phone size={14} className="text-gray-400" />
 
                 <span className="text-[11px] text-gray-500">
                   Phone
@@ -413,14 +464,46 @@ const EmployeeDetailsPage = () => {
               </span>
             </div>
 
-            {/* Status */}
+            {/* EMPLOYEE TYPE */}
 
             <div className="flex items-center justify-between gap-4 px-4 py-3.5">
               <div className="flex items-center gap-2">
-                <ShieldCheck
+                <BriefcaseBusiness
                   size={14}
                   className="text-gray-400"
                 />
+
+                <span className="text-[11px] text-gray-500">
+                  Employee Type
+                </span>
+              </div>
+
+              <span className="text-right text-xs font-semibold text-gray-700">
+                {employeeType}
+              </span>
+            </div>
+
+            {/* ROLE */}
+
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-gray-400" />
+
+                <span className="text-[11px] text-gray-500">
+                  Role
+                </span>
+              </div>
+
+              <span className="text-right text-xs font-semibold text-gray-700">
+                {employee.role || "-"}
+              </span>
+            </div>
+
+            {/* STATUS */}
+
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-gray-400" />
 
                 <span className="text-[11px] text-gray-500">
                   Status
@@ -431,7 +514,9 @@ const EmployeeDetailsPage = () => {
                 className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                   employeeStatus === "Active"
                     ? "bg-green-50 text-green-600"
-                    : "bg-red-50 text-red-500"
+                    : employeeStatus === "Inactive"
+                      ? "bg-red-50 text-red-500"
+                      : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {employeeStatus}
@@ -465,7 +550,7 @@ const EmployeeDetailsPage = () => {
           </div>
 
           <div className="divide-y divide-gray-50">
-            {/* Conference */}
+            {/* CONFERENCE NAME */}
 
             <div className="flex items-start justify-between gap-4 px-4 py-4">
               <div className="flex items-center gap-2">
@@ -479,14 +564,14 @@ const EmployeeDetailsPage = () => {
                 </span>
               </div>
 
-              <span className="max-w-[60%] text-right text-xs font-semibold text-gray-700">
+              <span className="max-w-[60%] break-words text-right text-xs font-semibold text-gray-700">
                 {conferenceName}
               </span>
             </div>
 
-            {/* Conference ID */}
+            {/* CONFERENCE ID */}
 
-            <div className="flex items-center justify-between gap-4 px-4 py-4">
+            <div className="flex items-start justify-between gap-4 px-4 py-4">
               <div className="flex items-center gap-2">
                 <BriefcaseBusiness
                   size={14}
@@ -498,35 +583,59 @@ const EmployeeDetailsPage = () => {
                 </span>
               </div>
 
-              <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
-                {conferenceDetails.length > 0
-                  ? conferenceDetails
-                      .map(
-                        (conference) =>
-                          conference?.conferenceId
-                      )
-                      .filter(Boolean)
-                      .join(", ")
-                  : "-"}
+              <span className="max-w-[60%] break-all text-right text-xs font-semibold text-gray-700">
+                {conferenceIds}
               </span>
             </div>
 
-            {/* Employee ID */}
+            {/* EMPLOYEE ID */}
 
-            <div className="flex items-center justify-between gap-4 px-4 py-4">
+            <div className="flex items-start justify-between gap-4 px-4 py-4">
               <div className="flex items-center gap-2">
-                <BriefcaseBusiness
-                  size={14}
-                  className="text-gray-400"
-                />
+                <User size={14} className="text-gray-400" />
 
                 <span className="text-[11px] text-gray-500">
                   Employee ID
                 </span>
               </div>
 
-              <span className="max-w-[60%] truncate text-right text-xs font-semibold text-gray-700">
+              <span className="max-w-[60%] break-all text-right text-xs font-semibold text-gray-700">
                 #{employee._id}
+              </span>
+            </div>
+
+            {/* CREATED DATE */}
+
+            <div className="flex items-center justify-between gap-4 px-4 py-4">
+              <div className="flex items-center gap-2">
+                <CalendarDays
+                  size={14}
+                  className="text-gray-400"
+                />
+
+                <span className="text-[11px] text-gray-500">
+                  Created At
+                </span>
+              </div>
+
+              <span className="text-right text-xs font-semibold text-gray-700">
+                {formatDateTime(employee.createdAt)}
+              </span>
+            </div>
+
+            {/* UPDATED DATE */}
+
+            <div className="flex items-center justify-between gap-4 px-4 py-4">
+              <div className="flex items-center gap-2">
+                <Clock3 size={14} className="text-gray-400" />
+
+                <span className="text-[11px] text-gray-500">
+                  Last Updated
+                </span>
+              </div>
+
+              <span className="text-right text-xs font-semibold text-gray-700">
+                {formatDateTime(employee.updatedAt)}
               </span>
             </div>
           </div>
@@ -539,10 +648,7 @@ const EmployeeDetailsPage = () => {
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm lg:col-span-2">
           <div className="border-b border-gray-100 px-4 py-3">
             <div className="flex items-center gap-2">
-              <Clock3
-                size={16}
-                className="text-[#7C3AED]"
-              />
+              <Clock3 size={16} className="text-[#7C3AED]" />
 
               <div>
                 <h3 className="text-[13px] font-bold text-gray-800">
@@ -550,22 +656,18 @@ const EmployeeDetailsPage = () => {
                 </h3>
 
                 <p className="mt-0.5 text-[10px] text-gray-400">
-                  Recent employee login and logout
-                  activity.
+                  Recent employee login and logout activity.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 divide-y divide-gray-50 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            {/* Last Login */}
+            {/* LAST LOGIN */}
 
             <div className="flex items-center gap-4 px-5 py-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                <LogIn
-                  size={18}
-                  className="text-green-600"
-                />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50">
+                <LogIn size={18} className="text-green-600" />
               </div>
 
               <div>
@@ -574,19 +676,16 @@ const EmployeeDetailsPage = () => {
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-gray-700">
-                  {employee.lastLogin || "-"}
+                  {formatDateTime(employee.lastLogin)}
                 </p>
               </div>
             </div>
 
-            {/* Last Logout */}
+            {/* LAST LOGOUT */}
 
             <div className="flex items-center gap-4 px-5 py-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50">
-                <LogOut
-                  size={18}
-                  className="text-red-500"
-                />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                <LogOut size={18} className="text-red-500" />
               </div>
 
               <div>
@@ -595,18 +694,13 @@ const EmployeeDetailsPage = () => {
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-gray-700">
-                  {employee.lastLogout || "-"}
+                  {formatDateTime(employee.lastLogout)}
                 </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* =====================================================
-          BOTTOM BACK BUTTON
-      ===================================================== */}
-
     </div>
   );
 };

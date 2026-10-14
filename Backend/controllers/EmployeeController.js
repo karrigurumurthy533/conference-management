@@ -1,5 +1,6 @@
 const Employee = require("../models/Employee");
 const Speaker = require("../models/Speaker");
+const bcrypt = require("bcryptjs");
 
 const Abstract = require("../models/Abstract");
 const Registration = require("../models/Registration");
@@ -486,7 +487,7 @@ exports.sendEmployeeEmail = async (req, res) => {
       name: employee.fullName,
       email: employee.email,
       employeeType: employee.employeeType,
-      password: "Please use the secure password setup link.",
+      password: "Employee@123",
       loginUrl,
     });
 
@@ -516,6 +517,72 @@ exports.sendEmployeeEmail = async (req, res) => {
         ? "Email service is temporarily unreachable. Please try again."
         : "Email sending failed. Please check the email configuration.",
       errorCode: error.code || "EMAIL_SEND_FAILED",
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    // Authentication middleware req.role lo employee document/id set chestundani assume chestunnam.
+    const employeeId =
+      req.role?._id || req.employee?._id || req.user?._id;
+
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!employeeId) {
+      return res.status(401).json({
+        success: false,
+        message: "Employee authentication required.",
+      });
+    }
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirm password are required.",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least 8 characters.",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match.",
+      });
+    }
+
+    const employee = await Employee.findById(employeeId)
+      .select("+password");
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found.",
+      });
+    }
+
+    // Employee model pre-save middleware password-ni hash chesthe,
+    // ikkada bcrypt.hash() malli call cheyyakandi.
+    employee.password = newPassword;
+
+    await employee.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully. Please log in again.",
+    });
+  } catch (error) {
+    console.error("changePassword error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to change password.",
     });
   }
 };

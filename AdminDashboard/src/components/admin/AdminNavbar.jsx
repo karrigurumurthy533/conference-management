@@ -135,7 +135,7 @@ const AdminNavbar = ({ onMenuClick, isSidebarOpen = false }) => {
           type="button"
           onClick={() => navigate("/admin/profile")}
           aria-label="Open admin profile"
-          className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition hover:bg-gray-50 sm:gap-2.5"
+          className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition hover:bg-purple-50 sm:gap-2.5"
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
             <UserCircle size={21} />
@@ -155,6 +155,7 @@ const AdminNavbar = ({ onMenuClick, isSidebarOpen = false }) => {
             className="hidden text-gray-400 sm:block"
           />
         </button>
+
       </div>
     </header>
   );

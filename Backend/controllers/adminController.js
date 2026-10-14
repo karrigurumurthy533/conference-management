@@ -62,10 +62,11 @@ exports.createEmployee = async (req, res) => {
 
     // Validate employee type
     const allowedEmployeeTypes = [
-      "event manager",
-      "coordinator",
-      "marketing",
-      "webiner",
+      "conference intern",
+      "conference coordinator",
+      "senior conference coordinator",
+      "conference team lead",
+      "conference manager",
     ];
 
     if (!allowedEmployeeTypes.includes(normalizedEmployeeType)) {
@@ -236,10 +237,6 @@ exports.getEmployeeById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // --------------------------------------------------
-    // VALIDATE ID
-    // --------------------------------------------------
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -247,16 +244,13 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------
-    // FIND EMPLOYEE
-    // --------------------------------------------------
-
     const employee = await Employee.findById(id)
       .select("-password")
-      .populate(
-        "assignedConferences",
-        "basicInformation conferenceDates venueInformation"
-      );
+      .populate({
+        path: "assignedConferences",
+        select: "title basicInformation.title",
+      })
+      .lean();
 
     if (!employee) {
       return res.status(404).json({
@@ -265,13 +259,22 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------
-    // RESPONSE
-    // --------------------------------------------------
+    const formattedEmployee = {
+      ...employee,
+      assignedConferences: (employee.assignedConferences || [])
+        .filter(Boolean)
+        .map((conference) => ({
+          _id: conference._id,
+          title:
+            conference.title ||
+            conference.basicInformation?.title ||
+            "Untitled Conference",
+        })),
+    };
 
     return res.status(200).json({
       success: true,
-      data: employee,
+      data: formattedEmployee,
     });
   } catch (error) {
     console.error("Get Employee Error:", error);
@@ -279,11 +282,13 @@ exports.getEmployeeById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch employee.",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
-
 
 exports.updateEmployee = async (req, res) => {
   try {
@@ -294,7 +299,6 @@ exports.updateEmployee = async (req, res) => {
       email,
       role,
       employeeType,
-      password,
       phoneNumber,
       assignedConferences,
       status,
@@ -336,13 +340,21 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (email !== undefined) {
+      if (
+        typeof email !== "string" ||
+        !email.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Email cannot be empty.",
+        });
+      }
+
       const normalizedEmail = email.trim().toLowerCase();
 
       const emailExists = await Employee.findOne({
         email: normalizedEmail,
-        _id: {
-          $ne: id,
-        },
+        _id: { $ne: id },
       });
 
       if (emailExists) {
@@ -360,7 +372,10 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (fullName !== undefined) {
-      if (!fullName.trim()) {
+      if (
+        typeof fullName !== "string" ||
+        !fullName.trim()
+      ) {
         return res.status(400).json({
           success: false,
           message: "Full name cannot be empty.",
@@ -383,11 +398,19 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (employeeType !== undefined) {
+      if (typeof employeeType !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid employee type.",
+        });
+      }
+
       const allowedEmployeeTypes = [
-        "event manager",
-        "coordinator",
-        "marketing",
-        "webiner",
+        "Conference Intern",
+        "Conference Coordinator",
+        "Senior Conference Coordinator",
+        "Conference Team Lead",
+        "Conference Manager",
       ];
 
       const normalizedEmployeeType = employeeType
@@ -413,6 +436,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (phoneNumber !== undefined) {
+      if (typeof phoneNumber !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid phone number.",
+        });
+      }
+
       employee.phoneNumber = phoneNumber.trim();
     }
 
@@ -421,6 +451,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (status !== undefined) {
+      if (typeof status !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid employee status.",
+        });
+      }
+
       const normalizedStatus = status
         .trim()
         .toLowerCase();
@@ -444,6 +481,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (department !== undefined) {
+      if (typeof department !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid department.",
+        });
+      }
+
       employee.department = department.trim();
     }
 
@@ -452,6 +496,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (designation !== undefined) {
+      if (typeof designation !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid designation.",
+        });
+      }
+
       employee.designation = designation.trim();
     }
 
@@ -460,6 +511,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (country !== undefined) {
+      if (typeof country !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid country.",
+        });
+      }
+
       employee.country = country.trim();
     }
 
@@ -468,6 +526,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (location !== undefined) {
+      if (typeof location !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid location.",
+        });
+      }
+
       employee.location = location.trim();
     }
 
@@ -476,6 +541,13 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (timezone !== undefined) {
+      if (typeof timezone !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid timezone.",
+        });
+      }
+
       employee.timezone = timezone.trim();
     }
 
@@ -484,31 +556,23 @@ exports.updateEmployee = async (req, res) => {
     // --------------------------------------------------
 
     if (about !== undefined) {
+      if (typeof about !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid about information.",
+        });
+      }
+
       employee.about = about.trim();
     }
 
     // --------------------------------------------------
     // PASSWORD
     // --------------------------------------------------
-    // IMPORTANT:
-    // Do NOT bcrypt.hash() here.
-    // employee.save() will trigger pre("save")
-    // and hash the password automatically.
+    // Password updates are intentionally disabled.
+    // req.body.password is ignored completely.
+    // The existing password remains unchanged.
     // --------------------------------------------------
-
-    if (
-      password !== undefined &&
-      password.trim() !== ""
-    ) {
-      if (password.trim().length < 6) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 6 characters.",
-        });
-      }
-
-      employee.password = password.trim();
-    }
 
     // --------------------------------------------------
     // PERMISSIONS
@@ -537,8 +601,15 @@ exports.updateEmployee = async (req, res) => {
         });
       }
 
-      for (const conferenceId of assignedConferences) {
-        if (!mongoose.Types.ObjectId.isValid(conferenceId)) {
+      const normalizedConferenceIds = [
+        ...new Set(assignedConferences),
+      ];
+
+      for (const conferenceId of normalizedConferenceIds) {
+        if (
+          typeof conferenceId !== "string" ||
+          !mongoose.Types.ObjectId.isValid(conferenceId)
+        ) {
           return res.status(400).json({
             success: false,
             message: `Invalid conference ID: ${conferenceId}`,
@@ -546,16 +617,16 @@ exports.updateEmployee = async (req, res) => {
         }
       }
 
-      if (assignedConferences.length > 0) {
+      if (normalizedConferenceIds.length > 0) {
         const conferences = await Conference.find({
           _id: {
-            $in: assignedConferences,
+            $in: normalizedConferenceIds,
           },
         }).select("_id");
 
         if (
           conferences.length !==
-          assignedConferences.length
+          normalizedConferenceIds.length
         ) {
           return res.status(404).json({
             success: false,
@@ -566,11 +637,11 @@ exports.updateEmployee = async (req, res) => {
       }
 
       employee.assignedConferences =
-        assignedConferences;
+        normalizedConferenceIds;
     }
 
     // --------------------------------------------------
-    // SAVE
+    // SAVE EMPLOYEE
     // --------------------------------------------------
 
     await employee.save();
@@ -579,16 +650,17 @@ exports.updateEmployee = async (req, res) => {
     // GET UPDATED EMPLOYEE
     // --------------------------------------------------
 
-    const updatedEmployee =
-      await Employee.findById(employee._id)
-        .select("-password")
-        .populate(
-          "assignedConferences",
-          "basicInformation conferenceDates venueInformation"
-        );
+    const updatedEmployee = await Employee.findById(
+      employee._id
+    )
+      .select("-password")
+      .populate(
+        "assignedConferences",
+        "basicInformation conferenceDates venueInformation"
+      );
 
     // --------------------------------------------------
-    // RESPONSE
+    // SUCCESS RESPONSE
     // --------------------------------------------------
 
     return res.status(200).json({
@@ -606,7 +678,6 @@ exports.updateEmployee = async (req, res) => {
     });
   }
 };
-
 
 exports.deleteEmployee = async (req, res) => {
   try {

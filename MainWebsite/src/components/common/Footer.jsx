@@ -112,7 +112,7 @@ const Footer = () => {
         <motion.div {...linkHover}>
           <Link
             to={href}
-            className="inline-block transition-colors"
+            className="inline-block text-[14px] leading-5 transition-colors sm:text-[15px]"
             style={linkStyle}
             {...hoverLinkProps}
           >
@@ -147,7 +147,7 @@ const Footer = () => {
               transition: { staggerChildren: 0.08 },
             },
           }}
-          className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-4 px-4 py-4 sm:px-5 md:grid-cols-4 md:gap-5 md:px-6"
+          className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 sm:px-5 md:grid-cols-4 md:gap-5 md:px-6 md:py-3"
         >
           {[
             {
@@ -183,7 +183,7 @@ const Footer = () => {
               <motion.div
                 whileHover={{ scale: 1.05, rotate: 3 }}
                 transition={{ duration: 0.2 }}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10"
                 style={{ backgroundColor: "#DDD6FE" }}
               >
                 <img
@@ -196,14 +196,14 @@ const Footer = () => {
 
               <div className="min-w-0">
                 <h3
-                  className="text-[18px] font-bold leading-none sm:text-[21px]"
+                  className="text-[20px] font-bold leading-tight sm:text-[23px]"
                   style={{ color: violet }}
                 >
                   {stat.value}
                 </h3>
 
                 <p
-                  className="mt-1 text-[11px] sm:text-[12px]"
+                  className="mt-0.5 text-[13px] leading-5 sm:text-[14px]"
                   style={{ color: textColor }}
                 >
                   {stat.label}
@@ -215,7 +215,7 @@ const Footer = () => {
       </div>
 
       {/* MAIN FOOTER */}
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:px-6 md:py-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-5 md:px-6 md:py-5">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -225,14 +225,14 @@ const Footer = () => {
               transition: { staggerChildren: 0.08 },
             },
           }}
-          className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 sm:gap-6 lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.25fr] lg:gap-7"
+          className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.25fr] lg:gap-7"
         >
-          {/* BRAND — full width on mobile */}
+          {/* BRAND */}
           <motion.div
             variants={fadeUp}
             className="col-span-2 min-w-0 sm:col-span-1"
           >
-            <motion.div {...linkHover} className="mb-3 inline-flex">
+            <motion.div {...linkHover} className="mb-2 inline-flex">
               <Link to="/" className="inline-flex items-center gap-2.5">
                 <motion.div
                   whileHover={{ scale: 1.06, rotate: 4 }}
@@ -240,7 +240,7 @@ const Footer = () => {
                   style={{ backgroundColor: "#DDD6FE" }}
                 >
                   <span
-                    className="text-lg font-bold"
+                    className="text-xl font-bold"
                     style={{ color: violet }}
                   >
                     G
@@ -249,13 +249,13 @@ const Footer = () => {
 
                 <div>
                   <h2
-                    className="text-[16px] font-bold leading-tight"
+                    className="text-[19px] font-bold leading-tight"
                     style={{ color: violet }}
                   >
                     GlobalScion
                   </h2>
                   <p
-                    className="text-[11px]"
+                    className="text-[13px] leading-5"
                     style={{ color: textColor }}
                   >
                     Conferences
@@ -265,14 +265,14 @@ const Footer = () => {
             </motion.div>
 
             <p
-              className="max-w-xs text-[12px] leading-5"
+              className="max-w-xs text-[14px] leading-5"
               style={{ color: textColor }}
             >
               Bringing people, ideas and innovation together for a better
               tomorrow.
             </p>
 
-            <div className="mt-4 flex items-center gap-2.5">
+            <div className="mt-3 flex items-center gap-2.5">
               {socialLinks.map(([icon, label, href]) => (
                 <motion.a
                   key={label}
@@ -302,14 +302,14 @@ const Footer = () => {
           {/* QUICK LINKS */}
           <motion.div variants={fadeUp} className="min-w-0">
             <h3
-              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
+              className="mb-2 text-[14px] font-semibold uppercase tracking-wide sm:text-[15px]"
               style={{ color: violet }}
             >
               Quick Links
             </h3>
 
             <ul
-              className="space-y-2 text-[12px]"
+              className="space-y-1.5"
               style={{ color: textColor }}
             >
               {renderLinks(quickLinks)}
@@ -319,14 +319,14 @@ const Footer = () => {
           {/* CONFERENCES */}
           <motion.div variants={fadeUp} className="min-w-0">
             <h3
-              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
+              className="mb-2 text-[14px] font-semibold uppercase tracking-wide sm:text-[15px]"
               style={{ color: violet }}
             >
               Conferences
             </h3>
 
             <ul
-              className="space-y-2 text-[12px]"
+              className="space-y-1.5"
               style={{ color: textColor }}
             >
               {renderLinks(conferenceLinks)}
@@ -336,34 +336,34 @@ const Footer = () => {
           {/* RESOURCES */}
           <motion.div variants={fadeUp} className="min-w-0">
             <h3
-              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
+              className="mb-2 text-[14px] font-semibold uppercase tracking-wide sm:text-[15px]"
               style={{ color: violet }}
             >
               Resources
             </h3>
 
             <ul
-              className="space-y-2 text-[12px]"
+              className="space-y-1.5"
               style={{ color: textColor }}
             >
               {renderLinks(resourceLinks)}
             </ul>
           </motion.div>
 
-          {/* CONTACT — full width on mobile */}
+          {/* CONTACT */}
           <motion.div
             variants={fadeUp}
             className="col-span-2 min-w-0 sm:col-span-1"
           >
             <h3
-              className="mb-3 text-[12px] font-semibold uppercase tracking-wide"
+              className="mb-2 text-[14px] font-semibold uppercase tracking-wide sm:text-[15px]"
               style={{ color: violet }}
             >
               Contact Us
             </h3>
 
             <div
-              className="space-y-2.5 text-[12px]"
+              className="space-y-2 text-[14px] leading-5 sm:text-[15px]"
               style={{ color: textColor }}
             >
               <motion.div
@@ -371,7 +371,7 @@ const Footer = () => {
                 className="flex items-start gap-2.5"
               >
                 <MapPin
-                  size={17}
+                  size={18}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{ color: violet }}
@@ -391,7 +391,7 @@ const Footer = () => {
                 className="flex items-start gap-2.5"
               >
                 <Phone
-                  size={17}
+                  size={18}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{ color: violet }}
@@ -414,7 +414,7 @@ const Footer = () => {
                 className="flex items-start gap-2.5"
               >
                 <Mail
-                  size={17}
+                  size={18}
                   strokeWidth={1.8}
                   className="mt-0.5 shrink-0"
                   style={{ color: violet }}
@@ -432,9 +432,9 @@ const Footer = () => {
             </div>
 
             {/* NEWSLETTER */}
-            <motion.div variants={fadeUp} className="mt-4">
+            <motion.div variants={fadeUp} className="mt-3">
               <h4
-                className="mb-2 text-[12px] font-semibold"
+                className="mb-1.5 text-[14px] font-semibold"
                 style={{ color: violet }}
               >
                 Subscribe to Our Newsletter
@@ -451,7 +451,7 @@ const Footer = () => {
                   type="email"
                   placeholder="Enter your email address"
                   aria-label="Email address"
-                  className="min-w-0 flex-1 bg-transparent px-3 text-[11px] outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-3 text-[13px] outline-none"
                   style={{ color: "#333333" }}
                 />
 
@@ -463,7 +463,7 @@ const Footer = () => {
                   className="flex w-10 shrink-0 items-center justify-center text-white"
                   style={{ backgroundColor: violet }}
                 >
-                  <Send size={16} strokeWidth={1.8} />
+                  <Send size={17} strokeWidth={1.8} />
                 </motion.button>
               </div>
             </motion.div>
@@ -480,7 +480,7 @@ const Footer = () => {
         style={{ borderColor: "#DDD6FE" }}
       >
         <div
-          className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 text-[10px] sm:px-5 md:flex-row md:items-center md:justify-between md:px-6"
+          className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 text-[12px] sm:px-5 md:flex-row md:items-center md:justify-between md:px-6"
           style={{ color: textColor }}
         >
           <p>© GlobalScion Conferences. All rights reserved.</p>
@@ -488,7 +488,7 @@ const Footer = () => {
           <div className="flex flex-wrap items-center gap-3.5">
             <Link
               to="/terms"
-              className="transition-colors"
+              className="text-[13px] transition-colors"
               style={linkStyle}
               {...hoverLinkProps}
             >
@@ -502,7 +502,7 @@ const Footer = () => {
 
             <Link
               to="/privacy"
-              className="transition-colors"
+              className="text-[13px] transition-colors"
               style={linkStyle}
               {...hoverLinkProps}
             >
@@ -516,7 +516,7 @@ const Footer = () => {
 
             <Link
               to="/help-center"
-              className="transition-colors"
+              className="text-[13px] transition-colors"
               style={linkStyle}
               {...hoverLinkProps}
             >

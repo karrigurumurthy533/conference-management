@@ -337,3 +337,12 @@ body {
     transition: none;
   }
 }
+
+@theme {
+  --animate-ticker: ticker 35s linear infinite;
+
+  @keyframes ticker {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+}
