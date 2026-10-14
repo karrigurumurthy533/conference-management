@@ -3,7 +3,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://global-scion-backend.onrender.comapi/v1",
+  baseURL: "https://global-scion-backend.onrender.com/api/v1",
 });
 
 axiosInstance.interceptors.request.use(
