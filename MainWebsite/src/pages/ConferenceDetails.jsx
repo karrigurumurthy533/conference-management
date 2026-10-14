@@ -294,22 +294,34 @@ const IconTile = ({ icon: Icon, size = 22 }) => (
   </span>
 );
 
+
 const FeatureCard = ({ icon, title, description, children }) => (
-  <div className={`${PREMIUM_CARD} flex flex-col p-6 sm:p-7`}>
-    <div className="flex items-start gap-4">
+  <div
+    className={`${PREMIUM_CARD} flex h-full flex-col p-6 sm:p-7`}
+  >
+    {/* HEADER */}
+    <div className="flex shrink-0 items-start gap-4">
       <IconTile icon={icon} />
-      <div className="min-w-0">
-        <h3 className="text-2xl text-[#171447] sm:text-2xl font-bold">
+
+      <div className="min-w-0 flex-1">
+        <h3 className="text-2xl font-bold text-[#171447]">
           {title}
         </h3>
-        <p className="mt-1 text-sm leading-5 text-slate-500 font-semibold">
+
+        <p className="mt-1 text-sm font-semibold leading-5 text-slate-500">
           {description}
         </p>
       </div>
     </div>
-    <div className="mt-5 border-t border-violet-100 pt-2">{children}</div>
+
+    {/* CONTENT — NO SCROLL */}
+    <div className="mt-5 flex flex-1 flex-col border-t border-violet-100 pt-4">
+      {children}
+    </div>
   </div>
 );
+
+
 
 const FlatList = ({
   items,
@@ -451,6 +463,51 @@ const BulletLines = ({ lines }) => (
     ))}
   </ul>
 );
+
+// ============================================================
+// INNER SCROLL AREA (wheel scroll stays inside the card)
+// ============================================================
+
+const InnerScroll = ({ className = "", children }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const handleWheel = (event) => {
+      // If the content doesn't overflow, let the page scroll normally
+      if (el.scrollHeight <= el.clientHeight + 1) return;
+
+      // Normalize line-based wheel deltas (Firefox)
+      const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+
+      const atTop = el.scrollTop <= 0 && delta < 0;
+      const atBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && delta > 0;
+
+      // At the very top/bottom of the card, let the page continue scrolling
+      if (atTop || atBottom) return;
+
+      // Otherwise scroll the card and stop the page from scrolling
+      event.preventDefault();
+      el.scrollTop += delta;
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+    >
+      {children}
+    </div>
+  );
+};
 
 // ============================================================
 // WHATSAPP FLOATING BUTTON
@@ -1244,7 +1301,7 @@ const ConferenceDetails = () => {
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur-md">
               <CalendarDays size={12} /> {category}
             </span>
-            <h1 className="mt-4 text-4xl leading-tight tracking-tight sm:text-5xl lg:text-[52px] font-extrabold">
+            <h1 className="mt-4 text-4xl leading-tight tracking-tight sm:text-5xl lg:text-[42px] font-bold">
               {title}
             </h1>
             <p className="mt-3 max-w-2xl text-base font-semibold leading-6 text-white/90 sm:text-lg">
@@ -1325,7 +1382,7 @@ const ConferenceDetails = () => {
                 <Clock size={23} />
               </div>
               <div>
-                <h2 className="text-xl text-white font-extrabold">
+                <h2 className="text-xl text-white font-bold">
                   {countdown.phase === "upcoming"
                     ? "Conference Countdown"
                     : countdown.phase === "live"
@@ -1356,7 +1413,7 @@ const ConferenceDetails = () => {
                       key={item.label}
                       className="flex min-w-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.13] to-white/[0.06] px-1 py-4"
                     >
-                      <span className="text-3xl font-extrabold tabular-nums text-white sm:text-4xl">
+                      <span className="text-3xl font-bold tabular-nums text-white sm:text-4xl">
                         {String(item.value).padStart(2, "0")}
                       </span>
                       <span className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-200 sm:text-xs">
@@ -1534,104 +1591,105 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-{/* SPEAKERS — COMPACT IMAGE OVERLAY CARDS */}
-<section
-  id="speakers"
-  className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8"
->
-  <div className="mx-auto max-w-[1300px]">
-    <SectionHeading
-      label="Featured Speakers"
-      title="Renowned Speakers"
-      description="Meet the speakers and professionals participating in this conference."
-    />
+      {/* SPEAKERS — COMPACT IMAGE OVERLAY CARDS */}
+      <section
+        id="speakers"
+        className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-[1300px]">
+          <SectionHeading
+            label="Featured Speakers"
+            title="Renowned Speakers"
+            description="Meet the speakers and professionals participating in this conference."
+          />
 
-    {speakers.length > 0 ? (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {speakers.map((speaker, index) => (
-          <motion.article
-            key={speaker._id || speaker.name || index}
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            className="group relative isolate h-[190px] min-w-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
-          >
-            {/* SPEAKER IMAGE */}
-            <img
-              src={getSpeakerImage(speaker)}
-              alt={asText(speaker.name, "Conference speaker")}
-              loading="lazy"
-              onError={(event) => {
-                event.currentTarget.onerror = null;
-                event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-              }}
-              className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-            />
-
-            {/* DARK IMAGE OVERLAY */}
-            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
-
-            {/* SPEAKER DETAILS ON IMAGE */}
-            <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
-              {/* NAME */}
-              <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
-                {asText(speaker.name, "Speaker")}
-              </h3>
-
-              {/* ROLE */}
-              <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
-                {asText(speaker.role, "Conference Speaker")}
-              </p>
-
-              {/* ORGANIZATION */}
-              {getSpeakerOrganization(speaker) && (
-                <div className="mt-1 flex items-start gap-1">
-                  <Building2
-                    size={11}
-                    className="mt-0.5 shrink-0 text-violet-300"
+          {speakers.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {speakers.map((speaker, index) => (
+                <motion.article
+                  key={speaker._id || speaker.name || index}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.15 }}
+                  className="group relative isolate h-[190px] min-w-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
+                >
+                  {/* SPEAKER IMAGE */}
+                  <img
+                    src={getSpeakerImage(speaker)}
+                    alt={asText(speaker.name, "Conference speaker")}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                    }}
+                    className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   />
-                  <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
-                    {getSpeakerOrganization(speaker)}
-                  </p>
-                </div>
-              )}
 
-              {/* LOCATION */}
-              {(speaker.country || speaker.location) && (
-                <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
-                  <MapPin size={10} className="shrink-0 text-violet-300" />
-                  <span className="line-clamp-1">
-                    {speaker.country || speaker.location}
-                  </span>
-                </div>
-              )}
+                  {/* DARK IMAGE OVERLAY */}
+                  <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
 
-              {/* SPECIALTY */}
-              {speaker.specialty && (
-                <div className="mt-1.5 flex items-center gap-1">
-                  <Award size={10} className="shrink-0 text-violet-300" />
-                  <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
-                    {speaker.specialty}
-                  </span>
-                </div>
-              )}
+                  {/* SPEAKER DETAILS ON IMAGE */}
+                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
+                    {/* NAME */}
+                    <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
+                      {asText(speaker.name, "Speaker")}
+                    </h3>
 
-              {/* BOTTOM ACCENT */}
-              <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
+                    {/* ROLE */}
+                    <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
+                      {asText(speaker.role, "Conference Speaker")}
+                    </p>
+
+                    {/* ORGANIZATION */}
+                    {getSpeakerOrganization(speaker) && (
+                      <div className="mt-1 flex items-start gap-1">
+                        <Building2
+                          size={11}
+                          className="mt-0.5 shrink-0 text-violet-300"
+                        />
+                        <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
+                          {getSpeakerOrganization(speaker)}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* LOCATION */}
+                    {(speaker.country || speaker.location) && (
+                      <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
+                        <MapPin
+                          size={10}
+                          className="shrink-0 text-violet-300"
+                        />
+                        <span className="line-clamp-1">
+                          {speaker.country || speaker.location}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* SPECIALTY */}
+                    {speaker.specialty && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <Award size={10} className="shrink-0 text-violet-300" />
+                        <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
+                          {speaker.specialty}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* BOTTOM ACCENT */}
+                    <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
+                  </div>
+                </motion.article>
+              ))}
             </div>
-          </motion.article>
-        ))}
-      </div>
-    ) : (
-      <EmptyState>
-        No speakers have been added to this conference yet.
-      </EmptyState>
-    )}
-  </div>
-</section>
-
-
+          ) : (
+            <EmptyState>
+              No speakers have been added to this conference yet.
+            </EmptyState>
+          )}
+        </div>
+      </section>
 
       {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
       <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 py-14 sm:px-6">
@@ -1839,64 +1897,98 @@ const ConferenceDetails = () => {
           <section id="explore" className="scroll-mt-20 bg-white py-4">
             <div className="w-full">
               <div className={`${PREMIUM_CARD} overflow-hidden`}>
-                <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <div className="flex min-h-0 flex-col bg-white">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch">
+                  {/* CONFERENCE INFORMATION */}
+                  <div className="flex min-w-0 flex-col bg-white">
+                    {/* HEADER */}
                     <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
                       <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
                           <Layers size={19} />
                         </span>
+
                         <div className="min-w-0">
-                          <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+                          <h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">
                             Conference Information
                           </h2>
+
                           <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
                             Explore conference details and opportunities.
                           </p>
                         </div>
                       </div>
                     </div>
-                    <div className="h-[560px] overflow-y-auto overscroll-contain [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+
+                    {/* INDEPENDENT SCROLL AREA */}
+                    <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
                       {DETAIL_ROWS.map((row) => {
                         const Icon = row.icon;
                         const open = activeRow === row.key;
+
                         return (
                           <div
                             key={row.key}
                             className="border-b border-violet-100 last:border-b-0"
                           >
+                            {/* ACCORDION HEADER */}
                             <button
                               type="button"
                               onClick={() => handleRowClick(row.key)}
                               aria-expanded={open}
-                              className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition sm:px-5 ${open ? "bg-violet-50" : "bg-white hover:bg-violet-50/50"}`}
+                              className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors duration-200 sm:px-5 ${
+                                open
+                                  ? "bg-violet-50"
+                                  : "bg-white hover:bg-violet-50/60"
+                              }`}
                             >
                               <span className="flex min-w-0 items-center gap-3">
                                 <span
-                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${open ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700"}`}
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ${
+                                    open
+                                      ? "bg-violet-600 text-white"
+                                      : "bg-violet-100 text-violet-700"
+                                  }`}
                                 >
                                   <Icon size={17} />
                                 </span>
+
                                 <span
-                                  className={`text-base font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
+                                  className={`text-base font-semibold leading-5 ${
+                                    open ? "text-violet-700" : "text-black"
+                                  }`}
                                 >
                                   {row.title}
                                 </span>
                               </span>
+
                               <span
-                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${open ? "rotate-180 border-violet-300 bg-white text-violet-700" : "border-violet-100 text-violet-600"}`}
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${
+                                  open
+                                    ? "rotate-180 border-violet-300 bg-white text-violet-700"
+                                    : "border-violet-100 text-violet-600"
+                                }`}
                               >
                                 <ChevronDown size={15} />
                               </span>
                             </button>
+
+                            {/* ACCORDION CONTENT */}
                             {open && (
                               <motion.div
-                                initial={{ opacity: 0, y: -5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.22 }}
+                                initial={{
+                                  opacity: 0,
+                                  y: -5,
+                                }}
+                                animate={{
+                                  opacity: 1,
+                                  y: 0,
+                                }}
+                                transition={{
+                                  duration: 0.22,
+                                }}
                                 className="bg-white px-4 pb-5 pt-3 sm:px-5"
                               >
-                                <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80">
+                                <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5">
                                   {renderRowContent(row.key)}
                                 </div>
                               </motion.div>
@@ -1904,19 +1996,23 @@ const ConferenceDetails = () => {
                           </div>
                         );
                       })}
-                    </div>
+                    </InnerScroll>
                   </div>
 
-                  <div className="flex min-h-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
+                  {/* SESSIONS AND TRACKS */}
+                  <div className="flex min-w-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
+                    {/* HEADER */}
                     <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
                       <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
                           <Layers size={19} />
                         </span>
+
                         <div className="min-w-0">
-                          <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+                          <h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">
                             Sessions and Tracks
                           </h2>
+
                           <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
                             Explore the scientific sessions and research topics
                             planned for this conference.
@@ -1924,9 +2020,11 @@ const ConferenceDetails = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="h-[560px] overflow-y-auto overscroll-contain px-5 py-2 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+
+                    {/* INDEPENDENT SCROLL AREA */}
+                    <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto px-5 py-3 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
                       <SessionsPanel items={sessionItems} />
-                    </div>
+                    </InnerScroll>
                   </div>
                 </div>
               </div>
@@ -1934,9 +2032,22 @@ const ConferenceDetails = () => {
           </section>
         </div>
       </section>
-      {/* SUBSCRIPTION SECTION - NAVY BLUE (height increased) */}
-      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-6 sm:px-10 sm:py-7">
+      {/* SUBSCRIPTION SECTION - NAVY BLUE (compact, heading on top) */}
+      <section className="mb-8 border-y border-[#252B55] bg-[#11143A] px-6 py-4 sm:px-10 sm:py-5">
         <div className="mx-auto max-w-7xl">
+          {/* HEADING (top) */}
+          <div className="mb-3 flex flex-col items-center gap-1 text-center lg:flex-row lg:items-baseline lg:gap-3 lg:text-left">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
+              Stay Connected
+            </p>
+            <h2 className="text-lg leading-6 text-white font-extrabold">
+              Subscribe to Our Mailing List
+            </h2>
+            <p className="text-sm font-semibold leading-5 text-slate-300">
+              Get conference updates and announcements.
+            </p>
+          </div>
+
           <motion.form
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1945,18 +2056,6 @@ const ConferenceDetails = () => {
             onSubmit={handleSubscribe}
             className="flex flex-col items-center gap-3 lg:flex-row"
           >
-            <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
-                Stay Connected
-              </p>
-              <h2 className="mt-1 text-lg leading-6 text-white font-extrabold">
-                Subscribe to Our Mailing List
-              </h2>
-              <p className="mt-1 text-sm font-semibold leading-5 text-slate-300">
-                Get conference updates and announcements.
-              </p>
-            </div>
-
             <div className="w-full lg:flex-1">
               <input
                 type="text"
@@ -2070,58 +2169,69 @@ const ConferenceDetails = () => {
           )}
         </div>
       </section>
+
       {/* KEY HIGHLIGHTS + KEY TOPICS + KEY POINTS */}
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
         {/* KEY HIGHLIGHTS */}
-        <FeatureCard
-          icon={Sparkles}
-          title="Key Highlights"
-          description="Important sessions and opportunities featured in the conference."
-        >
-          <AccordionList
-            rows={highlightRows}
-            icon={CheckCircle2}
-            emptyText="Highlights will be announced soon."
-          />
-        </FeatureCard>
+        <div className="h-full min-w-0">
+          <FeatureCard
+            icon={Sparkles}
+            title="Key Highlights"
+            description="Important sessions and opportunities featured in the conference."
+            className="h-full"
+          >
+            <AccordionList
+              rows={highlightRows}
+              icon={CheckCircle2}
+              emptyText="Highlights will be announced soon."
+            />
+          </FeatureCard>
+        </div>
 
         {/* KEY TOPICS */}
-        <FeatureCard
-          icon={Hash}
-          title="Key Topics"
-          description="Research areas and topics published for this conference."
-        >
-          <div id="topics" className="scroll-mt-24">
-            <AccordionList
-              rows={topicRows}
-              icon={CheckCircle2}
-              emptyText="Topics will be announced soon."
-            />
-          </div>
-        </FeatureCard>
+        <div className="h-full min-w-0">
+          <FeatureCard
+            icon={Hash}
+            title="Key Topics"
+            description="Research areas and topics published for this conference."
+            className="h-full"
+          >
+            <div id="topics" className="h-full scroll-mt-24">
+              <AccordionList
+                rows={topicRows}
+                icon={CheckCircle2}
+                emptyText="Topics will be announced soon."
+              />
+            </div>
+          </FeatureCard>
+        </div>
 
-        {/* KEY POINTS (bound to API data.keyPoints) */}
-        <FeatureCard
-          icon={Lightbulb}
-          title="Key Points"
-          description="Explore information, expert sessions and professional collaboration."
-        >
-          <ul className="divide-y divide-violet-100">
-            {keyPoints.map((point, index) => (
-              <li
-                key={`${point}-${index}`}
-                className="flex items-start gap-3 py-3.5 text-base leading-6 text-slate-700 font-semibold"
-              >
-                <CheckCircle2
-                  size={16}
-                  className="mt-1 shrink-0 text-violet-600"
-                />
-                {point}
-              </li>
-            ))}
-          </ul>
-        </FeatureCard>
+        {/* KEY POINTS */}
+        <div className="h-full min-w-0">
+          <FeatureCard
+            icon={Lightbulb}
+            title="Key Points"
+            description="Explore information, expert sessions and professional collaboration."
+            className="h-full"
+          >
+            <ul className="divide-y divide-violet-100">
+              {keyPoints.map((point, index) => (
+                <li
+                  key={`${point}-${index}`}
+                  className="flex items-start gap-3 py-3.5 text-base font-semibold leading-6 text-slate-700"
+                >
+                  <CheckCircle2
+                    size={16}
+                    className="mt-1 shrink-0 text-violet-600"
+                  />
+                  <span className="min-w-0 break-words">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </FeatureCard>
+        </div>
       </div>
+
       {/* REGISTRATION CATEGORIES */}
       {registrationCategories.length > 0 && (
         <section className="bg-white px-5 py-10 sm:px-10">
@@ -2170,7 +2280,7 @@ const ConferenceDetails = () => {
       )}
       {/* SPONSORS + RECENT POSTS */}
 
-      <section className="w-full bg-white px-0 py-10">
+      <section className="w-full bg-white px-0 py-6">
         <div
           className={`grid w-full grid-cols-1 items-start gap-0 ${
             hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
@@ -2179,25 +2289,25 @@ const ConferenceDetails = () => {
           {/* SPONSORS */}
           {hasSponsors && (
             <div
-              className={`${PREMIUM_CARD} min-w-0 rounded-none border-x-0 p-5 shadow-none sm:p-6`}
+              className={`${PREMIUM_CARD} min-w-0 rounded-none border-x-0 p-4 shadow-none sm:p-5`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <SectionLabel>Our Sponsors</SectionLabel>
-                  <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+                  <h2 className="mt-1 text-xl font-bold leading-tight text-[#171447] sm:text-2xl">
                     Media Partners &amp; Sponsors
                   </h2>
                 </div>
 
-                <Handshake className="shrink-0 text-violet-600" size={28} />
+                <Handshake className="shrink-0 text-violet-600" size={25} />
               </div>
 
-              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
                 We appreciate the organizations supporting this conference and
                 its research community.
               </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {sponsors.map((sponsor, index) => {
                   const logo =
                     typeof sponsor === "string"
@@ -2223,7 +2333,7 @@ const ConferenceDetails = () => {
                   return (
                     <div
                       key={`${logo || sponsorName}-${index}`}
-                      className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition duration-300 hover:border-violet-300 hover:shadow-md"
+                      className="flex h-24 min-w-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white p-3 transition duration-300 hover:border-violet-300 hover:shadow-sm"
                     >
                       {logo ? (
                         <img
@@ -2236,7 +2346,7 @@ const ConferenceDetails = () => {
                           }}
                         />
                       ) : (
-                        <span className="text-sm font-bold text-slate-700 sm:text-base">
+                        <span className="text-sm font-bold text-slate-700">
                           {sponsorName}
                         </span>
                       )}
@@ -2248,12 +2358,12 @@ const ConferenceDetails = () => {
           )}
 
           {/* RECENT POSTS */}
-          <div className="min-w-0 overflow-hidden rounded-none border-x-0 border-y border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-none sm:p-6">
+          <div className="min-w-0 overflow-hidden rounded-none border-x-0 border-y border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-4 shadow-none sm:p-5">
             {/* HEADER */}
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionLabel>Follow Us</SectionLabel>
-                <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+                <h2 className="mt-1 text-xl font-bold leading-tight text-[#171447] sm:text-2xl">
                   Recent Posts
                 </h2>
               </div>
@@ -2264,25 +2374,25 @@ const ConferenceDetails = () => {
                   type="button"
                   onClick={() => scroll(postRef, -1)}
                   aria-label="Previous posts"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
                 >
-                  <ChevronLeft size={19} />
+                  <ChevronLeft size={17} />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => scroll(postRef, 1)}
                   aria-label="Next posts"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
                 >
-                  <ChevronRight size={19} />
+                  <ChevronRight size={17} />
                 </button>
               </div>
             </div>
 
             {/* LATEST POSTS TICKER */}
-            <div className="gs-marquee-wrap mt-3 flex items-center gap-3 overflow-hidden rounded-full border border-violet-100 bg-white px-3 py-2">
-              <span className="shrink-0 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+            <div className="gs-marquee-wrap mt-3 flex items-center gap-2 overflow-hidden rounded-full border border-violet-100 bg-white px-2.5 py-1.5">
+              <span className="shrink-0 rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-bold text-white sm:text-xs">
                 Latest Posts
               </span>
 
@@ -2292,15 +2402,15 @@ const ConferenceDetails = () => {
                     <span
                       key={copy}
                       aria-hidden={copy === 1}
-                      className="flex shrink-0 items-center gap-8 pr-8 text-sm font-semibold text-slate-600 sm:text-base"
+                      className="flex shrink-0 items-center gap-5 pr-5 text-xs font-semibold text-slate-600 sm:text-sm"
                     >
                       {tickerItems.map((text, index) => (
                         <span
                           key={`${copy}-${index}`}
-                          className="flex items-center gap-8"
+                          className="flex items-center gap-5"
                         >
                           <span>{text}</span>
-                          <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+                          <span className="h-1 w-1 rounded-full bg-violet-400" />
                         </span>
                       ))}
                     </span>
@@ -2310,7 +2420,7 @@ const ConferenceDetails = () => {
             </div>
 
             {/* SOCIAL MEDIA */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-2.5">
               {[
                 {
                   label: "Facebook",
@@ -2321,7 +2431,7 @@ const ConferenceDetails = () => {
                   svg: (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-5 w-5"
+                      className="h-4 w-4"
                       fill="currentColor"
                       aria-hidden="true"
                     >
@@ -2338,7 +2448,7 @@ const ConferenceDetails = () => {
                   svg: (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-5 w-5"
+                      className="h-4 w-4"
                       fill="currentColor"
                       aria-hidden="true"
                     >
@@ -2356,7 +2466,7 @@ const ConferenceDetails = () => {
                   svg: (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-5 w-5"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -2383,7 +2493,7 @@ const ConferenceDetails = () => {
                   svg: (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-5 w-5"
+                      className="h-4 w-4"
                       fill="currentColor"
                       aria-hidden="true"
                     >
@@ -2399,17 +2509,17 @@ const ConferenceDetails = () => {
                   rel="noopener noreferrer"
                   aria-label={`Visit GlobalScion on ${social.label}`}
                   title={social.label}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md ${social.className}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${social.className}`}
                 >
                   {social.svg}
                 </a>
               ))}
             </div>
 
-            {/* SCROLLING POSTS */}
+            {/* COMPACT SCROLLING POSTS */}
             <div
               ref={postRef}
-              className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {posts.length > 0 ? (
                 posts.map((rawPost, index) => {
@@ -2431,14 +2541,15 @@ const ConferenceDetails = () => {
                   return (
                     <article
                       key={post._id || `${postTitle}-${index}`}
-                      className="group flex w-[220px] min-w-[220px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[250px] sm:min-w-[250px] xl:w-[270px] xl:min-w-[270px]"
+                      className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:w-[195px] sm:min-w-[195px] xl:w-[210px] xl:min-w-[210px]"
                     >
-                      <div className="h-36 overflow-hidden bg-violet-50 sm:h-40">
+                      {/* SMALLER IMAGE */}
+                      <div className="h-24 overflow-hidden bg-violet-50 sm:h-28">
                         <img
                           src={postImage}
                           alt={postTitle}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           onError={(event) => {
                             event.currentTarget.onerror = null;
                             event.currentTarget.src = FALLBACK_IMAGE;
@@ -2446,12 +2557,13 @@ const ConferenceDetails = () => {
                         />
                       </div>
 
-                      <div className="flex flex-1 flex-col p-4">
-                        <h3 className="line-clamp-2 text-sm font-extrabold leading-5 text-[#171447] sm:text-base">
+                      {/* REDUCED CONTENT HEIGHT */}
+                      <div className="flex flex-1 flex-col p-3">
+                        <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-[#171447] sm:text-sm sm:leading-5">
                           {postTitle}
                         </h3>
 
-                        <p className="mt-2 line-clamp-3 text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
+                        <p className="mt-1.5 line-clamp-2 text-[11px] font-medium leading-4 text-slate-600 sm:text-xs">
                           {getText(
                             post,
                             ["description", "content", "caption"],
@@ -2459,7 +2571,7 @@ const ConferenceDetails = () => {
                           )}
                         </p>
 
-                        <p className="mt-3 text-[11px] font-semibold text-slate-400">
+                        <p className="mt-2 text-[10px] font-semibold text-slate-400">
                           {formatDate(
                             post.date || post.createdAt,
                             "Latest Updates",
@@ -2471,9 +2583,10 @@ const ConferenceDetails = () => {
                             href={post.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-extrabold text-violet-700 hover:text-violet-900"
+                            className="mt-auto inline-flex items-center gap-1 pt-2 text-[11px] font-extrabold text-violet-700 hover:text-violet-900"
                           >
-                            Read more <ExternalLink size={13} />
+                            Read more
+                            <ExternalLink size={11} />
                           </a>
                         )}
                       </div>
@@ -2481,8 +2594,8 @@ const ConferenceDetails = () => {
                   );
                 })
               ) : (
-                <div className="flex min-h-36 w-full items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white px-4 text-center">
-                  <p className="text-sm font-semibold text-slate-500">
+                <div className="flex min-h-28 w-full items-center justify-center rounded-xl border border-dashed border-violet-200 bg-white px-4 text-center">
+                  <p className="text-xs font-semibold text-slate-500">
                     New conference updates will appear here.
                   </p>
                 </div>
@@ -2491,7 +2604,7 @@ const ConferenceDetails = () => {
 
             {/* FOOTER LINK */}
             <div className="mt-2 flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-slate-400">
+              <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
                 Scroll to explore updates
               </p>
 
@@ -2499,9 +2612,10 @@ const ConferenceDetails = () => {
                 href="https://globalscion.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-violet-700 transition hover:text-violet-900 sm:text-sm"
+                className="inline-flex shrink-0 items-center gap-1 text-[11px] font-extrabold text-violet-700 transition hover:text-violet-900 sm:text-xs"
               >
-                Visit GlobalScion <ArrowRight size={14} />
+                Visit GlobalScion
+                <ArrowRight size={12} />
               </a>
             </div>
           </div>
