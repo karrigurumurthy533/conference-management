@@ -1,34 +1,15 @@
 import { useState, useEffect } from "react";
-
 import {
-  ArrowLeft,
-  CalendarDays,
-  Check,
-  ChevronDown,
-  Globe2,
-  Image as ImageIcon,
-  Info,
-  Link2,
-  Plus,
-  Save,
-  Trash2,
-  Users,
-  BookOpen,
-  Mic2,
-  Layers,
-  DollarSign,
-  ListChecks,
-  Presentation,
-  BarChart3,
+  ArrowLeft, CalendarDays, Check, ChevronDown, Globe2, Image as ImageIcon, Info,
+  Link2, Plus, Save, Trash2, Users, BookOpen, Mic2, Layers, DollarSign,
+  ListChecks, Presentation, BarChart3,
 } from "lucide-react";
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import ImageUploader from "../../../components/admin/ImageUploader";
 import MultiImageUploader from "../../../components/admin/MultiImageUploader";
-
 import {
   getConferenceById,
   updateConference,
@@ -36,8 +17,12 @@ import {
 } from "../../../redux/conferenceSlice";
 
 /* =========================================================
-   REGISTRATION HELPERS
+   CONSTANTS / HELPERS
 ========================================================= */
+
+const MAX_VIDEO_MB = 100;
+const CURRENCIES = ["GBP", "USD", "EUR"];
+const CATEGORY_NAMES = ["Academic", "Business", "Others", "Student"];
 
 const emptyRegistrationItem = () => ({
   speakerRegistration: "",
@@ -56,6 +41,44 @@ const defaultRegistrationCategory = (name) => ({
   },
 });
 
+const defaultRegistrationCategories = () =>
+  CATEGORY_NAMES.map(defaultRegistrationCategory);
+
+/* Make sure data coming from the API always has every currency / field */
+const normalizeRegistration = (list) => {
+  if (!Array.isArray(list) || list.length === 0) return defaultRegistrationCategories();
+  return list.map((cat) => {
+    const base = defaultRegistrationCategory(cat.category || cat.name || "Category");
+    CURRENCIES.forEach((cur) => {
+      base.prices[cur] = { ...base.prices[cur], ...(cat.prices?.[cur] || {}) };
+    });
+    return base;
+  });
+};
+
+const defaultEPoster = () => ({
+  benefits: [],
+  guidelinesIntro: "",
+  specifications: {
+    Format: "PDF or PowerPoint (PPT/PPTX)",
+    Orientation: "Portrait",
+    "Recommended Size": "A0 (841 mm × 1189 mm)",
+    Language: "English",
+    "Maximum File Size": "20 MB",
+  },
+  posterContent: [],
+  designRequirements: [],
+  submissionGuidelines: [],
+  reviewAndAcceptance: [],
+  presentation: [],
+  certificate: [],
+  closingNotes: [],
+});
+
+const toDateInput = (value) => (value ? new Date(value).toISOString().slice(0, 10) : "");
+
+const topicToString = (t) => (typeof t === "string" ? t : t?.title || t?.name || "");
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -63,92 +86,59 @@ const defaultRegistrationCategory = (name) => ({
 const CreateConference = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const { id } = useParams();
-
-  /*
-    id exists  -> UPDATE MODE
-    id missing -> CREATE MODE
-  */
   const isEditMode = Boolean(id);
-
-  /* =========================================================
-     REDUX STATE
-  ========================================================= */
 
   const { loading: conferenceLoading, error: conferenceError } = useSelector(
     (state) => state.conference,
   );
 
-  /* =========================================================
-     LOCAL STATE
-  ========================================================= */
-
   const [activeSection, setActiveSection] = useState("basic");
   const [saving, setSaving] = useState(false);
 
-  /* =========================================================
-     BASIC DATA
-  ========================================================= */
-
   const [formData, setFormData] = useState({
     id: "",
-
     category: "",
     title: "",
     subtitle: "",
     description: "",
-
+    video: null,
     image: null,
     aboutImage: null,
-
     date: "",
     time: "Webinar",
-
     startDate: "",
     endDate: "",
-
     location: "",
     mode: "Webinar",
     participants: "Global",
-
     status: "Draft",
-
     venueName: "",
     address: "",
     city: "",
     state: "",
     country: "India",
-
     mapUrl: "",
     onlineLink: "",
-
     timezone: "Asia/Kolkata",
-
     registrationStartDate: "",
     registrationDeadline: "",
     abstractDeadline: "",
     paperDeadline: "",
-
     contactEmail: "",
     phone: "",
     whatsapp: "",
-
     website: "",
     linkedin: "",
     instagram: "",
     facebook: "",
-
     welcomeHeading: "Welcome Message",
     welcomeParagraphs: [""],
     welcomeSignature: "",
-
     whoShouldAttendDescription: "",
-
     marketHeading: "",
     marketParagraphs: [""],
     marketImage: null,
-
     submission: {
       abstractSubmission: true,
       paperSubmission: false,
@@ -160,161 +150,51 @@ const CreateConference = () => {
     },
   });
 
-  /* =========================================================
-     REGISTRATION
-  ========================================================= */
-
-  const [registrationCategories, setRegistrationCategories] = useState([
-    defaultRegistrationCategory("Academic"),
-    defaultRegistrationCategory("Business"),
-    defaultRegistrationCategory("Others"),
-    defaultRegistrationCategory("Student"),
-  ]);
-
-  /* =========================================================
-     ARRAYS
-  ========================================================= */
+  const [registrationCategories, setRegistrationCategories] = useState(
+    defaultRegistrationCategories(),
+  );
 
   const [speakers, setSpeakers] = useState([]);
   const [committee, setCommittee] = useState([]);
-
   const [topics, setTopics] = useState([]);
   const [tracks, setTracks] = useState([]);
-
   const [keyHighlights, setKeyHighlights] = useState([]);
-
+  const [keyPoints, setKeyPoints] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
   const [whoShouldAttend, setWhoShouldAttend] = useState([]);
-
   const [whyToAttend, setWhyToAttend] = useState([]);
-
   const [benefitsOfAttending, setBenefitsOfAttending] = useState([]);
-
   const [delegates, setDelegates] = useState([]);
-
   const [posterPresentersLive, setPosterPresentersLive] = useState([]);
-
   const [sessions, setSessions] = useState([]);
-
   const [sponsors, setSponsors] = useState([]);
-
-  /* =========================================================
-     E-POSTER
-  ========================================================= */
-
-  const [ePoster, setEPoster] = useState({
-    benefits: [],
-
-    guidelinesIntro: "",
-
-    specifications: {
-      Format: "PDF or PowerPoint (PPT/PPTX)",
-      Orientation: "Portrait",
-      "Recommended Size": "A0 (841 mm × 1189 mm)",
-      Language: "English",
-      "Maximum File Size": "20 MB",
-    },
-
-    posterContent: [],
-    designRequirements: [],
-    submissionGuidelines: [],
-    reviewAndAcceptance: [],
-    presentation: [],
-    certificate: [],
-    closingNotes: [],
-  });
-
-  /* =========================================================
-     SECTIONS
-  ========================================================= */
+  const [ePoster, setEPoster] = useState(defaultEPoster());
 
   const sections = [
-    {
-      id: "basic",
-      label: "Basic Information",
-      icon: Info,
-    },
-    {
-      id: "dates",
-      label: "Dates & Venue",
-      icon: CalendarDays,
-    },
-    {
-      id: "registration",
-      label: "Registration & Pricing",
-      icon: DollarSign,
-    },
-    {
-      id: "welcome",
-      label: "Welcome Message",
-      icon: BookOpen,
-    },
-    {
-      id: "speakers",
-      label: "Speakers & Committee",
-      icon: Mic2,
-    },
-    {
-      id: "content",
-      label: "Topics & Tracks",
-      icon: Layers,
-    },
-    {
-      id: "highlights",
-      label: "Highlights",
-      icon: ListChecks,
-    },
-    {
-      id: "agenda",
-      label: "Agenda",
-      icon: CalendarDays,
-    },
-    {
-      id: "attendees",
-      label: "Who Should Attend",
-      icon: Users,
-    },
-    {
-      id: "benefits",
-      label: "Benefits",
-      icon: Check,
-    },
-    {
-      id: "poster",
-      label: "Poster / E-Poster",
-      icon: Presentation,
-    },
-    {
-      id: "market",
-      label: "Market Analysis",
-      icon: BarChart3,
-    },
-    {
-      id: "media",
-      label: "Media & Sponsors",
-      icon: ImageIcon,
-    },
-    {
-      id: "contact",
-      label: "Contact & Social",
-      icon: Globe2,
-    },
+    { id: "basic", label: "Basic Information", icon: Info },
+    { id: "dates", label: "Dates & Venue", icon: CalendarDays },
+    { id: "registration", label: "Registration & Pricing", icon: DollarSign },
+    { id: "welcome", label: "Welcome Message", icon: BookOpen },
+    { id: "speakers", label: "Speakers & Committee", icon: Mic2 },
+    { id: "content", label: "Topics & Tracks", icon: Layers },
+    { id: "highlights", label: "Highlights", icon: ListChecks },
+    { id: "agenda", label: "Agenda", icon: CalendarDays },
+    { id: "attendees", label: "Who Should Attend", icon: Users },
+    { id: "benefits", label: "Benefits", icon: Check },
+    { id: "poster", label: "Poster / E-Poster", icon: Presentation },
+    { id: "market", label: "Market Analysis", icon: BarChart3 },
+    { id: "media", label: "Media & Sponsors", icon: ImageIcon },
+    { id: "contact", label: "Contact & Social", icon: Globe2 },
   ];
 
   const currentIndex = sections.findIndex((item) => item.id === activeSection);
 
-  /* =========================================================
-     CLASSES
-  ========================================================= */
-
   const inputClass =
     "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
-
   const textareaClass =
     "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
-
   const cardClass =
     "rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.035)]";
-
   const buttonClass =
     "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition";
 
@@ -323,310 +203,129 @@ const CreateConference = () => {
   ========================================================= */
 
   useEffect(() => {
-    /*
-      CREATE MODE
-
-      If there is no ID, do NOT call getConferenceById().
-    */
-
     if (!id) {
-      setFormData((prev) => ({
-        ...prev,
-        id: "",
-      }));
-
+      setFormData((prev) => ({ ...prev, id: "" }));
       setActiveSection("basic");
-
       return;
     }
-
-    /*
-      UPDATE MODE
-
-      Existing conference is loaded by ID.
-    */
 
     const loadConference = async () => {
       try {
         const result = await dispatch(getConferenceById(id)).unwrap();
-
         const conference = result?.conference || result?.data || result;
 
-        if (!conference) {
-          throw new Error("Conference data not found");
-        }
-
-        console.log("EDIT CONFERENCE DATA:", conference);
+        if (!conference) throw new Error("Conference data not found");
 
         const venue = conference.venue || {};
-
         const registrationDates = conference.registrationDates || {};
-
         const welcomeMessage = conference.welcomeMessage || {};
-
         const contact = conference.contact || {};
-
         const otherData = conference.otherData || {};
-
         const marketAnalysis = otherData.marketAnalysis || {};
-
-        /* ---------------------------------------------
-           BASIC DATA
-        --------------------------------------------- */
 
         setFormData((prev) => ({
           ...prev,
-
           id: conference.id || conference._id || id,
-
           category: conference.category || "",
-
           title: conference.title || "",
-
           subtitle: conference.subtitle || "",
-
           description: conference.description || "",
-
+          video: conference.video || conference.videoUrl || null,
           image: conference.image || null,
-
           aboutImage: conference.aboutImage || null,
-
           date: conference.date || "",
-
           time: conference.time || "Webinar",
-
-          startDate: conference.startDate
-            ? new Date(conference.startDate).toISOString().slice(0, 10)
-            : "",
-
-          endDate: conference.endDate
-            ? new Date(conference.endDate).toISOString().slice(0, 10)
-            : "",
-
+          startDate: toDateInput(conference.startDate),
+          endDate: toDateInput(conference.endDate),
           location: conference.location || "",
-
           mode: conference.mode || "Webinar",
-
           participants: conference.participants || "Global",
-
           status: conference.status || "Draft",
 
-          /* ---------------------------------------------
-             VENUE
-          --------------------------------------------- */
-
           venueName: venue.venueName || "",
-
           address: venue.address || "",
-
           city: venue.city || "",
-
           state: venue.state || "",
-
           country: venue.country || "India",
-
           mapUrl: venue.mapUrl || "",
-
           onlineLink: venue.onlineLink || "",
-
           timezone: venue.timezone || "Asia/Kolkata",
 
-          /* ---------------------------------------------
-             REGISTRATION DATES
-          --------------------------------------------- */
-
-          registrationStartDate: registrationDates.registrationStartDate
-            ? new Date(registrationDates.registrationStartDate)
-                .toISOString()
-                .slice(0, 10)
-            : "",
-
-          registrationDeadline: registrationDates.registrationDeadline
-            ? new Date(registrationDates.registrationDeadline)
-                .toISOString()
-                .slice(0, 10)
-            : "",
-
-          abstractDeadline: registrationDates.abstractDeadline
-            ? new Date(registrationDates.abstractDeadline)
-                .toISOString()
-                .slice(0, 10)
-            : "",
-
-          paperDeadline: registrationDates.paperDeadline
-            ? new Date(registrationDates.paperDeadline)
-                .toISOString()
-                .slice(0, 10)
-            : "",
-
-          /* ---------------------------------------------
-             CONTACT
-          --------------------------------------------- */
+          registrationStartDate: toDateInput(registrationDates.registrationStartDate),
+          registrationDeadline: toDateInput(registrationDates.registrationDeadline),
+          abstractDeadline: toDateInput(registrationDates.abstractDeadline),
+          paperDeadline: toDateInput(registrationDates.paperDeadline),
 
           contactEmail: contact.email || "",
-
           phone: contact.phone || "",
-
           whatsapp: contact.whatsapp || "",
-
           website: contact.website || "",
-
           linkedin: contact.linkedin || "",
-
           instagram: contact.instagram || "",
-
           facebook: contact.facebook || "",
 
-          /* ---------------------------------------------
-             WELCOME
-          --------------------------------------------- */
-
           welcomeHeading: welcomeMessage.heading || "Welcome Message",
-
           welcomeParagraphs: welcomeMessage.paragraphs?.length
             ? welcomeMessage.paragraphs
             : [""],
-
           welcomeSignature: welcomeMessage.signature || "",
 
-          /* ---------------------------------------------
-             ATTENDEES
-          --------------------------------------------- */
-
-          whoShouldAttendDescription:
-            conference.whoShouldAttendDescription || "",
-
-          /* ---------------------------------------------
-             MARKET
-          --------------------------------------------- */
+          whoShouldAttendDescription: conference.whoShouldAttendDescription || "",
 
           marketHeading: marketAnalysis.heading || "",
-
           marketParagraphs: marketAnalysis.paragraphs?.length
             ? marketAnalysis.paragraphs
             : [""],
-
           marketImage: marketAnalysis.image || null,
 
-          /* ---------------------------------------------
-             SUBMISSION
-          --------------------------------------------- */
-
-          submission: {
-            ...prev.submission,
-            ...(conference.submission || {}),
-          },
+          submission: { ...prev.submission, ...(conference.submission || {}) },
         }));
 
-        /* ---------------------------------------------
-           REGISTRATION
-        --------------------------------------------- */
-
-        setRegistrationCategories(
-          conference.registration?.length
-            ? conference.registration
-            : [
-                defaultRegistrationCategory("Academic"),
-                defaultRegistrationCategory("Business"),
-                defaultRegistrationCategory("Others"),
-                defaultRegistrationCategory("Student"),
-              ],
-        );
-
-        /* ---------------------------------------------
-           SPEAKERS
-        --------------------------------------------- */
+        setRegistrationCategories(normalizeRegistration(conference.registration));
 
         setSpeakers(
           (conference.speakers || []).map((speaker) => ({
             ...speaker,
-
             id: speaker.id || speaker._id || crypto.randomUUID(),
-
             image: speaker.image || null,
           })),
         );
 
-        /* ---------------------------------------------
-           COMMITTEE
-        --------------------------------------------- */
-
         setCommittee(
           (conference.committee || []).map((member) => ({
             ...member,
-
             id: member.id || member._id || crypto.randomUUID(),
-
             image: member.image || null,
           })),
         );
 
-        /* ---------------------------------------------
-           CONTENT
-        --------------------------------------------- */
-
-        setTopics(conference.topics || []);
-
+        setTopics((conference.topics || []).map(topicToString));
         setTracks(conference.tracks || []);
-
         setKeyHighlights(conference.keyHighlights || []);
-
+        setKeyPoints(conference.keyPoints || []);
+        setRecentPosts(conference.recentPosts || []);
         setWhoShouldAttend(conference.whoShouldAttend || []);
 
-        /* ---------------------------------------------
-           OTHER DATA
-        --------------------------------------------- */
-
         setWhyToAttend(otherData.whyToAttend || []);
-
         setBenefitsOfAttending(otherData.benefitsOfAttending || []);
-
         setDelegates(otherData.delegates || []);
-
         setPosterPresentersLive(otherData.posterPresentersLive || []);
-
         setSessions(otherData.sampleAgenda || []);
 
-        /* ---------------------------------------------
-           E-POSTER
-        --------------------------------------------- */
-
-        setEPoster(
-          otherData.ePosterPresenters || {
-            benefits: [],
-
-            guidelinesIntro: "",
-
-            specifications: {
-              Format: "PDF or PowerPoint (PPT/PPTX)",
-
-              Orientation: "Portrait",
-
-              "Recommended Size": "A0 (841 mm × 1189 mm)",
-
-              Language: "English",
-
-              "Maximum File Size": "20 MB",
-            },
-
-            posterContent: [],
-            designRequirements: [],
-            submissionGuidelines: [],
-            reviewAndAcceptance: [],
-            presentation: [],
-            certificate: [],
-            closingNotes: [],
-          },
-        );
-
-        /* ---------------------------------------------
-           SPONSORS
-        --------------------------------------------- */
+        const defaults = defaultEPoster();
+        const savedPoster = otherData.ePosterPresenters || {};
+        setEPoster({
+          ...defaults,
+          ...savedPoster,
+          specifications:
+            savedPoster.specifications && Object.keys(savedPoster.specifications).length
+              ? savedPoster.specifications
+              : defaults.specifications,
+        });
 
         setSponsors(conference.sponsors || []);
       } catch (error) {
         console.error("GET CONFERENCE BY ID ERROR:", error);
-
         toast.error(
           typeof error === "string"
             ? error
@@ -644,25 +343,9 @@ const CreateConference = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
-
       [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleSubmissionChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-
-      submission: {
-        ...prev.submission,
-
-        [name]: type === "checkbox" ? checked : value,
-      },
     }));
   };
 
@@ -670,558 +353,250 @@ const CreateConference = () => {
      ARRAY HELPERS
   ========================================================= */
 
-  const addArrayItem = (setter, value) => {
-    setter((prev) => [...prev, value]);
-  };
-
-  const removeArrayItem = (setter, index) => {
+  const addArrayItem = (setter, value) => setter((prev) => [...prev, value]);
+  const removeArrayItem = (setter, index) =>
     setter((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateArrayItem = (setter, index, value) => {
+  const updateArrayItem = (setter, index, value) =>
     setter((prev) => prev.map((item, i) => (i === index ? value : item)));
-  };
 
-  /* =========================================================
-     SPEAKERS
-  ========================================================= */
-
-  const addSpeaker = () => {
+  const addSpeaker = () =>
     addArrayItem(setSpeakers, {
       id: crypto.randomUUID(),
-
       name: "",
       role: "",
       organization: "",
       specialty: "",
       country: "",
-
       image: null,
-
       bio: "",
     });
-  };
 
-  /* =========================================================
-     COMMITTEE
-  ========================================================= */
-
-  const addCommittee = () => {
+  const addCommittee = () =>
     addArrayItem(setCommittee, {
       id: crypto.randomUUID(),
-
       name: "",
       role: "",
       organization: "",
-
       image: null,
     });
-  };
 
-  /* =========================================================
-     TOPIC
-  ========================================================= */
+  const addTopic = () => addArrayItem(setTopics, "");
+  const addTrack = () => addArrayItem(setTracks, { title: "", description: "" });
+  const addHighlight = () => addArrayItem(setKeyHighlights, { title: "", description: "" });
+  const addAttendee = () => addArrayItem(setWhoShouldAttend, "");
+  const addWhyAttend = () => addArrayItem(setWhyToAttend, { title: "", description: "" });
+  const addBenefit = () => addArrayItem(setBenefitsOfAttending, { title: "", description: "" });
+  const addDelegate = () => addArrayItem(setDelegates, { title: "", description: "" });
 
-  const addTopic = () => {
-    addArrayItem(setTopics, "");
-  };
+  /* POSTER */
+  const addPosterPoint = (field) =>
+    setEPoster((prev) => ({ ...prev, [field]: [...(prev[field] || []), ""] }));
 
-  /* =========================================================
-     TRACK
-  ========================================================= */
-
-  const addTrack = () => {
-    addArrayItem(setTracks, {
-      title: "",
-      description: "",
-    });
-  };
-
-  /* =========================================================
-     HIGHLIGHT
-  ========================================================= */
-
-  const addHighlight = () => {
-    addArrayItem(setKeyHighlights, {
-      title: "",
-      description: "",
-    });
-  };
-
-  /* =========================================================
-     ATTENDEE
-  ========================================================= */
-
-  const addAttendee = () => {
-    addArrayItem(setWhoShouldAttend, "");
-  };
-
-  /* =========================================================
-     WHY ATTEND
-  ========================================================= */
-
-  const addWhyAttend = () => {
-    addArrayItem(setWhyToAttend, {
-      title: "",
-      description: "",
-    });
-  };
-
-  /* =========================================================
-     BENEFITS
-  ========================================================= */
-
-  const addBenefit = () => {
-    addArrayItem(setBenefitsOfAttending, {
-      title: "",
-      description: "",
-    });
-  };
-
-  /* =========================================================
-     DELEGATES
-  ========================================================= */
-
-  const addDelegate = () => {
-    addArrayItem(setDelegates, {
-      title: "",
-      description: "",
-    });
-  };
-
-  /* =========================================================
-     POSTER
-  ========================================================= */
-
-  const addPosterPoint = (field) => {
+  const updatePosterPoint = (field, index, value) =>
     setEPoster((prev) => ({
       ...prev,
-
-      [field]: [...prev[field], ""],
-    }));
-  };
-
-  const updatePosterPoint = (field, index, value) => {
-    setEPoster((prev) => ({
-      ...prev,
-
       [field]: prev[field].map((item, i) => (i === index ? value : item)),
     }));
-  };
 
-  const removePosterPoint = (field, index) => {
+  const removePosterPoint = (field, index) =>
     setEPoster((prev) => ({
       ...prev,
-
       [field]: prev[field].filter((_, i) => i !== index),
     }));
-  };
 
-  /* =========================================================
-     AGENDA
-  ========================================================= */
+  /* AGENDA */
+  const addSession = () =>
+    addArrayItem(setSessions, { day: "", schedule: [{ time: "", session: "" }] });
 
-  const addSession = () => {
-    addArrayItem(setSessions, {
-      day: "",
-
-      schedule: [
-        {
-          time: "",
-          session: "",
-        },
-      ],
-    });
-  };
-
-  const addSchedule = (dayIndex) => {
+  const addSchedule = (dayIndex) =>
     setSessions((prev) =>
       prev.map((day, index) =>
         index === dayIndex
-          ? {
-              ...day,
-
-              schedule: [
-                ...day.schedule,
-
-                {
-                  time: "",
-                  session: "",
-                },
-              ],
-            }
+          ? { ...day, schedule: [...(day.schedule || []), { time: "", session: "" }] }
           : day,
       ),
     );
-  };
 
-  const updateSchedule = (dayIndex, scheduleIndex, field, value) => {
+  const updateSchedule = (dayIndex, scheduleIndex, field, value) =>
     setSessions((prev) =>
       prev.map((day, i) =>
         i === dayIndex
           ? {
               ...day,
-
               schedule: day.schedule.map((item, j) =>
-                j === scheduleIndex
-                  ? {
-                      ...item,
-
-                      [field]: value,
-                    }
-                  : item,
+                j === scheduleIndex ? { ...item, [field]: value } : item,
               ),
             }
           : day,
       ),
     );
-  };
 
-  /* =========================================================
-     REGISTRATION
-  ========================================================= */
-
-  const updateRegistrationPrice = (categoryIndex, currency, field, value) => {
+  /* REGISTRATION */
+  const updateRegistrationPrice = (categoryIndex, currency, field, value) =>
     setRegistrationCategories((prev) =>
       prev.map((category, index) =>
         index === categoryIndex
           ? {
               ...category,
-
               prices: {
                 ...category.prices,
-
-                [currency]: {
-                  ...category.prices[currency],
-
-                  [field]: value,
-                },
+                [currency]: { ...category.prices[currency], [field]: value },
               },
             }
           : category,
       ),
     );
-  };
 
   /* =========================================================
      BUILD CONFERENCE JSON
   ========================================================= */
 
-  const buildConferenceData = () => {
-    return {
-      /*
-          ID is handled separately.
-          In CREATE mode it will be removed.
-        */
+  const buildConferenceData = () => ({
+    id: formData.id,
+    category: formData.category,
+    title: formData.title,
+    subtitle: formData.subtitle,
+    date: formData.date,
+    time: formData.time,
+    startDate: formData.startDate,
+    endDate: formData.endDate,
+    location: formData.location,
+    mode: formData.mode,
+    participants: formData.participants,
+    description: formData.description,
 
-      id: formData.id,
+    // File -> sent as multipart "conferenceVideo". String -> existing URL. null -> removed.
+    video: formData.video instanceof File ? undefined : formData.video || null,
 
-      category: formData.category,
+    keyPoints: keyPoints.filter(Boolean),
+    recentPosts,
 
-      title: formData.title,
+    venue: {
+      venueName: formData.venueName,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      mapUrl: formData.mapUrl,
+      onlineLink: formData.onlineLink,
+      timezone: formData.timezone,
+    },
 
-      subtitle: formData.subtitle,
+    registrationDates: {
+      registrationStartDate: formData.registrationStartDate,
+      registrationDeadline: formData.registrationDeadline,
+      abstractDeadline: formData.abstractDeadline,
+      paperDeadline: formData.paperDeadline,
+    },
 
-      date: formData.date,
+    registration: registrationCategories,
 
-      time: formData.time,
+    welcomeMessage: {
+      heading: formData.welcomeHeading,
+      paragraphs: formData.welcomeParagraphs.filter(Boolean),
+      signature: formData.welcomeSignature,
+    },
 
-      startDate: formData.startDate,
+    speakers: speakers.map(({ id, _id, ...speaker }) => ({
+      ...speaker,
+      image: speaker.image instanceof File ? null : speaker.image || null,
+    })),
 
-      endDate: formData.endDate,
+    committee: committee.map(({ id, _id, ...member }) => ({
+      ...member,
+      image: member.image instanceof File ? null : member.image || null,
+    })),
 
-      location: formData.location,
+    whoShouldAttend: whoShouldAttend.filter(Boolean),
+    whoShouldAttendDescription: formData.whoShouldAttendDescription,
 
-      mode: formData.mode,
+    keyHighlights,
 
-      participants: formData.participants,
+    // topics are plain strings
+    topics: topics.map(topicToString).map((t) => t.trim()).filter(Boolean),
 
-      description: formData.description,
+    tracks,
 
-      /* ---------------------------------------------
-           VENUE
-        --------------------------------------------- */
-
-      venue: {
-        venueName: formData.venueName,
-
-        address: formData.address,
-
-        city: formData.city,
-
-        state: formData.state,
-
-        country: formData.country,
-
-        mapUrl: formData.mapUrl,
-
-        onlineLink: formData.onlineLink,
-
-        timezone: formData.timezone,
+    otherData: {
+      whyToAttend,
+      sampleAgenda: sessions,
+      benefitsOfAttending,
+      delegates,
+      posterPresentersLive: posterPresentersLive.filter(Boolean),
+      ePosterPresenters: { ...ePoster },
+      marketAnalysis: {
+        heading: formData.marketHeading,
+        paragraphs: formData.marketParagraphs.filter(Boolean),
+        // existing URL is kept; a new file goes through multipart "marketImage"
+        image: typeof formData.marketImage === "string" ? formData.marketImage : null,
       },
+    },
 
-      /* ---------------------------------------------
-           REGISTRATION DATES
-        --------------------------------------------- */
+    submission: formData.submission,
 
-      registrationDates: {
-        registrationStartDate: formData.registrationStartDate,
+    contact: {
+      email: formData.contactEmail,
+      phone: formData.phone,
+      whatsapp: formData.whatsapp,
+      website: formData.website,
+      linkedin: formData.linkedin,
+      instagram: formData.instagram,
+      facebook: formData.facebook,
+    },
 
-        registrationDeadline: formData.registrationDeadline,
-
-        abstractDeadline: formData.abstractDeadline,
-
-        paperDeadline: formData.paperDeadline,
-      },
-
-      /* ---------------------------------------------
-           REGISTRATION
-        --------------------------------------------- */
-
-      registration: registrationCategories,
-
-      /* ---------------------------------------------
-           WELCOME
-        --------------------------------------------- */
-
-      welcomeMessage: {
-        heading: formData.welcomeHeading,
-
-        paragraphs: formData.welcomeParagraphs.filter(Boolean),
-
-        signature: formData.welcomeSignature,
-      },
-
-      /* ---------------------------------------------
-           SPEAKERS
-        --------------------------------------------- */
-
-      speakers: speakers.map(({ id, _id, ...speaker }) => ({
-        ...speaker,
-
-        image: speaker.image instanceof File ? null : speaker.image || null,
-      })),
-
-      /* ---------------------------------------------
-           COMMITTEE
-        --------------------------------------------- */
-
-      committee: committee.map(({ id, _id, ...member }) => ({
-        ...member,
-
-        image: member.image instanceof File ? null : member.image || null,
-      })),
-
-      /* ---------------------------------------------
-           ATTENDEES
-        --------------------------------------------- */
-
-      whoShouldAttend: whoShouldAttend.filter(Boolean),
-
-      whoShouldAttendDescription: formData.whoShouldAttendDescription,
-
-      /* ---------------------------------------------
-           HIGHLIGHTS
-        --------------------------------------------- */
-
-      keyHighlights,
-
-      /* ---------------------------------------------
-           TOPICS
-        --------------------------------------------- */
-
-      topics: topics.filter(Boolean),
-
-      /* ---------------------------------------------
-           TRACKS
-        --------------------------------------------- */
-
-      tracks,
-
-      /* ---------------------------------------------
-           OTHER DATA
-        --------------------------------------------- */
-
-      otherData: {
-        whyToAttend,
-
-        sampleAgenda: sessions,
-
-        benefitsOfAttending,
-
-        delegates,
-
-        posterPresentersLive: posterPresentersLive.filter(Boolean),
-
-        ePosterPresenters: {
-          ...ePoster,
-        },
-
-        marketAnalysis: {
-          heading: formData.marketHeading,
-
-          paragraphs: formData.marketParagraphs.filter(Boolean),
-
-          /*
-              Image is handled through
-              multipart upload.
-            */
-          image: null,
-        },
-      },
-
-      /* ---------------------------------------------
-           SUBMISSION
-        --------------------------------------------- */
-
-      submission: formData.submission,
-
-      /* ---------------------------------------------
-           CONTACT
-        --------------------------------------------- */
-
-      contact: {
-        email: formData.contactEmail,
-
-        phone: formData.phone,
-
-        whatsapp: formData.whatsapp,
-
-        website: formData.website,
-
-        linkedin: formData.linkedin,
-
-        instagram: formData.instagram,
-
-        facebook: formData.facebook,
-      },
-
-      /* ---------------------------------------------
-           STATUS
-        --------------------------------------------- */
-
-      status: formData.status,
-    };
-  };
+    status: formData.status,
+  });
 
   /* =========================================================
      CREATE / UPDATE CONFERENCE
   ========================================================= */
 
   const saveConference = async (publish = false) => {
-    /*
-      Determine mode from URL ID.
-
-      CREATE:
-      /admin/conferences/create
-      id = undefined
-
-      UPDATE:
-      /admin/conferences/:id/edit
-      id = actual Mongo ID
-    */
-
     const conferenceId = formData.id || id;
-
     const editMode = Boolean(conferenceId);
 
     try {
       setSaving(true);
 
       const conferenceData = buildConferenceData();
-
-      /* ---------------------------------------------
-         STATUS
-      --------------------------------------------- */
-
       conferenceData.status = publish ? "Published" : "Draft";
 
-      /* ---------------------------------------------
-         ID
+      if (editMode) conferenceData.id = conferenceId;
+      else delete conferenceData.id;
 
-         UPDATE -> include ID
-         CREATE -> remove ID
-      --------------------------------------------- */
-
-      if (editMode) {
-        conferenceData.id = conferenceId;
-      } else {
-        delete conferenceData.id;
-      }
-
-      /* ---------------------------------------------
-         FORM DATA
-      --------------------------------------------- */
-
-      const form = new FormData();
-
-      form.append("conferenceData", JSON.stringify(conferenceData));
-
-      /* ---------------------------------------------
-         MAIN IMAGE
-      --------------------------------------------- */
-
-      if (formData.image instanceof File) {
-        form.append("conferenceImage", formData.image);
-      }
-
-      /* ---------------------------------------------
-         ABOUT IMAGE
-      --------------------------------------------- */
-
-      if (formData.aboutImage instanceof File) {
-        form.append("aboutImage", formData.aboutImage);
-      }
-
-      /* ---------------------------------------------
-         MARKET IMAGE
-      --------------------------------------------- */
-
-      if (formData.marketImage instanceof File) {
-        form.append("marketImage", formData.marketImage);
-      }
-
-      /* ---------------------------------------------
-         SPEAKER IMAGES
-      --------------------------------------------- */
-
-      speakers.forEach((speaker) => {
-        if (speaker.image instanceof File) {
-          form.append("speakerImages", speaker.image);
-        }
-      });
-
-      /* ---------------------------------------------
-         COMMITTEE IMAGES
-      --------------------------------------------- */
-
-      committee.forEach((member) => {
-        if (member.image instanceof File) {
-          form.append("committeeImages", member.image);
-        }
-      });
-
-      /* SPONSOR IMAGES */
-
-      const sponsorPayload = sponsors.map((sponsor) => {
-        if (typeof sponsor === "string") {
-          return sponsor;
-        }
-
+      /* SPONSORS (must be set BEFORE conferenceData is stringified) */
+      conferenceData.sponsors = sponsors.map((sponsor) => {
+        if (typeof sponsor === "string") return sponsor;
         if (sponsor?.file instanceof File) {
           return sponsor.url || sponsor.image || sponsor.imageUrl || null;
         }
-
         return (
-          sponsor?.url ||
-          sponsor?.image ||
-          sponsor?.imageUrl ||
-          sponsor?.secure_url ||
-          null
+          sponsor?.url || sponsor?.image || sponsor?.imageUrl || sponsor?.secure_url || null
         );
       });
 
-      conferenceData.sponsors = sponsorPayload;
+      const form = new FormData();
+      form.append("conferenceData", JSON.stringify(conferenceData));
+
+      if (formData.image instanceof File) form.append("conferenceImage", formData.image);
+      if (formData.aboutImage instanceof File) form.append("aboutImage", formData.aboutImage);
+      if (formData.marketImage instanceof File) form.append("marketImage", formData.marketImage);
+
+      /* VIDEO */
+      if (formData.video instanceof File) form.append("conferenceVideo", formData.video);
+
+      /* SPEAKER / COMMITTEE IMAGES (indexed so backend maps them correctly) */
+      speakers.forEach((speaker, index) => {
+        if (speaker.image instanceof File) {
+          form.append(`speakerImage_${index}`, speaker.image);
+        }
+      });
+
+      committee.forEach((member, index) => {
+        if (member.image instanceof File) {
+          form.append(`committeeImage_${index}`, member.image);
+        }
+      });
 
       sponsors.forEach((sponsor, index) => {
         if (sponsor?.file instanceof File) {
@@ -1230,14 +605,7 @@ const CreateConference = () => {
       });
 
       if (editMode) {
-        const result = await dispatch(
-          updateConference({
-            id: conferenceId,
-
-            formData: form,
-          }),
-        ).unwrap();
-
+        await dispatch(updateConference({ id: conferenceId, formData: form })).unwrap();
         toast.success(
           publish
             ? "Conference updated and published successfully!"
@@ -1245,7 +613,6 @@ const CreateConference = () => {
         );
       } else {
         await dispatch(createConference(form)).unwrap();
-
         toast.success(
           publish
             ? "Conference created and published successfully!"
@@ -1255,10 +622,7 @@ const CreateConference = () => {
 
       navigate("/admin/conferences");
     } catch (error) {
-      console.error(
-        editMode ? "UPDATE CONFERENCE ERROR:" : "CREATE CONFERENCE ERROR:",
-        error,
-      );
+      console.error(editMode ? "UPDATE CONFERENCE ERROR:" : "CREATE CONFERENCE ERROR:", error);
 
       const message =
         typeof error === "string"
@@ -1322,73 +686,92 @@ const CreateConference = () => {
             value={formData.description}
             onChange={handleChange}
             rows={5}
+            placeholder="Enter the conference description..."
             className={textareaClass}
           />
+        </Field>
+
+        <Field label="Conference Video (MP4, WebM or MOV)" full>
+          <div className="rounded-xl border border-dashed border-violet-300 bg-violet-50/40 p-4">
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                if (file && file.size > MAX_VIDEO_MB * 1024 * 1024) {
+                  toast.error(`Video must be ${MAX_VIDEO_MB} MB or smaller.`);
+                  e.target.value = "";
+                  return;
+                }
+                setFormData((prev) => ({ ...prev, video: file || prev.video }));
+              }}
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-600 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-violet-700"
+            />
+            <p className="mt-2 text-xs text-slate-500">
+              Upload a conference video up to {MAX_VIDEO_MB} MB. The backend upload
+              middleware must accept the field name <code>conferenceVideo</code>.
+            </p>
+            {formData.video && (
+              <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-xs font-semibold text-slate-700">
+                  {formData.video instanceof File
+                    ? formData.video.name
+                    : "Existing conference video"}
+                </p>
+                {typeof formData.video === "string" && (
+                  <a
+                    href={formData.video}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-xs text-violet-700 underline"
+                  >
+                    Preview existing video
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, video: null }))}
+                  className="ml-3 text-xs font-semibold text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
         </Field>
 
         <ImageUploader
           label="Conference Hero Image"
           value={formData.image}
-          onChange={(file) =>
-            setFormData((prev) => ({
-              ...prev,
-              image: file,
-            }))
-          }
+          onChange={(file) => setFormData((prev) => ({ ...prev, image: file }))}
         />
 
         <ImageUploader
           label="About Conference Image"
           value={formData.aboutImage}
-          onChange={(file) =>
-            setFormData((prev) => ({
-              ...prev,
-              aboutImage: file,
-            }))
-          }
+          onChange={(file) => setFormData((prev) => ({ ...prev, aboutImage: file }))}
         />
 
         <Field label="Conference Status">
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className={inputClass}
-          >
+          <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
             <option value="Draft">Draft</option>
-
             <option value="Published">Published</option>
-
             <option value="Closed">Closed</option>
           </select>
         </Field>
 
         <Field label="Conference Mode">
-          <select
-            name="mode"
-            value={formData.mode}
-            onChange={handleChange}
-            className={inputClass}
-          >
+          <select name="mode" value={formData.mode} onChange={handleChange} className={inputClass}>
             <option value="Webinar">Webinar</option>
-
             <option value="Physical">Physical</option>
-
             <option value="Hybrid">Hybrid</option>
           </select>
         </Field>
 
         <Field label="Participants">
-          <select
-            name="participants"
-            value={formData.participants}
-            onChange={handleChange}
-            className={inputClass}
-          >
+          <select name="participants" value={formData.participants} onChange={handleChange} className={inputClass}>
             <option value="Global">Global</option>
-
             <option value="National">National</option>
-
             <option value="Regional">Regional</option>
           </select>
         </Field>
@@ -1410,83 +793,28 @@ const CreateConference = () => {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Start Date *">
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="End Date">
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Display Date">
-            <input
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              placeholder="April 06-07, 2027"
-              className={inputClass}
-            />
+            <input name="date" value={formData.date} onChange={handleChange} placeholder="April 06-07, 2027" className={inputClass} />
           </Field>
-
           <Field label="Time">
-            <input
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              placeholder="Webinar"
-              className={inputClass}
-            />
+            <input name="time" value={formData.time} onChange={handleChange} placeholder="Webinar" className={inputClass} />
           </Field>
-
           <Field label="Registration Start Date">
-            <input
-              type="date"
-              name="registrationStartDate"
-              value={formData.registrationStartDate}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="registrationStartDate" value={formData.registrationStartDate} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Registration Deadline">
-            <input
-              type="date"
-              name="registrationDeadline"
-              value={formData.registrationDeadline}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="registrationDeadline" value={formData.registrationDeadline} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Abstract Deadline">
-            <input
-              type="date"
-              name="abstractDeadline"
-              value={formData.abstractDeadline}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="abstractDeadline" value={formData.abstractDeadline} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Paper Deadline">
-            <input
-              type="date"
-              name="paperDeadline"
-              value={formData.paperDeadline}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input type="date" name="paperDeadline" value={formData.paperDeadline} onChange={handleChange} className={inputClass} />
           </Field>
         </div>
       </div>
@@ -1496,94 +824,36 @@ const CreateConference = () => {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Venue Name">
-            <input
-              name="venueName"
-              value={formData.venueName}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="venueName" value={formData.venueName} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Location">
-            <input
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Webinar"
-              className={inputClass}
-            />
+            <input name="location" value={formData.location} onChange={handleChange} placeholder="Webinar" className={inputClass} />
           </Field>
-
           <Field label="Address" full>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows={2}
-              className={textareaClass}
-            />
+            <textarea name="address" value={formData.address} onChange={handleChange} rows={2} className={textareaClass} />
           </Field>
-
           <Field label="City">
-            <input
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="city" value={formData.city} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="State">
-            <input
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="state" value={formData.state} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Country">
-            <input
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="country" value={formData.country} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Timezone">
-            <select
-              name="timezone"
-              value={formData.timezone}
-              onChange={handleChange}
-              className={inputClass}
-            >
+            <select name="timezone" value={formData.timezone} onChange={handleChange} className={inputClass}>
               <option value="Asia/Kolkata">Asia/Kolkata</option>
-
               <option value="UTC">UTC</option>
-
               <option value="Europe/London">Europe/London</option>
-
               <option value="America/New_York">America/New_York</option>
             </select>
           </Field>
-
           <Field label="Google Maps URL">
-            <input
-              name="mapUrl"
-              value={formData.mapUrl}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="mapUrl" value={formData.mapUrl} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Online Link">
-            <input
-              name="onlineLink"
-              value={formData.onlineLink}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="onlineLink" value={formData.onlineLink} onChange={handleChange} className={inputClass} />
           </Field>
         </div>
       </div>
@@ -1596,13 +866,9 @@ const CreateConference = () => {
 
   const registrationFields = [
     ["speakerRegistration", "Speaker Registration"],
-
     ["delegateRegistration", "Delegate Registration"],
-
     ["posterRegistration", "Poster Registration"],
-
     ["packageA", "Package A (Registration + 2 Nights Accommodation)"],
-
     ["packageB", "Package B (Registration + 3 Nights Accommodation)"],
   ];
 
@@ -1616,15 +882,10 @@ const CreateConference = () => {
       <div className="mb-4 rounded-xl border border-violet-100 bg-violet-50/50 p-3">
         <div className="flex items-center gap-2">
           <DollarSign size={18} className="text-violet-600" />
-
           <div>
-            <p className="text-[13px] font-bold text-slate-800">
-              Currency Based Registration
-            </p>
-
+            <p className="text-[13px] font-bold text-slate-800">Currency Based Registration</p>
             <p className="text-[11px] text-slate-500">
-              Public registration page can switch currency without changing
-              conference data.
+              Public registration page can switch currency without changing conference data.
             </p>
           </div>
         </div>
@@ -1632,21 +893,13 @@ const CreateConference = () => {
 
       <div className="space-y-5">
         {registrationCategories.map((category, categoryIndex) => (
-          <div
-            key={category.category}
-            className="overflow-hidden rounded-xl border border-slate-200"
-          >
+          <div key={category.category} className="overflow-hidden rounded-xl border border-slate-200">
             <div className="flex items-center justify-between bg-slate-800 px-4 py-3">
-              <h3 className="text-sm font-bold text-white">
-                {category.category}
-              </h3>
-
-              <span className="text-[11px] text-slate-300">
-                Registration Pricing
-              </span>
+              <h3 className="text-sm font-bold text-white">{category.category}</h3>
+              <span className="text-[11px] text-slate-300">Registration Pricing</span>
             </div>
 
-            {["GBP", "USD", "EUR"].map((currency) => (
+            {CURRENCIES.map((currency) => (
               <div key={currency} className="border-t border-slate-200 p-3">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700">
@@ -1661,19 +914,13 @@ const CreateConference = () => {
                         <input
                           type="number"
                           min="0"
-                          value={category.prices[currency][field]}
+                          value={category.prices?.[currency]?.[field] ?? ""}
                           onChange={(e) =>
-                            updateRegistrationPrice(
-                              categoryIndex,
-                              currency,
-                              field,
-                              e.target.value,
-                            )
+                            updateRegistrationPrice(categoryIndex, currency, field, e.target.value)
                           }
                           placeholder="0"
                           className={`${inputClass} pr-12`}
                         />
-
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">
                           {currency}
                         </span>
@@ -1701,21 +948,14 @@ const CreateConference = () => {
       />
 
       <Field label="Heading">
-        <input
-          name="welcomeHeading"
-          value={formData.welcomeHeading}
-          onChange={handleChange}
-          className={inputClass}
-        />
+        <input name="welcomeHeading" value={formData.welcomeHeading} onChange={handleChange} className={inputClass} />
       </Field>
 
       <div className="mt-4 space-y-3">
         {formData.welcomeParagraphs.map((paragraph, index) => (
           <div key={index}>
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-[12px] font-semibold text-slate-700">
-                Paragraph {index + 1}
-              </label>
+              <label className="text-[12px] font-semibold text-slate-700">Paragraph {index + 1}</label>
 
               {formData.welcomeParagraphs.length > 1 && (
                 <button
@@ -1723,10 +963,7 @@ const CreateConference = () => {
                   onClick={() =>
                     setFormData((prev) => ({
                       ...prev,
-
-                      welcomeParagraphs: prev.welcomeParagraphs.filter(
-                        (_, i) => i !== index,
-                      ),
+                      welcomeParagraphs: prev.welcomeParagraphs.filter((_, i) => i !== index),
                     }))
                   }
                   className="text-red-500"
@@ -1741,7 +978,6 @@ const CreateConference = () => {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-
                   welcomeParagraphs: prev.welcomeParagraphs.map((item, i) =>
                     i === index ? e.target.value : item,
                   ),
@@ -1757,11 +993,7 @@ const CreateConference = () => {
       <button
         type="button"
         onClick={() =>
-          setFormData((prev) => ({
-            ...prev,
-
-            welcomeParagraphs: [...prev.welcomeParagraphs, ""],
-          }))
+          setFormData((prev) => ({ ...prev, welcomeParagraphs: [...prev.welcomeParagraphs, ""] }))
         }
         className={`${buttonClass} mt-3 bg-violet-600 text-white hover:bg-violet-700`}
       >
@@ -1798,23 +1030,13 @@ const CreateConference = () => {
         />
 
         <div className="space-y-3">
-          {speakers.length === 0 && (
-            <EmptyState icon={Users} text="No speakers added." />
-          )}
+          {speakers.length === 0 && <EmptyState icon={Users} text="No speakers added." />}
 
           {speakers.map((speaker, index) => (
-            <div
-              key={speaker.id}
-              className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-            >
+            <div key={speaker.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-[13px] font-bold">Speaker {index + 1}</h3>
-
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem(setSpeakers, index)}
-                  className="text-red-500"
-                >
+                <button type="button" onClick={() => removeArrayItem(setSpeakers, index)} className="text-red-500">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -1831,11 +1053,7 @@ const CreateConference = () => {
                     <input
                       value={speaker[field] || ""}
                       onChange={(e) =>
-                        updateArrayItem(setSpeakers, index, {
-                          ...speaker,
-
-                          [field]: e.target.value,
-                        })
+                        updateArrayItem(setSpeakers, index, { ...speaker, [field]: e.target.value })
                       }
                       className={inputClass}
                     />
@@ -1845,25 +1063,13 @@ const CreateConference = () => {
                 <ImageUploader
                   label="Speaker Image"
                   value={speaker.image}
-                  onChange={(file) =>
-                    updateArrayItem(setSpeakers, index, {
-                      ...speaker,
-
-                      image: file,
-                    })
-                  }
+                  onChange={(file) => updateArrayItem(setSpeakers, index, { ...speaker, image: file })}
                 />
 
                 <Field label="Biography" full>
                   <textarea
                     value={speaker.bio || ""}
-                    onChange={(e) =>
-                      updateArrayItem(setSpeakers, index, {
-                        ...speaker,
-
-                        bio: e.target.value,
-                      })
-                    }
+                    onChange={(e) => updateArrayItem(setSpeakers, index, { ...speaker, bio: e.target.value })}
                     rows={4}
                     className={textareaClass}
                   />
@@ -1875,28 +1081,14 @@ const CreateConference = () => {
       </div>
 
       <div className={cardClass}>
-        <HeaderButton
-          title="Organizing Committee"
-          buttonText="Add Member"
-          onClick={addCommittee}
-        />
+        <HeaderButton title="Organizing Committee" buttonText="Add Member" onClick={addCommittee} />
 
         <div className="space-y-3">
           {committee.map((member, index) => (
-            <div
-              key={member.id}
-              className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-            >
+            <div key={member.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-[13px] font-bold">
-                  Committee Member {index + 1}
-                </h3>
-
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem(setCommittee, index)}
-                  className="text-red-500"
-                >
+                <h3 className="text-[13px] font-bold">Committee Member {index + 1}</h3>
+                <button type="button" onClick={() => removeArrayItem(setCommittee, index)} className="text-red-500">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -1911,11 +1103,7 @@ const CreateConference = () => {
                     <input
                       value={member[field] || ""}
                       onChange={(e) =>
-                        updateArrayItem(setCommittee, index, {
-                          ...member,
-
-                          [field]: e.target.value,
-                        })
+                        updateArrayItem(setCommittee, index, { ...member, [field]: e.target.value })
                       }
                       className={inputClass}
                     />
@@ -1925,13 +1113,7 @@ const CreateConference = () => {
                 <ImageUploader
                   label="Committee Image"
                   value={member.image}
-                  onChange={(file) =>
-                    updateArrayItem(setCommittee, index, {
-                      ...member,
-
-                      image: file,
-                    })
-                  }
+                  onChange={(file) => updateArrayItem(setCommittee, index, { ...member, image: file })}
                 />
               </div>
             </div>
@@ -1942,7 +1124,7 @@ const CreateConference = () => {
   );
 
   /* =========================================================
-     CONTENT
+     CONTENT (TOPICS / TRACKS)
   ========================================================= */
 
   const renderContent = () => (
@@ -1959,14 +1141,11 @@ const CreateConference = () => {
           {topics.map((topic, index) => (
             <div key={index} className="flex gap-2">
               <input
-                value={typeof topic === "string" ? topic : topic?.name || ""}
-                onChange={(e) =>
-                  updateArrayItem(setTopics, index, e.target.value)
-                }
+                value={topicToString(topic)}
+                onChange={(e) => updateArrayItem(setTopics, index, e.target.value)}
                 className={inputClass}
                 placeholder="Autism Research"
               />
-
               <button
                 type="button"
                 onClick={() => removeArrayItem(setTopics, index)}
@@ -1989,44 +1168,24 @@ const CreateConference = () => {
 
         <div className="space-y-3">
           {tracks.map((track, index) => (
-            <div
-              key={index}
-              className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-            >
+            <div key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="mb-2 flex justify-between">
                 <span className="text-[12px] font-bold">Track {index + 1}</span>
-
-                <button
-                  type="button"
-                  onClick={() => removeArrayItem(setTracks, index)}
-                  className="text-red-500"
-                >
+                <button type="button" onClick={() => removeArrayItem(setTracks, index)} className="text-red-500">
                   <Trash2 size={14} />
                 </button>
               </div>
 
               <input
                 value={track.title || ""}
-                onChange={(e) =>
-                  updateArrayItem(setTracks, index, {
-                    ...track,
-
-                    title: e.target.value,
-                  })
-                }
+                onChange={(e) => updateArrayItem(setTracks, index, { ...track, title: e.target.value })}
                 placeholder="Track Title"
                 className={inputClass}
               />
 
               <textarea
                 value={track.description || ""}
-                onChange={(e) =>
-                  updateArrayItem(setTracks, index, {
-                    ...track,
-
-                    description: e.target.value,
-                  })
-                }
+                onChange={(e) => updateArrayItem(setTracks, index, { ...track, description: e.target.value })}
                 placeholder="Track Description"
                 rows={3}
                 className={`${textareaClass} mt-2`}
@@ -2043,7 +1202,7 @@ const CreateConference = () => {
   ========================================================= */
 
   const renderHighlights = () => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className={cardClass}>
         <HeaderButton
           title="Key Highlights"
@@ -2053,24 +1212,14 @@ const CreateConference = () => {
         />
 
         {keyHighlights.map((item, index) => (
-          <div
-            key={index}
-            className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
-          >
+          <div key={index} className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <div className="flex gap-2">
               <input
                 value={item.title || ""}
-                onChange={(e) =>
-                  updateArrayItem(setKeyHighlights, index, {
-                    ...item,
-
-                    title: e.target.value,
-                  })
-                }
+                onChange={(e) => updateArrayItem(setKeyHighlights, index, { ...item, title: e.target.value })}
                 placeholder="Live Keynote Presentations"
                 className={inputClass}
               />
-
               <button
                 type="button"
                 onClick={() => removeArrayItem(setKeyHighlights, index)}
@@ -2082,19 +1231,58 @@ const CreateConference = () => {
 
             <textarea
               value={item.description || ""}
-              onChange={(e) =>
-                updateArrayItem(setKeyHighlights, index, {
-                  ...item,
-
-                  description: e.target.value,
-                })
-              }
-              placeholder="Description"
+              onChange={(e) => updateArrayItem(setKeyHighlights, index, { ...item, description: e.target.value })}
+              placeholder="Highlight description"
               rows={3}
               className={`${textareaClass} mt-2`}
             />
           </div>
         ))}
+      </div>
+
+      <div className={cardClass}>
+        <HeaderButton
+          title="Key Points"
+          description="Important points displayed on the conference details page."
+          buttonText="Add Key Point"
+          onClick={() => setKeyPoints((prev) => [...prev, ""])}
+        />
+
+        {keyPoints.map((point, index) => (
+          <div
+            key={index}
+            className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700">
+              {index + 1}
+            </span>
+
+            <input
+              type="text"
+              value={point || ""}
+              onChange={(e) =>
+                setKeyPoints((prev) => prev.map((item, i) => (i === index ? e.target.value : item)))
+              }
+              placeholder="Enter key point"
+              className={inputClass}
+            />
+
+            <button
+              type="button"
+              onClick={() => setKeyPoints((prev) => prev.filter((_, i) => i !== index))}
+              className="w-10 shrink-0 text-red-500 transition hover:text-red-700"
+              title="Remove key point"
+            >
+              <Trash2 size={14} className="mx-auto" />
+            </button>
+          </div>
+        ))}
+
+        {keyPoints.length === 0 && (
+          <p className="py-4 text-center text-sm text-slate-500">
+            No key points added yet. Click "Add Key Point" to get started.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -2127,18 +1315,11 @@ const CreateConference = () => {
           <div key={index} className="flex gap-2">
             <input
               value={item}
-              onChange={(e) =>
-                updateArrayItem(setWhoShouldAttend, index, e.target.value)
-              }
+              onChange={(e) => updateArrayItem(setWhoShouldAttend, index, e.target.value)}
               className={inputClass}
               placeholder="Autism Researchers"
             />
-
-            <button
-              type="button"
-              onClick={() => removeArrayItem(setWhoShouldAttend, index)}
-              className="w-10 text-red-500"
-            >
+            <button type="button" onClick={() => removeArrayItem(setWhoShouldAttend, index)} className="w-10 text-red-500">
               <Trash2 size={14} className="mx-auto" />
             </button>
           </div>
@@ -2154,12 +1335,7 @@ const CreateConference = () => {
   const renderBenefits = () => (
     <div className="space-y-3">
       <div className={cardClass}>
-        <HeaderButton
-          title="Why To Attend"
-          buttonText="Add Item"
-          onClick={addWhyAttend}
-        />
-
+        <HeaderButton title="Why To Attend" buttonText="Add Item" onClick={addWhyAttend} />
         {whyToAttend.map((item, index) => (
           <ObjectItem
             key={index}
@@ -2172,12 +1348,7 @@ const CreateConference = () => {
       </div>
 
       <div className={cardClass}>
-        <HeaderButton
-          title="Benefits Of Attending"
-          buttonText="Add Benefit"
-          onClick={addBenefit}
-        />
-
+        <HeaderButton title="Benefits Of Attending" buttonText="Add Benefit" onClick={addBenefit} />
         {benefitsOfAttending.map((item, index) => (
           <ObjectItem
             key={index}
@@ -2190,12 +1361,7 @@ const CreateConference = () => {
       </div>
 
       <div className={cardClass}>
-        <HeaderButton
-          title="Delegate Benefits"
-          buttonText="Add Delegate Benefit"
-          onClick={addDelegate}
-        />
-
+        <HeaderButton title="Delegate Benefits" buttonText="Add Delegate Benefit" onClick={addDelegate} />
         {delegates.map((item, index) => (
           <ObjectItem
             key={index}
@@ -2223,79 +1389,40 @@ const CreateConference = () => {
       />
 
       {sessions.map((day, dayIndex) => (
-        <div
-          key={dayIndex}
-          className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
-        >
+        <div key={dayIndex} className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="mb-3 flex gap-2">
             <input
               value={day.day || ""}
-              onChange={(e) =>
-                updateArrayItem(setSessions, dayIndex, {
-                  ...day,
-
-                  day: e.target.value,
-                })
-              }
+              onChange={(e) => updateArrayItem(setSessions, dayIndex, { ...day, day: e.target.value })}
               placeholder="Day 1 – April 06, 2027 | Webinar"
               className={inputClass}
             />
-
-            <button
-              type="button"
-              onClick={() => removeArrayItem(setSessions, dayIndex)}
-              className="w-10 text-red-500"
-            >
+            <button type="button" onClick={() => removeArrayItem(setSessions, dayIndex)} className="w-10 text-red-500">
               <Trash2 size={14} className="mx-auto" />
             </button>
           </div>
 
           {(day.schedule || []).map((schedule, scheduleIndex) => (
-            <div
-              key={scheduleIndex}
-              className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-[150px_1fr_40px]"
-            >
+            <div key={scheduleIndex} className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-[150px_1fr_40px]">
               <input
                 value={schedule.time || ""}
-                onChange={(e) =>
-                  updateSchedule(
-                    dayIndex,
-                    scheduleIndex,
-                    "time",
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => updateSchedule(dayIndex, scheduleIndex, "time", e.target.value)}
                 placeholder="9:00 AM"
                 className={inputClass}
               />
-
               <input
                 value={schedule.session || ""}
-                onChange={(e) =>
-                  updateSchedule(
-                    dayIndex,
-                    scheduleIndex,
-                    "session",
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => updateSchedule(dayIndex, scheduleIndex, "session", e.target.value)}
                 placeholder="Opening Remarks & Welcome Address"
                 className={inputClass}
               />
-
               <button
                 type="button"
                 onClick={() =>
                   setSessions((prev) =>
                     prev.map((item, i) =>
                       i === dayIndex
-                        ? {
-                            ...item,
-
-                            schedule: item.schedule.filter(
-                              (_, j) => j !== scheduleIndex,
-                            ),
-                          }
+                        ? { ...item, schedule: item.schedule.filter((_, j) => j !== scheduleIndex) }
                         : item,
                     ),
                   )
@@ -2326,58 +1453,37 @@ const CreateConference = () => {
 
   const posterFields = [
     ["benefits", "E-Poster Benefits"],
-
     ["posterContent", "Poster Content"],
-
     ["designRequirements", "Design Requirements"],
-
     ["submissionGuidelines", "Submission Guidelines"],
-
     ["reviewAndAcceptance", "Review & Acceptance"],
-
     ["presentation", "Presentation"],
-
     ["certificate", "Certificate"],
-
     ["closingNotes", "Closing Notes"],
   ];
 
   const renderPoster = () => (
     <div className={cardClass}>
-      <SectionHeader
-        title="Poster & E-Poster"
-        description="Manage poster presentation information."
-      />
+      <SectionHeader title="Poster & E-Poster" description="Manage poster presentation information." />
 
       <Field label="E-Poster Guidelines Introduction">
         <textarea
           value={ePoster.guidelinesIntro}
-          onChange={(e) =>
-            setEPoster((prev) => ({
-              ...prev,
-
-              guidelinesIntro: e.target.value,
-            }))
-          }
+          onChange={(e) => setEPoster((prev) => ({ ...prev, guidelinesIntro: e.target.value }))}
           rows={5}
           className={textareaClass}
         />
       </Field>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-        {Object.entries(ePoster.specifications).map(([key, value]) => (
+        {Object.entries(ePoster.specifications || {}).map(([key, value]) => (
           <Field key={key} label={key}>
             <input
               value={value}
               onChange={(e) =>
                 setEPoster((prev) => ({
                   ...prev,
-
-                  specifications: {
-                    ...prev.specifications,
-
-                    [key]: e.target.value,
-                  },
+                  specifications: { ...prev.specifications, [key]: e.target.value },
                 }))
               }
               className={inputClass}
@@ -2391,7 +1497,6 @@ const CreateConference = () => {
           <div key={field}>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-[13px] font-bold">{title}</h3>
-
               <button
                 type="button"
                 onClick={() => addPosterPoint(field)}
@@ -2405,17 +1510,10 @@ const CreateConference = () => {
               <div key={index} className="mb-2 flex gap-2">
                 <input
                   value={item}
-                  onChange={(e) =>
-                    updatePosterPoint(field, index, e.target.value)
-                  }
+                  onChange={(e) => updatePosterPoint(field, index, e.target.value)}
                   className={inputClass}
                 />
-
-                <button
-                  type="button"
-                  onClick={() => removePosterPoint(field, index)}
-                  className="w-10 text-red-500"
-                >
+                <button type="button" onClick={() => removePosterPoint(field, index)} className="w-10 text-red-500">
                   <Trash2 size={14} className="mx-auto" />
                 </button>
               </div>
@@ -2431,12 +1529,9 @@ const CreateConference = () => {
           <div key={index} className="mb-2 flex gap-2">
             <input
               value={item}
-              onChange={(e) =>
-                updateArrayItem(setPosterPresentersLive, index, e.target.value)
-              }
+              onChange={(e) => updateArrayItem(setPosterPresentersLive, index, e.target.value)}
               className={inputClass}
             />
-
             <button
               type="button"
               onClick={() => removeArrayItem(setPosterPresentersLive, index)}
@@ -2465,10 +1560,7 @@ const CreateConference = () => {
 
   const renderMarket = () => (
     <div className={cardClass}>
-      <SectionHeader
-        title="Market Analysis"
-        description="Conference-specific market analysis content."
-      />
+      <SectionHeader title="Market Analysis" description="Conference-specific market analysis content." />
 
       <Field label="Heading">
         <input
@@ -2484,19 +1576,13 @@ const CreateConference = () => {
         {formData.marketParagraphs.map((paragraph, index) => (
           <div key={index} className="mb-3">
             <div className="mb-1 flex justify-between">
-              <label className="text-[12px] font-semibold">
-                Paragraph {index + 1}
-              </label>
-
+              <label className="text-[12px] font-semibold">Paragraph {index + 1}</label>
               <button
                 type="button"
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-
-                    marketParagraphs: prev.marketParagraphs.filter(
-                      (_, i) => i !== index,
-                    ),
+                    marketParagraphs: prev.marketParagraphs.filter((_, i) => i !== index),
                   }))
                 }
                 className="text-red-500"
@@ -2510,7 +1596,6 @@ const CreateConference = () => {
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-
                   marketParagraphs: prev.marketParagraphs.map((item, i) =>
                     i === index ? e.target.value : item,
                   ),
@@ -2525,11 +1610,7 @@ const CreateConference = () => {
         <button
           type="button"
           onClick={() =>
-            setFormData((prev) => ({
-              ...prev,
-
-              marketParagraphs: [...prev.marketParagraphs, ""],
-            }))
+            setFormData((prev) => ({ ...prev, marketParagraphs: [...prev.marketParagraphs, ""] }))
           }
           className={`${buttonClass} bg-violet-600 text-white`}
         >
@@ -2542,13 +1623,7 @@ const CreateConference = () => {
         <ImageUploader
           label="Market Analysis Image"
           value={formData.marketImage}
-          onChange={(file) =>
-            setFormData((prev) => ({
-              ...prev,
-
-              marketImage: file,
-            }))
-          }
+          onChange={(file) => setFormData((prev) => ({ ...prev, marketImage: file }))}
         />
       </div>
     </div>
@@ -2560,16 +1635,8 @@ const CreateConference = () => {
 
   const renderMedia = () => (
     <div className={cardClass}>
-      <SectionHeader
-        title="Media & Sponsors"
-        description="Upload sponsor logos using drag and drop."
-      />
-
-      <MultiImageUploader
-        label="Sponsor Logos"
-        values={sponsors}
-        onChange={setSponsors}
-      />
+      <SectionHeader title="Media & Sponsors" description="Upload sponsor logos using drag and drop." />
+      <MultiImageUploader label="Sponsor Logos" values={sponsors} onChange={setSponsors} />
     </div>
   );
 
@@ -2584,39 +1651,16 @@ const CreateConference = () => {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Contact Email">
-            <input
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="contactEmail" value={formData.contactEmail} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Phone">
-            <input
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="phone" value={formData.phone} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="WhatsApp">
-            <input
-              name="whatsapp"
-              value={formData.whatsapp}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="whatsapp" value={formData.whatsapp} onChange={handleChange} className={inputClass} />
           </Field>
-
           <Field label="Website">
-            <input
-              name="website"
-              value={formData.website}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            <input name="website" value={formData.website} onChange={handleChange} className={inputClass} />
           </Field>
         </div>
       </div>
@@ -2632,11 +1676,7 @@ const CreateConference = () => {
           ].map(([name, label]) => (
             <Field key={name} label={label}>
               <div className="relative">
-                <Link2
-                  size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400"
-                />
-
+                <Link2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400" />
                 <input
                   name={name}
                   value={formData[name]}
@@ -2650,134 +1690,104 @@ const CreateConference = () => {
       </div>
 
       <div className={cardClass}>
-        <SectionHeader title="Submission Settings" />
-
-        <div className="space-y-2">
-          {[
-            ["abstractSubmission", "Enable Abstract Submission"],
-
-            ["paperSubmission", "Enable Full Paper Submission"],
-
-            ["oralPresentation", "Allow Oral Presentation"],
-
-            ["posterPresentation", "Allow Poster Presentation"],
-
-            ["virtualPresentation", "Allow Virtual Presentation"],
-          ].map(([name, label]) => (
-            <label
-              key={name}
-              className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-3"
-            >
-              <span className="text-[13px] font-medium">{label}</span>
-
-              <input
-                type="checkbox"
-                name={name}
-                checked={formData.submission[name]}
-                onChange={handleSubmissionChange}
-                className="h-4 w-4 accent-violet-600"
-              />
-            </label>
+        <HeaderButton
+          title="Recent Posts"
+          description="Add news, announcements or recent updates shown on the conference page."
+          buttonText="Add Post"
+          onClick={() =>
+            addArrayItem(setRecentPosts, { title: "", description: "", url: "", date: "" })
+          }
+        />
+        {recentPosts.length === 0 && <EmptyState icon={BookOpen} text="No recent posts added yet." />}
+        <div className="space-y-3">
+          {recentPosts.map((post, index) => (
+            <div key={post.id || index} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">Post {index + 1}</p>
+                <button
+                  type="button"
+                  onClick={() => removeArrayItem(setRecentPosts, index)}
+                  className="text-red-500"
+                  aria-label={`Remove post ${index + 1}`}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Field label="Post Title">
+                  <input
+                    value={post.title || ""}
+                    onChange={(e) => updateArrayItem(setRecentPosts, index, { ...post, title: e.target.value })}
+                    placeholder="Conference announcement"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Post Date">
+                  <input
+                    type="date"
+                    value={post.date || ""}
+                    onChange={(e) => updateArrayItem(setRecentPosts, index, { ...post, date: e.target.value })}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Post / Article URL" full>
+                  <input
+                    type="url"
+                    value={post.url || ""}
+                    onChange={(e) => updateArrayItem(setRecentPosts, index, { ...post, url: e.target.value })}
+                    placeholder="https://..."
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Post Description" full>
+                  <textarea
+                    value={post.description || ""}
+                    onChange={(e) =>
+                      updateArrayItem(setRecentPosts, index, { ...post, description: e.target.value })
+                    }
+                    rows={3}
+                    placeholder="Short summary of the update..."
+                    className={textareaClass}
+                  />
+                </Field>
+              </div>
+            </div>
           ))}
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Field label="Review Type">
-            <select
-              name="reviewType"
-              value={formData.submission.reviewType}
-              onChange={handleSubmissionChange}
-              className={inputClass}
-            >
-              <option>Single Blind</option>
-
-              <option>Double Blind</option>
-
-              <option>Open Review</option>
-            </select>
-          </Field>
-
-          <Field label="Maximum Abstract Words">
-            <input
-              type="number"
-              name="maxAbstractWords"
-              value={formData.submission.maxAbstractWords}
-              onChange={handleSubmissionChange}
-              className={inputClass}
-            />
-          </Field>
         </div>
       </div>
     </div>
   );
 
   /* =========================================================
-     RENDER SECTION
+     RENDER SECTION / NAVIGATION
   ========================================================= */
 
   const renderSection = () => {
     switch (activeSection) {
-      case "basic":
-        return renderBasic();
-
-      case "dates":
-        return renderDates();
-
-      case "registration":
-        return renderRegistration();
-
-      case "welcome":
-        return renderWelcome();
-
-      case "speakers":
-        return renderSpeakers();
-
-      case "content":
-        return renderContent();
-
-      case "highlights":
-        return renderHighlights();
-
-      case "agenda":
-        return renderAgenda();
-
-      case "attendees":
-        return renderAttendees();
-
-      case "benefits":
-        return renderBenefits();
-
-      case "poster":
-        return renderPoster();
-
-      case "market":
-        return renderMarket();
-
-      case "media":
-        return renderMedia();
-
-      case "contact":
-        return renderContact();
-
-      default:
-        return renderBasic();
+      case "basic": return renderBasic();
+      case "dates": return renderDates();
+      case "registration": return renderRegistration();
+      case "welcome": return renderWelcome();
+      case "speakers": return renderSpeakers();
+      case "content": return renderContent();
+      case "highlights": return renderHighlights();
+      case "agenda": return renderAgenda();
+      case "attendees": return renderAttendees();
+      case "benefits": return renderBenefits();
+      case "poster": return renderPoster();
+      case "market": return renderMarket();
+      case "media": return renderMedia();
+      case "contact": return renderContact();
+      default: return renderBasic();
     }
   };
 
-  /* =========================================================
-     NAVIGATION
-  ========================================================= */
-
   const goPrevious = () => {
-    if (currentIndex > 0) {
-      setActiveSection(sections[currentIndex - 1].id);
-    }
+    if (currentIndex > 0) setActiveSection(sections[currentIndex - 1].id);
   };
 
   const goNext = () => {
-    if (currentIndex < sections.length - 1) {
-      setActiveSection(sections[currentIndex + 1].id);
-    }
+    if (currentIndex < sections.length - 1) setActiveSection(sections[currentIndex + 1].id);
   };
 
   /* =========================================================
@@ -2786,10 +1796,6 @@ const CreateConference = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="flex min-h-[62px] items-center justify-between gap-3 px-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -2805,7 +1811,6 @@ const CreateConference = () => {
               <h1 className="truncate text-[16px] font-bold text-slate-900">
                 {isEditMode ? "Update Conference" : "Create Conference"}
               </h1>
-
               <p className="hidden text-[11px] text-slate-500 sm:block">
                 {isEditMode
                   ? "Update the selected conference and save changes to the API."
@@ -2814,13 +1819,7 @@ const CreateConference = () => {
             </div>
           </div>
 
-          {/* =================================================
-              TOP ACTIONS
-          ================================================== */}
-
           <div className="flex gap-2">
-            {/* SAVE DRAFT / UPDATE DRAFT */}
-
             <button
               type="button"
               disabled={saving || conferenceLoading}
@@ -2828,11 +1827,8 @@ const CreateConference = () => {
               className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 text-[12px] font-semibold text-violet-700 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={15} />
-
               {isEditMode ? "Update Draft" : "Save Draft"}
             </button>
-
-            {/* CREATE / UPDATE & PUBLISH */}
 
             <button
               type="button"
@@ -2841,36 +1837,21 @@ const CreateConference = () => {
               className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 text-[12px] font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Check size={15} />
-
               {saving
-                ? isEditMode
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditMode
-                  ? "Update & Publish"
-                  : "Create & Publish"}
+                ? isEditMode ? "Updating..." : "Creating..."
+                : isEditMode ? "Update & Publish" : "Create & Publish"}
             </button>
           </div>
         </div>
       </header>
 
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
-
       <div className="mx-auto w-full max-w-[1500px] p-3">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="grid grid-cols-1 lg:grid-cols-[235px_minmax(0,1fr)]">
-            {/* =================================================
-                SIDEBAR
-            ================================================== */}
-
             <aside className="border-b border-slate-200 bg-slate-50 p-3 lg:border-b-0 lg:border-r">
               {sections.map((section, index) => {
                 const Icon = section.icon;
-
                 const active = activeSection === section.id;
-
                 const completed = index < currentIndex;
 
                 return (
@@ -2879,16 +1860,12 @@ const CreateConference = () => {
                     type="button"
                     onClick={() => setActiveSection(section.id)}
                     className={`mb-1.5 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition ${
-                      active
-                        ? "bg-violet-100 text-violet-700"
-                        : "text-slate-600 hover:bg-white"
+                      active ? "bg-violet-100 text-violet-700" : "text-slate-600 hover:bg-white"
                     }`}
                   >
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                        active || completed
-                          ? "bg-violet-600 text-white"
-                          : "bg-white text-slate-400"
+                        active || completed ? "bg-violet-600 text-white" : "bg-white text-slate-400"
                       }`}
                     >
                       {completed ? <Check size={14} /> : <Icon size={14} />}
@@ -2898,26 +1875,17 @@ const CreateConference = () => {
                       <p className="text-[9px] font-bold uppercase tracking-wide opacity-60">
                         Step {index + 1}
                       </p>
-
-                      <p className="text-[12px] font-semibold">
-                        {section.label}
-                      </p>
+                      <p className="text-[12px] font-semibold">{section.label}</p>
                     </div>
                   </button>
                 );
               })}
             </aside>
 
-            {/* =================================================
-                CONTENT
-            ================================================== */}
-
             <main className="min-w-0 bg-slate-50/50 p-3 sm:p-4">
               {renderSection()}
 
               <div className="mt-3 flex items-center justify-between">
-                {/* PREVIOUS */}
-
                 <button
                   type="button"
                   disabled={currentIndex === 0 || saving || conferenceLoading}
@@ -2926,8 +1894,6 @@ const CreateConference = () => {
                 >
                   Previous
                 </button>
-
-                {/* NEXT */}
 
                 {currentIndex < sections.length - 1 ? (
                   <button
@@ -2940,8 +1906,6 @@ const CreateConference = () => {
                     <ChevronDown size={15} className="-rotate-90" />
                   </button>
                 ) : (
-                  /* LAST STEP */
-
                   <button
                     type="button"
                     onClick={() => saveConference(false)}
@@ -2949,14 +1913,9 @@ const CreateConference = () => {
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-[12px] font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save size={15} />
-
                     {saving
-                      ? isEditMode
-                        ? "Updating..."
-                        : "Creating..."
-                      : isEditMode
-                        ? "Update Conference"
-                        : "Create Conference"}
+                      ? isEditMode ? "Updating..." : "Creating..."
+                      : isEditMode ? "Update Conference" : "Create Conference"}
                   </button>
                 )}
               </div>
@@ -2969,70 +1928,45 @@ const CreateConference = () => {
 };
 
 /* =========================================================
-   FIELD
+   SMALL COMPONENTS
 ========================================================= */
 
 const Field = ({ label, children, full = false }) => (
   <div className={full ? "md:col-span-2" : ""}>
-    <label className="mb-1.5 block text-[12px] font-semibold text-slate-700">
-      {label}
-    </label>
-
+    <label className="mb-1.5 block text-[12px] font-semibold text-slate-700">{label}</label>
     {children}
   </div>
 );
 
-/* =========================================================
-   SECTION HEADER
-========================================================= */
-
 const SectionHeader = ({ title, description }) => (
   <div className="mb-4">
     <h2 className="text-[15px] font-bold text-slate-900">{title}</h2>
-
     {description && (
-      <p className="mt-0.5 text-[12px] leading-5 text-slate-500">
-        {description}
-      </p>
+      <p className="mt-0.5 text-[12px] leading-5 text-slate-500">{description}</p>
     )}
   </div>
 );
 
-/* =========================================================
-   HEADER BUTTON
-========================================================= */
-
 const HeaderButton = ({ title, description, buttonText, onClick }) => (
   <div className="mb-4 flex items-center justify-between gap-3">
     <SectionHeader title={title} description={description} />
-
     <button
       type="button"
       onClick={onClick}
       className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[12px] font-semibold text-white hover:bg-violet-700"
     >
       <Plus size={15} />
-
       {buttonText}
     </button>
   </div>
 );
 
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
 const EmptyState = ({ icon: Icon, text }) => (
   <div className="rounded-lg border border-dashed border-slate-300 py-8 text-center">
     <Icon size={28} className="mx-auto text-slate-300" />
-
     <p className="mt-2 text-[12px] text-slate-500">{text}</p>
   </div>
 );
-
-/* =========================================================
-   OBJECT ITEM
-========================================================= */
 
 const ObjectItem = ({ item, index, setter, titlePlaceholder }) => (
   <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -3041,21 +1975,12 @@ const ObjectItem = ({ item, index, setter, titlePlaceholder }) => (
         value={item?.title || ""}
         onChange={(e) =>
           setter((prev) =>
-            prev.map((x, i) =>
-              i === index
-                ? {
-                    ...x,
-
-                    title: e.target.value,
-                  }
-                : x,
-            ),
+            prev.map((x, i) => (i === index ? { ...x, title: e.target.value } : x)),
           )
         }
         placeholder={titlePlaceholder}
         className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px]"
       />
-
       <button
         type="button"
         onClick={() => setter((prev) => prev.filter((_, i) => i !== index))}
@@ -3069,15 +1994,7 @@ const ObjectItem = ({ item, index, setter, titlePlaceholder }) => (
       value={item?.description || ""}
       onChange={(e) =>
         setter((prev) =>
-          prev.map((x, i) =>
-            i === index
-              ? {
-                  ...x,
-
-                  description: e.target.value,
-                }
-              : x,
-          ),
+          prev.map((x, i) => (i === index ? { ...x, description: e.target.value } : x)),
         )
       }
       placeholder="Description"

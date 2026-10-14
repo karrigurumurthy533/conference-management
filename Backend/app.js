@@ -65,10 +65,6 @@ if (process.env.NODE_ENV !== "production") {
     app.use(morgan("combined"));
 }
 
-// ======================================================
-// HEALTH CHECK
-// ======================================================
-
 app.get("/api/health", (req, res) => {
     res.status(200).json({
         success: true,
@@ -77,30 +73,17 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-// ======================================================
-// SITEMAP
-// IMPORTANT: Must be outside /api/v1
-// ======================================================
 
 app.use("/", sitemapRoutes);
 
-// ======================================================
-// API ROUTES
-// ======================================================
 
 app.use("/api/v1", router);
 
-// ======================================================
-// 404
-// ======================================================
 
 app.use((req, res, next) => {
     next(new AppError(`Route not found: ${req.originalUrl}`, 404));
 });
 
-// ======================================================
-// ERROR HANDLER
-// ======================================================
 
 app.use(async (err, req, res, next) => {
     const statusCode = err.statusCode || 500;

@@ -9,6 +9,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const contactRoutes = require("./routes/contactRoutes.js");
 const invoiceRoutes = require("./routes/invoiceRoutes.js");
+const conferenceRoutes = require("./routes/conferenceRoutes.js");
 
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/notification", notificationRoutes);
 router.use("/invoices", invoiceRoutes);
 router.use("/contact", contactRoutes);
+router.use("/conference", conferenceRoutes);
 
 
 

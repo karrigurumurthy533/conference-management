@@ -215,8 +215,12 @@ const getMediaUrl = (value) => {
 };
 
 const getSpeakerImage = (speaker) => {
-  const image = speaker?.image || speaker?.photo || speaker?.profileImage;
-  if (typeof image === "string" && image.trim()) return image;
+  const image =
+    speaker?.image ||
+    speaker?.photo ||
+    speaker?.profileImage ||
+    speaker?.imageUrl;
+  if (typeof image === "string" && image.trim()) return image.trim();
   if (isObject(image)) {
     return (
       image.url || image.secure_url || image.fileUrl || FALLBACK_SPEAKER_IMAGE
@@ -268,9 +272,7 @@ const SectionLabel = ({ children }) => (
 const SectionHeading = ({ label, title, description }) => (
   <div className="mb-6">
     {label && <SectionLabel>{label}</SectionLabel>}
-    <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
-      {title}
-    </h2>
+    <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">{title}</h2>
     {description && (
       <p className="mt-1.5 max-w-3xl text-base font-semibold leading-6 text-slate-600 sm:text-lg">
         {description}
@@ -604,10 +606,6 @@ const ConferenceDetails = () => {
     };
   }, []);
 
-// AUTOMATIC RECENT POSTS SCROLL
-
-
-
   // Normalized conference data
   const data = conference || {};
   const title = asText(data.title || data.name, "International Conference");
@@ -629,6 +627,9 @@ const ConferenceDetails = () => {
 
   const aboutImage = getMediaUrl(data.aboutImage) || FALLBACK_ABOUT_IMAGE;
 
+  // Conference video (Cloudinary URL string from API: data.video)
+  const videoUrl = getMediaUrl(data.video || data.videoUrl);
+
   const speakers = asArray(data.speakers);
 
   const tracks = asArray(data.tracks);
@@ -640,6 +641,17 @@ const ConferenceDetails = () => {
       item && (item.title || item.description || typeof item === "string"),
   );
   const topics = asArray(data.topics);
+
+  // Key points from API (string[]). Falls back to defaults only when empty.
+  const apiKeyPoints = asArray(data.keyPoints)
+    .map((point) =>
+      typeof point === "string"
+        ? point.trim()
+        : getText(point, ["title", "text", "name", "description"]),
+    )
+    .filter(Boolean);
+  const keyPoints = apiKeyPoints.length ? apiKeyPoints : FALLBACK_KEY_POINTS;
+
   const sponsors = asArray(data.sponsors).filter(Boolean);
   const welcome = isObject(data.welcomeMessage) ? data.welcomeMessage : {};
 
@@ -674,11 +686,20 @@ const ConferenceDetails = () => {
     : {};
   const contact = isObject(data.contact) ? data.contact : {};
   const registrationCategories = asArray(data.registrationCategories);
-  const socialPosts = asArray(data.recentPosts || data.posts);
+  const socialPosts = asArray(data.recentPosts || data.posts).filter(
+    (post) => post && (typeof post === "object" || typeof post === "string"),
+  );
   const posts = socialPosts.length ? socialPosts : FALLBACK_POSTS;
   const countdownStart = data.startDate || null;
   const countdownEnd = data.endDate || data.startDate || null;
   const hasSponsors = sponsors.length > 0;
+
+  // Titles used in the scrolling "Latest" ticker
+  const tickerItems = posts
+    .map((post, index) =>
+      getText(post, ["title", "name"], `Conference Update ${index + 1}`),
+    )
+    .filter(Boolean);
 
   const highlightRows = keyHighlights.map((highlight, index) => ({
     key: highlight?._id || `highlight-${index}`,
@@ -831,38 +852,36 @@ const ConferenceDetails = () => {
     venueName,
   ]);
 
+  // AUTOMATIC RECENT POSTS SCROLL
   useEffect(() => {
-  const container = postRef.current;
+    const container = postRef.current;
 
-  if (!container || posts.length <= 1) return;
+    if (!container || posts.length <= 1) return;
 
-  const interval = setInterval(() => {
-    const firstCard = container.querySelector("article");
+    const interval = setInterval(() => {
+      const firstCard = container.querySelector("article");
 
-    if (!firstCard) return;
+      if (!firstCard) return;
 
-    const cardWidth = firstCard.getBoundingClientRect().width;
-    const gap = 12; // gap-3 = 12px
-    const maxScroll =
-      container.scrollWidth - container.clientWidth;
+      const cardWidth = firstCard.getBoundingClientRect().width;
+      const gap = 12; // gap-3 = 12px
+      const maxScroll = container.scrollWidth - container.clientWidth;
 
-    if (container.scrollLeft >= maxScroll - 5) {
-      // Last post reached: restart from the first post
-      container.scrollTo({
-        left: 0,
-        behavior: "smooth",
-      });
-    } else {
-      // Move to the next post automatically
-      container.scrollBy({
-        left: cardWidth + gap,
-        behavior: "smooth",
-      });
-    }
-  }, 3000); // Every 3 seconds
+      if (container.scrollLeft >= maxScroll - 5) {
+        container.scrollTo({
+          left: 0,
+          behavior: "smooth",
+        });
+      } else {
+        container.scrollBy({
+          left: cardWidth + gap,
+          behavior: "smooth",
+        });
+      }
+    }, 3000);
 
-  return () => clearInterval(interval);
-}, [posts.length]);
+    return () => clearInterval(interval);
+  }, [posts.length]);
 
   // Navigation
   const goToRegistration = () => navigate(`/conferences/${currentId}/register`);
@@ -1161,6 +1180,23 @@ const ConferenceDetails = () => {
 
   return (
     <div className="min-h-screen overflow-hidden bg-white font-sans text-slate-800">
+      {/* Scrolling ticker animation for Recent Posts */}
+      <style>{`
+        @keyframes gsMarquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .gs-marquee-track {
+          animation: gsMarquee 22s linear infinite;
+        }
+        .gs-marquee-wrap:hover .gs-marquee-track {
+          animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .gs-marquee-track { animation: none; }
+        }
+      `}</style>
+
       {apiError && (
         <div className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-center text-sm text-amber-800">
           {apiError} Showing available fallback content where appropriate.
@@ -1225,41 +1261,36 @@ const ConferenceDetails = () => {
               </div>
             </div>
 
-          
+            {/* HERO BUTTONS - reduced gap */}
+            <div className="mt-6 grid grid-cols-1 justify-start gap-x-1 gap-y-2 sm:grid-cols-[280px_280px] sm:gap-x-2">
+              <button
+                onClick={goToRegistration}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Register Now <ArrowRight size={19} />
+              </button>
 
+              <button
+                onClick={goToBrochure}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-white/50 bg-white/5 px-5 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/15"
+              >
+                <Download size={18} /> Download Brochure
+              </button>
 
-<div className="mt-7 grid grid-cols-1 justify-center gap-4 sm:grid-cols-2">
-  <button
-    onClick={goToRegistration}
-    className="inline-flex w-full max-w-[280px] items-center justify-center gap-3 justify-self-center rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:justify-self-start"
-  >
-    Register Now <ArrowRight size={19} />
-  </button>
+              <button
+                onClick={goToScientificProgram}
+                className="inline-flex w-full items-center justify-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30"
+              >
+                View Scientific Program
+              </button>
 
-  <button
-    onClick={goToBrochure}
-    className="inline-flex w-full max-w-[280px] items-center justify-center gap-3 justify-self-center rounded-xl border border-white/50 bg-white/5 px-5 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:justify-self-start"
-  >
-    <Download size={18} /> Download Brochure
-  </button>
-
-  <button
-    onClick={goToScientificProgram}
-    className="inline-flex w-full max-w-[280px] items-center justify-center justify-self-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30 sm:justify-self-start"
-  >
-    View Scientific Program
-  </button>
-
-  <button
-    onClick={goToAbstracts}
-    className="inline-flex w-full max-w-[280px] items-center justify-center justify-self-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30 sm:justify-self-start"
-  >
-    Abstract Submission
-  </button>
-</div>
-
-
-
+              <button
+                onClick={goToAbstracts}
+                className="inline-flex w-full items-center justify-center rounded-xl border border-violet-300/80 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-violet-600/30"
+              >
+                Abstract Submission
+              </button>
+            </div>
           </motion.div>
 
           {/* COUNTDOWN */}
@@ -1565,8 +1596,8 @@ const ConferenceDetails = () => {
       </section>
 
       {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
-      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-5 py-14 sm:px-10">
-        <div className="mx-auto max-w-[1300px] space-y-8">
+      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-[1600px] space-y-8">
           {/* WHO SHOULD ATTEND */}
           <div
             className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}
@@ -1613,7 +1644,6 @@ const ConferenceDetails = () => {
 
           {/* OUR CONFERENCE GALLERY */}
           <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-8">
-            {/* GALLERY HEADING */}
             <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <SectionLabel>Moments & Memories</SectionLabel>
@@ -1637,129 +1667,119 @@ const ConferenceDetails = () => {
               </div>
             </div>
 
-            {/* RESPONSIVE CONFERENCE GALLERY */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-              {/* LARGE FEATURED IMAGE */}
-              <div className="group relative min-h-[260px] overflow-hidden rounded-2xl sm:col-span-2 sm:row-span-2 sm:min-h-[420px]">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
+              <div className="group relative h-[150px] overflow-hidden rounded-xl sm:col-span-2 sm:row-span-2 sm:h-[240px] lg:h-[240px]">
                 <img
                   src="/images/one.jpeg"
                   alt="International conference experience"
                   loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110"
+                  className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-
                 <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/90 via-[#100d35]/10 to-transparent" />
-
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
+                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
                     Featured Moment
                   </span>
-                  <h3 className="mt-3 text-2xl text-white sm:text-3xl font-extrabold">
+                  <h3 className="mt-2 text-base font-extrabold text-white sm:text-lg">
                     Global Conference Experience
                   </h3>
-                  <p className="mt-2 max-w-md text-sm font-semibold leading-5 text-white/80 sm:text-base">
+                  <p className="mt-1 text-xs font-medium leading-4 text-white/80">
                     Bringing researchers, professionals and innovators together.
                   </p>
                 </div>
               </div>
 
-              {/* WIDE LANDSCAPE IMAGE */}
-              <div className="group relative h-[220px] overflow-hidden rounded-2xl lg:col-span-2">
+              <div className="group relative h-[120px] overflow-hidden rounded-xl sm:col-span-1 sm:h-[115px] lg:col-span-2">
                 <img
                   src="/images/second.jpeg"
                   alt="Expert conference presentation"
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/80 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-200">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
                     Knowledge Sharing
                   </p>
-                  <h3 className="mt-1 text-xl text-white font-extrabold">
+                  <h3 className="mt-1 text-sm font-extrabold text-white">
                     Expert Presentations
                   </h3>
                 </div>
               </div>
 
-              {/* COLLABORATION IMAGE */}
-              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+              <div className="group relative h-[120px] overflow-hidden rounded-xl">
                 <img
                   src="/images/three.jpeg"
                   alt="Professional collaboration"
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-xs font-semibold text-violet-200">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-3">
+                  <p className="text-[10px] font-semibold text-violet-200">
                     COLLABORATION
                   </p>
-                  <h3 className="mt-1 text-base text-white font-extrabold">
+                  <h3 className="mt-1 text-sm font-extrabold text-white">
                     Networking & Ideas
                   </h3>
                 </div>
               </div>
 
-              {/* RESEARCH IMAGE */}
-              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+              <div className="group relative h-[120px] overflow-hidden rounded-xl">
                 <img
                   src="/images/four.jpeg"
                   alt="Research and technology"
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-xs font-semibold text-violet-200">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-3">
+                  <p className="text-[10px] font-semibold text-violet-200">
                     INNOVATION
                   </p>
-                  <h3 className="mt-1 text-base text-white font-extrabold">
+                  <h3 className="mt-1 text-sm font-extrabold text-white">
                     Research & Technology
                   </h3>
                 </div>
               </div>
 
-              {/* WIDE COMMUNITY IMAGE */}
-              <div className="group relative h-[230px] overflow-hidden rounded-2xl sm:col-span-2">
+              <div className="group relative h-[120px] overflow-hidden rounded-xl sm:col-span-2">
                 <img
                   src="/images/five.jpeg"
                   alt="Conference community"
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-200">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
                     Global Community
                   </p>
-                  <h3 className="mt-1 text-xl text-white font-extrabold">
+                  <h3 className="mt-1 text-sm font-extrabold text-white">
                     Connecting People, Inspiring Change
                   </h3>
                 </div>
               </div>
 
-              {/* TEAMWORK IMAGE */}
-              <div className="group relative h-[230px] overflow-hidden rounded-2xl">
+              <div className="group relative h-[120px] overflow-hidden rounded-xl">
                 <img
                   src="/images/six.jpeg"
                   alt="Conference teamwork"
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 p-4">
-                  <p className="text-xs font-semibold text-violet-200">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-3">
+                  <p className="text-[10px] font-semibold text-violet-200">
                     TEAMWORK
                   </p>
-                  <h3 className="mt-1 text-base text-white font-extrabold">
+                  <h3 className="mt-1 text-sm font-extrabold text-white">
                     Working Together
                   </h3>
                 </div>
               </div>
             </div>
 
-            {/* GALLERY FOOTER */}
             <div className="mt-6 flex flex-col gap-3 border-t border-violet-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold leading-5 text-slate-500">
                 Inspiring conversations. Meaningful connections. Shared
@@ -1777,62 +1797,107 @@ const ConferenceDetails = () => {
             </div>
           </div>
 
-          {/* KEY HIGHLIGHTS + KEY TOPICS + KEY POINTS */}
-          <div className="grid items-start gap-6 lg:grid-cols-3">
-            {/* KEY HIGHLIGHTS */}
-            <FeatureCard
-              icon={Sparkles}
-              title="Key Highlights"
-              description="Important sessions and opportunities featured in the conference."
-            >
-              <AccordionList
-                rows={highlightRows}
-                icon={CheckCircle2}
-                emptyText="Highlights will be announced soon."
-              />
-            </FeatureCard>
+          {/* SESSIONS AND TRACKS + CONFERENCE INFORMATION */}
+          <section id="explore" className="scroll-mt-20 bg-white py-4">
+            <div className="w-full">
+              <div className={`${PREMIUM_CARD} overflow-hidden`}>
+                <div className="grid grid-cols-1 lg:grid-cols-2">
+                  <div className="flex min-h-0 flex-col bg-white">
+                    <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                          <Layers size={19} />
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+                            Conference Information
+                          </h2>
+                          <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
+                            Explore conference details and opportunities.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[560px] overflow-y-auto overscroll-contain [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+                      {DETAIL_ROWS.map((row) => {
+                        const Icon = row.icon;
+                        const open = activeRow === row.key;
+                        return (
+                          <div
+                            key={row.key}
+                            className="border-b border-violet-100 last:border-b-0"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleRowClick(row.key)}
+                              aria-expanded={open}
+                              className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition sm:px-5 ${open ? "bg-violet-50" : "bg-white hover:bg-violet-50/50"}`}
+                            >
+                              <span className="flex min-w-0 items-center gap-3">
+                                <span
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${open ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700"}`}
+                                >
+                                  <Icon size={17} />
+                                </span>
+                                <span
+                                  className={`text-base font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
+                                >
+                                  {row.title}
+                                </span>
+                              </span>
+                              <span
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${open ? "rotate-180 border-violet-300 bg-white text-violet-700" : "border-violet-100 text-violet-600"}`}
+                              >
+                                <ChevronDown size={15} />
+                              </span>
+                            </button>
+                            {open && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.22 }}
+                                className="bg-white px-4 pb-5 pt-3 sm:px-5"
+                              >
+                                <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80">
+                                  {renderRowContent(row.key)}
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-            {/* KEY TOPICS */}
-            <FeatureCard
-              icon={Hash}
-              title="Key Topics"
-              description="Research areas and topics published for this conference."
-            >
-              <div id="topics" className="scroll-mt-24">
-                <AccordionList
-                  rows={topicRows}
-                  icon={CheckCircle2}
-                  emptyText="Topics will be announced soon."
-                />
+                  <div className="flex min-h-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
+                    <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                          <Layers size={19} />
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+                            Sessions and Tracks
+                          </h2>
+                          <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
+                            Explore the scientific sessions and research topics
+                            planned for this conference.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[560px] overflow-y-auto overscroll-contain px-5 py-2 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+                      <SessionsPanel items={sessionItems} />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </FeatureCard>
-
-            {/* KEY POINTS */}
-            <FeatureCard
-              icon={Lightbulb}
-              title="Key Points"
-              description="Explore information, expert sessions and professional collaboration."
-            >
-              <ul className="divide-y divide-violet-100">
-                {FALLBACK_KEY_POINTS.map((point) => (
-                  <li
-                    key={point}
-                    className="flex items-start gap-3 py-3.5 text-base leading-6 text-slate-700 font-semibold"
-                  >
-                    <CheckCircle2
-                      size={16}
-                      className="mt-1 shrink-0 text-violet-600"
-                    />
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </FeatureCard>
-          </div>
+            </div>
+          </section>
         </div>
       </section>
-      {/* SUBSCRIPTION SECTION - NAVY BLUE */}
-      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-7 sm:px-10">
+      {/* SUBSCRIPTION SECTION - NAVY BLUE (height increased) */}
+      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-12 sm:px-10 sm:py-14">
         <div className="mx-auto max-w-7xl">
           <motion.form
             initial={{ opacity: 0, y: 10 }}
@@ -1840,7 +1905,7 @@ const ConferenceDetails = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
             onSubmit={handleSubscribe}
-            className="flex flex-col items-center gap-4 lg:flex-row"
+            className="flex flex-col items-center gap-5 lg:flex-row"
           >
             <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
@@ -1863,7 +1928,7 @@ const ConferenceDetails = () => {
                 placeholder="Full Name"
                 autoComplete="name"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1875,7 +1940,7 @@ const ConferenceDetails = () => {
                 placeholder="Email Address"
                 autoComplete="email"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1887,7 +1952,7 @@ const ConferenceDetails = () => {
                 placeholder="Phone Number"
                 autoComplete="tel"
                 disabled={subscribeLoading}
-                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1896,7 +1961,7 @@ const ConferenceDetails = () => {
                 value={subscriberForm.conferenceId}
                 onChange={handleSubscriberChange}
                 disabled={subscribeLoading}
-                className={`h-11 w-full rounded-lg border border-white/15 bg-[#20244D] px-3 text-base font-semibold outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
+                className={`h-14 w-full rounded-lg border border-white/15 bg-[#20244D] px-4 text-base font-semibold outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
               >
                 <option value="" disabled>
                   Select Conference
@@ -1918,7 +1983,7 @@ const ConferenceDetails = () => {
             <button
               type="submit"
               disabled={subscribeLoading}
-              className="flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-6 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+              className="flex h-14 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-8 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
             >
               {subscribeLoading ? (
                 <span className="flex items-center gap-2">
@@ -1967,106 +2032,58 @@ const ConferenceDetails = () => {
           )}
         </div>
       </section>
-      {/* SESSIONS AND TRACKS + CONFERENCE INFORMATION */}
-      <section
-        id="explore"
-        className="scroll-mt-20 bg-white px-5 py-12 sm:px-10"
-      >
-        <div className="mx-auto max-w-[1300px]">
-          <div className={`${PREMIUM_CARD} overflow-hidden`}>
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              <div className="flex min-h-0 flex-col bg-white">
-                <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                      <Layers size={19} />
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
-                        Conference Information
-                      </h2>
-                      <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
-                        Explore conference details and opportunities.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-[560px] overflow-y-auto overscroll-contain [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
-                  {DETAIL_ROWS.map((row) => {
-                    const Icon = row.icon;
-                    const open = activeRow === row.key;
-                    return (
-                      <div
-                        key={row.key}
-                        className="border-b border-violet-100 last:border-b-0"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleRowClick(row.key)}
-                          aria-expanded={open}
-                          className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition sm:px-5 ${open ? "bg-violet-50" : "bg-white hover:bg-violet-50/50"}`}
-                        >
-                          <span className="flex min-w-0 items-center gap-3">
-                            <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${open ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700"}`}
-                            >
-                              <Icon size={17} />
-                            </span>
-                            <span
-                              className={`text-base font-semibold leading-5 ${open ? "text-violet-700" : "text-black"}`}
-                            >
-                              {row.title}
-                            </span>
-                          </span>
-                          <span
-                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${open ? "rotate-180 border-violet-300 bg-white text-violet-700" : "border-violet-100 text-violet-600"}`}
-                          >
-                            <ChevronDown size={15} />
-                          </span>
-                        </button>
-                        {open && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.22 }}
-                            className="bg-white px-4 pb-5 pt-3 sm:px-5"
-                          >
-                            <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80">
-                              {renderRowContent(row.key)}
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+      {/* KEY HIGHLIGHTS + KEY TOPICS + KEY POINTS */}
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        {/* KEY HIGHLIGHTS */}
+        <FeatureCard
+          icon={Sparkles}
+          title="Key Highlights"
+          description="Important sessions and opportunities featured in the conference."
+        >
+          <AccordionList
+            rows={highlightRows}
+            icon={CheckCircle2}
+            emptyText="Highlights will be announced soon."
+          />
+        </FeatureCard>
 
-              <div className="flex min-h-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
-                <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                      <Layers size={19} />
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
-                        Sessions and Tracks
-                      </h2>
-                      <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
-                        Explore the scientific sessions and research topics
-                        planned for this conference.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-[560px] overflow-y-auto overscroll-contain px-5 py-2 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
-                  <SessionsPanel items={sessionItems} />
-                </div>
-              </div>
-            </div>
+        {/* KEY TOPICS */}
+        <FeatureCard
+          icon={Hash}
+          title="Key Topics"
+          description="Research areas and topics published for this conference."
+        >
+          <div id="topics" className="scroll-mt-24">
+            <AccordionList
+              rows={topicRows}
+              icon={CheckCircle2}
+              emptyText="Topics will be announced soon."
+            />
           </div>
-        </div>
-      </section>
+        </FeatureCard>
+
+        {/* KEY POINTS (bound to API data.keyPoints) */}
+        <FeatureCard
+          icon={Lightbulb}
+          title="Key Points"
+          description="Explore information, expert sessions and professional collaboration."
+        >
+          <ul className="divide-y divide-violet-100">
+            {keyPoints.map((point, index) => (
+              <li
+                key={`${point}-${index}`}
+                className="flex items-start gap-3 py-3.5 text-base leading-6 text-slate-700 font-semibold"
+              >
+                <CheckCircle2
+                  size={16}
+                  className="mt-1 shrink-0 text-violet-600"
+                />
+                {point}
+              </li>
+            ))}
+          </ul>
+        </FeatureCard>
+      </div>
       {/* REGISTRATION CATEGORIES */}
       {registrationCategories.length > 0 && (
         <section className="bg-white px-5 py-10 sm:px-10">
@@ -2113,301 +2130,334 @@ const ConferenceDetails = () => {
           </div>
         </section>
       )}
-{/* SPONSORS + RECENT POSTS */}
-<section className="bg-white px-5 py-10 sm:px-10">
-  <div
-    className={`mx-auto grid max-w-[1300px] gap-5 ${
-      hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
-    }`}
-  >
-    {/* SPONSORS */}
-    {hasSponsors && (
-      <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <SectionLabel>Our Sponsors</SectionLabel>
-            <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
-              Media Partners & Sponsors
-            </h2>
-          </div>
-          <Handshake
-            className="shrink-0 text-violet-600"
-            size={28}
-          />
-        </div>
-
-        <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
-          We appreciate the organizations supporting this conference and
-          its research community.
-        </p>
-
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {sponsors.map((sponsor, index) => {
-            const logo =
-              typeof sponsor === "string"
-                ? getMediaUrl(sponsor)
-                : getMediaUrl(
-                    sponsor?.logo ||
-                      sponsor?.logoUrl ||
-                      sponsor?.image ||
-                      sponsor?.imageUrl ||
-                      sponsor?.fileUrl ||
-                      sponsor?.url
-                  );
-
-            const sponsorName =
-              typeof sponsor === "string"
-                ? `Sponsor ${index + 1}`
-                : getText(
-                    sponsor,
-                    ["name", "title", "companyName"],
-                    `Sponsor ${index + 1}`
-                  );
-
-            return (
-              <div
-                key={`${logo || sponsorName}-${index}`}
-                className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition duration-300 hover:border-violet-300 hover:shadow-md"
-              >
-                {logo ? (
-                  <img
-                    src={logo}
-                    alt={sponsorName}
-                    loading="lazy"
-                    className="block h-full w-full object-contain"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-slate-700 sm:text-base">
-                    {sponsorName}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    )}
-
-    {/* RECENT POSTS */}
-    <div className="min-w-0 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <SectionLabel>Follow Us</SectionLabel>
-          <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
-            Recent Posts
-          </h2>
-        </div>
-
-        {/* SCROLL CONTROLS */}
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => scroll(postRef, -1)}
-            aria-label="Previous posts"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
-          >
-            <ChevronLeft size={19} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => scroll(postRef, 1)}
-            aria-label="Next posts"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
-          >
-            <ChevronRight size={19} />
-          </button>
-        </div>
-      </div>
-
-      <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
-        Follow conference announcements, research news and community
-        updates.
-      </p>
-
-      {/* SOCIAL MEDIA SVG ICONS */}
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {[
-          {
-            label: "Facebook",
-            url: contact.facebook || "https://www.facebook.com/",
-            className: "bg-[#1877F2]",
-            svg: (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M13.5 21v-8.18h2.75l.41-3.19H13.5V7.6c0-.92.26-1.55 1.58-1.55h1.69V3.2c-.29-.04-1.3-.13-2.48-.13-2.45 0-4.12 1.5-4.12 4.25v2.31H7.4v3.19h2.77V21h3.33Z" />
-              </svg>
-            ),
-          },
-          {
-            label: "LinkedIn",
-            url: contact.linkedin || "https://www.linkedin.com/",
-            className: "bg-[#0A66C2]",
-            svg: (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M5.2 3.5a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM3.55 8.75h3.3v11.7h-3.3V8.75Zm5.35 0h3.16v1.6h.05c.44-.83 1.52-1.95 3.14-1.95 3.36 0 3.98 2.21 3.98 5.08v6.97h-3.3v-6.18c0-1.47-.03-3.36-2.05-3.36-2.05 0-2.36 1.6-2.36 3.25v6.29H8.9V8.75Z" />
-              </svg>
-            ),
-          },
-          {
-            label: "Instagram",
-            url: contact.instagram || "https://www.instagram.com/",
-            className: "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
-            svg: (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-              </svg>
-            ),
-          },
-          {
-            label: "YouTube",
-            url: contact.youtube || "https://www.youtube.com/",
-            className: "bg-[#FF0033]",
-            svg: (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M23.2 7a3 3 0 0 0-2.1-2.1C19.25 4.4 12 4.4 12 4.4s-7.25 0-9.1.5A3 3 0 0 0 .8 7 31 31 0 0 0 .3 12a31 31 0 0 0 .5 5 3 3 0 0 0 2.1 2.1c1.85.5 9.1.5 9.1.5s7.25 0 9.1-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-5 31 31 0 0 0-.5-5ZM9.6 15.5v-7l6.1 3.5-6.1 3.5Z" />
-              </svg>
-            ),
-          },
-        ].map((social) => (
-          <a
-            key={social.label}
-            href={social.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Visit GlobalScion on ${social.label}`}
-            title={social.label}
-            className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md ${social.className}`}
-          >
-            {social.svg}
-          </a>
-        ))}
-      </div>
-
-      {/* SCROLLING POSTS */}
-      <div
-        ref={postRef}
-        className="mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {posts.length > 0 ? (
-          posts.map((post, index) => {
-            const postTitle = getText(
-              post,
-              ["title", "name"],
-              `Conference Update ${index + 1}`
-            );
-
-            const postImage =
-              getMediaUrl(
-                post.image || post.imageUrl || post.thumbnail
-              ) || FALLBACK_IMAGE;
-
-            return (
-              <article
-                key={post._id || `${postTitle}-${index}`}
-                className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[190px] sm:min-w-[190px]"
-              >
-                <div className="h-28 overflow-hidden bg-violet-50">
-                  <img
-                    src={postImage}
-                    alt={postTitle}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = FALLBACK_IMAGE;
-                    }}
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col p-3.5">
-                  <h3 className="line-clamp-2 text-sm font-extrabold leading-5 text-[#171447] sm:text-base">
-                    {postTitle}
-                  </h3>
-
-                  <p className="mt-2 line-clamp-3 text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
-                    {getText(
-                      post,
-                      ["description", "content", "caption"],
-                      "Follow GlobalScion for more updates."
-                    )}
-                  </p>
-
-                  <p className="mt-3 text-[11px] font-semibold text-slate-400">
-                    {formatDate(
-                      post.date || post.createdAt,
-                      "Latest Updates"
-                    )}
-                  </p>
-
-                  {post.url && (
-                    <a
-                      href={post.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-extrabold text-violet-700 hover:text-violet-900"
-                    >
-                      Read more <ExternalLink size={13} />
-                    </a>
-                  )}
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="flex min-h-36 w-full items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white px-4 text-center">
-            <p className="text-sm font-semibold text-slate-500">
-              New conference updates will appear here.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold text-slate-400">
-          Scroll to explore updates
-        </p>
-
-        <a
-          href="https://globalscion.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-violet-700 transition hover:text-violet-900 sm:text-sm"
+      {/* SPONSORS + RECENT POSTS */}
+      <section className="bg-white px-5 py-10 sm:px-10">
+        <div
+          className={`mx-auto grid max-w-[1300px] gap-5 ${
+            hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
+          }`}
         >
-          Visit GlobalScion <ArrowRight size={14} />
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
+          {/* SPONSORS */}
+          {hasSponsors && (
+            <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <SectionLabel>Our Sponsors</SectionLabel>
+                  <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+                    Media Partners & Sponsors
+                  </h2>
+                </div>
+                <Handshake className="shrink-0 text-violet-600" size={28} />
+              </div>
 
-      {/* CONFERENCE INTRODUCTION MODAL */}
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+                We appreciate the organizations supporting this conference and
+                its research community.
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {sponsors.map((sponsor, index) => {
+                  const logo =
+                    typeof sponsor === "string"
+                      ? getMediaUrl(sponsor)
+                      : getMediaUrl(
+                          sponsor?.logo ||
+                            sponsor?.logoUrl ||
+                            sponsor?.image ||
+                            sponsor?.imageUrl ||
+                            sponsor?.fileUrl ||
+                            sponsor?.url,
+                        );
+
+                  const sponsorName =
+                    typeof sponsor === "string"
+                      ? `Sponsor ${index + 1}`
+                      : getText(
+                          sponsor,
+                          ["name", "title", "companyName"],
+                          `Sponsor ${index + 1}`,
+                        );
+
+                  return (
+                    <div
+                      key={`${logo || sponsorName}-${index}`}
+                      className="flex h-28 min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition duration-300 hover:border-violet-300 hover:shadow-md"
+                    >
+                      {logo ? (
+                        <img
+                          src={logo}
+                          alt={sponsorName}
+                          loading="lazy"
+                          className="block h-full w-full object-contain"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-slate-700 sm:text-base">
+                          {sponsorName}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* RECENT POSTS */}
+          <div className="min-w-0 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <SectionLabel>Follow Us</SectionLabel>
+                <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
+                  Recent Posts
+                </h2>
+              </div>
+
+              {/* SCROLL CONTROLS */}
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => scroll(postRef, -1)}
+                  aria-label="Previous posts"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+                >
+                  <ChevronLeft size={19} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scroll(postRef, 1)}
+                  aria-label="Next posts"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-700 transition hover:bg-violet-700 hover:text-white"
+                >
+                  <ChevronRight size={19} />
+                </button>
+              </div>
+            </div>
+
+            {/* LATEST POSTS - SCROLLING TEXT TICKER */}
+            <div className="gs-marquee-wrap mt-3 flex items-center gap-3 overflow-hidden rounded-full border border-violet-100 bg-white px-3 py-2">
+              <span className="shrink-0 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                Latest Posts
+              </span>
+              <div className="relative min-w-0 flex-1 overflow-hidden">
+                <div className="gs-marquee-track flex w-max whitespace-nowrap">
+                  {[0, 1].map((copy) => (
+                    <span
+                      key={copy}
+                      aria-hidden={copy === 1}
+                      className="flex shrink-0 items-center gap-8 pr-8 text-sm font-semibold text-slate-600 sm:text-base"
+                    >
+                      {tickerItems.map((text, index) => (
+                        <span
+                          key={`${copy}-${index}`}
+                          className="flex items-center gap-8"
+                        >
+                          <span>{text}</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+                        </span>
+                      ))}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* SOCIAL MEDIA SVG ICONS */}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {[
+                {
+                  label: "Facebook",
+                  url: contact.facebook || "https://www.facebook.com/share/14KW4MrpefS/",
+                  className: "bg-[#1877F2]",
+                  svg: (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M13.5 21v-8.18h2.75l.41-3.19H13.5V7.6c0-.92.26-1.55 1.58-1.55h1.69V3.2c-.29-.04-1.3-.13-2.48-.13-2.45 0-4.12 1.5-4.12 4.25v2.31H7.4v3.19h2.77V21h3.33Z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: "LinkedIn",
+                  url: contact.linkedin || "https://www.linkedin.com/in/gedala-sonu-5bb823405",
+                  className: "bg-[#0A66C2]",
+                  svg: (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M5.2 3.5a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM3.55 8.75h3.3v11.7h-3.3V8.75Zm5.35 0h3.16v1.6h.05c.44-.83 1.52-1.95 3.14-1.95 3.36 0 3.98 2.21 3.98 5.08v6.97h-3.3v-6.18c0-1.47-.03-3.36-2.05-3.36-2.05 0-2.36 1.6-2.36 3.25v6.29H8.9V8.75Z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: "Instagram",
+                  url: contact.instagram || "https://www.instagram.com/global_scion_conferences",
+                  className:
+                    "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
+                  svg: (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle
+                        cx="17.5"
+                        cy="6.5"
+                        r="1"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                    </svg>
+                  ),
+                },
+                {
+                  label: "YouTube",
+                  url: contact.youtube || "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
+                  className: "bg-[#FF0033]",
+                  svg: (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M23.2 7a3 3 0 0 0-2.1-2.1C19.25 4.4 12 4.4 12 4.4s-7.25 0-9.1.5A3 3 0 0 0 .8 7 31 31 0 0 0 .3 12a31 31 0 0 0 .5 5 3 3 0 0 0 2.1 2.1c1.85.5 9.1.5 9.1.5s7.25 0 9.1-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-5 31 31 0 0 0-.5-5ZM9.6 15.5v-7l6.1 3.5-6.1 3.5Z" />
+                    </svg>
+                  ),
+                },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Visit GlobalScion on ${social.label}`}
+                  title={social.label}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md ${social.className}`}
+                >
+                  {social.svg}
+                </a>
+              ))}
+            </div>
+
+            {/* SCROLLING POSTS (bound to API data.recentPosts) */}
+            <div
+              ref={postRef}
+              className="mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {posts.length > 0 ? (
+                posts.map((rawPost, index) => {
+                  // API may return plain URL strings or objects
+                  const post =
+                    typeof rawPost === "string"
+                      ? { url: rawPost }
+                      : rawPost || {};
+
+                  const postTitle = getText(
+                    post,
+                    ["title", "name"],
+                    `Conference Update ${index + 1}`,
+                  );
+
+                  const postImage =
+                    getMediaUrl(
+                      post.url || post.imageUrl || post.thumbnail,
+                    ) || FALLBACK_IMAGE;
+
+                  return (
+                    <article
+                      key={post._id || `${postTitle}-${index}`}
+                      className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[190px] sm:min-w-[190px]"
+                    >
+                      <div className="h-28 overflow-hidden bg-violet-50">
+                        <img
+                          src={postImage}
+                          alt={postTitle}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = FALLBACK_IMAGE;
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex flex-1 flex-col p-3.5">
+                        <h3 className="line-clamp-2 text-sm font-extrabold leading-5 text-[#171447] sm:text-base">
+                          {postTitle}
+                        </h3>
+
+                        <p className="mt-2 line-clamp-3 text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
+                          {getText(
+                            post,
+                            ["description", "content", "caption"],
+                            "Follow GlobalScion for more updates.",
+                          )}
+                        </p>
+
+                        <p className="mt-3 text-[11px] font-semibold text-slate-400">
+                          {formatDate(
+                            post.date || post.createdAt,
+                            "Latest Updates",
+                          )}
+                        </p>
+
+                        {post.url && (
+                          <a
+                            href={post.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-extrabold text-violet-700 hover:text-violet-900"
+                          >
+                            Read more <ExternalLink size={13} />
+                          </a>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="flex min-h-36 w-full items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white px-4 text-center">
+                  <p className="text-sm font-semibold text-slate-500">
+                    New conference updates will appear here.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-slate-400">
+                Scroll to explore updates
+              </p>
+
+              <a
+                href="https://globalscion.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-violet-700 transition hover:text-violet-900 sm:text-sm"
+              >
+                Visit GlobalScion <ArrowRight size={14} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CONFERENCE INTRODUCTION MODAL (plays API video when available) */}
       {videoOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm"
@@ -2417,13 +2467,15 @@ const ConferenceDetails = () => {
             role="dialog"
             aria-modal="true"
             aria-label="About the conference"
-            className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+            className={`relative max-h-[92vh] w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8 ${
+              videoUrl ? "max-w-3xl" : "max-w-2xl"
+            }`}
             onClick={(event) => event.stopPropagation()}
           >
             <button
               onClick={() => setVideoOpen(false)}
               aria-label="Close modal"
-              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-violet-100"
+              className="absolute right-4 top-4 z-10 rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-violet-100"
             >
               <X size={19} />
             </button>
@@ -2431,6 +2483,24 @@ const ConferenceDetails = () => {
             <h2 className="mt-2 text-3xl text-[#171447] font-extrabold">
               {title}
             </h2>
+
+            {videoUrl && (
+              <div className="mt-4 overflow-hidden rounded-xl bg-black">
+                <video
+                  key={videoUrl}
+                  src={videoUrl}
+                  poster={aboutImage}
+                  controls
+                  autoPlay
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full bg-black"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+
             <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden font-semibold">
               {welcomeText}
             </p>

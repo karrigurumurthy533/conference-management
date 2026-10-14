@@ -1,25 +1,25 @@
 import axiosInstance from "../redux/axiosInstance";
 
 export const createConferenceApi = (formData) => {
-  return axiosInstance.post("/admin/conferences", formData);
+  return axiosInstance.post("/conference/create", formData);
 };
 
 export const getConferencesApi = () => {
-  return axiosInstance.get("/admin/conferences");
+  return axiosInstance.get("/conference/getAll");
 };
 
 export const getConferenceByIdApi = (id) => {
-  return axiosInstance.get(`/admin/conferences/${id}`);
+  return axiosInstance.get(`/conference/${id}`);
 };
 
 export const updateConferenceApi = ({ id, formData }) => {
-  return axiosInstance.put(`/admin/conferences/${id}`, formData);
+  return axiosInstance.put(`/conference/${id}`, formData);
 };
 
 export const deleteConferenceApi = (id) => {
-  return axiosInstance.delete(`/admin/conferences/${id}`);
+  return axiosInstance.delete(`/conference/${id}`);
 };
 
 export const publishConferenceApi = (id) => {
-  return axiosInstance.patch(`/admin/conferences/${id}/publish`);
+  return axiosInstance.patch(`/conference/${id}/publish`);
 };

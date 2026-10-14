@@ -5,34 +5,19 @@ const adminAttendanceController = require("../controllers/adminAttendanceControl
 
 const authMiddleware = require("../middlewares/authMiddleware");
 const {
-    conferenceUpload,
     upload,
 } = require("../middlewares/uploadMiddleware");
 
 
-const { validationResult } = require("express-validator");
+
 
 const router = express.Router();
 
 
-router.post("/conferences", authMiddleware("admin"), conferenceUpload, adminController.createConference);
 
-router.get("/conferences", adminController.getAllConferences);
-router.get("/conferences/:id", adminController.getConferenceById);
-router.put("/conferences/:id", conferenceUpload, adminController.updateConference);
-router.delete("/conferences/:id", authMiddleware("admin"), adminController.deleteConference);
-router.patch("/conferences/:id/publish", authMiddleware("admin"), adminController.publishConference);
+router.post("/employees",authMiddleware("admin"),adminController.createEmployee);
 
-router.post(
-    "/employees",
-    authMiddleware("admin"),
-    adminController.createEmployee
-);
-
-router.get(
-    "/employees",
-    authMiddleware("admin"),
-    adminController.getAllEmployees
+router.get("/employees",authMiddleware("admin"),adminController.getAllEmployees
 );
 
 router.get(
