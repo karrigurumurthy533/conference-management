@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Building2,
   Star,
   Gift,
   BarChart3,
@@ -298,7 +299,7 @@ const FeatureCard = ({ icon, title, description, children }) => (
     <div className="flex items-start gap-4">
       <IconTile icon={icon} />
       <div className="min-w-0">
-        <h3 className="text-2xl text-[#171447] sm:text-3xl font-bold">
+        <h3 className="text-2xl text-[#171447] sm:text-2xl font-bold">
           {title}
         </h3>
         <p className="mt-1 text-sm leading-5 text-slate-500 font-semibold">
@@ -471,21 +472,40 @@ const WhatsAppIcon = ({ size = 30 }) => (
   </svg>
 );
 
-const WhatsAppButton = () => (
-  <a
-    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Chat with us on WhatsApp"
-    title="Chat with us on WhatsApp"
-    className="fixed bottom-5 left-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_30px_-8px_rgba(37,211,102,0.8)] transition hover:-translate-y-1 hover:bg-[#1ebe5b] sm:bottom-7 sm:left-7 sm:h-16 sm:w-16"
-  >
-    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#25D366] opacity-30" />
-    <span className="relative">
-      <WhatsAppIcon size={30} />
-    </span>
-  </a>
-);
+const WHATSAPP_DISPLAY_NUMBER = "+44 3308 088650";
+
+const WhatsAppButton = () => {
+  const link = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+
+  return (
+    <div className="fixed bottom-5 left-5 z-[90] flex items-center gap-2 sm:bottom-7 sm:left-7">
+      {/* ICON */}
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with us on WhatsApp"
+        title="Chat with us on WhatsApp"
+        className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_30px_-8px_rgba(37,211,102,0.8)] transition hover:-translate-y-1 hover:bg-[#1ebe5b] sm:h-16 sm:w-16"
+      >
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#25D366] opacity-30" />
+        <span className="relative">
+          <WhatsAppIcon size={30} />
+        </span>
+      </a>
+
+      {/* NUMBER */}
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-11 items-center rounded-full bg-[#25D366] px-4 text-sm font-bold text-white shadow-[0_12px_30px_-8px_rgba(37,211,102,0.8)] transition hover:-translate-y-1 hover:bg-[#1ebe5b] sm:h-12 sm:px-5 sm:text-base"
+      >
+        {WHATSAPP_DISPLAY_NUMBER}
+      </a>
+    </div>
+  );
+};
 
 // ============================================================
 // MAIN COMPONENT
@@ -1513,87 +1533,105 @@ const ConferenceDetails = () => {
           </div>
         </div>
       </section>
-      {/* SPEAKERS */}
-      <section
-        id="speakers"
-        className="scroll-mt-24 bg-white px-5 py-12 sm:px-10"
-      >
-        <div className="mx-auto max-w-[1300px]">
-          <SectionHeading
-            label="Featured Speakers"
-            title="Renowned Speakers"
-            description="Meet the speakers and professionals participating in this conference."
-          />
 
-          {speakers.length ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {speakers.map((speaker, index) => (
-                <motion.article
-                  key={speaker._id || speaker.name || index}
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-[0_8px_25px_-15px_rgba(109,40,217,0.25)] transition-all duration-300 hover:-translate-y-1 hover:border-violet-300 hover:shadow-[0_18px_35px_-15px_rgba(109,40,217,0.3)]"
-                >
-                  {/* SQUARE / RECTANGULAR SPEAKER IMAGE */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-violet-50">
-                    <img
-                      src={getSpeakerImage(speaker)}
-                      alt={asText(speaker.name, "Conference speaker")}
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.onerror = null;
-                        event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-                      }}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+{/* SPEAKERS — COMPACT IMAGE OVERLAY CARDS */}
+<section
+  id="speakers"
+  className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8"
+>
+  <div className="mx-auto max-w-[1300px]">
+    <SectionHeading
+      label="Featured Speakers"
+      title="Renowned Speakers"
+      description="Meet the speakers and professionals participating in this conference."
+    />
 
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#171447]/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
+    {speakers.length > 0 ? (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {speakers.map((speaker, index) => (
+          <motion.article
+            key={speaker._id || speaker.name || index}
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            className="group relative isolate h-[190px] min-w-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
+          >
+            {/* SPEAKER IMAGE */}
+            <img
+              src={getSpeakerImage(speaker)}
+              alt={asText(speaker.name, "Conference speaker")}
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+              }}
+              className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            />
 
-                  {/* SPEAKER DETAILS */}
-                  <div className="flex flex-1 flex-col p-4 text-center">
-                    <h3 className="text-lg leading-6 text-[#171447] font-extrabold">
-                      {asText(speaker.name, "Speaker")}
-                    </h3>
+            {/* DARK IMAGE OVERLAY */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
 
-                    <p className="mt-1 text-sm font-semibold leading-5 text-violet-600">
-                      {asText(speaker.role, "Conference Speaker")}
-                    </p>
+            {/* SPEAKER DETAILS ON IMAGE */}
+            <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
+              {/* NAME */}
+              <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
+                {asText(speaker.name, "Speaker")}
+              </h3>
 
-                    {getSpeakerOrganization(speaker) && (
-                      <p className="mt-2 text-sm font-semibold leading-5 text-slate-600">
-                        {getSpeakerOrganization(speaker)}
-                      </p>
-                    )}
+              {/* ROLE */}
+              <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
+                {asText(speaker.role, "Conference Speaker")}
+              </p>
 
-                    {speaker.specialty && (
-                      <div className="mt-3">
-                        <span className="inline-flex max-w-full items-center justify-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
-                          {speaker.specialty}
-                        </span>
-                      </div>
-                    )}
+              {/* ORGANIZATION */}
+              {getSpeakerOrganization(speaker) && (
+                <div className="mt-1 flex items-start gap-1">
+                  <Building2
+                    size={11}
+                    className="mt-0.5 shrink-0 text-violet-300"
+                  />
+                  <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
+                    {getSpeakerOrganization(speaker)}
+                  </p>
+                </div>
+              )}
 
-                    {speaker.bio && (
-                      <p className="mt-3 line-clamp-3 text-sm leading-5 text-slate-500 font-semibold">
-                        {speaker.bio}
-                      </p>
-                    )}
+              {/* LOCATION */}
+              {(speaker.country || speaker.location) && (
+                <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
+                  <MapPin size={10} className="shrink-0 text-violet-300" />
+                  <span className="line-clamp-1">
+                    {speaker.country || speaker.location}
+                  </span>
+                </div>
+              )}
 
-                    <div className="mx-auto mt-4 h-1 w-10 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-300 group-hover:w-16" />
-                  </div>
-                </motion.article>
-              ))}
+              {/* SPECIALTY */}
+              {speaker.specialty && (
+                <div className="mt-1.5 flex items-center gap-1">
+                  <Award size={10} className="shrink-0 text-violet-300" />
+                  <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
+                    {speaker.specialty}
+                  </span>
+                </div>
+              )}
+
+              {/* BOTTOM ACCENT */}
+              <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
             </div>
-          ) : (
-            <EmptyState>
-              No speakers have been added to this conference yet.
-            </EmptyState>
-          )}
-        </div>
-      </section>
+          </motion.article>
+        ))}
+      </div>
+    ) : (
+      <EmptyState>
+        No speakers have been added to this conference yet.
+      </EmptyState>
+    )}
+  </div>
+</section>
+
+
 
       {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
       <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 py-14 sm:px-6">
@@ -1897,7 +1935,7 @@ const ConferenceDetails = () => {
         </div>
       </section>
       {/* SUBSCRIPTION SECTION - NAVY BLUE (height increased) */}
-      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-12 sm:px-10 sm:py-14">
+      <section className="border-y border-[#252B55] bg-[#11143A] px-6 py-6 sm:px-10 sm:py-7">
         <div className="mx-auto max-w-7xl">
           <motion.form
             initial={{ opacity: 0, y: 10 }}
@@ -1905,7 +1943,7 @@ const ConferenceDetails = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
             onSubmit={handleSubscribe}
-            className="flex flex-col items-center gap-5 lg:flex-row"
+            className="flex flex-col items-center gap-3 lg:flex-row"
           >
             <div className="shrink-0 text-center lg:w-[220px] lg:text-left">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
@@ -1928,7 +1966,7 @@ const ConferenceDetails = () => {
                 placeholder="Full Name"
                 autoComplete="name"
                 disabled={subscribeLoading}
-                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1940,7 +1978,7 @@ const ConferenceDetails = () => {
                 placeholder="Email Address"
                 autoComplete="email"
                 disabled={subscribeLoading}
-                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1952,7 +1990,7 @@ const ConferenceDetails = () => {
                 placeholder="Phone Number"
                 autoComplete="tel"
                 disabled={subscribeLoading}
-                className="h-14 w-full rounded-lg border border-white/15 bg-white/10 px-4 text-base font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-lg border border-white/15 bg-white/10 px-3.5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
             <div className="w-full lg:flex-1">
@@ -1961,7 +1999,7 @@ const ConferenceDetails = () => {
                 value={subscriberForm.conferenceId}
                 onChange={handleSubscriberChange}
                 disabled={subscribeLoading}
-                className={`h-14 w-full rounded-lg border border-white/15 bg-[#20244D] px-4 text-base font-semibold outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
+                className={`h-11 w-full rounded-lg border border-white/15 bg-[#20244D] px-3.5 text-sm font-semibold outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60 ${subscriberForm.conferenceId ? "text-white" : "text-slate-300"}`}
               >
                 <option value="" disabled>
                   Select Conference
@@ -1983,7 +2021,7 @@ const ConferenceDetails = () => {
             <button
               type="submit"
               disabled={subscribeLoading}
-              className="flex h-14 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-8 text-base font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+              className="flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition duration-300 hover:-translate-y-0.5 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 focus:ring-offset-[#11143A] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
             >
               {subscribeLoading ? (
                 <span className="flex items-center gap-2">
@@ -2000,7 +2038,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
+              className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
             >
               <AlertCircle size={14} />
               <span>{formError}</span>
@@ -2010,7 +2048,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
+              className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-red-300 lg:justify-end"
             >
               <AlertCircle size={14} />
               <span>
@@ -2024,7 +2062,7 @@ const ConferenceDetails = () => {
             <motion.div
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300 lg:justify-end"
+              className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300 lg:justify-end"
             >
               <CheckCircle2 size={14} />
               <span>Successfully subscribed to the conference.</span>
@@ -2131,22 +2169,26 @@ const ConferenceDetails = () => {
         </section>
       )}
       {/* SPONSORS + RECENT POSTS */}
-      <section className="bg-white px-5 py-10 sm:px-10">
+
+      <section className="w-full bg-white px-0 py-10">
         <div
-          className={`mx-auto grid max-w-[1300px] gap-5 ${
+          className={`grid w-full grid-cols-1 items-start gap-0 ${
             hasSponsors ? "lg:grid-cols-[0.9fr_1.1fr]" : "grid-cols-1"
           }`}
         >
           {/* SPONSORS */}
           {hasSponsors && (
-            <div className={`${PREMIUM_CARD} p-5 sm:p-6`}>
+            <div
+              className={`${PREMIUM_CARD} min-w-0 rounded-none border-x-0 p-5 shadow-none sm:p-6`}
+            >
               <div className="flex items-center justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <SectionLabel>Our Sponsors</SectionLabel>
                   <h2 className="mt-1 text-2xl font-bold leading-tight text-[#171447] sm:text-3xl">
-                    Media Partners & Sponsors
+                    Media Partners &amp; Sponsors
                   </h2>
                 </div>
+
                 <Handshake className="shrink-0 text-violet-600" size={28} />
               </div>
 
@@ -2206,7 +2248,8 @@ const ConferenceDetails = () => {
           )}
 
           {/* RECENT POSTS */}
-          <div className="min-w-0 overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-6">
+          <div className="min-w-0 overflow-hidden rounded-none border-x-0 border-y border-violet-100 bg-gradient-to-br from-[#f6f3ff] to-white p-5 shadow-none sm:p-6">
+            {/* HEADER */}
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionLabel>Follow Us</SectionLabel>
@@ -2237,11 +2280,12 @@ const ConferenceDetails = () => {
               </div>
             </div>
 
-            {/* LATEST POSTS - SCROLLING TEXT TICKER */}
+            {/* LATEST POSTS TICKER */}
             <div className="gs-marquee-wrap mt-3 flex items-center gap-3 overflow-hidden rounded-full border border-violet-100 bg-white px-3 py-2">
               <span className="shrink-0 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
                 Latest Posts
               </span>
+
               <div className="relative min-w-0 flex-1 overflow-hidden">
                 <div className="gs-marquee-track flex w-max whitespace-nowrap">
                   {[0, 1].map((copy) => (
@@ -2265,12 +2309,14 @@ const ConferenceDetails = () => {
               </div>
             </div>
 
-            {/* SOCIAL MEDIA SVG ICONS */}
+            {/* SOCIAL MEDIA */}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {[
                 {
                   label: "Facebook",
-                  url: contact.facebook || "https://www.facebook.com/share/14KW4MrpefS/",
+                  url:
+                    contact.facebook ||
+                    "https://www.facebook.com/share/14KW4MrpefS/",
                   className: "bg-[#1877F2]",
                   svg: (
                     <svg
@@ -2285,7 +2331,9 @@ const ConferenceDetails = () => {
                 },
                 {
                   label: "LinkedIn",
-                  url: contact.linkedin || "https://www.linkedin.com/in/gedala-sonu-5bb823405",
+                  url:
+                    contact.linkedin ||
+                    "https://www.linkedin.com/in/gedala-sonu-5bb823405",
                   className: "bg-[#0A66C2]",
                   svg: (
                     <svg
@@ -2300,7 +2348,9 @@ const ConferenceDetails = () => {
                 },
                 {
                   label: "Instagram",
-                  url: contact.instagram || "https://www.instagram.com/global_scion_conferences",
+                  url:
+                    contact.instagram ||
+                    "https://www.instagram.com/global_scion_conferences",
                   className:
                     "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
                   svg: (
@@ -2326,7 +2376,9 @@ const ConferenceDetails = () => {
                 },
                 {
                   label: "YouTube",
-                  url: contact.youtube || "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
+                  url:
+                    contact.youtube ||
+                    "https://www.youtube.com/@GLOBALSCIONPRIVATELIMITED",
                   className: "bg-[#FF0033]",
                   svg: (
                     <svg
@@ -2354,14 +2406,13 @@ const ConferenceDetails = () => {
               ))}
             </div>
 
-            {/* SCROLLING POSTS (bound to API data.recentPosts) */}
+            {/* SCROLLING POSTS */}
             <div
               ref={postRef}
-              className="mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {posts.length > 0 ? (
                 posts.map((rawPost, index) => {
-                  // API may return plain URL strings or objects
                   const post =
                     typeof rawPost === "string"
                       ? { url: rawPost }
@@ -2374,16 +2425,15 @@ const ConferenceDetails = () => {
                   );
 
                   const postImage =
-                    getMediaUrl(
-                      post.url || post.imageUrl || post.thumbnail,
-                    ) || FALLBACK_IMAGE;
+                    getMediaUrl(post.url || post.imageUrl || post.thumbnail) ||
+                    FALLBACK_IMAGE;
 
                   return (
                     <article
                       key={post._id || `${postTitle}-${index}`}
-                      className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[190px] sm:min-w-[190px]"
+                      className="group flex w-[220px] min-w-[220px] snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-lg sm:w-[250px] sm:min-w-[250px] xl:w-[270px] xl:min-w-[270px]"
                     >
-                      <div className="h-28 overflow-hidden bg-violet-50">
+                      <div className="h-36 overflow-hidden bg-violet-50 sm:h-40">
                         <img
                           src={postImage}
                           alt={postTitle}
@@ -2396,7 +2446,7 @@ const ConferenceDetails = () => {
                         />
                       </div>
 
-                      <div className="flex flex-1 flex-col p-3.5">
+                      <div className="flex flex-1 flex-col p-4">
                         <h3 className="line-clamp-2 text-sm font-extrabold leading-5 text-[#171447] sm:text-base">
                           {postTitle}
                         </h3>
@@ -2439,6 +2489,7 @@ const ConferenceDetails = () => {
               )}
             </div>
 
+            {/* FOOTER LINK */}
             <div className="mt-2 flex items-center justify-between gap-3">
               <p className="text-xs font-semibold text-slate-400">
                 Scroll to explore updates

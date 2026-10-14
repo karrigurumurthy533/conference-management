@@ -103,13 +103,13 @@ const Navbar = () => {
 
   const desktopLinkClass = (path) => `
     relative
-    text-sm
+    text-lg
     transition-all
     duration-300
     hover:opacity-75
     ${
       isActive(path)
-        ? "font-semibold"
+        ? "font-bold"
         : "font-medium"
     }
   `;
