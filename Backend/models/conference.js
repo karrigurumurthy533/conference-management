@@ -10,7 +10,143 @@ const titleDesc = () =>
     { _id: false }
   );
 
-/* Legacy registration schema (kept so old data does not break) */
+
+
+const seoSchema = new mongoose.Schema(
+  {
+    // Search engine metadata
+    metaTitle: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 70,
+    },
+    metaDescription: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 320,
+    },
+    focusKeyword: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 100,
+    },
+    metaKeywords: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (items) =>
+          items.length <= 20 &&
+          items.every(
+            (item) =>
+              typeof item === "string" &&
+              item.trim().length > 0 &&
+              item.trim().length <= 100
+          ),
+        message: "Maximum 20 keywords are allowed.",
+      },
+    },
+
+    // Preferred public page URL
+    canonicalUrl: {
+      type: String,
+      trim: true,
+      default: "",
+      validate: {
+        validator: (value) =>
+          !value ||
+          (() => {
+            try {
+              const url = new URL(value);
+              return (
+                url.protocol === "https:" &&
+                Boolean(url.hostname) &&
+                !url.username &&
+                !url.password
+              );
+            } catch {
+              return false;
+            }
+          })(),
+        message: "Canonical URL must be a valid HTTPS URL.",
+      },
+    },
+
+    // Search engine crawling and indexing
+    robotsIndex: {
+      type: Boolean,
+      default: true,
+    },
+    robotsFollow: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Open Graph: WhatsApp, LinkedIn, Facebook, etc.
+    ogTitle: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 100,
+    },
+    ogDescription: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 320,
+    },
+    ogImage: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    ogImageAlt: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 200,
+    },
+    ogType: {
+      type: String,
+      enum: ["website", "article"],
+      default: "website",
+    },
+
+    // Twitter / X sharing
+    twitterCard: {
+      type: String,
+      enum: ["summary", "summary_large_image"],
+      default: "summary_large_image",
+    },
+    twitterTitle: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 100,
+    },
+    twitterDescription: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 320,
+    },
+    twitterImage: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    twitterImageAlt: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 200,
+    },
+  },
+  { _id: false }
+);
+
 const registrationCategorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -27,8 +163,7 @@ const registrationCategorySchema = new mongoose.Schema(
   { _id: false }
 );
 
-/* NEW: matches the frontend `registration` payload
-   [{ category, prices: { GBP: {...}, USD: {...}, EUR: {...} } }] */
+
 const priceItemSchema = new mongoose.Schema(
   {
     speakerRegistration: { type: Number, default: 0 },
@@ -193,6 +328,7 @@ const recentPostSchema = new mongoose.Schema(
     title: { type: String, default: "", trim: true },
     description: { type: String, default: "", trim: true },
     url: { type: String, default: "", trim: true },
+    image: { type: String, default: "", trim: true },
     date: { type: String, default: "", trim: true },
   },
   { _id: false }
@@ -209,6 +345,18 @@ const conferenceSchema = new mongoose.Schema(
     video: { type: String, default: "", trim: true },
     image: { type: String, default: "" },
     aboutImage: { type: String, default: "" },
+    galleryImages: {
+      type: [String],
+      default: [],
+    },
+    latestUpdates: {
+      type: [String],
+      default: [],
+    },
+    recentpostUpdates: {
+      type: [String],
+      default: [],
+    },
 
     date: { type: String, default: "" },
     time: { type: String, default: "Webinar" },
@@ -261,6 +409,10 @@ const conferenceSchema = new mongoose.Schema(
     otherData: { type: otherDataSchema, default: () => ({}) },
     submission: { type: submissionSchema, default: () => ({}) },
     contact: { type: contactSchema, default: () => ({}) },
+    seo: {
+      type: seoSchema,
+      default: () => ({}),
+    },
 
     sponsors: { type: [String], default: [] },
 

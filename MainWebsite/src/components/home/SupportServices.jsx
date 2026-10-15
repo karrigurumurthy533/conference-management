@@ -311,7 +311,7 @@ const SupportServices = () => {
 
                 {/* Title */}
                 <h3
-                  className="mt-5 min-h-[52px] text-[15px] font-bold leading-6 transition-colors duration-500"
+                  className="mt-5 min-h-[52px] text-[18px] font-bold leading-6 transition-colors duration-500"
                   style={{
                     color: colors.title,
                   }}
@@ -321,7 +321,7 @@ const SupportServices = () => {
 
                 {/* Description */}
                 <p
-                  className="mt-3 text-[12px] leading-6 transition-colors duration-500"
+                  className="mt-3 text-[16px] leading-6 transition-colors duration-500"
                   style={{
                     color: colors.description,
                   }}
@@ -338,7 +338,7 @@ const SupportServices = () => {
                   transition={{
                     duration: 0.2,
                   }}
-                  className="mt-5 inline-flex items-center gap-1.5 text-[11px] font-bold transition-colors duration-300"
+                  className="mt-5 inline-flex items-center gap-1.5 text-[15px] font-bold transition-colors duration-300"
                   style={{
                     color: colors.link,
                   }}

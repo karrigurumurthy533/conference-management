@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft, CalendarDays, Check, ChevronDown, Globe2, Image as ImageIcon, Info,
   Link2, Plus, Save, Trash2, Users, BookOpen, Mic2, Layers, DollarSign,
-  ListChecks, Presentation, BarChart3,
+  ListChecks, Presentation, BarChart3, Images, Search, Megaphone,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -75,9 +75,36 @@ const defaultEPoster = () => ({
   closingNotes: [],
 });
 
+const defaultSeo = () => ({
+  metaTitle: "",
+  metaDescription: "",
+  keywords: "",
+  canonicalUrl: "",
+  ogTitle: "",
+  ogDescription: "",
+  ogType: "website",
+  ogImage: null,
+  twitterCard: "summary_large_image",
+  twitterTitle: "",
+  twitterDescription: "",
+  twitterSite: "",
+  twitterImage: null,
+  index: true,
+  follow: true,
+  noarchive: false,
+  nosnippet: false,
+});
+
 const toDateInput = (value) => (value ? new Date(value).toISOString().slice(0, 10) : "");
 
 const topicToString = (t) => (typeof t === "string" ? t : t?.title || t?.name || "");
+
+/* Gallery / sponsor style items can be a string URL or an object with a url */
+const itemToUrl = (item) => {
+  if (!item) return null;
+  if (typeof item === "string") return item;
+  return item.url || item.image || item.imageUrl || item.secure_url || null;
+};
 
 /* =========================================================
    COMPONENT
@@ -170,6 +197,12 @@ const CreateConference = () => {
   const [sponsors, setSponsors] = useState([]);
   const [ePoster, setEPoster] = useState(defaultEPoster());
 
+  /* NEW */
+  const [gallery, setGallery] = useState([]);
+  const [seo, setSeo] = useState(defaultSeo());
+  const [latestUpdates, setLatestUpdates] = useState([]);
+  const [recentpostUpdates, setRecentpostUpdates] = useState([]);
+
   const sections = [
     { id: "basic", label: "Basic Information", icon: Info },
     { id: "dates", label: "Dates & Venue", icon: CalendarDays },
@@ -183,11 +216,28 @@ const CreateConference = () => {
     { id: "benefits", label: "Benefits", icon: Check },
     { id: "poster", label: "Poster / E-Poster", icon: Presentation },
     { id: "market", label: "Market Analysis", icon: BarChart3 },
+    { id: "gallery", label: "Gallery Images", icon: Images },
     { id: "media", label: "Media & Sponsors", icon: ImageIcon },
+    { id: "updates", label: "Updates", icon: Megaphone },
+    { id: "seo", label: "SEO Optimization", icon: Search },
     { id: "contact", label: "Contact & Social", icon: Globe2 },
   ];
 
   const currentIndex = sections.findIndex((item) => item.id === activeSection);
+
+  /* Always start from the top when a section is opened (sidebar, Previous, Continue) */
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    let node = rootRef.current;
+    while (node && node !== document.body) {
+      if (node.scrollTop > 0) node.scrollTop = 0;
+      node = node.parentElement;
+    }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeSection]);
 
   const inputClass =
     "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10";
@@ -303,7 +353,13 @@ const CreateConference = () => {
         setTracks(conference.tracks || []);
         setKeyHighlights(conference.keyHighlights || []);
         setKeyPoints(conference.keyPoints || []);
-        setRecentPosts(conference.recentPosts || []);
+        setRecentPosts(
+          (conference.recentPosts || []).map((post) => ({
+            ...post,
+            id: post.id || post._id || crypto.randomUUID(),
+            image: post.image || null,
+          })),
+        );
         setWhoShouldAttend(conference.whoShouldAttend || []);
 
         setWhyToAttend(otherData.whyToAttend || []);
@@ -324,6 +380,27 @@ const CreateConference = () => {
         });
 
         setSponsors(conference.sponsors || []);
+
+        /* NEW: gallery, updates, SEO */
+        setGallery(conference.galleryImages || conference.gallery || []);
+        setLatestUpdates(conference.latestUpdates || []);
+        setRecentpostUpdates(conference.recentpostUpdates || []);
+
+        const savedSeo = conference.seo || {};
+        const seoDefaults = defaultSeo();
+        setSeo({
+          ...seoDefaults,
+          ...savedSeo,
+          keywords: Array.isArray(savedSeo.keywords)
+            ? savedSeo.keywords.join(", ")
+            : savedSeo.keywords || "",
+          ogImage: savedSeo.ogImage || null,
+          twitterImage: savedSeo.twitterImage || null,
+          index: savedSeo.index ?? seoDefaults.index,
+          follow: savedSeo.follow ?? seoDefaults.follow,
+          noarchive: savedSeo.noarchive ?? seoDefaults.noarchive,
+          nosnippet: savedSeo.nosnippet ?? seoDefaults.nosnippet,
+        });
       } catch (error) {
         console.error("GET CONFERENCE BY ID ERROR:", error);
         toast.error(
@@ -349,11 +426,20 @@ const CreateConference = () => {
     }));
   };
 
+  const handleSeoChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSeo((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
   /* =========================================================
      ARRAY HELPERS
   ========================================================= */
 
-  const addArrayItem = (setter, value) => setter((prev) => [...prev, value]);
+  /* New items are added at the TOP; older items move down */
+  const addArrayItem = (setter, value) => setter((prev) => [value, ...prev]);
   const removeArrayItem = (setter, index) =>
     setter((prev) => prev.filter((_, i) => i !== index));
   const updateArrayItem = (setter, index, value) =>
@@ -388,9 +474,20 @@ const CreateConference = () => {
   const addBenefit = () => addArrayItem(setBenefitsOfAttending, { title: "", description: "" });
   const addDelegate = () => addArrayItem(setDelegates, { title: "", description: "" });
 
+  /* RECENT POSTS (image upload instead of URL) */
+  const addRecentPost = () =>
+    addArrayItem(setRecentPosts, {
+      id: crypto.randomUUID(),
+      title: "",
+      description: "",
+      url: "",
+      date: "",
+      image: null,
+    });
+
   /* POSTER */
   const addPosterPoint = (field) =>
-    setEPoster((prev) => ({ ...prev, [field]: [...(prev[field] || []), ""] }));
+    setEPoster((prev) => ({ ...prev, [field]: ["", ...(prev[field] || [])] }));
 
   const updatePosterPoint = (field, index, value) =>
     setEPoster((prev) => ({
@@ -412,7 +509,7 @@ const CreateConference = () => {
     setSessions((prev) =>
       prev.map((day, index) =>
         index === dayIndex
-          ? { ...day, schedule: [...(day.schedule || []), { time: "", session: "" }] }
+          ? { ...day, schedule: [{ time: "", session: "" }, ...(day.schedule || [])] }
           : day,
       ),
     );
@@ -469,7 +566,19 @@ const CreateConference = () => {
     video: formData.video instanceof File ? undefined : formData.video || null,
 
     keyPoints: keyPoints.filter(Boolean),
-    recentPosts,
+
+    // image File -> multipart "recentPostImage_<index>". String -> existing URL. null -> removed.
+    recentPosts: recentPosts.map(({ id, _id, ...post }) => ({
+      title: post.title || "",
+      description: post.description || "",
+      url: post.url || "",
+      date: post.date || "",
+      image: post.image instanceof File ? null : post.image || null,
+    })),
+
+    // scrolling sentences
+    latestUpdates: latestUpdates.map((s) => (s || "").trim()).filter(Boolean),
+    recentpostUpdates: recentpostUpdates.map((s) => (s || "").trim()).filter(Boolean),
 
     venue: {
       venueName: formData.venueName,
@@ -534,6 +643,30 @@ const CreateConference = () => {
 
     submission: formData.submission,
 
+    // SEO (social images: File -> multipart "seoOgImage" / "seoTwitterImage")
+    seo: {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: (seo.keywords || "")
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+      canonicalUrl: seo.canonicalUrl,
+      ogTitle: seo.ogTitle,
+      ogDescription: seo.ogDescription,
+      ogType: seo.ogType,
+      ogImage: typeof seo.ogImage === "string" ? seo.ogImage : null,
+      twitterCard: seo.twitterCard,
+      twitterTitle: seo.twitterTitle,
+      twitterDescription: seo.twitterDescription,
+      twitterSite: seo.twitterSite,
+      twitterImage: typeof seo.twitterImage === "string" ? seo.twitterImage : null,
+      index: seo.index,
+      follow: seo.follow,
+      noarchive: seo.noarchive,
+      nosnippet: seo.nosnippet,
+    },
+
     contact: {
       email: formData.contactEmail,
       phone: formData.phone,
@@ -575,12 +708,22 @@ const CreateConference = () => {
         );
       });
 
+      /* GALLERY (same pattern as sponsors: existing URL kept, new file -> null + indexed upload) */
+      conferenceData.galleryImages = gallery.map((item) => {
+        if (item?.file instanceof File) return null;
+        return itemToUrl(item);
+      });
+
       const form = new FormData();
       form.append("conferenceData", JSON.stringify(conferenceData));
 
       if (formData.image instanceof File) form.append("conferenceImage", formData.image);
       if (formData.aboutImage instanceof File) form.append("aboutImage", formData.aboutImage);
       if (formData.marketImage instanceof File) form.append("marketImage", formData.marketImage);
+
+      /* SEO SOCIAL IMAGES */
+      if (seo.ogImage instanceof File) form.append("seoOgImage", seo.ogImage);
+      if (seo.twitterImage instanceof File) form.append("seoTwitterImage", seo.twitterImage);
 
       /* VIDEO */
       if (formData.video instanceof File) form.append("conferenceVideo", formData.video);
@@ -601,6 +744,20 @@ const CreateConference = () => {
       sponsors.forEach((sponsor, index) => {
         if (sponsor?.file instanceof File) {
           form.append(`sponsorImage_${index}`, sponsor.file);
+        }
+      });
+
+      /* GALLERY IMAGES */
+      gallery.forEach((item, index) => {
+        if (item?.file instanceof File) {
+          form.append(`galleryImage_${index}`, item.file);
+        }
+      });
+
+      /* RECENT POST IMAGES */
+      recentPosts.forEach((post, index) => {
+        if (post.image instanceof File) {
+          form.append(`recentPostImage_${index}`, post.image);
         }
       });
 
@@ -993,7 +1150,7 @@ const CreateConference = () => {
       <button
         type="button"
         onClick={() =>
-          setFormData((prev) => ({ ...prev, welcomeParagraphs: [...prev.welcomeParagraphs, ""] }))
+          setFormData((prev) => ({ ...prev, welcomeParagraphs: ["", ...prev.welcomeParagraphs] }))
         }
         className={`${buttonClass} mt-3 bg-violet-600 text-white hover:bg-violet-700`}
       >
@@ -1245,7 +1402,7 @@ const CreateConference = () => {
           title="Key Points"
           description="Important points displayed on the conference details page."
           buttonText="Add Key Point"
-          onClick={() => setKeyPoints((prev) => [...prev, ""])}
+          onClick={() => setKeyPoints((prev) => ["", ...prev])}
         />
 
         {keyPoints.map((point, index) => (
@@ -1610,7 +1767,7 @@ const CreateConference = () => {
         <button
           type="button"
           onClick={() =>
-            setFormData((prev) => ({ ...prev, marketParagraphs: [...prev.marketParagraphs, ""] }))
+            setFormData((prev) => ({ ...prev, marketParagraphs: ["", ...prev.marketParagraphs] }))
           }
           className={`${buttonClass} bg-violet-600 text-white`}
         >
@@ -1630,6 +1787,24 @@ const CreateConference = () => {
   );
 
   /* =========================================================
+     GALLERY (NEW)
+  ========================================================= */
+
+  const renderGallery = () => (
+    <div className={cardClass}>
+      <SectionHeader
+        title="Gallery Images"
+        description="Drag and drop multiple images. Preview them and remove any image before saving."
+      />
+      <MultiImageUploader label="Gallery Images" values={gallery} onChange={setGallery} />
+      <p className="mt-2 text-[11px] text-slate-500">
+        {gallery.length} image{gallery.length === 1 ? "" : "s"} selected. New files are sent as{" "}
+        <code>galleryImage_&lt;index&gt;</code>.
+      </p>
+    </div>
+  );
+
+  /* =========================================================
      MEDIA
   ========================================================= */
 
@@ -1637,6 +1812,260 @@ const CreateConference = () => {
     <div className={cardClass}>
       <SectionHeader title="Media & Sponsors" description="Upload sponsor logos using drag and drop." />
       <MultiImageUploader label="Sponsor Logos" values={sponsors} onChange={setSponsors} />
+    </div>
+  );
+
+  /* =========================================================
+     UPDATES (NEW)
+  ========================================================= */
+
+  const renderSentenceList = ({ title, description, buttonText, placeholder, items, setter }) => (
+    <div className={cardClass}>
+      <HeaderButton
+        title={title}
+        description={description}
+        buttonText={buttonText}
+        onClick={() => addArrayItem(setter, "")}
+      />
+
+      {items.length === 0 && <EmptyState icon={Megaphone} text="No sentences added yet." />}
+
+      <div className="space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[12px] font-semibold text-violet-700">
+              {index + 1}
+            </span>
+            <input
+              value={item || ""}
+              onChange={(e) => updateArrayItem(setter, index, e.target.value)}
+              placeholder={placeholder}
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => removeArrayItem(setter, index)}
+              className="w-10 shrink-0 rounded-lg border border-red-200 py-2 text-red-500"
+              aria-label={`Remove sentence ${index + 1}`}
+            >
+              <Trash2 size={14} className="mx-auto" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderUpdates = () => (
+    <div className="space-y-3">
+      {renderSentenceList({
+        title: "Latest Updates",
+        description: "Each sentence scrolls in the Latest Updates ticker on the public page.",
+        buttonText: "Add Sentence",
+        placeholder: "Early bird registration is now open!",
+        items: latestUpdates,
+        setter: setLatestUpdates,
+      })}
+
+      {renderSentenceList({
+        title: "Recent Post Updates",
+        description: "Each sentence scrolls in the Recent Post Updates ticker on the public page.",
+        buttonText: "Add Sentence",
+        placeholder: "Abstract submission deadline has been extended.",
+        items: recentpostUpdates,
+        setter: setRecentpostUpdates,
+      })}
+    </div>
+  );
+
+  /* =========================================================
+     SEO (NEW)
+  ========================================================= */
+
+  const renderSeo = () => (
+    <div className="space-y-3">
+      <div className={cardClass}>
+        <SectionHeader
+          title="Search Engine Optimization"
+          description="Meta tags used by search engines for the public conference page."
+        />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label={`Meta Title (${seo.metaTitle.length}/60)`} full>
+            <input
+              name="metaTitle"
+              value={seo.metaTitle}
+              onChange={handleSeoChange}
+              maxLength={120}
+              placeholder="2nd International Conference on Autism Research 2027"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={`Meta Description (${seo.metaDescription.length}/160)`} full>
+            <textarea
+              name="metaDescription"
+              value={seo.metaDescription}
+              onChange={handleSeoChange}
+              rows={3}
+              maxLength={320}
+              placeholder="Short summary shown in search results..."
+              className={textareaClass}
+            />
+          </Field>
+
+          <Field label="Keywords (comma separated)" full>
+            <input
+              name="keywords"
+              value={seo.keywords}
+              onChange={handleSeoChange}
+              placeholder="autism conference, autism research, neurodevelopment"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Canonical URL" full>
+            <input
+              type="url"
+              name="canonicalUrl"
+              value={seo.canonicalUrl}
+              onChange={handleSeoChange}
+              placeholder="https://example.com/conferences/autism-2027"
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <SectionHeader
+          title="Open Graph (Facebook, LinkedIn, WhatsApp)"
+          description="Controls how the page looks when shared on social platforms."
+        />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label="OG Title">
+            <input name="ogTitle" value={seo.ogTitle} onChange={handleSeoChange} className={inputClass} />
+          </Field>
+
+          <Field label="OG Type">
+            <select name="ogType" value={seo.ogType} onChange={handleSeoChange} className={inputClass}>
+              <option value="website">website</option>
+              <option value="article">article</option>
+              <option value="event">event</option>
+            </select>
+          </Field>
+
+          <Field label="OG Description" full>
+            <textarea
+              name="ogDescription"
+              value={seo.ogDescription}
+              onChange={handleSeoChange}
+              rows={3}
+              className={textareaClass}
+            />
+          </Field>
+
+          <ImageUploader
+            label="OG Image (1200 × 630 recommended)"
+            value={seo.ogImage}
+            onChange={(file) => setSeo((prev) => ({ ...prev, ogImage: file }))}
+          />
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <SectionHeader
+          title="X / Twitter Card"
+          description="Controls how the page looks when shared on X (Twitter)."
+        />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Field label="Card Type">
+            <select name="twitterCard" value={seo.twitterCard} onChange={handleSeoChange} className={inputClass}>
+              <option value="summary_large_image">summary_large_image</option>
+              <option value="summary">summary</option>
+            </select>
+          </Field>
+
+          <Field label="Twitter Site Handle">
+            <input
+              name="twitterSite"
+              value={seo.twitterSite}
+              onChange={handleSeoChange}
+              placeholder="@yourhandle"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Twitter Title" full>
+            <input name="twitterTitle" value={seo.twitterTitle} onChange={handleSeoChange} className={inputClass} />
+          </Field>
+
+          <Field label="Twitter Description" full>
+            <textarea
+              name="twitterDescription"
+              value={seo.twitterDescription}
+              onChange={handleSeoChange}
+              rows={3}
+              className={textareaClass}
+            />
+          </Field>
+
+          <ImageUploader
+            label="Twitter Image"
+            value={seo.twitterImage}
+            onChange={(file) => setSeo((prev) => ({ ...prev, twitterImage: file }))}
+          />
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        <SectionHeader
+          title="Indexing Controls"
+          description="Decide how search engine crawlers treat this conference page."
+        />
+
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {[
+            ["index", "Allow indexing (index)", "Turn off to send noindex"],
+            ["follow", "Allow link following (follow)", "Turn off to send nofollow"],
+            ["noarchive", "Disable cached copy (noarchive)", "Search engines will not store a cached copy"],
+            ["nosnippet", "Disable snippet (nosnippet)", "No text snippet in search results"],
+          ].map(([name, label, hint]) => (
+            <label
+              key={name}
+              className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
+            >
+              <input
+                type="checkbox"
+                name={name}
+                checked={Boolean(seo[name])}
+                onChange={handleSeoChange}
+                className="mt-0.5 h-4 w-4 accent-violet-600"
+              />
+              <span>
+                <span className="block text-[12px] font-semibold text-slate-800">{label}</span>
+                <span className="block text-[11px] text-slate-500">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        <p className="mt-3 rounded-lg bg-violet-50 px-3 py-2 text-[11px] text-violet-700">
+          Robots directive:{" "}
+          <code>
+            {[
+              seo.index ? "index" : "noindex",
+              seo.follow ? "follow" : "nofollow",
+              seo.noarchive ? "noarchive" : null,
+              seo.nosnippet ? "nosnippet" : null,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          </code>
+        </p>
+      </div>
     </div>
   );
 
@@ -1694,9 +2123,7 @@ const CreateConference = () => {
           title="Recent Posts"
           description="Add news, announcements or recent updates shown on the conference page."
           buttonText="Add Post"
-          onClick={() =>
-            addArrayItem(setRecentPosts, { title: "", description: "", url: "", date: "" })
-          }
+          onClick={addRecentPost}
         />
         {recentPosts.length === 0 && <EmptyState icon={BookOpen} text="No recent posts added yet." />}
         <div className="space-y-3">
@@ -1725,17 +2152,17 @@ const CreateConference = () => {
                 <Field label="Post Date">
                   <input
                     type="date"
-                    value={post.date || ""}
+                    value={post.date ? toDateInput(post.date) : ""}
                     onChange={(e) => updateArrayItem(setRecentPosts, index, { ...post, date: e.target.value })}
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Post / Article URL" full>
+                <Field label="Post URL (optional)" full>
                   <input
                     type="url"
                     value={post.url || ""}
                     onChange={(e) => updateArrayItem(setRecentPosts, index, { ...post, url: e.target.value })}
-                    placeholder="https://..."
+                    placeholder="https://example.com/announcement"
                     className={inputClass}
                   />
                 </Field>
@@ -1750,6 +2177,11 @@ const CreateConference = () => {
                     className={textareaClass}
                   />
                 </Field>
+                <ImageUploader
+                  label="Post Image"
+                  value={post.image}
+                  onChange={(file) => updateArrayItem(setRecentPosts, index, { ...post, image: file })}
+                />
               </div>
             </div>
           ))}
@@ -1776,7 +2208,10 @@ const CreateConference = () => {
       case "benefits": return renderBenefits();
       case "poster": return renderPoster();
       case "market": return renderMarket();
+      case "gallery": return renderGallery();
       case "media": return renderMedia();
+      case "updates": return renderUpdates();
+      case "seo": return renderSeo();
       case "contact": return renderContact();
       default: return renderBasic();
     }
@@ -1795,7 +2230,7 @@ const CreateConference = () => {
   ========================================================= */
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div ref={rootRef} className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="flex min-h-[62px] items-center justify-between gap-3 px-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">

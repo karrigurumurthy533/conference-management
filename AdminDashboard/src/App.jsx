@@ -42,6 +42,8 @@ import SubscribersDetails from "./pages/admin/SubscribersDetails";
 import CreateInvoice from "./pages/admin/createInvoice";
 import InvoiceDetails from "./pages/admin/InvoiceDetails";
 import EmployeeAttendance from "./pages/admin/EmployeeAttendance";
+import CreateReceipt from "./pages/admin/CreateReceipt";
+import PaymentReceiptDetails from "./pages/admin/PaymentReceiptDetails";
 
 function App() {
   return (
@@ -112,6 +114,9 @@ function App() {
           <Route path="invoices/:invoiceId" element={<InvoiceDetails />} />
 
           <Route path="payment-receipts" element={<PaymentReceipts />} />
+          <Route path="payment-receipts/create" element={<CreateReceipt />} />
+          <Route path="payment-receipts/:receiptId/edit" element={<CreateReceipt />} />
+          <Route path="payment-receipts/:receiptId" element={<PaymentReceiptDetails />} />
 
           {/* Abstracts */}
           <Route path="abstracts" element={<Abstracts />} />

@@ -45,14 +45,6 @@ import { subscribe, clearSubscribe } from "../redux/userSlice";
 
 const FALLBACK_CONFERENCE_ID = "6abe6282115ac55e02fcf168";
 
-const LATEST_UPDATES = [
-  "Early bird registration is now open",
-  "Abstract submission deadline: 30 November 2026",
-  "Keynote speakers announced",
-  "Workshops and poster sessions open for registration",
-  "Group registration discounts available",
-];
-
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=2000&q=90";
 
@@ -89,30 +81,6 @@ const DETAIL_ROWS = [
     icon: ImageIcon,
   },
   { key: "market", title: "Market Analysis", icon: BarChart3 },
-];
-
-const FALLBACK_POSTS = [
-  {
-    title: "Conference Updates",
-    description: "Follow the latest conference announcements and updates.",
-    date: "Latest Updates",
-    image:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=500&q=80",
-  },
-  {
-    title: "Research & Innovation",
-    description: "Discover new ideas and developments in research.",
-    date: "Conference News",
-    image:
-      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=500&q=80",
-  },
-  {
-    title: "Global Collaboration",
-    description: "Connecting professionals and researchers worldwide.",
-    date: "Community News",
-    image:
-      "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=500&q=80",
-  },
 ];
 
 const fadeUp = {
@@ -588,7 +556,7 @@ const ConferenceDetails = () => {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   const [activeRow, setActiveRow] = useState(null);
-  const [videoOpen, setVideoOpen] = useState(false);
+ const [showVideo, setShowVideo] = useState(false);
   const [subscriberForm, setSubscriberForm] = useState({
     name: "",
     email: "",
@@ -721,6 +689,14 @@ const ConferenceDetails = () => {
   );
   const topics = asArray(data.topics);
 
+  const galleryImages = asArray(data.galleryImages)
+    .map((item) =>
+      typeof item === "string"
+        ? item.trim()
+        : getText(item, ["imageUrl", "image", "url", "src"], ""),
+    )
+    .filter(Boolean);
+
   // Key points from API (string[]). Falls back to defaults only when empty.
   const apiKeyPoints = asArray(data.keyPoints)
     .map((point) =>
@@ -765,10 +741,35 @@ const ConferenceDetails = () => {
     : {};
   const contact = isObject(data.contact) ? data.contact : {};
   const registrationCategories = asArray(data.registrationCategories);
+
+  const latestUpdates = asArray(data.latestUpdates)
+    .map((item) =>
+      typeof item === "string"
+        ? item.trim()
+        : getText(item, ["title", "text", "message", "content", "name"], ""),
+    )
+    .filter(Boolean);
+
+  const recentPostUpdates = asArray(data.recentpostUpdates)
+    .filter(
+      (post) => post && (typeof post === "object" || typeof post === "string"),
+    )
+    .map((post, index) =>
+      typeof post === "string"
+        ? {
+            _id: `recent-post-${index}`,
+            title: post.trim(),
+            description: post.trim(),
+          }
+        : post,
+    );
+
   const socialPosts = asArray(data.recentPosts || data.posts).filter(
     (post) => post && (typeof post === "object" || typeof post === "string"),
   );
-  const posts = socialPosts.length ? socialPosts : FALLBACK_POSTS;
+
+  const posts = socialPosts.length ? socialPosts : recentPostUpdates;
+
   const countdownStart = data.startDate || null;
   const countdownEnd = data.endDate || data.startDate || null;
   const hasSponsors = sponsors.length > 0;
@@ -1530,7 +1531,7 @@ const ConferenceDetails = () => {
           {/* SCROLLING AREA */}
           <div className="group relative min-w-0 flex-1 overflow-hidden bg-white">
             <div className="flex w-max animate-ticker items-center group-hover:[animation-play-state:paused] motion-reduce:animate-none">
-              {[...LATEST_UPDATES, ...LATEST_UPDATES].map((item, i) => (
+              {[...latestUpdates, ...latestUpdates].map((item, i) => (
                 <span
                   key={i}
                   className="flex items-center gap-2 whitespace-nowrap px-6 py-3 text-sm font-bold text-violet-700"
@@ -1577,30 +1578,41 @@ const ConferenceDetails = () => {
             <div className="ml-10 mt-1 h-0.5 w-32 rotate-[-5deg] rounded-full bg-violet-500" />
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setVideoOpen(true)}
-              className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.4)]"
-              aria-label="Open conference introduction"
-            >
-              <img
-                src={aboutImage}
-                alt={`${title} introduction`}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
-              <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-violet-700 transition group-hover:scale-110">
-                <Play size={25} fill="currentColor" />
-              </span>
-              <span className="absolute bottom-8 left-0 w-full text-center text-base font-bold text-white">
-                About the Conference
-              </span>
-              <span className="absolute bottom-3 left-0 w-full text-center text-[13px] text-white/80">
-                Discover our vision
-              </span>
-            </button>
-          </div>
+<div className="relative">
+  {showVideo && videoUrl ? (
+    <video
+      key={videoUrl}
+      src={videoUrl}
+      poster={aboutImage}
+      controls
+      autoPlay
+      playsInline
+      preload="metadata"
+      className="aspect-video w-full rounded-2xl bg-black"
+    />
+  ) : (
+    <button
+      type="button"
+      onClick={() => setShowVideo(true)}
+      className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-lg"
+      aria-label="Play conference introduction"
+    >
+      <img
+        src={aboutImage}
+        alt={`${title} introduction`}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span className="rounded-full bg-black/60 p-4 text-white">
+          ▶
+        </span>
+      </span>
+    </button>
+  )}
+</div>
+
+          
 
           <div className="grid grid-cols-2 gap-3 rounded-2xl bg-violet-50 p-4 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1">
             {[
@@ -1801,116 +1813,36 @@ const ConferenceDetails = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
-              <div className="group relative h-[150px] overflow-hidden rounded-xl sm:col-span-2 sm:row-span-2 sm:h-[240px] lg:h-[240px]">
-                <img
-                  src="/images/one.jpeg"
-                  alt="International conference experience"
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/90 via-[#100d35]/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                  <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
-                    Featured Moment
-                  </span>
-                  <h3 className="mt-2 text-base font-extrabold text-white sm:text-lg">
-                    Global Conference Experience
-                  </h3>
-                  <p className="mt-1 text-xs font-medium leading-4 text-white/80">
-                    Bringing researchers, professionals and innovators together.
-                  </p>
-                </div>
-              </div>
+              {galleryImages.map((image, index) => (
+                <div
+                  key={`${image}-${index}`}
+                  className={`group relative overflow-hidden rounded-xl ${
+                    index === 0
+                      ? "h-[150px] sm:col-span-2 sm:row-span-2 sm:h-[240px] lg:h-[240px]"
+                      : "h-[120px]"
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Conference gallery image ${index + 1}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
 
-              <div className="group relative h-[120px] overflow-hidden rounded-xl sm:col-span-1 sm:h-[115px] lg:col-span-2">
-                <img
-                  src="/images/second.jpeg"
-                  alt="Expert conference presentation"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
-                    Knowledge Sharing
-                  </p>
-                  <h3 className="mt-1 text-sm font-extrabold text-white">
-                    Expert Presentations
-                  </h3>
-                </div>
-              </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
 
-              <div className="group relative h-[120px] overflow-hidden rounded-xl">
-                <img
-                  src="/images/three.jpeg"
-                  alt="Professional collaboration"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-3">
-                  <p className="text-[10px] font-semibold text-violet-200">
-                    COLLABORATION
-                  </p>
-                  <h3 className="mt-1 text-sm font-extrabold text-white">
-                    Networking & Ideas
-                  </h3>
+                  <div className="absolute bottom-0 left-0 p-3 sm:p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
+                      Conference Moments
+                    </p>
+                    <h3 className="mt-1 text-sm font-extrabold text-white">
+                      {index === 0
+                        ? "Global Conference Experience"
+                        : `Conference Moment ${index + 1}`}
+                    </h3>
+                  </div>
                 </div>
-              </div>
-
-              <div className="group relative h-[120px] overflow-hidden rounded-xl">
-                <img
-                  src="/images/four.jpeg"
-                  alt="Research and technology"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-3">
-                  <p className="text-[10px] font-semibold text-violet-200">
-                    INNOVATION
-                  </p>
-                  <h3 className="mt-1 text-sm font-extrabold text-white">
-                    Research & Technology
-                  </h3>
-                </div>
-              </div>
-
-              <div className="group relative h-[120px] overflow-hidden rounded-xl sm:col-span-2">
-                <img
-                  src="/images/five.jpeg"
-                  alt="Conference community"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
-                    Global Community
-                  </p>
-                  <h3 className="mt-1 text-sm font-extrabold text-white">
-                    Connecting People, Inspiring Change
-                  </h3>
-                </div>
-              </div>
-
-              <div className="group relative h-[120px] overflow-hidden rounded-xl">
-                <img
-                  src="/images/six.jpeg"
-                  alt="Conference teamwork"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-3">
-                  <p className="text-[10px] font-semibold text-violet-200">
-                    TEAMWORK
-                  </p>
-                  <h3 className="mt-1 text-sm font-extrabold text-white">
-                    Working Together
-                  </h3>
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 border-t border-violet-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
@@ -2315,6 +2247,7 @@ const ConferenceDetails = () => {
           </div>
         </section>
       )}
+
       {/* SPONSORS + RECENT POSTS */}
 
       <section className="w-full bg-white px-0 py-6">
@@ -2571,28 +2504,26 @@ const ConferenceDetails = () => {
                     `Conference Update ${index + 1}`,
                   );
 
-                  const postImage =
-                    getMediaUrl(post.url || post.imageUrl || post.thumbnail) ||
-                    FALLBACK_IMAGE;
+                  const postImage = getMediaUrl(
+                    post.image || post.imageUrl || post.thumbnail,
+                  );
 
                   return (
                     <article
                       key={post._id || `${postTitle}-${index}`}
                       className="group flex w-[175px] min-w-[175px] snap-start flex-col overflow-hidden rounded-xl border border-slate-100 bg-white transition duration-300 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:w-[195px] sm:min-w-[195px] xl:w-[210px] xl:min-w-[210px]"
                     >
-                      {/* SMALLER IMAGE */}
-                      <div className="h-24 overflow-hidden bg-violet-50 sm:h-28">
-                        <img
-                          src={postImage}
-                          alt={postTitle}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = FALLBACK_IMAGE;
-                          }}
-                        />
-                      </div>
+                      {postImage && (
+                        <div className="h-24 overflow-hidden sm:h-28">
+                          <img
+                            src={postImage}
+                            alt={postTitle}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            onError={(event) => event.currentTarget.parentElement?.remove()}
+                          />
+                        </div>
+                      )}
 
                       {/* REDUCED CONTENT HEIGHT */}
                       <div className="flex flex-1 flex-col p-3">
@@ -2639,6 +2570,8 @@ const ConferenceDetails = () => {
               )}
             </div>
 
+            
+
             {/* FOOTER LINK */}
             <div className="mt-2 flex items-center justify-between gap-3">
               <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
@@ -2658,66 +2591,6 @@ const ConferenceDetails = () => {
           </div>
         </div>
       </section>
-
-      {/* CONFERENCE INTRODUCTION MODAL (plays API video when available) */}
-      {videoOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm"
-          onClick={() => setVideoOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="About the conference"
-            className={`relative max-h-[92vh] w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8 ${
-              videoUrl ? "max-w-3xl" : "max-w-2xl"
-            }`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              onClick={() => setVideoOpen(false)}
-              aria-label="Close modal"
-              className="absolute right-4 top-4 z-10 rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-violet-100"
-            >
-              <X size={19} />
-            </button>
-            <SectionLabel>About GlobalScion</SectionLabel>
-            <h2 className="mt-2 text-3xl text-[#171447] font-extrabold">
-              {title}
-            </h2>
-
-            {videoUrl && (
-              <div className="mt-4 overflow-hidden rounded-xl bg-black">
-                <video
-                  key={videoUrl}
-                  src={videoUrl}
-                  poster={aboutImage}
-                  controls
-                  autoPlay
-                  playsInline
-                  preload="metadata"
-                  className="aspect-video w-full bg-black"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            )}
-
-            <p className="mt-4 whitespace-pre-line text-base leading-7 text-slate-600 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:10] overflow-hidden font-semibold">
-              {welcomeText}
-            </p>
-            <button
-              onClick={() => {
-                setVideoOpen(false);
-                scrollTo("explore");
-              }}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700"
-            >
-              Explore Conference <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* WHATSAPP FLOATING BUTTON */}
       <WhatsAppButton />

@@ -179,7 +179,7 @@ const EmpoweringEveryStep = () => {
           {/* Subtitle */}
           <motion.p
             variants={fadeUp}
-            className="mt-2 text-sm leading-6 transition-colors duration-500 sm:text-[15px]"
+            className="mt-2 text-sm leading-6 transition-colors duration-500 sm:text-[17px]"
             style={{
               color: colors.subtitle,
             }}
@@ -290,7 +290,7 @@ const EmpoweringEveryStep = () => {
 
                 {/* Title */}
                 <h3
-                  className="mt-3 text-[13px] font-bold leading-5 transition-colors duration-500"
+                  className="mt-3 text-[18px] font-extrabold leading-5 transition-colors duration-500"
                   style={{
                     color: colors.title,
                   }}
@@ -300,7 +300,7 @@ const EmpoweringEveryStep = () => {
 
                 {/* Description */}
                 <p
-                  className="mt-2 text-[10px] leading-[1.65] transition-colors duration-500"
+                  className="mt-2 text-[15px] leading-[1.65] transition-colors duration-500"
                   style={{
                     color: colors.description,
                   }}
@@ -313,7 +313,7 @@ const EmpoweringEveryStep = () => {
                   {service.points.map((point) => (
                     <li
                       key={point}
-                      className="flex items-start gap-2 text-[10px] leading-[1.55] transition-colors duration-500"
+                      className="flex items-start gap-2 text-[14px] leading-[1.55] transition-colors duration-500"
                       style={{
                         color: colors.pointText,
                       }}
@@ -352,7 +352,7 @@ const EmpoweringEveryStep = () => {
                   transition={{
                     duration: 0.2,
                   }}
-                  className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold transition-colors duration-300"
+                  className="mt-4 inline-flex items-center gap-1 text-[15px] font-semibold transition-colors duration-300"
                   style={{
                     color: colors.brand,
                   }}

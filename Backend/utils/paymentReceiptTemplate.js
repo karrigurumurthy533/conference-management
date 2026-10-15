@@ -1,0 +1,23 @@
+const fs = require("fs");
+const path = require("path");
+const logo = "data:image/png;base64," + fs.readFileSync(path.join(__dirname, "../assets/web_logo.png")).toString("base64");
+const e = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const date = (v) => { const d = new Date(v); return v && !Number.isNaN(d.getTime()) ? d.toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"}) : (v || "-"); };
+const currencyLabels = { EUR: "Euro", GBP: "Pound Sterling", USD: "US Dollar", INR: "Indian Rupee", AUD: "Australian Dollar", CAD: "Canadian Dollar" };
+const money = (amount, currency) => { try { return new Intl.NumberFormat("en-GB", { style: "currency", currency: currency || "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(amount || 0)); } catch { return (currency || "USD") + " " + Number(amount || 0).toFixed(2); } };
+const address = (title, p) => "<section><h3>"+title+"</h3><p><strong>"+e(p.name||"-")+"</strong></p><p>"+e(p.address||"-")+"</p><p>Country: "+e(p.country||"-")+"</p><p>Phone: "+e(((p.countryCode||"")+" "+(p.phone||"")).trim()||"-")+"</p><p>Email: "+e(p.email||"-")+"</p></section>";
+module.exports = function paymentReceiptTemplate(r) {
+  r = r || {}; const b=r.billing||{}, s=r.shipping||{}, items=r.items||[];
+  const totals=r.totals instanceof Map ? Object.fromEntries(r.totals) : (r.totals||{});
+  const rows=items.map((x,i)=>"<tr><td>"+(i+1)+"</td><td>"+e(x.description)+"</td><td>"+e(currencyLabels[x.currency] || x.currency)+"</td><td class='amount'>"+Number(x.amount||0).toLocaleString("en-GB",{minimumFractionDigits:0,maximumFractionDigits:2})+"</td></tr>").join("");
+  const sum=Object.entries(totals).map(([c,a])=>"<p><strong>Total ("+e(c)+"): "+e(money(a,c))+"</strong></p>").join("");
+  return "<!doctype html><html><head><meta charset='utf-8'><title>Payment Receipt</title><style>"+
+  "*{box-sizing:border-box}@page{size:A4;margin:0}html,body{margin:0;width:210mm;min-height:297mm;background:#fff}body{font:11px/1.55 Arial,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}"+
+  ".paper{position:relative;isolation:isolate;width:210mm;min-height:297mm;padding:12mm;background:#fff}.paper:before{content:'';position:absolute;z-index:0;inset:0;background:url("+logo+") no-repeat center/62% auto;opacity:.055;pointer-events:none}.paper>*{position:relative;z-index:1}"+
+  ".head{padding-bottom:19px;border-bottom:2px solid #7c3aed}h1{font-size:19px;margin:0 0 8px}.head p{margin:0}.title{text-align:right;font-size:14px;margin:20px 0 13px!important}p{margin:0 0 4px;overflow-wrap:anywhere}h3{font-size:11px;margin:0 0 8px}"+
+  ".grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px;margin-top:19px}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;margin-top:19px}th,td{padding:8px 7px;border:1px solid #d6d6d6;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#f2e5fa}th:first-child{width:8%}th:nth-child(2){width:52%}th:nth-child(3){width:15%}th:last-child{width:25%;text-align:right}.amount{text-align:right}.totals{text-align:right;margin-top:12px}.extra{margin-top:22px}</style></head><body><main class='paper'>"+
+  "<header class='head'><h1>"+e(r.conferenceTitle||"Conference")+"</h1><p>"+e(r.conferenceDates||"")+" | "+e(r.conferenceMode||"")+"</p><h2 class='title'>PAYMENT RECEIPT</h2><p><strong>Receipt:</strong> "+e(r.receiptNumber||"-")+"</p></header>"+
+  "<div class='grid'><section><h3>Organization</h3><p>"+e(r.companyCountry||"United Kingdom")+"</p><p>Phone: "+e(r.companyPhone||"-")+"</p><p>Email: "+e(r.companyEmail||"-")+"</p></section><section><h3>Payment Information</h3><p>Date of Payment: "+e(date(r.paymentDate))+"</p><p>Payment Method: "+e(r.paymentMethod||"-")+"</p><p>Transaction ID: "+e(r.transactionId||"-")+"</p></section></div>"+
+  "<div class='grid'>"+address("Billing To",b)+address("Shipping To",s)+"</div><table><thead><tr><th>S.No</th><th>Description</th><th>Currency</th><th>Amount</th></tr></thead><tbody>"+rows+"</tbody></table><div class='totals'>"+sum+"</div>"+
+  "<section class='extra'><h3>Additional Details</h3><p>This is a computer-generated receipt. Signature is not necessary.</p><p>For questions, please email: "+e(r.supportEmail||"support@globalscion.org")+"</p><p>Terms &amp; Conditions: "+e(r.terms||"All online payments through payment gateways are accepted after our customer agrees to our Terms and Conditions.")+"</p><p style='text-align:center'>GlobalScion Conferences &middot; Payment Receipt</p></section></main></body></html>";
+};
