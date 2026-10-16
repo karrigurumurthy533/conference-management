@@ -2083,7 +2083,7 @@ const ConferenceDetails = () => {
 
               {contact.linkedin && (
                 <ContactItem
-                 
+                  icon="/linkedin.svg"
                   label="LinkedIn"
                   value={contact.linkedin}
                   href={contact.linkedin}
@@ -2092,7 +2092,7 @@ const ConferenceDetails = () => {
 
               {contact.instagram && (
                 <ContactItem
-                
+                  icon="/instagram.svg"
                   label="Instagram"
                   value={contact.instagram}
                   href={contact.instagram}
@@ -2101,6 +2101,7 @@ const ConferenceDetails = () => {
 
               {contact.facebook && (
                 <ContactItem
+                  icon="/facebook.svg"
                   label="Facebook"
                   value={contact.facebook}
                   href={contact.facebook}
@@ -2460,10 +2461,19 @@ const ContactItem = ({
   const content = (
     <>
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50">
-        <Icon
-          size={14}
-          className="text-violet-600"
-        />
+        {typeof Icon === "string" ? (
+          <img
+            src={Icon}
+            alt=""
+            aria-hidden="true"
+            className="h-4 w-4 object-contain"
+          />
+        ) : (
+          <Icon
+            size={14}
+            className="text-violet-600"
+          />
+        )}
       </div>
 
       <div className="min-w-0">
