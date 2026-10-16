@@ -21,7 +21,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const employeeToken =
-      localStorage.getItem("employeeToken");
+      sessionStorage.getItem("employeeToken");
 
     const adminToken =
       localStorage.getItem("token");
@@ -58,12 +58,14 @@ axiosInstance.interceptors.response.use(
 
     if (error?.response?.status === 401) {
       const employeeToken =
-        localStorage.getItem("employeeToken");
+        sessionStorage.getItem("employeeToken");
 
       const adminToken =
         localStorage.getItem("token");
 
       if (employeeToken) {
+        sessionStorage.removeItem("employeeToken");
+        sessionStorage.removeItem("employeeUser");
         localStorage.removeItem("employeeToken");
         localStorage.removeItem("employeeUser");
       }
