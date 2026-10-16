@@ -1638,164 +1638,80 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-      <section id="speakers" className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8">
+      <section
+        id="speakers"
+        className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8"
+      >
         <div className="mx-auto max-w-[1300px]">
-          <SectionHeading label="Featured Speakers" title="Renowned Speakers" description="Meet the speakers and professionals participating in this conference." />
-      {speakers.length > 0 ? (
-        <>
-          {speakers.length > 6 && (
-            <style>{`
-              @keyframes speaker-marquee-left-to-right {
-                from { transform: translateX(-50%); }
-                to { transform: translateX(0); }
-              }
+          <SectionHeading
+            label="Featured Speakers"
+            title="Renowned Speakers"
+            description="Meet the speakers and professionals participating in this conference."
+          />
 
-              .speaker-marquee-track {
-                animation: speaker-marquee-left-to-right 36s linear infinite;
-                will-change: transform;
-              }
-
-              .speaker-marquee-viewport:hover .speaker-marquee-track {
-                animation-play-state: paused;
-              }
-            `}</style>
-          )}
-
-          <div
-            className={
-              speakers.length > 6
-                ? 'speaker-marquee-viewport w-full overflow-hidden'
-                : 'w-full'
-            }
-          >
-            {speakers.length > 6 ? (
-              <div className="speaker-marquee-track flex w-max">
-                {[0, 1].map((copy) => (
-                  <div
-                    key={`speaker-copy-${copy}`}
-                    aria-hidden={copy === 1}
-                    className="flex w-max shrink-0 gap-3 pr-3"
-                  >
-                    {speakers.map((speaker, index) => (
-                      <motion.article
-                        key={`${copy}-${speaker._id || speaker.name || index}`}
-                        variants={fadeUp}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, amount: 0.15 }}
-                        className="group relative isolate h-[190px] w-[175px] shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
-                      >
-                        <img
-                          src={getSpeakerImage(speaker)}
-                          alt={asText(speaker.name, "Conference speaker")}
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-                          }}
-                          className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
-                          <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
-                            {asText(speaker.name, "Speaker")}
-                          </h3>
-                          <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
-                            {asText(speaker.role, "Conference Speaker")}
-                          </p>
-                          {getSpeakerOrganization(speaker) && (
-                            <div className="mt-1 flex items-start gap-1">
-                              <Building2 size={11} className="mt-0.5 shrink-0 text-violet-300" />
-                              <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
-                                {getSpeakerOrganization(speaker)}
-                              </p>
-                            </div>
-                          )}
-                          {(speaker.country || speaker.location) && (
-                            <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
-                              <MapPin size={10} className="shrink-0 text-violet-300" />
-                              <span className="line-clamp-1">{speaker.country || speaker.location}</span>
-                            </div>
-                          )}
-                          {speaker.specialty && (
-                            <div className="mt-1.5 flex items-center gap-1">
-                              <Award size={10} className="shrink-0 text-violet-300" />
-                              <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
-                                {speaker.specialty}
-                              </span>
-                            </div>
-                          )}
-                          <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
-                        </div>
-                      </motion.article>
-                    ))}
+          {speakers.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {speakers.map((speaker, index) => (
+                <motion.article
+                  key={speaker._id || speaker.name || index}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.15 }}
+                  className="group relative isolate h-[190px] w-full min-w-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
+                >
+                  <img
+                    src={getSpeakerImage(speaker)}
+                    alt={asText(speaker.name, "Conference speaker")}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                    }}
+                    className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
+                    <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
+                      {asText(speaker.name, "Speaker")}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
+                      {asText(speaker.role, "Conference Speaker")}
+                    </p>
+                    {getSpeakerOrganization(speaker) && (
+                      <div className="mt-1 flex items-start gap-1">
+                        <Building2 size={11} className="mt-0.5 shrink-0 text-violet-300" />
+                        <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
+                          {getSpeakerOrganization(speaker)}
+                        </p>
+                      </div>
+                    )}
+                    {(speaker.country || speaker.location) && (
+                      <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
+                        <MapPin size={10} className="shrink-0 text-violet-300" />
+                        <span className="line-clamp-1">
+                          {speaker.country || speaker.location}
+                        </span>
+                      </div>
+                    )}
+                    {speaker.specialty && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <Award size={10} className="shrink-0 text-violet-300" />
+                        <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
+                          {speaker.specialty}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {speakers.map((speaker, index) => (
-                  <motion.article
-                    key={speaker._id || speaker.name || index}
-                    variants={fadeUp}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.15 }}
-                    className="group relative isolate h-[190px] w-full min-w-0 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
-                  >
-                    <img
-                      src={getSpeakerImage(speaker)}
-                      alt={asText(speaker.name, "Conference speaker")}
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.onerror = null;
-                        event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-                      }}
-                      className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
-                      <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
-                        {asText(speaker.name, "Speaker")}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
-                        {asText(speaker.role, "Conference Speaker")}
-                      </p>
-                      {getSpeakerOrganization(speaker) && (
-                        <div className="mt-1 flex items-start gap-1">
-                          <Building2 size={11} className="mt-0.5 shrink-0 text-violet-300" />
-                          <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
-                            {getSpeakerOrganization(speaker)}
-                          </p>
-                        </div>
-                      )}
-                      {(speaker.country || speaker.location) && (
-                        <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
-                          <MapPin size={10} className="shrink-0 text-violet-300" />
-                          <span className="line-clamp-1">{speaker.country || speaker.location}</span>
-                        </div>
-                      )}
-                      {speaker.specialty && (
-                        <div className="mt-1.5 flex items-center gap-1">
-                          <Award size={10} className="shrink-0 text-violet-300" />
-                          <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
-                            {speaker.specialty}
-                          </span>
-                        </div>
-                      )}
-                      <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
-                    </div>
-                  </motion.article>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        <EmptyState>
-          No speakers have been added to this conference yet.
-        </EmptyState>
-      )}
+                </motion.article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState>
+              No speakers have been added to this conference yet.
+            </EmptyState>
+          )}
         </div>
       </section>
       {/* WHO SHOULD ATTEND */}
