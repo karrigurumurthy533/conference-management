@@ -488,6 +488,21 @@ exports.getAllConferences = async (req, res) => {
   }
 };
 
+exports.getConferenceRegistrationPrices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid conference ID" });
+    }
+    const conference = await Conference.findById(id).select("title registration registrationCategories").lean();
+    if (!conference) return res.status(404).json({ success: false, message: "Conference not found" });
+    return res.status(200).json({ success: true, data: { conferenceId: conference._id, conferenceTitle: conference.title, registrationPrices: conference.registration?.length ? conference.registration : conference.registrationCategories || [] } });
+  } catch (error) {
+    console.error("Get conference registration prices error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch registration prices" });
+  }
+};
+
 exports.getConferenceById = async (req, res) => {
   try {
     const { id } = req.params;

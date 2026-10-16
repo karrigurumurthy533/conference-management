@@ -9,6 +9,8 @@ export const getConferencesApi = () => {
   );
 };
 
+export const getConferenceRegistrationPricesApi = (conferenceId) => axiosInstance.get(`/conference/${conferenceId}/registration-prices`);
+
 export const getConferenceByIdApi = (id) => {
   return axiosInstance.get(
     `/conference/${id}`

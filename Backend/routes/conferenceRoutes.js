@@ -12,6 +12,7 @@ const router = express.Router();
 // Example: router.post("/", protect, restrictTo("admin"), conferenceUpload, controller.createConference);
 router.post("/create", authMiddleware("admin"), conferenceUpload, conferenceController.createConference);
 router.get("/getAll", cacheMiddleware(60),conferenceController.getAllConferences);
+router.get("/:id/registration-prices", conferenceController.getConferenceRegistrationPrices);
 router.get("/:id",cacheMiddleware(60), conferenceController.getConferenceById);
 router.put("/:id", conferenceUpload,conferenceController.updateConference);
 router.delete("/:id", authMiddleware("admin"), conferenceController.deleteConference);

@@ -151,7 +151,7 @@ const registrationCategorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     price: { type: Number, default: 0 },
-    currency: { type: String, default: "USD", trim: true },
+    currency: { type: String, default: "EUR", trim: true },
     description: { type: String, default: "", trim: true },
     earlyBirdPrice: { type: Number, default: 0 },
     earlyBirdDeadline: { type: Date, default: null },

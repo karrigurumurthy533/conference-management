@@ -117,7 +117,7 @@ const registrationSchema = new mongoose.Schema(
         uppercase: true,
         trim: true,
         enum: ["GBP", "USD", "EUR"],
-        default: "GBP",
+        default: "EUR",
       },
     },
 

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { getConferenceByIdApi } from "../api/api";
+import { getConferenceByIdApi, getConferenceRegistrationPricesApi } from "../api/api";
 import { createRegistration } from "../redux/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -94,6 +94,15 @@ const cardVariants = {
   },
 };
 
+const REGISTRATION_PRICE_FIELDS = [
+  ["speakerRegistration", "Speaker Registration"],
+  ["delegateRegistration", "Delegate Registration"],
+  ["posterRegistration", "Poster Registration"],
+  ["packageA", "Package A (Registration + 2 Nights Accommodation)"],
+  ["packageB", "Package B (Registration + 3 Nights Accommodation)"],
+];
+const REGISTRATION_GROUP_COLORS = ["#8CCB9F", "#7EA0BD", "#9BBEF5", "#F29A9A"];
+
 const RegisterPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -102,6 +111,9 @@ const RegisterPage = () => {
   const [conference, setConference] = useState(null);
   const [conferenceLoading, setConferenceLoading] = useState(true);
   const [conferenceError, setConferenceError] = useState("");
+  const [registrationPrices, setRegistrationPrices] = useState([]);
+  const [registrationPricesLoading, setRegistrationPricesLoading] = useState(true);
+  const [registrationPricesError, setRegistrationPricesError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -155,168 +167,77 @@ const RegisterPage = () => {
     registrationType: "",
   });
 
-  const [currency, setCurrency] = useState("GBP");
+  const [currency, setCurrency] = useState("EUR");
 
   const currencyConfig = {
-    GBP: {
-      symbol: "£",
-      rate: 1,
-      label: "GBP (£)",
-    },
-    USD: {
-      symbol: "$",
-      rate: 1.35,
-      label: "USD ($)",
-    },
-    EUR: {
-      symbol: "€",
-      rate: 1.17,
-      label: "EUR (€)",
-    },
+    GBP: { symbol: String.fromCharCode(163), label: "GBP" },
+    USD: { symbol: "$", label: "USD ($)" },
+    EUR: { symbol: String.fromCharCode(8364), label: "EUR" },
   };
+  const selectedCurrency = currencyConfig[currency] || currencyConfig.EUR;
+  const convertPrice = (price) => Number(price) || 0;
 
-  const selectedCurrency = currencyConfig[currency];
-
-  const convertPrice = (gbpPrice) => {
-    return gbpPrice * selectedCurrency.rate;
-  };
-
-  const registrationGroups = [
-    {
-      title: "Academic",
-      color: "#8CCB9F",
-      options: [
-        {
-          id: "academic-speaker",
-          label: "Speaker Registration",
-          price: 579,
-        },
-        {
-          id: "academic-delegate",
-          label: "Delegate Registration",
-          price: 521,
-        },
-        {
-          id: "academic-poster",
-          label: "Poster Registration",
-          price: 629,
-        },
-        {
-          id: "academic-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
-          price: 979,
-        },
-        {
-          id: "academic-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
-          price: 1079,
-        },
-      ],
-    },
-    {
-      title: "Business",
-      color: "#7EA0BD",
-      options: [
-        {
-          id: "business-speaker",
-          label: "Speaker Registration",
-          price: 779,
-        },
-        {
-          id: "business-delegate",
-          label: "Delegate Registration",
-          price: 629,
-        },
-        {
-          id: "business-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
-          price: 1079,
-        },
-        {
-          id: "business-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
-          price: 1179,
-        },
-      ],
-    },
-    {
-      title: "Others",
-      color: "#9BBEF5",
-      options: [
-        {
-          id: "other-token",
-          label: "Token Amount",
-          price: 299,
-        },
-        {
-          id: "other-exhibitor",
-          label: "Exhibitor",
-          price: 1979,
-        },
-        {
-          id: "other-elite",
-          label: "Elite Sponsor",
-          price: 3979,
-        },
-        {
-          id: "other-gold",
-          label: "Gold Sponsor",
-          price: 3979,
-        },
-        {
-          id: "other-silver",
-          label: "Silver Sponsor",
-          price: 2479,
-        },
-      ],
-    },
-    {
-      title: "Student",
-      color: "#F29A9A",
-      options: [
-        {
-          id: "student-speaker",
-          label: "Speaker Registration",
-          price: 479,
-        },
-        {
-          id: "student-delegate",
-          label: "Delegate Registration",
-          price: 429,
-        },
-        {
-          id: "student-poster",
-          label: "Poster Registration",
-          price: 529,
-        },
-        {
-          id: "student-package-a",
-          label: "Package A (Registration + 2 Nights Accommodation)",
-          price: 951,
-        },
-        {
-          id: "student-package-b",
-          label: "Package B (Registration + 3 Nights Accommodation)",
-          price: 1059,
-        },
-      ],
-    },
-  ];
-
-  const selectedRegistration = useMemo(() => {
-    for (const group of registrationGroups) {
-      const found = group.options.find(
-        (option) => option.id === formData.registrationType,
-      );
-
-      if (found) {
-        return found;
+  useEffect(() => {
+    let active = true;
+    const fetchRegistrationPrices = async () => {
+      if (!id) {
+        setRegistrationPrices([]);
+        setRegistrationPricesError("Invalid conference ID.");
+        setRegistrationPricesLoading(false);
+        return;
       }
-    }
+      setRegistrationPricesLoading(true);
+      setRegistrationPricesError("");
+      try {
+        const response = await getConferenceRegistrationPricesApi(id);
+        const result = response?.data?.data ?? response?.data ?? {};
+        const prices = result?.registrationPrices ?? result?.registration ?? result?.registrationCategories ?? [];
+        if (!active) return;
+        setRegistrationPrices(Array.isArray(prices) ? prices : []);
+        if (!Array.isArray(prices) || prices.length === 0) {
+          setRegistrationPricesError("Registration prices have not been added for this conference yet.");
+        }
+      } catch (error) {
+        if (!active) return;
+        setRegistrationPrices([]);
+        setRegistrationPricesError(error?.response?.data?.message || "Unable to load registration prices.");
+      } finally {
+        if (active) setRegistrationPricesLoading(false);
+      }
+    };
+    fetchRegistrationPrices();
+    return () => { active = false; };
+  }, [id]);
 
-    return null;
-  }, [formData.registrationType]);
+  const registrationGroups = useMemo(() => registrationPrices
+    .map((category, categoryIndex) => {
+      const title = String(category?.category || category?.name || "").trim();
+      if (!title) return null;
+      const priceSet = category?.prices?.[currency] || {};
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const options = REGISTRATION_PRICE_FIELDS.flatMap(([field, label]) => {
+        const price = Number(priceSet[field]);
+        return Number.isFinite(price) && price > 0
+          ? [{ id: `${slug}-${field}`, category: title, label, price }]
+          : [];
+      });
+      if (!options.length && Number(category?.price) > 0) {
+        options.push({ id: `${slug}-registration`, category: title, label: title, price: Number(category.price) });
+      }
+      return {
+        title,
+        color: REGISTRATION_GROUP_COLORS[categoryIndex % REGISTRATION_GROUP_COLORS.length],
+        options,
+      };
+    })
+    .filter((group) => group?.options.length), [registrationPrices, currency]);
 
+  const selectedRegistration = useMemo(
+    () => registrationGroups.flatMap((group) => group.options).find(
+      (option) => option.id === formData.registrationType,
+    ) || null,
+    [registrationGroups, formData.registrationType],
+  );
   const total = selectedRegistration?.price || 0;
 
   useEffect(() => {
@@ -459,7 +380,7 @@ const RegisterPage = () => {
       return;
     }
 
-    const registrationCategory = selectedRegistration.id.split("-")[0];
+    const registrationCategory = selectedRegistration.category;
 
     const convertedPrice = Number(convertPrice(total).toFixed(2));
 
@@ -1280,6 +1201,7 @@ const RegisterPage = () => {
                 </div>
               </motion.div>
 
+              {registrationPricesLoading && <p className="mt-5 text-center text-sm font-semibold text-violet-700">Loading registration prices...</p>}{registrationPricesError && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-5 text-center text-sm font-semibold text-amber-800">{registrationPricesError}</p>}
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {registrationGroups.map((group, index) => (
                   <motion.div

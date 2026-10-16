@@ -1638,6 +1638,9 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
+      <section id="speakers" className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1300px]">
+          <SectionHeading label="Featured Speakers" title="Renowned Speakers" description="Meet the speakers and professionals participating in this conference." />
       {speakers.length > 0 ? (
         <>
           {speakers.length > 6 && (
@@ -1793,6 +1796,8 @@ const ConferenceDetails = () => {
           No speakers have been added to this conference yet.
         </EmptyState>
       )}
+        </div>
+      </section>
       {/* WHO SHOULD ATTEND */}
       <div
         className={`${PREMIUM_CARD} relative mb-10 overflow-hidden p-6 sm:p-8`}
@@ -1838,6 +1843,50 @@ const ConferenceDetails = () => {
           </button>
         </div>
       </div>
+<section id="gallery" className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1300px] rounded-3xl border border-violet-100 bg-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-8">
+          <SectionLabel>Moments &amp; Memories</SectionLabel>
+          <h2 className="mt-2 text-2xl font-bold text-[#171447] sm:text-3xl">Our Conference Gallery</h2>
+          <p className="mt-2 mb-6 max-w-2xl text-base font-semibold leading-6 text-slate-600">Explore conference experiences, research presentations, expert discussions and opportunities to connect with the global community.</p>
+          {galleryImages.length ? (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
+              {galleryImages.map((image, index) => (
+                <div key={`${image}-${index}`} className={`group relative overflow-hidden rounded-xl ${index === 0 ? "h-[150px] sm:col-span-2 sm:row-span-2 sm:h-[240px]" : "h-[120px]"}`}>
+                  <img src={image} alt={`Conference gallery image ${index + 1}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">Conference Moments</p><h3 className="mt-1 text-sm font-extrabold text-white">{index === 0 ? "Global Conference Experience" : `Conference Moment ${index + 1}`}</h3></div>
+                </div>
+              ))}
+            </div>
+          ) : <EmptyState>Conference gallery images will be added soon.</EmptyState>}
+        </div>
+      </section>
+
+      <section id="explore" className="scroll-mt-20 bg-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1300px]">
+          <div className={`${PREMIUM_CARD} overflow-hidden`}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch">
+              <div className="flex min-w-0 flex-col bg-white">
+                <div className="border-b border-violet-100 px-5 py-5 sm:px-6"><h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">Conference Information</h2><p className="mt-1 text-sm font-semibold text-slate-600">Explore conference details and opportunities.</p></div>
+                <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
+                  {DETAIL_ROWS.map((row) => { const Icon = row.icon; const open = activeRow === row.key; return (
+                    <div key={row.key} className="border-b border-violet-100 last:border-b-0">
+                      <button type="button" onClick={() => handleRowClick(row.key)} aria-expanded={open} className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left ${open ? "bg-violet-50" : "bg-white hover:bg-violet-50/60"}`}>
+                        <span className="flex min-w-0 items-center gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${open ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700"}`}><Icon size={17} /></span><span className={`text-base font-semibold ${open ? "text-violet-700" : "text-black"}`}>{row.title}</span></span><ChevronDown size={15} />
+                      </button>
+                      {open && <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="bg-white px-4 pb-5 pt-3"><div className="text-base font-semibold leading-6 text-black/80">{renderRowContent(row.key)}</div></motion.div>}
+                    </div>
+                  ); })}
+                </InnerScroll>
+              </div>
+              <div className="flex min-w-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
+                <div className="border-b border-violet-100 px-5 py-5 sm:px-6"><h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">Sessions and Tracks</h2><p className="mt-1 text-sm font-semibold text-slate-600">Explore the scientific sessions and research topics planned for this conference.</p></div>
+                <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto px-5 py-3 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]"><SessionsPanel items={sessionItems} /></InnerScroll>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* SUBSCRIPTION SECTION - NAVY BLUE (compact, heading on top) */}
       <section className="mb-8 border-y border-[#252B55] bg-[#11143A] px-6 py-4 sm:px-10 sm:py-5">
         <div className="mx-auto max-w-7xl">
