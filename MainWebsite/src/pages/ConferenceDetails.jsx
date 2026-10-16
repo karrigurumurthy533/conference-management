@@ -556,7 +556,7 @@ const ConferenceDetails = () => {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   const [activeRow, setActiveRow] = useState(null);
- const [showVideo, setShowVideo] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const [subscriberForm, setSubscriberForm] = useState({
     name: "",
     email: "",
@@ -1578,41 +1578,39 @@ const ConferenceDetails = () => {
             <div className="ml-10 mt-1 h-0.5 w-32 rotate-[-5deg] rounded-full bg-violet-500" />
           </div>
 
-<div className="relative">
-  {showVideo && videoUrl ? (
-    <video
-      key={videoUrl}
-      src={videoUrl}
-      poster={aboutImage}
-      controls
-      autoPlay
-      playsInline
-      preload="metadata"
-      className="aspect-video w-full rounded-2xl bg-black"
-    />
-  ) : (
-    <button
-      type="button"
-      onClick={() => setShowVideo(true)}
-      className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-lg"
-      aria-label="Play conference introduction"
-    >
-      <img
-        src={aboutImage}
-        alt={`${title} introduction`}
-        loading="lazy"
-        className="h-full w-full object-cover"
-      />
-      <span className="absolute inset-0 flex items-center justify-center">
-        <span className="rounded-full bg-black/60 p-4 text-white">
-          ▶
-        </span>
-      </span>
-    </button>
-  )}
-</div>
-
-          
+          <div className="relative">
+            {showVideo && videoUrl ? (
+              <video
+                key={videoUrl}
+                src={videoUrl}
+                poster={aboutImage}
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+                className="aspect-video w-full rounded-2xl bg-black"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowVideo(true)}
+                className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-lg"
+                aria-label="Play conference introduction"
+              >
+                <img
+                  src={aboutImage}
+                  alt={`${title} introduction`}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="rounded-full bg-black/60 p-4 text-white">
+                    ▶
+                  </span>
+                </span>
+              </button>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-3 rounded-2xl bg-violet-50 p-4 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1">
             {[
@@ -1640,367 +1638,206 @@ const ConferenceDetails = () => {
         </div>
       </section>
 
-      {/* SPEAKERS — COMPACT IMAGE OVERLAY CARDS */}
-      <section
-        id="speakers"
-        className="scroll-mt-24 bg-white px-4 py-8 sm:px-6 lg:px-8"
-      >
-        <div className="mx-auto max-w-[1300px]">
-          <SectionHeading
-            label="Featured Speakers"
-            title="Renowned Speakers"
-            description="Meet the speakers and professionals participating in this conference."
-          />
+      {speakers.length > 0 ? (
+        <>
+          {speakers.length > 6 && (
+            <style>{`
+              @keyframes speaker-marquee-left-to-right {
+                from { transform: translateX(-50%); }
+                to { transform: translateX(0); }
+              }
 
-          {speakers.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {speakers.map((speaker, index) => (
-                <motion.article
-                  key={speaker._id || speaker.name || index}
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.15 }}
-                  className="group relative isolate h-[190px] min-w-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
-                >
-                  {/* SPEAKER IMAGE */}
-                  <img
-                    src={getSpeakerImage(speaker)}
-                    alt={asText(speaker.name, "Conference speaker")}
-                    loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
-                    }}
-                    className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  />
+              .speaker-marquee-track {
+                animation: speaker-marquee-left-to-right 36s linear infinite;
+                will-change: transform;
+              }
 
-                  {/* DARK IMAGE OVERLAY */}
-                  <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
-
-                  {/* SPEAKER DETAILS ON IMAGE */}
-                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
-                    {/* NAME */}
-                    <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
-                      {asText(speaker.name, "Speaker")}
-                    </h3>
-
-                    {/* ROLE */}
-                    <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
-                      {asText(speaker.role, "Conference Speaker")}
-                    </p>
-
-                    {/* ORGANIZATION */}
-                    {getSpeakerOrganization(speaker) && (
-                      <div className="mt-1 flex items-start gap-1">
-                        <Building2
-                          size={11}
-                          className="mt-0.5 shrink-0 text-violet-300"
-                        />
-                        <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
-                          {getSpeakerOrganization(speaker)}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* LOCATION */}
-                    {(speaker.country || speaker.location) && (
-                      <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
-                        <MapPin
-                          size={10}
-                          className="shrink-0 text-violet-300"
-                        />
-                        <span className="line-clamp-1">
-                          {speaker.country || speaker.location}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* SPECIALTY */}
-                    {speaker.specialty && (
-                      <div className="mt-1.5 flex items-center gap-1">
-                        <Award size={10} className="shrink-0 text-violet-300" />
-                        <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
-                          {speaker.specialty}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* BOTTOM ACCENT */}
-                    <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
-                  </div>
-                </motion.article>
-              ))}
-            </div>
-          ) : (
-            <EmptyState>
-              No speakers have been added to this conference yet.
-            </EmptyState>
+              .speaker-marquee-viewport:hover .speaker-marquee-track {
+                animation-play-state: paused;
+              }
+            `}</style>
           )}
-        </div>
-      </section>
 
-      {/* WHO SHOULD ATTEND + CONFERENCE GALLERY + HIGHLIGHTS / TOPICS / KEY POINTS */}
-      <section className="relative bg-gradient-to-b from-white via-violet-50/50 to-white px-4 pb-14 pt-4 sm:px-6">
-        <div className="mx-auto max-w-[1600px] space-y-8">
-          {/* WHO SHOULD ATTEND */}
           <div
-            className={`${PREMIUM_CARD} relative overflow-hidden p-6 sm:p-8`}
+            className={
+              speakers.length > 6
+                ? 'speaker-marquee-viewport w-full overflow-hidden'
+                : 'w-full'
+            }
           >
-            <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" />
-
-            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex gap-4 sm:gap-5">
-                <IconTile icon={Users} size={24} />
-
-                <div className="min-w-0">
-                  <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
-                    Who Should Attend?
-                  </h2>
-
-                  {whoShouldAttend ? (
-                    <p className="mt-2 max-w-3xl whitespace-pre-line text-base leading-[1.85] text-slate-600 font-semibold">
-                      {whoShouldAttend}
-                    </p>
-                  ) : asArray(data.whoShouldAttend).length ? (
-                    <div className="mt-3 max-w-3xl">
-                      <FlatList items={data.whoShouldAttend} />
-                    </div>
-                  ) : (
-                    <p className="mt-2 max-w-3xl text-base leading-[1.85] text-slate-600 font-semibold">
-                      This conference welcomes researchers, clinicians,
-                      educators, students, professionals and others interested
-                      in the conference subject. Please check the program for
-                      details.
-                    </p>
-                  )}
-                </div>
+            {speakers.length > 6 ? (
+              <div className="speaker-marquee-track flex w-max">
+                {[0, 1].map((copy) => (
+                  <div
+                    key={`speaker-copy-${copy}`}
+                    aria-hidden={copy === 1}
+                    className="flex w-max shrink-0 gap-3 pr-3"
+                  >
+                    {speakers.map((speaker, index) => (
+                      <motion.article
+                        key={`${copy}-${speaker._id || speaker.name || index}`}
+                        variants={fadeUp}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, amount: 0.15 }}
+                        className="group relative isolate h-[190px] w-[175px] shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
+                      >
+                        <img
+                          src={getSpeakerImage(speaker)}
+                          alt={asText(speaker.name, "Conference speaker")}
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                          }}
+                          className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
+                          <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
+                            {asText(speaker.name, "Speaker")}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
+                            {asText(speaker.role, "Conference Speaker")}
+                          </p>
+                          {getSpeakerOrganization(speaker) && (
+                            <div className="mt-1 flex items-start gap-1">
+                              <Building2 size={11} className="mt-0.5 shrink-0 text-violet-300" />
+                              <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
+                                {getSpeakerOrganization(speaker)}
+                              </p>
+                            </div>
+                          )}
+                          {(speaker.country || speaker.location) && (
+                            <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
+                              <MapPin size={10} className="shrink-0 text-violet-300" />
+                              <span className="line-clamp-1">{speaker.country || speaker.location}</span>
+                            </div>
+                          )}
+                          {speaker.specialty && (
+                            <div className="mt-1.5 flex items-center gap-1">
+                              <Award size={10} className="shrink-0 text-violet-300" />
+                              <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
+                                {speaker.specialty}
+                              </span>
+                            </div>
+                          )}
+                          <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
+                        </div>
+                      </motion.article>
+                    ))}
+                  </div>
+                ))}
               </div>
-
-              <button
-                onClick={() => scrollTo("explore")}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
-              >
-                View Conference Details
-                <ArrowRight size={14} />
-              </button>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {speakers.map((speaker, index) => (
+                  <motion.article
+                    key={speaker._id || speaker.name || index}
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.15 }}
+                    className="group relative isolate h-[190px] w-full min-w-0 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-[#171447] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:h-[205px]"
+                  >
+                    <img
+                      src={getSpeakerImage(speaker)}
+                      alt={asText(speaker.name, "Conference speaker")}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = FALLBACK_SPEAKER_IMAGE;
+                      }}
+                      className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#100b38] via-[#171447]/25 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-2.5 text-white sm:p-3">
+                      <h3 className="line-clamp-2 text-xs font-extrabold leading-4 text-white sm:text-sm sm:leading-5">
+                        {asText(speaker.name, "Speaker")}
+                      </h3>
+                      <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-3.5 text-violet-200 sm:text-[11px]">
+                        {asText(speaker.role, "Conference Speaker")}
+                      </p>
+                      {getSpeakerOrganization(speaker) && (
+                        <div className="mt-1 flex items-start gap-1">
+                          <Building2 size={11} className="mt-0.5 shrink-0 text-violet-300" />
+                          <p className="line-clamp-2 text-[9px] font-medium leading-3 text-white/90 sm:text-[10px] sm:leading-3.5">
+                            {getSpeakerOrganization(speaker)}
+                          </p>
+                        </div>
+                      )}
+                      {(speaker.country || speaker.location) && (
+                        <div className="mt-1 flex items-center gap-1 text-[9px] text-white/80">
+                          <MapPin size={10} className="shrink-0 text-violet-300" />
+                          <span className="line-clamp-1">{speaker.country || speaker.location}</span>
+                        </div>
+                      )}
+                      {speaker.specialty && (
+                        <div className="mt-1.5 flex items-center gap-1">
+                          <Award size={10} className="shrink-0 text-violet-300" />
+                          <span className="line-clamp-1 text-[9px] font-medium text-violet-100">
+                            {speaker.specialty}
+                          </span>
+                        </div>
+                      )}
+                      <div className="mt-2 h-0.5 w-7 rounded-full bg-violet-400 transition-all duration-300 group-hover:w-12" />
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            )}
           </div>
+        </>
+      ) : (
+        <EmptyState>
+          No speakers have been added to this conference yet.
+        </EmptyState>
+      )}
+      {/* WHO SHOULD ATTEND */}
+      <div
+        className={`${PREMIUM_CARD} relative mb-10 overflow-hidden p-6 sm:p-8`}
+      >
+        <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-violet-200/40 blur-3xl" />
 
-          {/* OUR CONFERENCE GALLERY */}
-          <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white p-5 shadow-[0_18px_50px_-24px_rgba(76,29,149,0.25)] sm:p-8">
-            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <SectionLabel>Moments & Memories</SectionLabel>
+        <div className="relative flex flex-col items-start gap-5">
+          {/* HEADING + PARAGRAPH */}
+          <div className="flex w-full items-start gap-4 sm:gap-5">
+            <IconTile icon={Users} size={24} />
 
-                <h2 className="text-2xl text-[#171447] sm:text-3xl font-bold">
-                  Our Conference Gallery
-                </h2>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">
+                Who Should Attend?
+              </h2>
 
-                <p className="mt-2 max-w-2xl text-base font-semibold leading-6 text-slate-600">
-                  Explore conference experiences, research presentations, expert
-                  discussions and opportunities to connect with the global
-                  community.
+              {whoShouldAttend ? (
+                <p className="mt-3 w-full whitespace-pre-line text-base font-semibold leading-[1.85] text-slate-600">
+                  {whoShouldAttend}
                 </p>
-              </div>
-
-              <div className="flex items-center gap-2 self-start rounded-full border border-violet-100 bg-violet-50 px-4 py-2 sm:self-auto">
-                <ImageIcon size={16} className="text-violet-600" />
-                <span className="text-sm font-semibold text-violet-700">
-                  Conference Moments
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
-              {galleryImages.map((image, index) => (
-                <div
-                  key={`${image}-${index}`}
-                  className={`group relative overflow-hidden rounded-xl ${
-                    index === 0
-                      ? "h-[150px] sm:col-span-2 sm:row-span-2 sm:h-[240px] lg:h-[240px]"
-                      : "h-[120px]"
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Conference gallery image ${index + 1}`}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#100d35]/85 to-transparent" />
-
-                  <div className="absolute bottom-0 left-0 p-3 sm:p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200">
-                      Conference Moments
-                    </p>
-                    <h3 className="mt-1 text-sm font-extrabold text-white">
-                      {index === 0
-                        ? "Global Conference Experience"
-                        : `Conference Moment ${index + 1}`}
-                    </h3>
-                  </div>
+              ) : asArray(data.whoShouldAttend).length ? (
+                <div className="mt-3 w-full">
+                  <FlatList items={data.whoShouldAttend} />
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 border-t border-violet-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-semibold leading-5 text-slate-500">
-                Inspiring conversations. Meaningful connections. Shared
-                discoveries.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => scrollTo("explore")}
-                className="inline-flex items-center gap-2 self-start rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-sm font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-600 hover:text-white sm:self-auto"
-              >
-                Explore Conference
-                <ArrowRight size={14} />
-              </button>
+              ) : (
+                <p className="mt-3 w-full text-base font-semibold leading-[1.85] text-slate-600">
+                  This conference welcomes researchers, clinicians, educators,
+                  students, professionals and others interested in the
+                  conference subject. Please check the program for details.
+                </p>
+              )}
             </div>
           </div>
 
-          {/* SESSIONS AND TRACKS + CONFERENCE INFORMATION */}
-          <section id="explore" className="scroll-mt-20 bg-white py-4">
-            <div className="w-full">
-              <div className={`${PREMIUM_CARD} overflow-hidden`}>
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch">
-                  {/* CONFERENCE INFORMATION */}
-                  <div className="flex min-w-0 flex-col bg-white">
-                    {/* HEADER */}
-                    <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                          <Layers size={19} />
-                        </span>
-
-                        <div className="min-w-0">
-                          <h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">
-                            Conference Information
-                          </h2>
-
-                          <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
-                            Explore conference details and opportunities.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* INDEPENDENT SCROLL AREA */}
-                    <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
-                      {DETAIL_ROWS.map((row) => {
-                        const Icon = row.icon;
-                        const open = activeRow === row.key;
-
-                        return (
-                          <div
-                            key={row.key}
-                            className="border-b border-violet-100 last:border-b-0"
-                          >
-                            {/* ACCORDION HEADER */}
-                            <button
-                              type="button"
-                              onClick={() => handleRowClick(row.key)}
-                              aria-expanded={open}
-                              className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors duration-200 sm:px-5 ${
-                                open
-                                  ? "bg-violet-50"
-                                  : "bg-white hover:bg-violet-50/60"
-                              }`}
-                            >
-                              <span className="flex min-w-0 items-center gap-3">
-                                <span
-                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-200 ${
-                                    open
-                                      ? "bg-violet-600 text-white"
-                                      : "bg-violet-100 text-violet-700"
-                                  }`}
-                                >
-                                  <Icon size={17} />
-                                </span>
-
-                                <span
-                                  className={`text-base font-semibold leading-5 ${
-                                    open ? "text-violet-700" : "text-black"
-                                  }`}
-                                >
-                                  {row.title}
-                                </span>
-                              </span>
-
-                              <span
-                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${
-                                  open
-                                    ? "rotate-180 border-violet-300 bg-white text-violet-700"
-                                    : "border-violet-100 text-violet-600"
-                                }`}
-                              >
-                                <ChevronDown size={15} />
-                              </span>
-                            </button>
-
-                            {/* ACCORDION CONTENT */}
-                            {open && (
-                              <motion.div
-                                initial={{
-                                  opacity: 0,
-                                  y: -5,
-                                }}
-                                animate={{
-                                  opacity: 1,
-                                  y: 0,
-                                }}
-                                transition={{
-                                  duration: 0.22,
-                                }}
-                                className="bg-white px-4 pb-5 pt-3 sm:px-5"
-                              >
-                                <div className="text-base font-semibold leading-6 text-black/80 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-extrabold [&_h3]:text-violet-700 [&_p]:mb-3 [&_p]:text-base [&_p]:font-semibold [&_p]:leading-6 [&_p]:text-black/80 [&_li]:mb-2 [&_li]:text-base [&_li]:font-semibold [&_li]:leading-6 [&_li]:text-black/80 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5">
-                                  {renderRowContent(row.key)}
-                                </div>
-                              </motion.div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </InnerScroll>
-                  </div>
-
-                  {/* SESSIONS AND TRACKS */}
-                  <div className="flex min-w-0 flex-col border-t border-violet-100 bg-white lg:border-l lg:border-t-0">
-                    {/* HEADER */}
-                    <div className="shrink-0 border-b border-violet-100 px-5 py-5 sm:px-6">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                          <Layers size={19} />
-                        </span>
-
-                        <div className="min-w-0">
-                          <h2 className="text-2xl font-bold text-[#171447] sm:text-3xl">
-                            Sessions and Tracks
-                          </h2>
-
-                          <p className="mt-1 text-sm font-semibold leading-5 text-black/70 sm:text-base">
-                            Explore the scientific sessions and research topics
-                            planned for this conference.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* INDEPENDENT SCROLL AREA */}
-                    <InnerScroll className="h-[560px] min-h-0 overflow-x-hidden overflow-y-auto px-5 py-3 sm:px-6 [scrollbar-color:#a78bfa_#f5f3ff] [scrollbar-width:thin]">
-                      <SessionsPanel items={sessionItems} />
-                    </InnerScroll>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          {/* BUTTON BELOW THE PARAGRAPH, LEFT ALIGNED */}
+          <button
+            type="button"
+            onClick={() => scrollTo("explore")}
+            className="ml-12 inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(109,40,217,0.9)] transition hover:-translate-y-0.5"
+          >
+            View Conference Details
+            <ArrowRight size={14} />
+          </button>
         </div>
-      </section>
+      </div>
       {/* SUBSCRIPTION SECTION - NAVY BLUE (compact, heading on top) */}
       <section className="mb-8 border-y border-[#252B55] bg-[#11143A] px-6 py-4 sm:px-10 sm:py-5">
         <div className="mx-auto max-w-7xl">
@@ -2200,53 +2037,6 @@ const ConferenceDetails = () => {
           </FeatureCard>
         </div>
       </div>
-
-      {/* REGISTRATION CATEGORIES */}
-      {registrationCategories.length > 0 && (
-        <section className="bg-white px-5 py-10 sm:px-10">
-          <div className="mx-auto max-w-[1300px]">
-            <SectionHeading
-              label="Join Us"
-              title="Registration Categories"
-              description="Registration categories available for this conference."
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {registrationCategories.map((categoryItem, index) => (
-                <div
-                  key={categoryItem._id || categoryItem.name || index}
-                  className={`${PREMIUM_CARD} p-5`}
-                >
-                  <h3 className="text-base text-[#171447] font-extrabold">
-                    {getText(
-                      categoryItem,
-                      ["name", "title", "category", "label"],
-                      `Category ${index + 1}`,
-                    )}
-                  </h3>
-                  <p className="mt-2 text-base font-semibold leading-6 text-slate-600">
-                    {getText(
-                      categoryItem,
-                      ["description", "details"],
-                      "Registration details are available through the registration page.",
-                    )}
-                  </p>
-                  {categoryItem.price !== undefined && (
-                    <p className="mt-3 text-base font-bold text-violet-700">
-                      {categoryItem.currency || ""} {categoryItem.price}
-                    </p>
-                  )}
-                  <button
-                    onClick={goToRegistration}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700"
-                  >
-                    Register <ArrowRight size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* SPONSORS + RECENT POSTS */}
 
@@ -2520,7 +2310,9 @@ const ConferenceDetails = () => {
                             alt={postTitle}
                             loading="lazy"
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            onError={(event) => event.currentTarget.parentElement?.remove()}
+                            onError={(event) =>
+                              event.currentTarget.parentElement?.remove()
+                            }
                           />
                         </div>
                       )}
@@ -2569,8 +2361,6 @@ const ConferenceDetails = () => {
                 </div>
               )}
             </div>
-
-            
 
             {/* FOOTER LINK */}
             <div className="mt-2 flex items-center justify-between gap-3">

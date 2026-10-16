@@ -1,8 +1,42 @@
 
 const mongoose = require("mongoose");
 const PaymentReceipt = require("../models/PaymentReceipt");
+const ReceiptCounter = require("../models/ReceiptCounter");
 const paymentReceiptTemplate = require("../utils/paymentReceiptTemplate");
 const { getBrowser } = require("../utils/pdfBrowser");
+const RECEIPT_NUMBER_PREFIX = "ICHMPSUMT27";
+
+async function generateReceiptNumber() {
+  const counterId = "paymentReceipt";
+  const counter = await ReceiptCounter.findById(counterId).lean();
+
+  if (!counter) {
+    const existingReceipts = await PaymentReceipt.find({
+      receiptNumber: new RegExp("^" + RECEIPT_NUMBER_PREFIX + "-\\d+$"),
+    }).select("receiptNumber").lean();
+    const highestExistingNumber = existingReceipts.reduce((highest, receipt) => {
+      const suffix = Number(receipt.receiptNumber.split("-").pop());
+      return Number.isSafeInteger(suffix) ? Math.max(highest, suffix) : highest;
+    }, 0);
+
+    try {
+      await ReceiptCounter.findOneAndUpdate(
+        { _id: counterId },
+        { $setOnInsert: { sequence: highestExistingNumber } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      if (error.code !== 11000) throw error;
+    }
+  }
+
+  const nextCounter = await ReceiptCounter.findOneAndUpdate(
+    { _id: counterId },
+    { $inc: { sequence: 1 } },
+    { new: true }
+  );
+  return RECEIPT_NUMBER_PREFIX + "-" + nextCounter.sequence;
+}
 
 // CREATE RECEIPT - POST
 
@@ -72,24 +106,10 @@ exports.createPaymentReceipt = async (req, res) => {
     if (!companyCountry?.trim?.()) requiredFields.push("companyCountry");
     if (!companyPhone?.trim?.()) requiredFields.push("companyPhone");
     if (!companyEmail?.trim?.()) requiredFields.push("companyEmail");
-    if (!receiptNumber?.trim?.()) requiredFields.push("receiptNumber");
     if (!paymentDate) requiredFields.push("paymentDate");
     if (!paymentMethod?.trim?.()) requiredFields.push("paymentMethod");
-    if (!transactionId?.trim?.()) requiredFields.push("transactionId");
 
     if (!billing?.name?.trim?.()) requiredFields.push("billing.name");
-    if (!billing?.address?.trim?.()) requiredFields.push("billing.address");
-    if (!billing?.country?.trim?.()) requiredFields.push("billing.country");
-    if (!billing?.countryCode?.trim?.()) requiredFields.push("billing.countryCode");
-    if (!billing?.phone?.trim?.()) requiredFields.push("billing.phone");
-    if (!billing?.email?.trim?.()) requiredFields.push("billing.email");
-
-    if (!shipping?.name?.trim?.()) requiredFields.push("shipping.name");
-    if (!shipping?.address?.trim?.()) requiredFields.push("shipping.address");
-    if (!shipping?.country?.trim?.()) requiredFields.push("shipping.country");
-    if (!shipping?.countryCode?.trim?.()) requiredFields.push("shipping.countryCode");
-    if (!shipping?.phone?.trim?.()) requiredFields.push("shipping.phone");
-    if (!shipping?.email?.trim?.()) requiredFields.push("shipping.email");
 
     if (!Array.isArray(items) || items.length === 0) {
       requiredFields.push("items");
@@ -131,13 +151,13 @@ exports.createPaymentReceipt = async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const normalizedCompanyEmail = companyEmail.trim().toLowerCase();
-    const normalizedBillingEmail = billing.email.trim().toLowerCase();
-    const normalizedShippingEmail = shipping.email.trim().toLowerCase();
+    const normalizedBillingEmail = String(billing?.email || "").trim().toLowerCase();
+    const normalizedShippingEmail = String(shipping?.email || "").trim().toLowerCase();
 
     if (
       !emailRegex.test(normalizedCompanyEmail) ||
-      !emailRegex.test(normalizedBillingEmail) ||
-      !emailRegex.test(normalizedShippingEmail)
+      (normalizedBillingEmail && !emailRegex.test(normalizedBillingEmail)) ||
+      (normalizedShippingEmail && !emailRegex.test(normalizedShippingEmail))
     ) {
       return res.status(400).json({
         success: false,
@@ -270,7 +290,7 @@ exports.createPaymentReceipt = async (req, res) => {
     // 11. DUPLICATE RECEIPT NUMBER CHECK
     // ==========================================
 
-    const normalizedReceiptNumber = receiptNumber.trim();
+    const normalizedReceiptNumber = await generateReceiptNumber();
 
     const existingReceipt = await PaymentReceipt.findOne({
       receiptNumber: normalizedReceiptNumber,
@@ -302,23 +322,23 @@ exports.createPaymentReceipt = async (req, res) => {
       receiptNumber: normalizedReceiptNumber,
       paymentDate: parsedPaymentDate,
       paymentMethod,
-      transactionId: transactionId.trim(),
+      transactionId: String(transactionId || "").trim(),
 
       billing: {
         name: billing.name.trim(),
-        address: billing.address.trim(),
-        country: billing.country.trim(),
-        countryCode: billing.countryCode.trim(),
-        phone: billing.phone.trim(),
+        address: String(billing.address || "").trim(),
+        country: String(billing.country || "United States").trim(),
+        countryCode: String(billing.countryCode || "+1").trim(),
+        phone: String(billing.phone || "").trim(),
         email: normalizedBillingEmail,
       },
 
       shipping: {
-        name: shipping.name.trim(),
-        address: shipping.address.trim(),
-        country: shipping.country.trim(),
-        countryCode: shipping.countryCode.trim(),
-        phone: shipping.phone.trim(),
+        name: String(shipping.name || "").trim(),
+        address: String(shipping.address || "").trim(),
+        country: String(shipping.country || "United States").trim(),
+        countryCode: String(shipping.countryCode || "+1").trim(),
+        phone: String(shipping.phone || "").trim(),
         email: normalizedShippingEmail,
       },
 

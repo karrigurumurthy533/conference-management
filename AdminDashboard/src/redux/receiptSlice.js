@@ -24,10 +24,17 @@ export const createReceipt = createAsyncThunk(
     try {
       return await createReceiptApi(receiptData);
     } catch (error) {
+      const responseData = error.response?.data;
+      const message =
+        responseData?.message ||
+        error.message ||
+        "Failed to create payment receipt";
+      const missingFields = responseData?.missingFields;
+
       return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create payment receipt"
+        Array.isArray(missingFields) && missingFields.length
+          ? message + " Missing: " + missingFields.join(", ") + "."
+          : message
       );
     }
   }

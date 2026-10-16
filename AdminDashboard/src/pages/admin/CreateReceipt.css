@@ -479,3 +479,9 @@
     white-space: normal;
   }
 }
+/* Show the printable receipt in the details screen; the create page keeps its print-only copy hidden. */
+@media screen {
+  .receipt-detail-page #receipt-print {
+    display: block;
+  }
+}

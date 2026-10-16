@@ -71,6 +71,15 @@ const countryCodes = [
   { code: "+86", label: "China (+86)" },
 ];
 
+const generateReceiptNumber = () => {
+  const randomValues = new Uint32Array(1);
+  globalThis.crypto?.getRandomValues?.(randomValues);
+  const randomSuffix = String(
+    randomValues[0] ? randomValues[0] % 1000 : Math.floor(Math.random() * 1000)
+  ).padStart(3, "0");
+
+  return "ICHMPSUMT27-" + Date.now() + randomSuffix;
+};
 const initialForm = {
   conferenceId: "",
   conferenceTitle: "",
@@ -292,7 +301,7 @@ const CreateReceipt = () => {
     (state) => state.receipt?.creating || false
   );
 
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({ ...initialForm, receiptNumber: receiptId ? "" : generateReceiptNumber() }));
   const [items, setItems] = useState([createInitialItem()]);
   const [formError, setFormError] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -513,15 +522,25 @@ const CreateReceipt = () => {
   }, {});
 
   const validateForm = () => {
+    if (!form.conferenceDates.trim()) {
+      setFormError("Please enter the conference dates.");
+      return false;
+    }
+
+    if (!form.companyCountry.trim() || !form.companyPhone.trim() || !form.companyEmail.trim()) {
+      setFormError("Please complete the organization country, phone, and email.");
+      return false;
+    }
+
+    if (!form.paymentMethod.trim()) {
+      setFormError("Please select a payment method.");
+      return false;
+    }
     if (!form.conferenceId) {
       setFormError("Please select a conference.");
       return false;
     }
 
-    if (!form.receiptNumber.trim()) {
-      setFormError("Please enter a receipt number.");
-      return false;
-    }
 
     if (!form.billingName.trim()) {
       setFormError("Please enter the Billing To name.");
@@ -595,8 +614,7 @@ const CreateReceipt = () => {
         companyEmail: form.companyEmail,
         supportEmail: form.supportEmail,
         terms: form.terms,
-
-        receiptNumber: form.receiptNumber.trim(),
+        receiptNumber: form.receiptNumber,
         paymentDate: form.paymentDate,
         paymentMethod: form.paymentMethod,
         transactionId: form.transactionId.trim(),
@@ -637,7 +655,7 @@ const CreateReceipt = () => {
 
       navigate(isEditing ? "/admin/payment-receipts/" + receiptId : "/admin/payment-receipts", {
         replace: true,
-        state: { receiptSaved: true, receiptNumber: form.receiptNumber.trim() },
+        state: { receiptSaved: true, receiptNumber: isEditing ? form.receiptNumber.trim() : response?.data?.receiptNumber || "" },
       });
     } catch (error) {
       console.error("Create receipt API error:", error);
@@ -903,14 +921,13 @@ const CreateReceipt = () => {
           <Section
             title="Receipt & Payment Details"
             icon={CreditCard}
-            description="Enter the receipt number and payment transaction details."
+            description="Receipt number is generated automatically."
           >
             <Field
               label="Receipt Number"
-              value={form.receiptNumber}
-              onChange={(e) => updateField("receiptNumber", e.target.value)}
-              placeholder="e.g. ICMHPSUMT27-12"
-              required
+              value={form.receiptNumber || "Loading receipt number..."}
+              placeholder="Generating receipt number..."
+              disabled
             />
 
             <Field
