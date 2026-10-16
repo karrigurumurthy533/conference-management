@@ -814,14 +814,42 @@ const ConferenceDetails = () => {
   // SEO metadata and Event structured data
   useEffect(() => {
     const originalTitle = document.title;
-    const pageTitle = `${title} | GlobalScion Conferences`;
-    const pageDescription = (
+    const seo = isObject(data.seo) ? data.seo : {};
+    const pageTitle = asText(
+      seo.metaTitle,
+      `${title} | GlobalScion Conferences`,
+    );
+    const pageDescription = asText(
+      seo.metaDescription,
       description ||
-      subtitle ||
-      `Explore ${title}, including speakers, scientific sessions, research topics and registration details.`
+        subtitle ||
+        `Explore ${title}, including speakers, scientific sessions, research topics and registration details.`,
     )
       .replace(/\s+/g, " ")
       .slice(0, 300);
+    const focusKeyword = asText(seo.focusKeyword);
+    const metaKeywords = [...new Set([
+      ...asArray(seo.metaKeywords).map((keyword) => asText(keyword)).filter(Boolean),
+      focusKeyword,
+      title,
+      category,
+      "GlobalScion Conferences",
+      "international conference",
+      "scientific program",
+      "conference speakers",
+      "conference registration",
+      "research and innovation",
+    ].filter(Boolean))].join(", ");
+    const ogTitle = asText(seo.ogTitle, pageTitle);
+    const ogDescription = asText(seo.ogDescription, pageDescription);
+    const ogImage = asText(seo.ogImage, heroImage);
+    const twitterTitle = asText(seo.twitterTitle, pageTitle);
+    const twitterDescription = asText(seo.twitterDescription, pageDescription);
+    const twitterImage = asText(seo.twitterImage, ogImage);
+    const canonicalUrl = asText(
+      seo.canonicalUrl,
+      `${window.location.origin}${window.location.pathname}`,
+    );
 
     document.title = pageTitle;
 
@@ -837,29 +865,24 @@ const ConferenceDetails = () => {
     };
 
     setMeta("name", "description", pageDescription);
+    setMeta("name", "keywords", metaKeywords);
     setMeta(
       "name",
-      "keywords",
-      [
-        title,
-        category,
-        "GlobalScion Conferences",
-        "international conference",
-        "scientific program",
-        "conference speakers",
-        "conference registration",
-        "research and innovation",
-      ].join(", "),
+      "robots",
+      `${seo.robotsIndex === false ? "noindex" : "index"}, ${seo.robotsFollow === false ? "nofollow" : "follow"}`,
     );
-    setMeta("property", "og:type", "event");
-    setMeta("property", "og:title", pageTitle);
-    setMeta("property", "og:description", pageDescription);
-    setMeta("property", "og:image", heroImage);
+    setMeta("name", "focus-keyword", focusKeyword);
+    setMeta("property", "og:type", asText(seo.ogType, "event"));
+    setMeta("property", "og:title", ogTitle);
+    setMeta("property", "og:description", ogDescription);
+    setMeta("property", "og:image", ogImage);
+    setMeta("property", "og:image:alt", asText(seo.ogImageAlt, title));
     setMeta("property", "og:site_name", "GlobalScion Conferences");
-    setMeta("name", "twitter:card", "summary_large_image");
-    setMeta("name", "twitter:title", pageTitle);
-    setMeta("name", "twitter:description", pageDescription);
-    setMeta("name", "twitter:image", heroImage);
+    setMeta("name", "twitter:card", asText(seo.twitterCard, "summary_large_image"));
+    setMeta("name", "twitter:title", twitterTitle);
+    setMeta("name", "twitter:description", twitterDescription);
+    setMeta("name", "twitter:image", twitterImage);
+    setMeta("name", "twitter:image:alt", asText(seo.twitterImageAlt, title));
 
     let canonical = document.head.querySelector('link[rel="canonical"]');
     if (!canonical) {
@@ -867,7 +890,7 @@ const ConferenceDetails = () => {
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
-    canonical.href = `${window.location.origin}${window.location.pathname}`;
+    canonical.href = canonicalUrl;
 
     const isOnline = /webinar|online|virtual/i.test(mode);
     const eventSchema = {
@@ -875,7 +898,8 @@ const ConferenceDetails = () => {
       "@type": "Event",
       name: title,
       description: pageDescription,
-      image: heroImage ? [heroImage] : undefined,
+      url: canonicalUrl,
+      image: ogImage ? [ogImage] : undefined,
       startDate: data.startDate || undefined,
       endDate: data.endDate || undefined,
       eventStatus: "https://schema.org/EventScheduled",
@@ -930,6 +954,7 @@ const ConferenceDetails = () => {
     data.venue,
     mode,
     venueName,
+    data.seo,
   ]);
 
   // AUTOMATIC RECENT POSTS SCROLL
