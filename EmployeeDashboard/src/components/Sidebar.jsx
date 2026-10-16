@@ -96,6 +96,10 @@ function Sidebar({
         "employeeUser"
       );
 
+      sessionStorage.removeItem("employeeToken");
+      sessionStorage.removeItem("employeeUser");
+      sessionStorage.removeItem("isLoggedIn");
+
       // Backward compatibility
       localStorage.removeItem(
         "isLoggedIn"

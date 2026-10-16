@@ -19,7 +19,7 @@ import ChangePassword from "../Pages/ChangePassword";
 // ======================================================
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("employeeToken");
+  const token = sessionStorage.getItem("employeeToken");
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -33,7 +33,14 @@ function ProtectedRoute({ children }) {
 // ======================================================
 
 function PublicRoute({ children }) {
-  const token = localStorage.getItem("employeeToken");
+  const forceFreshLogin = new URLSearchParams(window.location.search).get("freshLogin") === "1";
+  if (forceFreshLogin) {
+    sessionStorage.removeItem("employeeToken");
+    sessionStorage.removeItem("employeeUser");
+    localStorage.removeItem("employeeToken");
+    localStorage.removeItem("employeeUser");
+  }
+  const token = sessionStorage.getItem("employeeToken");
 
   if (token) {
     return <Navigate to="/dashboard" replace />;

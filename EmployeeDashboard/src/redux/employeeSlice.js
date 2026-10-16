@@ -32,11 +32,11 @@ export const employeeLogin = createAsyncThunk(
             const response = await employeeLoginApi(loginData);
 
             if (response?.token) {
-                localStorage.setItem("employeeToken", response.token);
+                sessionStorage.setItem("employeeToken", response.token);
             }
 
             if (response?.user) {
-                localStorage.setItem(
+                sessionStorage.setItem(
                     "employeeUser",
                     JSON.stringify(response.user)
                 );
@@ -302,9 +302,9 @@ export const getMonthlyAttendance = createAsyncThunk(
 const initialState = {
     // Employee Authentication
     employee:
-        JSON.parse(localStorage.getItem("employeeUser")) || null,
+        JSON.parse(sessionStorage.getItem("employeeUser")) || null,
 
-    token: localStorage.getItem("employeeToken") || null,
+    token: sessionStorage.getItem("employeeToken") || null,
 
     loading: false,
     error: null,

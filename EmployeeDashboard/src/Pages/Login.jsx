@@ -188,7 +188,7 @@ const Login = () => {
       // SAVE TOKEN
       // ==================================================
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "employeeToken",
         result.token
       );
@@ -197,7 +197,7 @@ const Login = () => {
       // SAVE USER
       // ==================================================
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "employeeUser",
         JSON.stringify(result.user)
       );
@@ -206,7 +206,7 @@ const Login = () => {
       // OPTIONAL BACKWARD COMPATIBILITY
       // ==================================================
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "isLoggedIn",
         "true"
       );
@@ -231,7 +231,7 @@ const Login = () => {
       // ==================================================
 
       const savedToken =
-        localStorage.getItem(
+        sessionStorage.getItem(
           "employeeToken"
         );
 

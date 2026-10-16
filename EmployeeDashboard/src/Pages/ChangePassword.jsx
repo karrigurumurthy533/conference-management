@@ -73,9 +73,7 @@ function ChangePassword() {
       return;
     }
 
-    const token =
-      localStorage.getItem("employeeToken") ||
-      sessionStorage.getItem("employeeToken");
+    const token = sessionStorage.getItem("employeeToken");
 
     if (!token) {
       setError("Your session has expired. Please log in again.");

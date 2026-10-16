@@ -55,6 +55,18 @@ const sendEmployeeCredentials = async ({
     throw new Error("EMPLOYEE_LOGIN_URL is not configured");
   }
 
+  const employeeFreshLoginUrl = (() => {
+    try {
+      const url = new URL(employeeLoginUrl);
+      url.searchParams.set("freshLogin", "1");
+      return url.toString();
+    } catch {
+      const [path, hash = ""] = employeeLoginUrl.split("#", 2);
+      const separator = path.includes("?") ? "&" : "?";
+      return `${path}${separator}freshLogin=1${hash ? `#${hash}` : ""}`;
+    }
+  })();
+
   const info = await transporter.sendMail({
     from: `"GlobalScion" <${process.env.SMTP_USER}>`,
     to: email,
@@ -82,7 +94,7 @@ const sendEmployeeCredentials = async ({
           </div>
 
           <p style="text-align:center;margin:28px 0">
-            <a href="${escapeHtml(employeeLoginUrl)}"
+            <a href="${escapeHtml(employeeFreshLoginUrl)}"
               style="background:#7c3aed;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;font-size:16px">
               Login to Employee Dashboard
             </a>
