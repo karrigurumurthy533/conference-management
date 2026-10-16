@@ -3,19 +3,19 @@ import { useState } from "react";
 import {
   Bell,
   ChevronDown,
-  CircleHelp,
-  Mail,
   Menu,
   Search,
   X,
 } from "lucide-react";
 
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 import { selectEmployee } from "../redux/employeeSlice";
 
 function Navbar({ onMenuClick, isSidebarOpen }) {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const navigate = useNavigate();
 
   // =========================================================
   // EMPLOYEE DATA FROM REDUX
@@ -241,6 +241,7 @@ function Navbar({ onMenuClick, isSidebarOpen }) {
               hover:text-[#8138A2]
             "
             aria-label="Notifications"
+            onClick={() => navigate("/notifications")}
           >
             <Bell
               size={18}
@@ -262,62 +263,7 @@ function Navbar({ onMenuClick, isSidebarOpen }) {
             />
           </button>
 
-          {/* =================================================
-              MAIL
-          ================================================== */}
-
-          <button
-            type="button"
-            className="
-              hidden
-              h-9
-              w-9
-              shrink-0
-              items-center
-              justify-center
-              rounded-lg
-              text-slate-500
-              transition
-              hover:bg-violet-50
-              hover:text-[#8138A2]
-              sm:flex
-            "
-            aria-label="Mail"
-          >
-            <Mail
-              size={18}
-              strokeWidth={1.8}
-            />
-          </button>
-
-          {/* =================================================
-              HELP
-          ================================================== */}
-
-          <button
-            type="button"
-            className="
-              hidden
-              h-9
-              w-9
-              shrink-0
-              items-center
-              justify-center
-              rounded-lg
-              text-slate-500
-              transition
-              hover:bg-violet-50
-              hover:text-[#8138A2]
-              md:flex
-            "
-            aria-label="Help"
-          >
-            <CircleHelp
-              size={18}
-              strokeWidth={1.8}
-            />
-          </button>
-
+      
           {/* =================================================
               DIVIDER
           ================================================== */}
