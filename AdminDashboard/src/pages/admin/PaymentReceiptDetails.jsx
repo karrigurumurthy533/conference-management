@@ -15,7 +15,7 @@ import {
   downloadReceiptPdf,
   getReceiptById,
 } from "../../redux/receiptSlice";
-import "./CreateReceipt.css";
+
 
 const dateText = (value) => {
   if (!value) return "-";

@@ -1,3 +1,4 @@
+
 const fs = require("fs");
 const path = require("path");
 
@@ -24,14 +25,24 @@ const date = (v) => {
   if (!v) return "-";
 
   const d = new Date(v);
-
   if (Number.isNaN(d.getTime())) return e(v);
 
   const day = String(d.getDate()).padStart(2, "0");
-  const month = d.toLocaleDateString("en-GB", { month: "long" });
+  const month = d.toLocaleDateString("en-GB", {
+    month: "long",
+  });
   const year = d.getFullYear();
 
-  return `${day}${day.endsWith("01") && day !== "11" ? "st" : day.endsWith("02") && day !== "12" ? "nd" : day.endsWith("03") && day !== "13" ? "rd" : "th"} ${month}, ${year}`;
+  const suffix =
+    day !== "11" && day.endsWith("1")
+      ? "st"
+      : day !== "12" && day.endsWith("2")
+      ? "nd"
+      : day !== "13" && day.endsWith("3")
+      ? "rd"
+      : "th";
+
+  return `${day}${suffix} ${month}, ${year}`;
 };
 
 const currencyLabels = {
@@ -84,9 +95,11 @@ const address = (title, p = {}) => `
       </tr>
       <tr>
         <td class="address-label">E-Mail:</td>
-        <td>${p.email
-          ? `<a href="mailto:${e(p.email)}">${e(p.email)}</a>`
-          : "-"}</td>
+        <td>${
+          p.email
+            ? `<a href="mailto:${e(p.email)}">${e(p.email)}</a>`
+            : "-"
+        }</td>
       </tr>
     </tbody>
   </table>
@@ -113,14 +126,12 @@ module.exports = function paymentReceiptTemplate(r) {
           <td class="currency">${e(
             currencyLabels[x.currency] || x.currency || "-"
           )}</td>
-          <td class="amount">
-            ${e(
-              Number(x.amount || 0).toLocaleString("en-GB", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })
-            )}
-          </td>
+          <td class="amount">${e(
+            Number(x.amount || 0).toLocaleString("en-GB", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
+          )}</td>
         </tr>
       `
     )
@@ -142,6 +153,7 @@ module.exports = function paymentReceiptTemplate(r) {
 <html>
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Payment Receipt</title>
 
 <style>
@@ -150,23 +162,22 @@ module.exports = function paymentReceiptTemplate(r) {
   }
 
   @page {
-    size: A4;
-    margin: 0;
+    size: A4 portrait;
+    margin: 5mm;
   }
 
   html,
   body {
     margin: 0;
     padding: 0;
-    width: 210mm;
-    min-height: 297mm;
+    width: 100%;
     background: #ffffff;
   }
 
   body {
     font-family: "Times New Roman", Times, serif;
     font-size: 12pt;
-    line-height: 1.4;
+    line-height: 1.25;
     color: #222222;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -175,112 +186,105 @@ module.exports = function paymentReceiptTemplate(r) {
   .paper {
     position: relative;
     isolation: isolate;
-    width: 210mm;
-    min-height: 297mm;
-    padding: 8mm 25mm 12mm;
-    overflow: hidden;
+    width: 100%;
+    max-width: none;
+    min-height: 287mm;
+    padding: 0 5mm 4mm;
+    margin: 0;
+    overflow: visible;
     background: #ffffff;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Diagonal conference watermark */
+  /* Logo-only diagonal watermark */
   .paper::before {
     content: "";
     position: absolute;
-    z-index: -1;
-    inset: 0;
+    z-index: 0;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 70%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    transform-origin: center center;
     background-image: url("${logo}");
     background-repeat: no-repeat;
-    background-position: center 57%;
-    background-size: 80% auto;
-    opacity: 0.055;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.16;
     pointer-events: none;
   }
 
-  .watermark-text {
-    position: absolute;
-    z-index: -1;
-    top: 42%;
-    left: 22%;
-    width: 70%;
-    transform: rotate(-48deg);
-    transform-origin: center;
-    color: #b7b7b7;
-    opacity: 0.50;
-    font-family: Arial, sans-serif;
-    font-size: 58pt;
-    font-weight: 700;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  .watermark-text span {
-    display: block;
-    font-size: 34pt;
-    font-weight: 400;
-    text-align: center;
-  }
-
-  .paper > *:not(.watermark-text) {
+  /* Keep receipt content above the watermark */
+  .paper > * {
     position: relative;
     z-index: 1;
   }
 
-  /* Header logo */
+  /* Logo at the very top-left */
   .brand {
-    height: 43mm;
+    width: 100%;
+    height: 24mm;
+    margin: 0;
+    padding: 0;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
+    text-align: left;
   }
 
   .brand img {
-    width: 57mm;
+    display: block;
+    width: 55mm;
     height: auto;
-    max-height: 26mm;
+    max-height: 21mm;
+    margin: 0;
+    padding: 0;
     object-fit: contain;
     object-position: left top;
   }
 
   .conference-title {
-    margin: -14mm 0 2mm;
+    margin: -5mm 0 2mm;
     text-align: center;
-    font-size: 14pt;
-    line-height: 1.3;
+    font-size: 16pt;
+    line-height: 1.2;
     font-weight: bold;
+    overflow-wrap: anywhere;
   }
 
   .conference-date {
     min-height: 8mm;
-    padding: 1mm 3mm;
+    padding: 1.5mm 3mm;
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    flex-wrap: wrap;
     background: #5b9bd5;
     color: #ffffff;
-    font-size: 14pt;
+    font-size: 13pt;
     font-weight: bold;
     line-height: 1.2;
   }
 
   .receipt-heading {
-    margin: 0;
+    margin: 1mm 0 0;
     padding: 0;
     text-align: center;
     color: #000000;
-    font-size: 18pt;
-    line-height: 1.65;
+    font-size: 19pt;
+    line-height: 1.25;
     font-weight: bold;
   }
 
-  /* Receipt/payment information */
+  /* Payment information */
   .payment-information {
     display: grid;
-    grid-template-columns: 63% 37%;
+    grid-template-columns: 60% 40%;
     column-gap: 0;
-    margin-top: 4mm;
-    margin-bottom: 8mm;
+    margin-top: 3mm;
+    margin-bottom: 4mm;
   }
 
   .payment-left,
@@ -289,9 +293,9 @@ module.exports = function paymentReceiptTemplate(r) {
   }
 
   .info-line {
-    margin: 0 0 5mm;
+    margin: 0 0 2mm;
     font-size: 12pt;
-    line-height: 1.45;
+    line-height: 1.25;
     overflow-wrap: anywhere;
   }
 
@@ -300,41 +304,37 @@ module.exports = function paymentReceiptTemplate(r) {
   }
 
   .payment-right .info-line {
-    margin-bottom: 0;
-  }
-
-  .payment-right .company-country {
-    margin-top: 0;
+    margin-bottom: 2mm;
   }
 
   /* Billing and shipping */
   .address-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4mm;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3mm;
     align-items: stretch;
-    margin-bottom: 12mm;
+    margin-bottom: 4mm;
   }
 
   .address-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    font-size: 12pt;
-    line-height: 1.35;
+    font-size: 11pt;
+    line-height: 1.2;
   }
 
   .address-table th,
   .address-table td {
     border: 1px solid #555555;
-    padding: 1.1mm 1.6mm;
+    padding: 1.2mm 1.4mm;
     vertical-align: top;
     text-align: left;
     overflow-wrap: anywhere;
   }
 
   .address-table th {
-    padding: 1mm;
+    padding: 1.3mm;
     text-align: center;
     font-size: 12pt;
     font-weight: bold;
@@ -357,15 +357,15 @@ module.exports = function paymentReceiptTemplate(r) {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    margin: 0 0 6mm;
+    margin: 0;
     font-size: 12pt;
-    line-height: 1.45;
+    line-height: 1.25;
   }
 
   .items-table th,
   .items-table td {
     border: 1px solid #666666;
-    padding: 1mm 1.5mm;
+    padding: 1.5mm 1.7mm;
     vertical-align: top;
     overflow-wrap: anywhere;
   }
@@ -373,29 +373,29 @@ module.exports = function paymentReceiptTemplate(r) {
   .items-table th {
     text-align: center;
     font-weight: bold;
-    white-space: nowrap;
+    font-size: 12pt;
   }
 
   .items-table th:nth-child(1),
   .items-table td:nth-child(1) {
-    width: 10%;
+    width: 9%;
     text-align: center;
   }
 
   .items-table th:nth-child(2),
   .items-table td:nth-child(2) {
-    width: 56%;
+    width: 55%;
   }
 
   .items-table th:nth-child(3),
   .items-table td:nth-child(3) {
-    width: 18%;
+    width: 19%;
     text-align: center;
   }
 
   .items-table th:nth-child(4),
   .items-table td:nth-child(4) {
-    width: 16%;
+    width: 17%;
   }
 
   .items-table td.description {
@@ -409,42 +409,50 @@ module.exports = function paymentReceiptTemplate(r) {
   }
 
   .items-table tbody tr {
-    height: 19mm;
+    height: auto;
   }
 
+  /* Total */
   .totals {
-    margin-top: -6mm;
-    margin-bottom: 6mm;
+    margin: 0 0 1mm;
+    padding: 0;
     text-align: right;
     font-size: 12pt;
+    line-height: 1.2;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .totals p {
-    margin: 0 0 1mm;
+    margin: 0;
+    padding: 0;
   }
 
   /* Additional details */
   .extra {
-    margin-top: 5mm;
+    margin-top: 2mm;
+    padding-top: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .extra h3 {
-    margin: 0 0 6mm;
-    font-size: 16pt;
-    line-height: 1.3;
+    margin: 0 0 1.5mm;
+    font-size: 14pt;
+    line-height: 1.2;
     font-weight: normal;
   }
 
   .extra ul {
     margin: 0;
-    padding-left: 12mm;
+    padding-left: 7mm;
   }
 
   .extra li {
     padding-left: 1mm;
     margin-bottom: 1mm;
-    font-size: 12pt;
-    line-height: 1.4;
+    font-size: 10.5pt;
+    line-height: 1.2;
     overflow-wrap: anywhere;
   }
 
@@ -457,7 +465,7 @@ module.exports = function paymentReceiptTemplate(r) {
   }
 
   .footer {
-    margin-top: 7mm;
+    margin-top: 2mm;
     text-align: center;
     font-size: 10pt;
   }
@@ -466,17 +474,96 @@ module.exports = function paymentReceiptTemplate(r) {
     body {
       margin: 0 auto;
     }
+
+    .paper {
+      max-width: 210mm;
+      margin: 0 auto;
+    }
+  }
+
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 5mm;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .paper {
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+      height: auto;
+      padding: 0 5mm 3mm;
+      margin: 0;
+      overflow: visible;
+    }
+
+    /* Print the logo watermark only */
+    .paper::before {
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 70%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      background-image: url("${logo}");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      opacity: 0.16;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .brand {
+      height: 24mm;
+      margin: 0;
+      padding: 0;
+      justify-content: flex-start;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .brand img {
+      margin: 0;
+      object-position: left top;
+    }
+
+    header,
+    .payment-information,
+    .address-grid,
+    .items-table,
+    .totals,
+    .extra {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .items-table thead {
+      display: table-header-group;
+    }
+
+    .items-table tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    a {
+      color: inherit;
+    }
   }
 </style>
 </head>
 
 <body>
 <main class="paper">
-
-  <div class="watermark-text">
-    GLOBALSCION
-    <span>Conference</span>
-  </div>
 
   <header>
     <div class="brand">
@@ -497,7 +584,6 @@ module.exports = function paymentReceiptTemplate(r) {
   </header>
 
   <section class="payment-information">
-
     <div class="payment-left">
       <p class="info-line">
         <strong>Receipt:</strong>
@@ -535,7 +621,6 @@ module.exports = function paymentReceiptTemplate(r) {
         ${e(r.companyEmail || "-")}
       </p>
     </div>
-
   </section>
 
   <section class="address-grid">
@@ -563,10 +648,6 @@ module.exports = function paymentReceiptTemplate(r) {
           <td class="amount">0.00</td>
         </tr>`
       }
-      <tr class="bottom-border-row">
-        <td colspan="3"></td>
-        <td></td>
-      </tr>
     </tbody>
   </table>
 
@@ -585,10 +666,10 @@ module.exports = function paymentReceiptTemplate(r) {
       <li>
         If you have any questions or concerns with this order, please mail-to:
         <br />
-        <a class="support-email"
-           href="mailto:${e(r.supportEmail || "support@globalscion.org")}">
-          ${e(r.supportEmail || "support@globalscion.org")}
-        </a>
+        <a
+          class="support-email"
+          href="mailto:${e(r.supportEmail || "support@globalscion.org")}"
+        >${e(r.supportEmail || "support@globalscion.org")}</a>
       </li>
 
       <li>

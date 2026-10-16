@@ -29,7 +29,7 @@ import {
   clearReceiptSuccess,
 } from "../../redux/receiptSlice";
 
-import "./CreateReceipt.css";
+
 
 const countries = [
   "United States",
